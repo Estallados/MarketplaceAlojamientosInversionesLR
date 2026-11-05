@@ -21,7 +21,7 @@ Los cuatro checks son **requeridos** en `main`: el PR no se puede fusionar hasta
 
 ### Ejecución local
 
-Requisitos: Java 17, Maven, Node 20 y Google Chrome (para los tests del frontend).
+Requisitos: Java 17, Maven, Node 22 y Google Chrome (para los tests del frontend).
 
 **Backend**
 
