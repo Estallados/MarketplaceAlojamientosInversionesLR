@@ -1,0 +1,402 @@
+Matriz de trazabilidad: requisito, HU, CA, rama, PR, prueba y release (SCRUM-195);;;;;;;;;;;;;;
+;;;;;;;;;;;;;;
+CA;Requisito;Requerimiento;Criterio;Condición de aceptación;HU;Caso de uso;Caso de prueba;Prueba automatizada;Estado;Commit;Rama;PR;Release;Observación
+CA-001;RF-002;Registro de cancelación;Política asociada;Dado que existe una reserva, cuando se solicita cancelarla, entonces el sistema debe identificar la política asociada a la publicación.;HU-01;CU-027;"CP-042 Cancelación con política y registro
+CP-043 Liberación de período después de cancelar
+CP-044 Conservación de período después de cancelar";CancelacionesTest#debeIdentificarYAplicarLaPoliticaDelAlojamientoConSuDevolucion_CA001_CA002_CA003;;38a9302;;;;
+CA-004;RF-002;Registro de cancelación;Registro de usuario y fecha;Dado que se procesa una cancelación, cuando finaliza la operación, entonces el sistema debe registrar usuario y fecha.;HU-01;CU-027;"CP-042 Cancelación con política y registro
+CP-043 Liberación de período después de cancelar
+CP-044 Conservación de período después de cancelar";CancelacionesTest#debeRegistrarUsuarioFechaMotivoDevolucionYEstadoFinal_CA004_CA005_CA006;;38a9302;;;;
+CA-007;RF-002;Registro de cancelación;Liberación del período;Dado que una reserva fue cancelada, cuando corresponde liberar el período, entonces el sistema debe actualizar su disponibilidad.;HU-01;CU-027;"CP-042 Cancelación con política y registro
+CP-043 Liberación de período después de cancelar
+CP-044 Conservación de período después de cancelar";CancelacionesTest#debeLiberarElPeriodoYMostrarloDisponibleDeNuevo_CA007_CA008;;38a9302;;;;
+CA-009;RF-002;Registro de cancelación;Conservación cuando no aplica;Dado que no corresponde liberar el período, cuando se procesa la cancelación, entonces el sistema debe respetar la política aplicada.;HU-01;CU-027;"CP-042 Cancelación con política y registro
+CP-043 Liberación de período después de cancelar
+CP-044 Conservación de período después de cancelar";CancelacionesTest#noDebeCancelarReservasQueYaEmpezaronOYaFueronCanceladas_CA009;;38a9302;;;;
+CA-010;RF-003;Registro/Consulta de notificaciones;Registro por evento relevante;Dado que ocurre un evento configurado como relevante para un usuario, cuando el sistema procesa dicho evento, entonces debe registrar una notificación asociada al usuario correspondiente.;HU-02;"CU-025
+CU-027
+CU-028";CP-045 Registro y consulta de notificaciones;NotificacionesResenasTest#unEventoRelevanteRegistraUnaNotificacionParaElUsuario_CA010;;38a9302;;;;
+CA-013;RF-003;Registro/Consulta de notificaciones;Visualización y consulta de notificaciones;Dado que un usuario autenticado tiene notificaciones registradas asociadas a su cuenta, cuando consulta sus notificaciones, entonces el sistema debe mostrar únicamente las notificaciones asociadas a dicho usuario.;HU-02;"CU-025
+CU-027
+CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesResenasTest#cadaUsuarioVeYMarcaSoloSusNotificaciones_CA013
+NotificacionesResenasTest#elContadorDeNoLeidasYMarcarTodasComoLeidas_CA013";;"38a9302
+e2f0592";;;;
+CA-016;RF-004;Registro/Consulta de reseñas y calificaciones;Reserva completada;Dado que el huésped tiene una reserva completada, cuando evalúa el alojamiento, entonces puede registrar una reseña o calificación.;HU-03;"CU-029
+CU-030";"CP-046 Registro de reseña
+CP-047 Reseña de reserva no completada
+CP-048 Consulta de reseñas de alojamiento";NotificacionesResenasTest#elHuespedDeUnaReservaCompletadaPuedeResenarYQuedaAsociada_CA016_CA018;;38a9302;;;;
+CA-018;RF-004;Registro/Consulta de reseñas y calificaciones;Asociación de reseña;Dado que se registra una reseña, cuando se almacena, entonces debe relacionarse con huésped, reserva, alojamiento, fecha y contenido.;HU-03;"CU-029
+CU-030";"CP-046 Registro de reseña
+CP-047 Reseña de reserva no completada
+CP-048 Consulta de reseñas de alojamiento";NotificacionesResenasTest#elHuespedDeUnaReservaCompletadaPuedeResenarYQuedaAsociada_CA016_CA018;;38a9302;;;;
+CA-019;RF-004;Registro/Consulta de reseñas y calificaciones;Consulta por publicación;Dado que una publicación tiene reseñas, cuando se consultan sus valoraciones, entonces el sistema debe mostrarlas.;HU-03;"CU-029
+CU-030";"CP-046 Registro de reseña
+CP-047 Reseña de reserva no completada
+CP-048 Consulta de reseñas de alojamiento";NotificacionesResenasTest#laConsultaPorPublicacionMuestraSoloSusResenasConPromedio_CA019_CA020;;38a9302;;;;
+CA-022;RF-005;Consulta de dashboard;Indicador de usuarios;Dado que existen usuarios registrados, cuando se consulta el dashboard, entonces debe mostrarse el indicador de usuarios.;HU-04;CU-014;CP-055 Consulta de dashboard;DashboardReportesTest#elDashboardMuestraTodosLosIndicadores_CA022_CA023_CA024_CA025_CA026;;38a9302;;;;
+CA-027;RF-006;Exportación de reportes;Formato de exportación;Dado que se solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"DashboardReportesTest#exportaEnPdfYRegistraSolicitanteYFecha_CA027_CA029
+DashboardReportesTest#elExcelCorrespondeConLaInformacionDelSistema_CA027_CA028";;38a9302;;;;
+CA-030;RF-001;Registro de usuarios;Crear cuenta;Dado que el usuario no está registrado, cuando proporciona todos los datos obligatorios y un rol válido, entonces el sistema crea la cuenta.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
+CP-002 Validación de campos obligatorios en registro";AuthFlowTest#registroCreaLaCuentaYEnviaUnCodigoQueEntregaElToken_CA030_CA032_CA033_CA042;;e2f0592;;;;
+CA-031;RF-001;Registro de usuarios;Validar campos;Dado que faltan datos obligatorios, cuando el usuario intenta registrarse, entonces el sistema indica los campos faltantes.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
+CP-002 Validación de campos obligatorios en registro";AuthFlowTest#rechazaDatosFaltantesOInvalidos_CA031_CA135;;38a9302;;;;
+CA-034;RF-008;Inicio de sesión;Iniciar sesión;Dado que el usuario está registrado, cuando proporciona credenciales válidas, entonces el sistema permite el acceso.;HU-07;"CU-002
+CU-035";"CP-003 Inicio de sesión exitoso
+CP-004 Inicio de sesión con credenciales incorrectas
+CP-005 Protección de funcionalidad sin autenticación
+CP-070 Activación del segundo factor";AuthFlowTest#loginPermiteElAccesoIdentificaElRolYRechazaCredencialesMalas_CA034_CA035_CA036;;38a9302;;;;
+CA-035;RF-008;Inicio de sesión;Validar credenciales;Dado que el usuario proporciona credenciales incorrectas, cuando intenta iniciar sesión, entonces el sistema informa que no son válidas.;HU-07;"CU-002
+CU-035";"CP-003 Inicio de sesión exitoso
+CP-004 Inicio de sesión con credenciales incorrectas
+CP-005 Protección de funcionalidad sin autenticación
+CP-070 Activación del segundo factor";AuthFlowTest#loginPermiteElAccesoIdentificaElRolYRechazaCredencialesMalas_CA034_CA035_CA036;;38a9302;;;;
+CA-037;RF-008;Inicio de sesión;Restringir acceso;Dado que el usuario no ha iniciado sesión, cuando intenta acceder a una función restringida, entonces el sistema impide el acceso.;HU-07;"CU-002
+CU-035";"CP-003 Inicio de sesión exitoso
+CP-004 Inicio de sesión con credenciales incorrectas
+CP-005 Protección de funcionalidad sin autenticación
+CP-070 Activación del segundo factor";AuthFlowTest#sinSesionNoSePuedeAccederAFuncionesRestringidas_CA037_CA044_CA134;;38a9302;;;;
+CA-038;RF-009;Recuperación de contraseña;Iniciar recuperación;Dado que el usuario no puede acceder a su cuenta, cuando selecciona recuperación de contraseña, entonces el sistema inicia el proceso.;HU-08;CU-003;CP-006 Recuperación de contraseña;IdentidadPerfilTest#debeRecuperarLaContraseniaConElProcesoSimulado_CA038_CA039_CA040_CA041;;38a9302;;;;
+CA-042;RF-010;Consulta de perfil;Consulta y visualización de información del perfil;Dado que el usuario ha iniciado sesión y tiene información registrada en su cuenta, cuando consulta su perfil, entonces el sistema debe mostrar de forma clara la información básica asociada a su cuenta, permitiéndole identificar sus datos registrados.;HU-09;CU-004;"CP-007 Consulta de perfil
+CP-008 Consulta de perfil sin autenticación";AuthFlowTest#registroCreaLaCuentaYEnviaUnCodigoQueEntregaElToken_CA030_CA032_CA033_CA042;;e2f0592;;;;
+CA-044;RF-010;Consulta de perfil;Restringir perfil;Dado que el usuario no ha iniciado sesión, cuando intenta consultar su perfil, entonces el sistema impide el acceso.;HU-09;CU-004;"CP-007 Consulta de perfil
+CP-008 Consulta de perfil sin autenticación";AuthFlowTest#sinSesionNoSePuedeAccederAFuncionesRestringidas_CA037_CA044_CA134;;38a9302;;;;
+CA-046;RF-011;Actualización de perfil;Actualizar perfil;Dado que el usuario ha iniciado sesión, cuando modifica datos válidos y guarda los cambios, entonces el sistema actualiza el perfil.;HU-09;CU-005;"CP-009 Actualización de perfil
+CP-010 Actualización de perfil con datos inválidos
+CP-011 Acceso o modificación de información de otro usuario";IdentidadPerfilTest#debeActualizarSoloNombreYTelefonoYMostrarLosCambios_CA046_CA048;;38a9302;;;;
+CA-047;RF-011;Actualización de perfil;Validar actualización;Dado que existen datos inválidos o incompletos, cuando el usuario intenta guardar los cambios, entonces el sistema informa el error.;HU-09;CU-005;"CP-009 Actualización de perfil
+CP-010 Actualización de perfil con datos inválidos
+CP-011 Acceso o modificación de información de otro usuario";IdentidadPerfilTest#debeRechazarTelefonoInvalidoONombreVacio_CA047;;38a9302;;;;
+CA-049;RF-011;Actualización de perfil;Proteger perfil;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la modificación.;HU-09;CU-005;"CP-009 Actualización de perfil
+CP-010 Actualización de perfil con datos inválidos
+CP-011 Acceso o modificación de información de otro usuario";IdentidadPerfilTest#unUsuarioNoPuedeConsultarNiModificarOtraCuenta_CA049_CA053_CA133;;38a9302;;;;
+CA-050;RF-012;Activación y desactivación de cuenta;Cambio de estado de la cuenta;Dado que la cuenta del usuario se encuentra en estado ACTIVA o INACTIVA, cuando el usuario solicita cambiar su estado, entonces el sistema debe actualizarla al estado contrario correspondiente: de ACTIVA a INACTIVA o de INACTIVA a ACTIVA.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
+CP-012 Activación y desactivación de cuenta";IdentidadPerfilTest#debeDesactivarYReactivarLaCuentaPropiaMostrandoElEstado_CA050_CA052;;38a9302;;;;
+CA-053;RF-012;Activación y desactivación de cuenta;Proteger estado;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la operación.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
+CP-012 Activación y desactivación de cuenta";IdentidadPerfilTest#unUsuarioNoPuedeConsultarNiModificarOtraCuenta_CA049_CA053_CA133;;38a9302;;;;
+CA-054;RF-013;Bloqueo de publicaciones;Bloqueo de publicación;Dado que existe una publicación que requiere una acción administrativa, cuando el administrador solicita bloquearla, entonces el sistema debe cambiar su estado a BLOQUEADA.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
+CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#bloquearCambiaABloqueadaYLaOcultaDeLasBusquedas_CA054_CA055_CA111;;38a9302;;;;
+CA-058;RF-014;Restricción de usuarios;Restringir usuario;Dado que el administrador consulta un usuario, cuando aplica una restricción, entonces el sistema registra y aplica la restricción.;HU-12;CU-010;"CP-051 Restricción de usuario
+CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
+CA-059;RF-014;Restricción de usuarios;Bloquear acciones;Dado que el usuario está restringido, cuando intenta realizar una acción que requiere una cuenta habilitada, entonces el sistema impide la acción.;HU-12;CU-010;"CP-051 Restricción de usuario
+CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
+CA-062;RF-015;Consulta de eventos de auditoría;Consultar auditoría;Dado que existen eventos registrados, cuando el administrador consulta la auditoría, entonces el sistema muestra los eventos.;HU-13;CU-011;"CP-053 Consulta de auditoría
+CP-054 Consulta de auditoría sin permisos";AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139;;38a9302;;;;
+CA-065;RF-015;Consulta de eventos de auditoría;Restringir auditoría;Dado que el usuario no tiene permisos administrativos, cuando intenta consultar la auditoría, entonces el sistema impide el acceso.;HU-13;CU-011;"CP-053 Consulta de auditoría
+CP-054 Consulta de auditoría sin permisos";AdministracionTest#unUsuarioSinPermisosNoPuedeConsultarLaAuditoria_CA065_CA134;;38a9302;;;;
+CA-066;RF-016;Moderación de reseñas;Ocultar reseña;Dado que existe una reseña que incumple las reglas, cuando el administrador decide ocultarla, entonces el sistema permite ocultarla.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
+CP-050 Moderación de reseña sin permisos";"AdministracionTest#elAdministradorOcultaUnaResenaQueDejaDeMostrarse_CA066_CA067_CA069
+NotificacionesResenasTest#elAdminListaLasResenasYAlOcultarUnaSeNotificaAlAutor_CA066";;"38a9302
+e2f0592";;;;
+CA-069;RF-016;Moderación de reseñas;Restringir moderación;Dado que el usuario no tiene permisos administrativos, cuando intenta ocultar una reseña, entonces el sistema impide la acción.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
+CP-050 Moderación de reseña sin permisos";AdministracionTest#elAdministradorOcultaUnaResenaQueDejaDeMostrarse_CA066_CA067_CA069;;38a9302;;;;
+CA-070;RF-021;Creación de reserva por el huésped;Creación exitosa con cotización vigente;Dado una cotización vigente y un alojamiento ACTIVA, cuando el huésped confirma, entonces el sistema crea la reserva con el monto cotizado.;HU-22;"CU-024
+CU-025";"CP-031 Generación de cotización con servicios adicionales
+CP-029 Validación de fechas
+CP-032 Cotización excediendo capacidad
+CP-034 Creación de reserva inmediata
+CP-035 Reserva de alojamiento no activo
+CP-036 Reservas superpuestas o simultáneas
+CP-037 Reserva inmediata inválida
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeCrearLaReservaConfirmadaConElMontoCotizadoYPagoAprobado_CA070_CA075_CA086_CA161;;38a9302;;;;
+CA-071;RF-021;Creación de reserva por el huésped;Rechazo por alojamiento no ACTIVA;Dado un alojamiento no ACTIVA, cuando el huésped intenta reservar, entonces el sistema rechaza la operación e informa el motivo.;HU-22;"CU-024
+CU-025";"CP-031 Generación de cotización con servicios adicionales
+CP-029 Validación de fechas
+CP-032 Cotización excediendo capacidad
+CP-034 Creación de reserva inmediata
+CP-035 Reserva de alojamiento no activo
+CP-036 Reservas superpuestas o simultáneas
+CP-037 Reserva inmediata inválida
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeRechazarReservaSiElAlojamientoDejoDeEstarActivo_CA071_CA159;;38a9302;;;;
+CA-072;"RF-021
+RNF-019";"Creación de reserva por el huésped
+Prevención de reservas superpuestas con revalidación";Rechazo por solapamiento de períodos;Dado un período ya reservado, cuando otro huésped intenta confirmar uno superpuesto, entonces el sistema rechaza la confirmación.;HU-22;"CU-024
+CU-025";"CP-031 Generación de cotización con servicios adicionales
+CP-029 Validación de fechas
+CP-032 Cotización excediendo capacidad
+CP-034 Creación de reserva inmediata
+CP-035 Reserva de alojamiento no activo
+CP-036 Reservas superpuestas o simultáneas
+CP-037 Reserva inmediata inválida
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeRevalidarYRechazarUnPeriodoQueOtroHuespedYaConfirmo_CA072_CA074;;38a9302;;;;
+CA-074;RNF-019;Prevención de reservas superpuestas con revalidación;Revalidación de disponibilidad al confirmar;Dado que una consulta previa mostró el alojamiento como disponible, cuando el huésped solicita confirmar la reserva, entonces el sistema debe volver a comprobar la disponibilidad inmediatamente antes de confirmarla y rechazarla si el período ya no está disponible.;HU-22;CU-025;"CP-036 Reservas superpuestas o simultáneas
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeRevalidarYRechazarUnPeriodoQueOtroHuespedYaConfirmo_CA072_CA074;;38a9302;;;;
+CA-075;RNF-020;Confirmación inmediata de reserva válida;Confirmación inmediata sin aprobación manual;Dado que una reserva cumple las condiciones definidas (alojamiento ACTIVA, período disponible y cotización vigente), cuando el huésped la confirma en el flujo de reserva inmediata, entonces el sistema debe confirmarla sin requerir aprobación manual del anfitrión.;HU-22;CU-025;"CP-034 Creación de reserva inmediata
+CP-037 Reserva inmediata inválida";ReservasPagosTest#debeCrearLaReservaConfirmadaConElMontoCotizadoYPagoAprobado_CA070_CA075_CA086_CA161;;38a9302;;;;
+CA-076;RF-020;Bloqueo automático del período reservado;Bloqueo del período tras confirmar;Dado que una reserva se confirma, cuando se consulta el calendario, entonces el período aparece como no disponible.;HU-22;CU-025;CP-038 Bloqueo de período después de reservar;DisponibilidadBusquedaTest#unaReservaConfirmadaBloqueaElPeriodoEnElCalendario_CA076_CA123;;38a9302;;;;
+CA-078;RF-022;Consulta de estado e historial de reservas;Consulta de historial del huésped;Dado que el huésped tiene reservas registradas, cuando consulta su historial, entonces el sistema muestra todas sus reservas con su estado actual.;HU-25;"CU-026
+CU-020";"CP-040 Consulta de historial de reservas
+CP-041 Consulta de reservas del anfitrión";ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133;;38a9302;;;;
+CA-079;RF-022;Consulta de estado e historial de reservas;Consulta de reservas propias del anfitrión;Dado que el anfitrión tiene alojamientos con reservas, cuando consulta sus reservas, entonces el sistema muestra solo las de sus alojamientos.;HU-25;"CU-026
+CU-020";"CP-040 Consulta de historial de reservas
+CP-041 Consulta de reservas del anfitrión";ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133;;38a9302;;;;
+CA-080;RNF-021;Cálculo consistente de cotización;Cotización muestra todos los componentes;Dado un alojamiento y fechas válidas, cuando se pide la cotización, entonces el sistema muestra todos los componentes exigidos.;HU-31;"CU-024
+CU-013";"CP-031 Generación de cotización con servicios adicionales
+CP-033 Aplicación de tarifa configurada o por defecto";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
+CA-082;RNF-018;Validación cronológica de fechas;Rechazo por fechas inválidas;Dado que la salida es anterior o igual a la llegada, cuando se pide la cotización, entonces el sistema la rechaza.;"HU-21
+HU-31";"CU-023
+CU-024";CP-029 Validación de fechas;"DisponibilidadBusquedaTest#debeRechazarSalidaIgualOAnteriorALaLlegada_CA122_CA082
+ReservasPagosTest#debeRechazarCotizacionConFechasInvalidas_CA082_CA181";;38a9302;;;;
+CA-083;"RF-021
+RNF-018";"Creación de reserva por el huésped
+Validación cronológica de fechas";Rechazo por capacidad excedida;Dado que la capacidad solicitada excede la del alojamiento, cuando se pide la cotización, entonces el sistema la rechaza.;HU-31;"CU-024
+CU-025
+CU-023";"CP-031 Generación de cotización con servicios adicionales
+CP-029 Validación de fechas
+CP-032 Cotización excediendo capacidad
+CP-034 Creación de reserva inmediata
+CP-035 Reserva de alojamiento no activo
+CP-036 Reservas superpuestas o simultáneas
+CP-037 Reserva inmediata inválida
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeRechazarCotizacionQueExcedeLaCapacidad_CA083;;38a9302;;;;
+CA-084;RF-023;Configurabilidad de tarifas porcentuales;Uso del nuevo porcentaje configurado;Dado que se modifica el porcentaje de servicio, cuando se genera una nueva cotización, entonces se usa el nuevo valor.;"HU-24
+HU-31";CU-013;CP-033 Aplicación de tarifa configurada o por defecto;PublicacionesTest#sinConfiguracionSeUsaElPorcentajePorDefectoYAlCambiarloSeAplica_CA084_CA085_CA180;;38a9302;;;;
+CA-086;RNF-021;Cálculo consistente de cotización;Monto de reserva igual al de la cotización;Dado que se confirma una reserva desde una cotización previa, cuando se crea el registro, entonces el monto coincide exactamente.;HU-22;"CU-024
+CU-013";"CP-031 Generación de cotización con servicios adicionales
+CP-033 Aplicación de tarifa configurada o por defecto";ReservasPagosTest#debeCrearLaReservaConfirmadaConElMontoCotizadoYPagoAprobado_CA070_CA075_CA086_CA161;;38a9302;;;;
+CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por ciudad;Dado que el usuario ingresa una ciudad, cuando ejecuta la búsqueda, entonces el sistema debe mostrar los alojamientos activos correspondientes a la ciudad indicada.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"CatalogoTest#unVisitanteSinSesionVeSoloLosQueSePuedenReservar_CA087
+DisponibilidadBusquedaTest#debeBuscarPorCiudad_CA087";;"85a995d
+38a9302";;;;
+CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle;Dado que el usuario visualiza los resultados de búsqueda, cuando selecciona un alojamiento, entonces el sistema debe mostrar la información detallada de la publicación.;HU-18;"CU-022
+CU-016";"CP-018 Consulta de detalle de publicación
+CP-019 Consulta de publicaciones propias";PublicacionesTest#elDetalleDeUnaPublicacionActivaEsPublicoYElDeUnBorradorNo_CA093_CA102;;38a9302;;;;
+CA-094;RF-017;Crear publicación de alojamiento;Creación de publicación;Dado que el usuario tiene el rol ANFITRION, cuando registra un nuevo alojamiento, entonces el sistema debe permitir crear la publicación.;HU-15;CU-017;"CP-013 Creación de publicación
+CP-014 Envío a revisión de publicación incompleta
+CP-015 Validación de capacidad y precio del alojamiento";"ImagenesAlojamientoTest#alCrearLaPrimeraImagenQuedaComoPrincipalYSeGuardaEnCloudinary_CA094
+PublicacionesTest#debeCrearPublicacionEnBorradorConLaInformacionMinima_CA094_CA095_CA096";;"598b01a
+38a9302";;;;
+CA-097;RF-017;Crear publicación de alojamiento;Validación de información obligatoria;Dado que una publicación no contiene toda la información mínima requerida, cuando el anfitrión intenta enviarla a revisión para su activación, entonces el sistema debe impedirlo e indicar los datos faltantes.;HU-15;CU-017;"CP-013 Creación de publicación
+CP-014 Envío a revisión de publicación incompleta
+CP-015 Validación de capacidad y precio del alojamiento";PublicacionesTest#debeImpedirEnviarARevisionSinInformacionMinimaEIndicarFaltantes_CA097;;38a9302;;;;
+CA-098;"RF-017
+RF-018";"Crear publicación de alojamiento
+Gestión y actualización de publicación";Validación de capacidad;Dado que el anfitrión registra o modifica la capacidad de un alojamiento, cuando ingresa un valor igual o menor que cero, entonces el sistema debe rechazarlo e informar que la capacidad debe ser mayor que cero.;HU-15;"CU-017
+CU-009
+CU-021";"CP-013 Creación de publicación
+CP-014 Envío a revisión de publicación incompleta
+CP-015 Validación de capacidad y precio del alojamiento
+CP-016 Actualización de publicación
+CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-020 Envío a revisión de publicación completa
+CP-021 Pausar publicación activa
+CP-057 Estados permitidos de la publicación
+CP-073 Registro y modificación de servicio adicional";PublicacionesTest#debeRechazarCapacidadMenorOIgualACero_CA098;;38a9302;;;;
+CA-100;RF-018;Gestión y actualización de publicación;Modificación de información;Dado que el anfitrión tiene una publicación registrada a su nombre, cuando modifica sus datos, entonces el sistema debe guardar y mostrar la información actualizada.;HU-16;"CU-009
+CU-021";"CP-016 Actualización de publicación
+CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-020 Envío a revisión de publicación completa
+CP-021 Pausar publicación activa
+CP-057 Estados permitidos de la publicación
+CP-073 Registro y modificación de servicio adicional";PublicacionesTest#elPropietarioModificaYVeLosCambios_CA100_CA113;;38a9302;;;;
+CA-101;RF-018;Gestión y actualización de publicación;Restricción de modificación;Dado que una publicación pertenece a otro anfitrión, cuando un usuario sin permisos intenta modificarla, entonces el sistema debe rechazar la operación.;HU-16;"CU-009
+CU-021";"CP-016 Actualización de publicación
+CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-020 Envío a revisión de publicación completa
+CP-021 Pausar publicación activa
+CP-057 Estados permitidos de la publicación
+CP-073 Registro y modificación de servicio adicional";PublicacionesTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114_CA132;;38a9302;;;;
+CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
+CU-016";"CP-018 Consulta de detalle de publicación
+CP-019 Consulta de publicaciones propias";PublicacionesTest#elAnfitrionConsultaSusPublicacionesConSuEstado_CA103;;38a9302;;;;
+CA-104;RF-018;Gestión y actualización de publicación;Estados permitidos;Dado que existe una publicación registrada, cuando se consulta o modifica su estado, entonces el sistema debe utilizar únicamente los estados BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA o BLOQUEADA.;HU-17;"CU-009
+CU-021";"CP-016 Actualización de publicación
+CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-020 Envío a revisión de publicación completa
+CP-021 Pausar publicación activa
+CP-057 Estados permitidos de la publicación
+CP-073 Registro y modificación de servicio adicional";PublicacionesTest#soloSePermitenLasTransicionesDefinidas_CA104;;38a9302;;;;
+CA-108;RF-018;Gestión y actualización de publicación;Pausa de publicación;Dado que el anfitrión tiene una publicación ACTIVA, cuando solicita pausarla, entonces el sistema debe cambiar su estado a PAUSADA.;HU-17;"CU-009
+CU-021";"CP-016 Actualización de publicación
+CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-020 Envío a revisión de publicación completa
+CP-021 Pausar publicación activa
+CP-057 Estados permitidos de la publicación
+CP-073 Registro y modificación de servicio adicional";PublicacionesTest#pausarCambiaAPausadaEImpideNuevasReservas_CA108_CA109;;38a9302;;;;
+CA-112;RF-013;Bloqueo de publicaciones;Conservación de reservas existentes;Dado que una publicación tiene reservas futuras, cuando un administrador la bloquea, entonces el sistema debe conservar dichas reservas para auditoría y marcarlas para revisión manual.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
+CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#alBloquearSeConservanLasReservasFuturasYQuedanEnRevision_CA112;;38a9302;;;;
+CA-113;RNF-004;Protección de operaciones e información de usuarios;Modificación autorizada;Dado que un usuario es el anfitrión propietario de una publicación o tiene el rol ADMINISTRADOR, cuando solicita modificarla, entonces el sistema debe permitir la operación si cumple las demás reglas aplicables.;HU-16;"CU-009
+CU-004
+CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-011 Acceso o modificación de información de otro usuario";"PublicacionesTest#elPropietarioModificaYVeLosCambios_CA100_CA113
+PublicacionesTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114_CA132";;38a9302;;;;
+CA-114;RNF-004;Protección de operaciones e información de usuarios;Modificación no autorizada;Dado que un usuario no es propietario de la publicación ni tiene permisos administrativos, cuando intenta modificarla, entonces el sistema debe denegar la operación.;HU-16;"CU-009
+CU-004
+CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-011 Acceso o modificación de información de otro usuario";PublicacionesTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114_CA132;;38a9302;;;;
+CA-115;RF-025;Registrar y actualizar períodos disponibles;Registro de disponibilidad;Dado que un anfitrión tiene un alojamiento registrado, cuando ingresa un período válido de disponibilidad, entonces el sistema debe guardar las fechas correspondientes.;HU-20;"CU-018
+CU-019";"CP-024 Registro de período disponible
+CP-025 Actualización de disponibilidad
+CP-026 Modificación de período reservado";DisponibilidadBusquedaTest#debeRegistrarUnPeriodoAsociadoAlAlojamiento_CA115_CA116;;38a9302;;;;
+CA-117;RF-025;Registrar y actualizar períodos disponibles;Actualización de períodos;Dado que un anfitrión tiene períodos de disponibilidad registrados para su alojamiento, cuando modifica un período no reservado, entonces el sistema debe guardar y mostrar la disponibilidad actualizada.;HU-20;"CU-018
+CU-019";"CP-024 Registro de período disponible
+CP-025 Actualización de disponibilidad
+CP-026 Modificación de período reservado";DisponibilidadBusquedaTest#debeActualizarUnPeriodoNoReservado_CA117;;38a9302;;;;
+CA-118;RF-025;Registrar y actualizar períodos disponibles;Protección de períodos reservados;Dado que un alojamiento tiene un período reservado, cuando el anfitrión intenta modificar su disponibilidad de manera que afecte dicha reserva, entonces el sistema debe rechazar la modificación.;HU-20;"CU-018
+CU-019";"CP-024 Registro de período disponible
+CP-025 Actualización de disponibilidad
+CP-026 Modificación de período reservado";DisponibilidadBusquedaTest#noDebePermitirModificarOEliminarUnPeriodoQueAfecteUnaReserva_CA118;;38a9302;;;;
+CA-119;RF-026;Consultar disponibilidad;Consulta de período disponible;Dado que una publicación se encuentra ACTIVA y tiene un período disponible, cuando el huésped consulta fechas comprendidas dentro de dicho período y sin reservas superpuestas, entonces el sistema debe mostrar el alojamiento como disponible.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
+CP-028 Consulta de período ocupado
+CP-029 Validación de fechas";DisponibilidadBusquedaTest#debeMostrarDisponibleUnPeriodoLibre_CA119_CA121;;38a9302;;;;
+CA-120;RF-026;Consultar disponibilidad;Consulta de período no disponible;Dado que un alojamiento tiene fechas reservadas o no disponibles, cuando el huésped consulta un período que incluye dichas fechas, entonces el sistema debe indicar que el alojamiento no está disponible para el período solicitado.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
+CP-028 Consulta de período ocupado
+CP-029 Validación de fechas";DisponibilidadBusquedaTest#debeIndicarNoDisponibleSiHayReservaOFueraDelPeriodo_CA120;;38a9302;;;;
+CA-131;RNF-003;Control de acceso por autenticación y roles;Acceso según rol;Dado un usuario con un rol determinado, cuando intente acceder a una funcionalidad, entonces el sistema debe permitir o rechazar el acceso según los permisos definidos para dicho rol.;;CU-002;"CP-074 Acceso según rol
+CP-005 Protección de funcionalidad sin autenticación";"DashboardReportesTest#soloElAdministradorConsultaElDashboard_CA131
+PublicacionesTest#unHuespedNoPuedeCrearPublicaciones_CA131
+ReservasPagosTest#unAnfitrionNoPuedeCrearReservas_CA131
+SeguridadRolesYCorsTest#soloAdminPuedeListarUsuarios_CA131";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-133;RNF-004;Protección de operaciones e información de usuarios;Aislamiento de información de usuarios;Dado un usuario autenticado, cuando intente consultar o modificar información privada de otro usuario sin autorización, entonces el sistema debe impedir la operación.;;"CU-009
+CU-004
+CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-011 Acceso o modificación de información de otro usuario";"IdentidadPerfilTest#unUsuarioNoPuedeConsultarNiModificarOtraCuenta_CA049_CA053_CA133
+ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-134;RNF-003;Control de acceso por autenticación y roles;Exigir autenticación;Dado un usuario sin una sesión válida, cuando intente ejecutar una operación protegida, entonces el sistema debe rechazar la solicitud y no ejecutar la operación.;;CU-002;"CP-074 Acceso según rol
+CP-005 Protección de funcionalidad sin autenticación";"AdministracionTest#unUsuarioSinPermisosNoPuedeConsultarLaAuditoria_CA065_CA134
+AuthFlowTest#sinSesionNoSePuedeAccederAFuncionesRestringidas_CA037_CA044_CA134";;38a9302;main;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-135;RNF-005;Validación de contraseñas;Contraseña con condiciones mínimas;Dado un usuario que registre o actualice su contraseña, cuando la contraseña no cumpla las condiciones mínimas establecidas, entonces el sistema debe rechazarla e informar la validación correspondiente.;;"CU-001
+CU-003
+CU-005";CP-075 Contraseña que no cumple condiciones mínimas;"AuthFlowTest#rechazaDatosFaltantesOInvalidos_CA031_CA135
+ExceptionChekerTest#debeRechazarContraseniaSinMayuscula_CA135
+ExceptionChekerTest#debeRechazarContraseniaSinMinuscula_CA135
+ExceptionChekerTest#debeAceptarContraseniaQueCumpleTodasLasReglas_CA135";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-136;RNF-006;Registro de operaciones relevantes;Registro de operaciones relevantes;Dado una operación considerada relevante, cuando esta sea ejecutada, entonces el sistema debe generar un registro asociado a dicha operación.;HU-26;CU-011;CP-076 Registro de operación relevante;"IdentidadPerfilTest#debeAuditarLoginExitosoYFallido_CA136_CA152
+AuditoriaServiceTest#debeGuardarEventoConActorFechaYResultado_CA136_CA137_CA138";;38a9302;;;;
+CA-137;RNF-006;Registro de operaciones relevantes;Usuario responsable de la acción;Dado un usuario autenticado que realice una operación trazable, cuando el sistema genere el registro, entonces este debe identificar al usuario responsable de la acción.;HU-26;CU-011;CP-076 Registro de operación relevante;"AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139
+AuditoriaServiceTest#debeGuardarEventoConActorFechaYResultado_CA136_CA137_CA138";;38a9302;;;;
+CA-138;RNF-006;Registro de operaciones relevantes;Fecha y estado de la operación;Dado un evento registrado, cuando se consulte su información, entonces el registro debe contener la fecha de ejecución y el estado o resultado correspondiente.;HU-26;CU-011;CP-076 Registro de operación relevante;"AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139
+AuditoriaServiceTest#debeGuardarEventoConActorFechaYResultado_CA136_CA137_CA138";;38a9302;;;;
+CA-139;RNF-007;Conservación de información para auditoría;Disponibilidad de registros para auditoría;Dado un evento de auditoría registrado, cuando un usuario autorizado consulte los registros posteriormente, entonces la información debe permanecer disponible para su revisión.;HU-26;CU-011;CP-077 Disponibilidad posterior de registros de auditoría;AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139;;38a9302;;;;
+CA-140;RNF-008;Prevención de duplicados y consistencia ante reintentos;Sin duplicados por reenvío;Dado una solicitud que ya fue procesada, cuando la misma solicitud sea enviada nuevamente, entonces el sistema no debe generar una segunda operación equivalente.;;CU-025;CP-078 Solicitud duplicada o reintentada;"CancelacionesTest#cancelarEsIdempotenteYNotificaAlAnfitrion_CA140
+ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
+IdempotenciaServiceTest#debeEjecutarUnaSolaVezYRepetirLaMismaRespuesta_CA140";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-141;RNF-008;Prevención de duplicados y consistencia ante reintentos;Resultado único ante reintentos;Dado una operación procesada previamente, cuando el cliente reintente la misma solicitud, entonces el sistema debe conservar el resultado original sin generar inconsistencias o duplicados.;;CU-025;CP-078 Solicitud duplicada o reintentada;"ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
+IdempotenciaServiceTest#debeRechazarLaMismaClaveConOtraPeticion_CA141
+IdempotenciaServiceTest#debeExigirUnaClaveValida_CA141";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-142;RNF-009;Tiempo de respuesta de consultas;Tiempo máximo de consulta;Dado que se ejecutan consultas de alojamientos bajo las condiciones de prueba definidas, cuando el usuario solicita visualizar los resultados, entonces al menos el 95 % de las solicitudes deben responder en un tiempo máximo de 6 segundos.;;"CU-022
+CU-023";"CP-079 Tiempo de respuesta de búsqueda
+CP-080 Tiempo de respuesta de disponibilidad";;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CA-143;RNF-009;Tiempo de respuesta de consultas;Tiempo máximo de disponibilidad;Dado que un usuario consulta la disponibilidad de un alojamiento bajo las condiciones de prueba definidas, cuando solicita las fechas disponibles, entonces al menos el 95 % de las solicitudes deben responder en un máximo de 6 segundos.;;"CU-022
+CU-023";"CP-079 Tiempo de respuesta de búsqueda
+CP-080 Tiempo de respuesta de disponibilidad";;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CA-144;RNF-010;Tiempo de actualización de información;Tiempo máximo de actualización;Dado que un anfitrión crea o actualiza una publicación o período de disponibilidad, cuando envía información válida, entonces al menos el 95 % de las operaciones deben completarse en un máximo de 5 segundos.;;"CU-009
+CU-019";CP-081 Tiempo de actualización de información;;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CA-145;RNF-011;Tiempo de confirmación de reserva;Tiempo máximo de confirmación;Dado que existe una solicitud de reserva válida, cuando el huésped solicita confirmarla, entonces al menos el 95 % de las operaciones deben completar la revalidación, confirmación y bloqueo del período en un máximo de 6 segundos.;;CU-025;CP-082 Tiempo de confirmación de reserva;;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CA-146;RNF-012;Diseño adaptable;Visualización en diferentes dispositivos;Dado que un usuario accede desde computador o dispositivo móvil, cuando utiliza las funciones de alojamientos o disponibilidad, entonces debe poder visualizar y utilizar sus elementos principales sin pérdida de información ni controles inaccesibles.;;;CP-083 Diseño adaptable;;;;;;;Se valida en el front (diseño adaptable). Ninguna HU lo lista en sus criterios de aceptación
+CA-147;RNF-013;Claridad de formularios y mensajes;Validación comprensible;Dado que el usuario completa un formulario, cuando omite un dato obligatorio o ingresa información inválida, entonces el sistema debe identificar el campo correspondiente y mostrar un mensaje.;;;"CP-084 Validación comprensible de formularios
+CP-086 Mensajes de confirmación y error";;;;;;;Se valida en el front (formularios). Ninguna HU lo lista en sus criterios de aceptación
+CA-148;RNF-014;Identificación de estados;Estados comprensibles;Dado que un usuario consulta una publicación o su disponibilidad, cuando visualiza su información, entonces debe poder identificar claramente el estado de la publicación y los períodos disponibles, reservados o bloqueados.;;"CU-019
+CU-025
+CU-031";CP-085 Identificación clara de estados;;;;;;;Se valida en el front (estados visibles). Ninguna HU lo lista en sus criterios de aceptación
+CA-149;RNF-013;Claridad de formularios y mensajes;Retroalimentación al usuario;Dado que un usuario realiza una operación, cuando esta termina correctamente o es rechazada, entonces el sistema debe mostrar un mensaje claro indicando el resultado y/o la causa del rechazo.;;;"CP-084 Validación comprensible de formularios
+CP-086 Mensajes de confirmación y error";IdentidadPerfilTest#erroresTecnicosRespondenConFormatoUniforme_CA149;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-150;RNF-015;Integridad de registros de auditoría;Protección de registros;Dado que existe un registro de auditoría, cuando un usuario no autorizado intenta modificarlo o eliminarlo, entonces el sistema debe impedir la operación y conservar la información original.;;CU-011;CP-087 Protección de registros de auditoría;AdministracionTest#losRegistrosDeAuditoriaNoSePuedenModificarNiBorrar_CA150;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-151;RNF-016;Identificación del recurso afectado;Asociación del evento;Dado que ocurre una operación relevante, cuando se genera su registro de auditoría, entonces debe quedar identificado el usuario, publicación, alojamiento, reserva u otro recurso relacionado.;;CU-011;CP-076 Registro de operación relevante;AdministracionTest#unaOperacionRechazadaQuedaRegistradaConElRecursoAfectado_CA151_CA152;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-152;RNF-017;Conservación de evidencias e historial;Evidencia de rechazo;Dado que una operación relevante es rechazada por autorización o disponibilidad, cuando el sistema procesa el rechazo, entonces debe conservar un registro del intento y de su resultado.;;CU-011;"CP-088 Registro de operación rechazada
+CP-089 Historial sin sobrescritura";"AdministracionTest#unaOperacionRechazadaQuedaRegistradaConElRecursoAfectado_CA151_CA152
+IdentidadPerfilTest#debeAuditarLoginExitosoYFallido_CA136_CA152
+AuditoriaServiceTest#debeGuardarTambienLasOperacionesRechazadas_CA152
+AuditoriaServiceTest#noDebeInterrumpirLaOperacionSiLaAuditoriaFalla_CA152";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-153;RNF-017;Conservación de evidencias e historial;Historial sin sobrescritura;Dado que existen registros anteriores sobre una publicación, disponibilidad o reserva, cuando ocurre un nuevo cambio relevante, entonces el sistema debe conservar los eventos anteriores.;;CU-011;"CP-088 Registro de operación rechazada
+CP-089 Historial sin sobrescritura";PublicacionesTest#elHistorialConservaTodosLosCambiosDeEstado_CA153;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CA-154;RNF-001;Disponibilidad operativa;Disponibilidad mínima del sistema;Dado que el sistema se encuentra dentro del período de operación definido, cuando los usuarios accedan a los servicios principales, entonces estos deben permanecer disponibles al menos el 99 % del tiempo medido durante las pruebas.;;;CP-090 Disponibilidad mínima del sistema;;;;;;;Depende del despliegue (disponibilidad). Ninguna HU lo lista en sus criterios de aceptación
+CA-155;RNF-002;Recuperación y continuidad ante fallos;Tiempo máximo de recuperación;Dado que ocurre una interrupción controlada de un servicio principal, cuando se inicia el proceso de recuperación, entonces el sistema debe restablecer el servicio en un tiempo máximo de 60 segundos.;;;"CP-091 Recuperación ante fallo
+CP-092 Conservación de información tras un fallo";;;;;;;Depende del despliegue (recuperación). Ninguna HU lo lista en sus criterios de aceptación
+CA-156;RNF-002;Recuperación y continuidad ante fallos;Conservación de información persistida;Dado que ocurre una interrupción después de almacenar información correctamente, cuando el sistema restablece sus servicios, entonces debe conservarse el 100 % de la información persistida antes del fallo.;;;"CP-091 Recuperación ante fallo
+CP-092 Conservación de información tras un fallo";;;;;;;Depende del despliegue (persistencia). Ninguna HU lo lista en sus criterios de aceptación
+CA-157;RF-027;Gestión del estado de revisión del alojamiento;Envío a revisión;Dado que el anfitrión completó los datos de una publicación, cuando solicita enviarla a revisión, entonces el sistema debe cambiar su estado a PENDIENTE_REVISION.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
+CP-057 Estados permitidos de la publicación
+CP-058 Aprobación de publicación
+CP-059 Rechazo de publicación con motivo
+CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeEnviarARevisionYAprobarQuedandoVisibleEnBusquedas_CA157_CA158_CA194;;38a9302;;;;
+CA-158;RF-027;Gestión del estado de revisión del alojamiento;Aprobación: disponible para reservas;Dado que existe una publicación en estado PENDIENTE_REVISION, cuando un administrador la aprueba, entonces el sistema debe cambiarla a ACTIVA y dejarla disponible para recibir reservas.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
+CP-057 Estados permitidos de la publicación
+CP-058 Aprobación de publicación
+CP-059 Rechazo de publicación con motivo
+CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeEnviarARevisionYAprobarQuedandoVisibleEnBusquedas_CA157_CA158_CA194;;38a9302;;;;
+CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada o bloqueada;Dado que una publicación está PAUSADA o BLOQUEADA, cuando un huésped intenta crear una nueva reserva sobre ella, entonces el sistema debe impedirlo y no mostrarla como disponible para nuevas reservas.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
+CP-057 Estados permitidos de la publicación
+CP-058 Aprobación de publicación
+CP-059 Rechazo de publicación con motivo
+CP-060 Auditoría de la decisión de revisión";ReservasPagosTest#debeRechazarReservaSiElAlojamientoDejoDeEstarActivo_CA071_CA159;;38a9302;;;;
+CA-160;RF-028;Procesamiento de pago simulado;Inicio del pago de prueba;Dado que el huésped confirma una reserva, cuando el sistema inicia el pago, entonces debe procesarlo únicamente en ambiente de pruebas, sin realizar cobros reales.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
+CP-062 Pago de prueba aprobado
+CP-063 Pago de prueba rechazado o con error";ReglasNegocioTest#nuncaSeCobraConUnaClaveQueNoSeaDePrueba_CA160;;38a9302;;;;
+CA-161;RF-028;Procesamiento de pago simulado;Pago aprobado;Dado que el pago de prueba fue aprobado, cuando el sistema recibe el resultado, entonces debe registrarlo y asociarlo a la reserva, que queda con un pago exitoso.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
+CP-062 Pago de prueba aprobado
+CP-063 Pago de prueba rechazado o con error";"ReservasPagosTest#debeCrearLaReservaConfirmadaConElMontoCotizadoYPagoAprobado_CA070_CA075_CA086_CA161
+PagoStripeTest#creaYConfirmaElPaymentIntentEnCentavosConClaveDeIdempotencia_CA161
+ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"38a9302
+4cf6ba5";;;;
+CA-162;RF-028;Procesamiento de pago simulado;Pago rechazado;Dado que el pago de prueba fue rechazado, cuando el sistema recibe el resultado, entonces la reserva no debe quedar registrada como pagada y debe mostrarse el resultado de pago rechazado.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
+CP-062 Pago de prueba aprobado
+CP-063 Pago de prueba rechazado o con error";"ReservasPagosTest#unPagoRechazadoNoDejaLaReservaPagadaYLiberaLasFechas_CA162
+ReservasPagosTest#elRechazoDiceElMotivoYUnMetodoQueNoEsDeStripeNiSeIntenta_CA162
+PagoStripeTest#unRechazoDeLaTarjetaLlegaConSuMotivoEnEspanol_CA162
+ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"38a9302
+4cf6ba5";;;;
+CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;;;;;;;Se valida en el front (mapa)
+CA-165;RF-029;Mensajería entre huésped y anfitrión;Envío de mensaje;Dado que el huésped está autenticado y participa en una conversación, cuando envía un mensaje al anfitrión, entonces el sistema debe registrarlo asociado a la conversación y al usuario que lo envió.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
+CP-065 Envío y respuesta de mensajes
+CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
+CA-167;RF-029;Mensajería entre huésped y anfitrión;Acceso restringido a la conversación;Dado que un usuario no participa en una conversación, cuando intenta consultarla, entonces el sistema debe impedirlo, permitiendo el acceso solo a los participantes autorizados.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
+CP-065 Envío y respuesta de mensajes
+CP-066 Acceso a conversación ajena";OpcionalesTest#quienNoParticipaNoPuedeVerNiEscribirEnLaConversacion_CA167;;38a9302;;;;
+CA-169;RF-029;Mensajería entre huésped y anfitrión;Inicio de conversación;Dado que el huésped está autenticado y el alojamiento existe, cuando inicia una conversación con el anfitrión del alojamiento, entonces el sistema debe crearla.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
+CP-065 Envío y respuesta de mensajes
+CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
+CA-170;RF-007;Gestión de alojamientos favoritos;Consulta de favoritos;Dado que el huésped está autenticado, cuando consulta sus alojamientos favoritos, entonces el sistema debe mostrar solo los asociados a su usuario.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
+CP-068 Consulta de favoritos
+CP-069 Eliminación de favorito";OpcionalesTest#agregarFavoritoNoDuplicaYSoloMuestraLosPropios_CA170_CA172_CA173;;38a9302;;;;
+CA-171;RF-007;Gestión de alojamientos favoritos;Eliminación de favorito;Dado que el huésped tiene un alojamiento en su lista de favoritos, cuando lo elimina, entonces el alojamiento debe dejar de aparecer en la lista.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
+CP-068 Consulta de favoritos
+CP-069 Eliminación de favorito";OpcionalesTest#eliminarUnFavoritoLoQuitaDeLaLista_CA171;;38a9302;;;;
+CA-173;RF-007;Gestión de alojamientos favoritos;Agregar favorito;Dado que el huésped está autenticado y el alojamiento existe, cuando lo agrega a sus favoritos, entonces el sistema debe registrarlo en su lista.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
+CP-068 Consulta de favoritos
+CP-069 Eliminación de favorito";OpcionalesTest#agregarFavoritoNoDuplicaYSoloMuestraLosPropios_CA170_CA172_CA173;;38a9302;;;;
+CA-174;RNF-023;Autenticación multifactor;Solicitud del segundo factor;Dado que el usuario tiene habilitado el segundo factor, cuando valida sus credenciales principales, entonces el sistema debe solicitar el segundo factor y no completar el acceso hasta validarlo.;HU-30;"CU-035
+CU-002";"CP-070 Activación del segundo factor
+CP-071 Inicio de sesión con segundo factor
+CP-072 Inicio de sesión con MFA deshabilitado";OpcionalesTest#conSegundoFactorElLoginPideElCodigoYSoloAceptaUnoValido_CA174_CA175_CA176_CA178;;38a9302;;;;
+CA-177;RNF-023;Autenticación multifactor;MFA deshabilitado;Dado que la cuenta tiene el segundo factor deshabilitado, cuando el usuario inicia sesión, entonces el sistema debe continuar con el mecanismo normal de autenticación.;HU-30;"CU-035
+CU-002";"CP-070 Activación del segundo factor
+CP-071 Inicio de sesión con segundo factor
+CP-072 Inicio de sesión con MFA deshabilitado";OpcionalesTest#sinSegundoFactorElLoginSigueNormal_CA177;;38a9302;;;;
+CA-178;RNF-023;Autenticación multifactor;Activación del segundo factor;Dado que el usuario está autenticado, cuando activa el segundo factor de autenticación, entonces la configuración debe quedar asociada exclusivamente a su cuenta.;HU-30;"CU-035
+CU-002";"CP-070 Activación del segundo factor
+CP-071 Inicio de sesión con segundo factor
+CP-072 Inicio de sesión con MFA deshabilitado";OpcionalesTest#conSegundoFactorElLoginPideElCodigoYSoloAceptaUnoValido_CA174_CA175_CA176_CA178;;38a9302;;;;
+CA-179;RF-021;Creación de reserva por el huésped;Desglose de cotización;Dado que existe un alojamiento ACTIVA y las fechas seleccionadas son válidas, cuando el huésped solicita la cotización, entonces el sistema debe mostrar noches, precio base, tarifa de limpieza, tarifa de servicio, descuentos y total.;HU-31;"CU-024
+CU-025";"CP-031 Generación de cotización con servicios adicionales
+CP-029 Validación de fechas
+CP-032 Cotización excediendo capacidad
+CP-034 Creación de reserva inmediata
+CP-035 Reserva de alojamiento no activo
+CP-036 Reservas superpuestas o simultáneas
+CP-037 Reserva inmediata inválida
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
+CA-183;RF-021;Creación de reserva por el huésped;Inclusión de servicios adicionales;Dado que el huésped selecciona uno o más servicios adicionales, cuando el sistema recalcula la cotización, entonces el total debe incluir el costo de cada uno.;HU-31;"CU-024
+CU-025";"CP-031 Generación de cotización con servicios adicionales
+CP-029 Validación de fechas
+CP-032 Cotización excediendo capacidad
+CP-034 Creación de reserva inmediata
+CP-035 Reserva de alojamiento no activo
+CP-036 Reservas superpuestas o simultáneas
+CP-037 Reserva inmediata inválida
+CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#laCotizacionMuestraIncluyeYExcluyeServiciosAdicionales_CA182_CA183_CA184;;38a9302;;;;
+CA-185;RF-018;Gestión y actualización de publicación;Registro de servicio adicional;Dado que el usuario es propietario de la publicación, cuando registra un servicio adicional con nombre y costo positivo, entonces el sistema debe asociarlo a su publicación.;HU-16;"CU-009
+CU-021";"CP-016 Actualización de publicación
+CP-017 Modificación sin permisos sobre una publicación o recurso
+CP-020 Envío a revisión de publicación completa
+CP-021 Pausar publicación activa
+CP-057 Estados permitidos de la publicación
+CP-073 Registro y modificación de servicio adicional";PublicacionesTest#elPropietarioRegistraServiciosAdicionalesYOtrosNo_CA185_CA187;;38a9302;;;;
+CA-195;RF-027;Gestión del estado de revisión del alojamiento;Rechazo con motivo;Dado que una publicación no cumple las condiciones, cuando el administrador la rechaza indicando el motivo, entonces el sistema debe registrar el motivo y notificar al anfitrión para que corrija y vuelva a presentarla.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
+CP-057 Estados permitidos de la publicación
+CP-058 Aprobación de publicación
+CP-059 Rechazo de publicación con motivo
+CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeRechazarConMotivoNotificarAlAnfitrionYAuditar_CA195_CA196;;38a9302;;;;
+CA-196;RF-027;Gestión del estado de revisión del alojamiento;Auditoría de la revisión;Dado que el administrador toma una decisión de revisión, cuando esta se registra, entonces el sistema debe guardar un evento de auditoría con administrador, publicación, fecha y resultado.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
+CP-057 Estados permitidos de la publicación
+CP-058 Aprobación de publicación
+CP-059 Rechazo de publicación con motivo
+CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeRechazarConMotivoNotificarAlAnfitrionYAuditar_CA195_CA196;;38a9302;;;;
