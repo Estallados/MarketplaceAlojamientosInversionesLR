@@ -1,0 +1,25 @@
+name: PR format
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validar título y rama
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if ! [[ "$PR_TITLE" =~ ^\[SCRUM-[0-9]+\]\ .+ ]]; then
+            echo "::error::El título debe ser '[SCRUM-n] descripción'. Actual: $PR_TITLE"
+            exit 1
+          fi
+          if ! [[ "$BRANCH" =~ ^(feat|fix|chore|docs|refactor|test)/SCRUM-[0-9]+-.+ ]]; then
+            echo "::error::La rama debe ser tipo/SCRUM-n-descripcion. Actual: $BRANCH"
+            exit 1
+          fi
+          echo "Formato correcto"
