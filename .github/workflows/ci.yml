@@ -38,9 +38,9 @@ jobs:
       - name: Build
         working-directory: marketplaceInversionesLRFront
         run: npx ng build
-      - name: Tests headless
+      - name: Tests
         working-directory: marketplaceInversionesLRFront
-        run: npx ng test --watch=false --browsers=ChromeHeadless
+        run: npx ng test --watch=false
 
   sonar:
     # Los PRs desde forks no tienen acceso a los secrets
