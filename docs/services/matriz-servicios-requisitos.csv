@@ -1,0 +1,67 @@
+Servicio;Nombre del servicio;Requisito;Requerimiento;HU;Proceso BPMN;Tipo de relación
+S01;Identidad y acceso;RF-001;Registro de usuarios;HU-06;PB-04;Responsable
+S01;Identidad y acceso;RF-008;Inicio de sesión;HU-07;PB-04;Responsable
+S01;Identidad y acceso;RF-009;Recuperación de contraseña;HU-08;PB-04;Responsable
+S01;Identidad y acceso;RNF-001;Disponibilidad operativa;-;PB-04;Cumple el requisito no funcional
+S01;Identidad y acceso;RNF-002;Recuperación y continuidad ante fallos;-;PB-04;Cumple el requisito no funcional
+S01;Identidad y acceso;RNF-003;Control de acceso por autenticación y roles;-;PB-04;Cumple el requisito no funcional
+S01;Identidad y acceso;RNF-004;Protección de operaciones e información de usuarios;HU-16;PB-04;Cumple el requisito no funcional
+S01;Identidad y acceso;RNF-005;Validación de contraseñas;-;PB-04;Cumple el requisito no funcional
+S01;Identidad y acceso;RNF-023;Autenticación multifactor;HU-30;PB-04;Cumple el requisito no funcional
+S02;Gestión de usuarios;RF-010;Consulta de perfil;HU-09;PB-04;Responsable
+S02;Gestión de usuarios;RF-011;Actualización de perfil;HU-09;PB-04;Responsable
+S02;Gestión de usuarios;RF-012;Activación y desactivación de cuenta;HU-10;PB-04;Responsable
+S02;Gestión de usuarios;RNF-004;Protección de operaciones e información de usuarios;HU-16;PB-04;Cumple el requisito no funcional
+S03;Alojamientos y publicaciones;RF-017;Crear publicación de alojamiento;HU-15;PB-01;Responsable
+S03;Alojamientos y publicaciones;RF-018;Gestión y actualización de publicación;HU-15, HU-16, HU-17;PB-01;Responsable
+S03;Alojamientos y publicaciones;RF-019;Consultar publicaciones registradas;HU-18, HU-19;PB-01;Responsable
+S03;Alojamientos y publicaciones;RF-027;Gestión del estado de revisión del alojamiento;HU-17, HU-32;PB-01;Responsable
+S03;Alojamientos y publicaciones;RNF-004;Protección de operaciones e información de usuarios;HU-16;PB-01;Cumple el requisito no funcional
+S03;Alojamientos y publicaciones;RNF-010;Tiempo de actualización de información;-;PB-01;Cumple el requisito no funcional
+S03;Alojamientos y publicaciones;RNF-012;Diseño adaptable;-;PB-01;Cumple el requisito no funcional
+S03;Alojamientos y publicaciones;RNF-013;Claridad de formularios y mensajes;-;PB-01;Cumple el requisito no funcional
+S03;Alojamientos y publicaciones;RNF-014;Identificación de estados;-;PB-01;Cumple el requisito no funcional
+S03;Alojamientos y publicaciones;RNF-022;Visualización de ubicación del alojamiento;HU-18;PB-01;Cumple el requisito no funcional
+S04;Disponibilidad;RF-020;Bloquear período reservado;HU-22;PB-05;Responsable
+S04;Disponibilidad;RF-025;Registrar y actualizar períodos disponibles;HU-20;PB-05;Responsable
+S04;Disponibilidad;RF-026;Consultar disponibilidad;HU-21;PB-05;Responsable
+S04;Disponibilidad;RNF-009;Tiempo de respuesta de consultas;-;PB-05;Cumple el requisito no funcional
+S04;Disponibilidad;RNF-010;Tiempo de actualización de información;-;PB-05;Cumple el requisito no funcional
+S04;Disponibilidad;RNF-014;Identificación de estados;-;PB-05;Cumple el requisito no funcional
+S04;Disponibilidad;RNF-018;Validación cronológica de fechas;HU-21, HU-31;PB-05;Cumple el requisito no funcional
+S04;Disponibilidad;RNF-019;Prevención de reservas superpuestas con revalidación;HU-22;PB-05;Cumple el requisito no funcional
+S05;Búsqueda;RF-024;Búsqueda de alojamientos;HU-23;PB-02;Responsable
+S05;Búsqueda;RNF-009;Tiempo de respuesta de consultas;-;PB-02;Cumple el requisito no funcional
+S05;Búsqueda;RNF-018;Validación cronológica de fechas;HU-21, HU-31;PB-02;Cumple el requisito no funcional
+S06;Tarifas y cotización;RF-023;Configurabilidad de tarifas porcentuales;HU-24, HU-31;PB-02;Responsable
+S06;Tarifas y cotización;RNF-018;Validación cronológica de fechas;HU-21, HU-31;PB-02;Cumple el requisito no funcional
+S06;Tarifas y cotización;RNF-021;Cálculo consistente de cotización;HU-22, HU-31;PB-02;Cumple el requisito no funcional
+S07;Reservas;RF-021;Creación de reserva por el huésped;HU-22, HU-31;PB-02;Responsable
+S07;Reservas;RF-022;Consulta de estado e historial de reservas;HU-25;PB-02;Responsable
+S07;Reservas;RNF-008;Prevención de duplicados y consistencia ante reintentos;-;PB-02;Cumple el requisito no funcional
+S07;Reservas;RNF-011;Tiempo de confirmación de reserva;-;PB-02;Cumple el requisito no funcional
+S07;Reservas;RNF-013;Claridad de formularios y mensajes;-;PB-02;Cumple el requisito no funcional
+S07;Reservas;RNF-018;Validación cronológica de fechas;HU-21, HU-31;PB-02;Cumple el requisito no funcional
+S07;Reservas;RNF-019;Prevención de reservas superpuestas con revalidación;HU-22;PB-02;Cumple el requisito no funcional
+S07;Reservas;RNF-020;Confirmación inmediata de reserva válida;HU-22;PB-02;Cumple el requisito no funcional
+S08;Pagos;RF-028;Procesamiento de pago simulado;HU-27;PB-02;Responsable
+S08;Pagos;RNF-008;Prevención de duplicados y consistencia ante reintentos;-;PB-02;Cumple el requisito no funcional
+S09;Cancelaciones;RF-002;Registro de cancelación;HU-01;PB-03;Responsable
+S10;Reseñas;RF-004;Registro/Consulta de reseñas y calificaciones;HU-03;Por confirmar;Responsable
+S10;Reseñas;RNF-004;Protección de operaciones e información de usuarios;HU-16;Por confirmar;Cumple el requisito no funcional
+S11;Notificaciones;RF-003;Registro/Consulta de notificaciones;HU-02;PB-06;Responsable
+S12;Mensajería;RF-029;Mensajería entre huésped y anfitrión;HU-28;PB-06;Responsable
+S12;Mensajería;RNF-004;Protección de operaciones e información de usuarios;HU-16;PB-06;Cumple el requisito no funcional
+S13;Favoritos;RF-007;Gestión de alojamientos favoritos;HU-29;Por confirmar;Responsable
+S13;Favoritos;RNF-004;Protección de operaciones e información de usuarios;HU-16;Por confirmar;Cumple el requisito no funcional
+S14;Auditoría y trazabilidad;RF-015;Consulta de eventos de auditoría;HU-13;PB-07;Responsable
+S14;Auditoría y trazabilidad;RNF-006;Registro de operaciones relevantes;HU-26;PB-07;Cumple el requisito no funcional
+S14;Auditoría y trazabilidad;RNF-007;Conservación de información para auditoría;HU-26;PB-07;Cumple el requisito no funcional
+S14;Auditoría y trazabilidad;RNF-015;Integridad de registros de auditoría;-;PB-07;Cumple el requisito no funcional
+S14;Auditoría y trazabilidad;RNF-016;Identificación del recurso afectado;-;PB-07;Cumple el requisito no funcional
+S14;Auditoría y trazabilidad;RNF-017;Conservación de evidencias e historial;-;PB-07;Cumple el requisito no funcional
+S15;Administración y moderación;RF-013;Bloqueo de publicaciones;HU-11;PB-07;Responsable
+S15;Administración y moderación;RF-014;Restricción de usuarios;HU-12;PB-07;Responsable
+S15;Administración y moderación;RF-016;Moderación de reseñas;HU-14;PB-07;Responsable
+S16;Analítica y reportes;RF-005;Consulta de dashboard;HU-04;PB-07;Responsable
+S16;Analítica y reportes;RF-006;Exportación de reportes;HU-05;PB-07;Responsable
