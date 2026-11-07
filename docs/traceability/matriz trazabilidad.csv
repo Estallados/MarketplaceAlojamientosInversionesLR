@@ -49,17 +49,20 @@ CA-034;RF-008;Inicio de sesión;Iniciar sesión e identificar rol;Dado que el usua
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
-CP-070 Activación del segundo factor";AuthFlowTest#loginPermiteElAccesoIdentificaElRolYRechazaCredencialesMalas_CA034_CA035_CA036;;38a9302;;;;
+CP-070 Activación del segundo factor";"JwtAuthenticationFilterTest#tokenValidoAutenticaConElRol_CA034
+InicioSesionTest#loginConCredencialesValidasIdentificaElRol_CA034";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
 CA-035;RF-008;Inicio de sesión;Validar credenciales;Dado que el usuario proporciona credenciales incorrectas, cuando intenta iniciar sesión, entonces el sistema informa que no son válidas.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
-CP-070 Activación del segundo factor";AuthFlowTest#loginPermiteElAccesoIdentificaElRolYRechazaCredencialesMalas_CA034_CA035_CA036;;38a9302;;;;
+CP-070 Activación del segundo factor";"InicioSesionTest#loginConCredencialesIncorrectasSeRechaza_CA035";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
 CA-037;RF-008;Inicio de sesión;Restringir acceso;Dado que el usuario no ha iniciado sesión, cuando intenta acceder a una función restringida, entonces el sistema impide el acceso.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
-CP-070 Activación del segundo factor";AuthFlowTest#sinSesionNoSePuedeAccederAFuncionesRestringidas_CA037_CA044_CA134;;38a9302;;;;
+CP-070 Activación del segundo factor";"JwtAuthenticationFilterTest#sinTokenValidoNoAutentica_CA037
+JwtAuthenticationFilterTest#cuentaNoActivaNoAutentica_CA037
+InicioSesionTest#sinSesionNoSeAccedeAFuncionesRestringidas_CA037";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
 CA-038;RF-009;Recuperación de contraseña;Proceso de recuperación;Dado que el usuario no puede acceder a su cuenta, cuando selecciona recuperación de contraseña y envía la información requerida, entonces el sistema procesa la solicitud y confirma el proceso si la información es válida, mediante un proceso simulado que no requiere un mecanismo externo.;HU-08;CU-003;CP-006 Recuperación de contraseña;IdentidadPerfilTest#debeRecuperarLaContraseniaConElProcesoSimulado_CA038_CA039_CA040_CA041;;38a9302;;;;
 CA-042;RF-010;Consulta de perfil;Consulta y visualización de información del perfil;Dado que el usuario ha iniciado sesión y tiene información registrada en su cuenta, cuando consulta su perfil, entonces el sistema debe mostrar de forma clara la información básica asociada a su cuenta, permitiéndole identificar sus datos registrados.;HU-09;CU-004;"CP-007 Consulta de perfil
 CP-008 Consulta de perfil sin autenticación";AuthFlowTest#registroCreaLaCuentaYEnviaUnCodigoQueEntregaElToken_CA030_CA032_CA033_CA042;;e2f0592;;;;

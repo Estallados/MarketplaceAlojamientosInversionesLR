@@ -5,17 +5,31 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.InicioGoogleDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.LoginDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.VerificacionCorreoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.InicioGoogleService;
+import co.edu.unbosque.marketplaceInversionesLR.service.SegundoFactorService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.VerificacionCorreoService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
@@ -29,17 +43,21 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * <p>
  * Crear una cuenta tiene dos pasos: {@code POST /auth/register} crea la cuenta
  * y envía un código al correo, y {@code POST /auth/verificar} confirma el
- * código y entrega el token de sesión.
+ * código y entrega el token de sesión. El inicio de sesión
+ * ({@code POST /auth/login}) devuelve un token JWT listo para usar.
  * </p>
  */
 @RestController
 @RequestMapping("/auth")
-@Tag(name = "Autenticación", description = "Registro y verificación del correo")
+@Tag(name = "Autenticación", description = "Registro, verificación del correo e inicio de sesión")
 public class AuthController {
 
 	/** Mensaje cuando la contraseña no cumple las reglas. */
 	private static final String MENSAJE_CONTRASENIA_DEBIL = "La contraseña debe tener entre 8 y 64 caracteres, "
 			+ "una mayúscula, una minúscula, un número y un símbolo.";
+
+	/** Valida las credenciales contra la base de datos (BCrypt). */
+	private final AuthenticationManager authenticationManager;
 
 	/** Reglas de negocio de usuarios. */
 	private final UsuarioService usuarioService;
@@ -53,20 +71,251 @@ public class AuthController {
 	/** Carga el usuario verificado para emitir su token. */
 	private final UserDetailsService userDetailsService;
 
+	/** Registro de auditoría de los inicios de sesión. */
+	private final AuditoriaService auditoriaService;
+
+	/** Verificación del segundo factor (TOTP). */
+	private final SegundoFactorService segundoFactorService;
+
+	/** Inicio de sesión y registro con una cuenta de Google. */
+	private final InicioGoogleService inicioGoogleService;
+
 	/**
 	 * Crea el controlador.
 	 *
+	 * @param authenticationManager     gestor de autenticación de Spring Security
 	 * @param usuarioService            servicio de usuarios
 	 * @param verificacionCorreoService servicio de verificación del correo
 	 * @param jwtUtil                   utilidad de tokens JWT
 	 * @param userDetailsService        servicio que carga usuarios por correo
+	 * @param auditoriaService          servicio de auditoría
+	 * @param segundoFactorService      servicio del segundo factor
+	 * @param inicioGoogleService       servicio de inicio de sesión con Google
 	 */
-	public AuthController(UsuarioService usuarioService, VerificacionCorreoService verificacionCorreoService,
-			JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+	public AuthController(AuthenticationManager authenticationManager, UsuarioService usuarioService,
+			VerificacionCorreoService verificacionCorreoService, JwtUtil jwtUtil, UserDetailsService userDetailsService,
+			AuditoriaService auditoriaService, SegundoFactorService segundoFactorService,
+			InicioGoogleService inicioGoogleService) {
+		this.authenticationManager = authenticationManager;
 		this.usuarioService = usuarioService;
 		this.verificacionCorreoService = verificacionCorreoService;
 		this.jwtUtil = jwtUtil;
 		this.userDetailsService = userDetailsService;
+		this.auditoriaService = auditoriaService;
+		this.segundoFactorService = segundoFactorService;
+		this.inicioGoogleService = inicioGoogleService;
+	}
+
+	/**
+	 * Inicia sesión (HU-07, RF-008). Ruta: {@code POST /auth/login}.
+	 *
+	 * @param loginRequest DTO con {@code correo}, {@code contrasenia} y,
+	 *                     opcionalmente, {@code codigo}
+	 * @return 200 con un JSON {token, rol, correo} (CA-034); 400 si faltan datos;
+	 *         401 si las credenciales son inválidas (CA-035) o falta o es
+	 *         incorrecto el código del segundo factor o del correo; 429 si se
+	 *         agotaron los intentos del código del correo; 403 si la cuenta está
+	 *         restringida o desactivada, o si el correo no está verificado (con
+	 *         {@code requiereVerificacion=true})
+	 */
+	@Operation(summary = "Iniciar sesión", description = "Devuelve {token, rol, correo}. Si la cuenta tiene "
+			+ "segundo factor, también hay que enviar codigo; sin él responde 401 con requiereSegundoFactor=true. "
+			+ "Si no, en cada inicio de sesión se envía un código al correo: sin codigo responde 401 con "
+			+ "requiereCodigoCorreo=true y hay que repetir la petición con ese codigo. El administrador no "
+			+ "recibe código por correo. "
+			+ "Si el correo no está verificado responde 403 con requiereVerificacion=true.")
+	@ApiResponse(responseCode = "200", description = "Sesión iniciada: {token, rol, correo}")
+	@ApiResponse(responseCode = "400", description = "Debes enviar el correo y la contraseña.")
+	@ApiResponse(responseCode = "401", description = "Correo o contraseña inválidos. | Ingresa el código de tu "
+			+ "aplicación autenticadora. | El código de verificación no es válido. | Te enviamos un código de "
+			+ "verificación a tu correo. | El código del correo no es válido o ya venció.")
+	@ApiResponse(responseCode = "429", description = "Superaste los intentos permitidos para este código del correo.")
+	@ApiResponse(responseCode = "403", description = "Debes verificar tu correo con el código que te enviamos antes de "
+			+ "iniciar sesión. | La cuenta está restringida o desactivada.")
+	@PostMapping("/login")
+	public ResponseEntity<Object> login(@RequestBody LoginDTO loginRequest) {
+		if (loginRequest.getCorreo() == null || loginRequest.getCorreo().isBlank()
+				|| loginRequest.getContrasenia() == null || loginRequest.getContrasenia().isBlank()) {
+			return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el correo y la contraseña.");
+		}
+		try {
+			String correo = UsuarioService.normalizarCorreo(loginRequest.getCorreo());
+			Authentication authentication = authenticationManager
+					.authenticate(new UsernamePasswordAuthenticationToken(correo, loginRequest.getContrasenia()));
+
+			UserDetails usuario = (UserDetails) authentication.getPrincipal();
+			Long idUsuario = usuario instanceof Usuario u ? u.getIdUsuario() : null;
+
+			// Correo sin verificar: la contraseña es correcta pero aún no se
+			// entrega el token
+			if (usuario instanceof Usuario u && !u.esCorreoVerificado()) {
+				auditoriaService.registrar(idUsuario, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO,
+						idUsuario, ResultadoAuditoria.RECHAZADO, "Correo sin verificar");
+				return ResponseEntity.status(HttpStatus.FORBIDDEN)
+						.body(Map.of("message",
+								"Debes verificar tu correo con el código que te enviamos antes de iniciar sesión.",
+								"requiereVerificacion", true));
+			}
+
+			// Segundo factor: con las credenciales válidas aún no se entrega el
+			// token
+			if (usuario instanceof Usuario u && SegundoFactorService.estaHabilitado(u)) {
+				if (loginRequest.getCodigo() == null || loginRequest.getCodigo().isBlank()) {
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message",
+							"Ingresa el código de tu aplicación autenticadora.", "requiereSegundoFactor", true));
+				}
+				if (!segundoFactorService.verificar(u, loginRequest.getCodigo())) {
+					auditoriaService.registrar(idUsuario, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO,
+							idUsuario, ResultadoAuditoria.RECHAZADO, "Código del segundo factor inválido");
+					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message",
+							"El código de verificación no es válido.", "requiereSegundoFactor", true));
+				}
+			} else if (usuario instanceof Usuario u && u.getRol() != Role.ADMIN) {
+				// Código por correo en cada inicio de sesión: sin él aún no se
+				// entrega el token. El administrador no lo necesita.
+				ResponseEntity<Object> pendiente = codigoInicioPorCorreo(u, correo, loginRequest.getCodigo());
+				if (pendiente != null) {
+					return pendiente;
+				}
+			}
+
+			auditoriaService.registrar(idUsuario, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO, idUsuario,
+					ResultadoAuditoria.EXITOSO, null);
+			return respuestaConToken(HttpStatus.OK, usuario, null);
+		} catch (LockedException | DisabledException e) {
+			auditoriaService.registrar(null, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO, null,
+					ResultadoAuditoria.RECHAZADO, "Cuenta restringida o desactivada");
+			return RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, "La cuenta está restringida o desactivada.");
+		} catch (AuthenticationException e) {
+			auditoriaService.registrar(null, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO, null,
+					ResultadoAuditoria.RECHAZADO, "Credenciales inválidas");
+			// Mensaje genérico: no revela si el correo existe ni el detalle técnico del
+			// error
+			return RespuestaUtil.mensaje(HttpStatus.UNAUTHORIZED, "Correo o contraseña inválidos.");
+		}
+	}
+
+	/**
+	 * Paso del código por correo del inicio de sesión. Sin código, envía uno
+	 * nuevo al correo; con código, lo comprueba.
+	 *
+	 * @param usuario cuenta con las credenciales ya validadas
+	 * @param correo  correo normalizado de la cuenta
+	 * @param codigo  código recibido en el correo, o {@code null}
+	 * @return {@code null} si el código es correcto (se entrega el token); si
+	 *         no, la respuesta 401/429 con {@code requiereCodigoCorreo=true}
+	 */
+	private ResponseEntity<Object> codigoInicioPorCorreo(Usuario usuario, String correo, String codigo) {
+		Long idUsuario = usuario.getIdUsuario();
+		if (codigo == null || codigo.isBlank()) {
+			String texto = verificacionCorreoService.enviarCodigoInicio(usuario,
+					correo) == VerificacionCorreoService.ESPERAR
+							? "Ya te enviamos un código al correo hace menos de un minuto. Revisa tu bandeja de entrada."
+							: "Te enviamos un código de verificación a tu correo; vence en "
+									+ VerificacionCorreoService.MINUTOS_VIGENCIA + " minutos.";
+			return respuestaCodigoCorreo(HttpStatus.UNAUTHORIZED, texto);
+		}
+		int resultado = verificacionCorreoService.verificarCodigoInicio(usuario, codigo);
+		if (resultado == VerificacionCorreoService.VERIFICADO) {
+			return null;
+		}
+		auditoriaService.registrar(idUsuario, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO, idUsuario,
+				ResultadoAuditoria.RECHAZADO, "Código de inicio de sesión inválido");
+		return resultado == VerificacionCorreoService.INTENTOS_AGOTADOS
+				? respuestaCodigoCorreo(HttpStatus.TOO_MANY_REQUESTS,
+						"Superaste los intentos permitidos para este código del correo. Vuelve a iniciar sesión "
+								+ "para recibir uno nuevo.")
+				: respuestaCodigoCorreo(HttpStatus.UNAUTHORIZED,
+						"El código del correo no es válido o ya venció. Revísalo o vuelve a iniciar sesión.");
+	}
+
+	/**
+	 * Respuesta que pide el código enviado al correo para terminar de iniciar
+	 * sesión.
+	 *
+	 * @param status estado HTTP
+	 * @param texto  mensaje para el usuario
+	 * @return {message, requiereSegundoFactor, requiereCodigoCorreo,
+	 *         metodoSegundoFactor=CORREO}
+	 */
+	private static ResponseEntity<Object> respuestaCodigoCorreo(HttpStatus status, String texto) {
+		Map<String, Object> respuesta = new LinkedHashMap<>();
+		respuesta.put("message", texto);
+		respuesta.put("requiereSegundoFactor", true);
+		respuesta.put("requiereCodigoCorreo", true);
+		respuesta.put("metodoSegundoFactor", "CORREO");
+		return ResponseEntity.status(status).body(respuesta);
+	}
+
+	/**
+	 * Configuración del botón de Google para el front. Ruta:
+	 * {@code GET /auth/google/configuracion}. Así el client ID no se escribe a
+	 * mano en Angular.
+	 *
+	 * @return 200 con {habilitado, clientId}; clientId es null si no está
+	 *         configurado
+	 */
+	@Operation(summary = "Configuración del botón de Google", description = "Devuelve {habilitado, clientId}. El "
+			+ "front inicializa Google Identity Services con ese clientId y envía el credential a POST /auth/google.")
+	@ApiResponse(responseCode = "200", description = "{habilitado, clientId}")
+	@GetMapping("/google/configuracion")
+	public ResponseEntity<Object> configuracionGoogle() {
+		String clientId = inicioGoogleService.clientId();
+		Map<String, Object> respuesta = new LinkedHashMap<>();
+		respuesta.put("habilitado", clientId != null);
+		respuesta.put("clientId", clientId);
+		return ResponseEntity.ok(respuesta);
+	}
+
+	/**
+	 * Inicia sesión con Google. Si el correo no tiene cuenta, la crea ya
+	 * verificada con el rol pedido. Ruta: {@code POST /auth/google}.
+	 *
+	 * @param datos DTO con {@code idToken} (el credential del botón de Google)
+	 *              y, opcionalmente, {@code rol} y {@code codigo}
+	 * @return 200 con {message, token, rol, correo, cuentaNueva=false}; 201
+	 *         igual con cuentaNueva=true si se creó la cuenta; 401 si el token
+	 *         no es válido o falta el código del segundo factor (con
+	 *         requiereSegundoFactor=true); 403 si la cuenta está restringida o
+	 *         se pide el rol ADMIN; 503 si no está configurado GOOGLE_CLIENT_ID
+	 */
+	@Operation(summary = "Iniciar sesión o registrarse con Google", description = "Recibe el credential (ID token) del botón de Google. Si el correo ya tiene cuenta inicia "
+			+ "sesión; si no, la crea verificada con rol HUESPED o el rol enviado (ANFITRION). Devuelve el "
+			+ "token igual que /auth/login, más cuentaNueva.")
+	@ApiResponse(responseCode = "200", description = "Sesión iniciada con Google: {token, rol, correo, "
+			+ "cuentaNueva=false}")
+	@ApiResponse(responseCode = "201", description = "Cuenta creada con Google: {token, rol, correo, cuentaNueva=true}")
+	@ApiResponse(responseCode = "400", description = "Debes enviar el idToken que entrega el botón de Google.")
+	@ApiResponse(responseCode = "401", description = "No se pudo verificar tu cuenta de Google. Intenta de nuevo. | "
+			+ "Ingresa el código de tu aplicación autenticadora. | El código de verificación no es válido.")
+	@ApiResponse(responseCode = "403", description = "La cuenta está restringida. | Solo puedes registrarte como "
+			+ "HUESPED o ANFITRION.")
+	@ApiResponse(responseCode = "503", description = "El inicio de sesión con Google no está configurado.")
+	@PostMapping("/google")
+	public ResponseEntity<Object> google(@RequestBody InicioGoogleDTO datos) {
+		if (datos.getIdToken() == null || datos.getIdToken().isBlank()) {
+			return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el idToken que entrega el botón de Google.");
+		}
+		InicioGoogleService.Inicio inicio = inicioGoogleService.iniciar(datos.getIdToken(), datos.getRol(),
+				datos.getCodigo());
+		return switch (inicio.codigo()) {
+		case InicioGoogleService.INICIADA -> {
+			Map<String, Object> respuesta = new LinkedHashMap<>(cuerpoConToken(inicio.usuario(),
+					inicio.cuentaNueva() ? "Cuenta creada con Google." : "Sesión iniciada con Google."));
+			respuesta.put("cuentaNueva", inicio.cuentaNueva());
+			yield ResponseEntity.status(inicio.cuentaNueva() ? HttpStatus.CREATED : HttpStatus.OK).body(respuesta);
+		}
+		case InicioGoogleService.NO_CONFIGURADO ->
+			RespuestaUtil.mensaje(HttpStatus.SERVICE_UNAVAILABLE, "El inicio de sesión con Google no está configurado.");
+		case InicioGoogleService.CUENTA_RESTRINGIDA -> RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, "La cuenta está restringida.");
+		case InicioGoogleService.ROL_NO_PERMITIDO ->
+			RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, "Solo puedes registrarte como HUESPED o ANFITRION.");
+		case InicioGoogleService.REQUIERE_SEGUNDO_FACTOR -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+				Map.of("message", "Ingresa el código de tu aplicación autenticadora.", "requiereSegundoFactor", true));
+		case InicioGoogleService.SEGUNDO_FACTOR_INVALIDO -> ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(Map.of("message", "El código de verificación no es válido.", "requiereSegundoFactor", true));
+		default -> RespuestaUtil.mensaje(HttpStatus.UNAUTHORIZED, "No se pudo verificar tu cuenta de Google. Intenta de nuevo.");
+		};
 	}
 
 	/**
@@ -180,16 +429,45 @@ public class AuthController {
 	 *         segundo factor
 	 */
 	private ResponseEntity<Object> respuestaVerificada(UserDetails usuario) {
-		if (usuario instanceof Usuario u && Boolean.TRUE.equals(u.getTotpHabilitado())) {
+		if (usuario instanceof Usuario u && SegundoFactorService.estaHabilitado(u)) {
 			return RespuestaUtil.mensaje(HttpStatus.OK, "Correo verificado. Inicia sesión con tu código.");
 		}
-		String rol = usuario.getAuthorities().stream().findFirst()
+		return respuestaConToken(HttpStatus.OK, usuario, "Correo verificado correctamente.");
+	}
+
+	/**
+	 * Respuesta de sesión iniciada: {message?, token, rol, correo}. La usan el
+	 * login y la verificación, para que el frontend guarde el token siempre
+	 * igual.
+	 *
+	 * @param status      estado HTTP
+	 * @param userDetails usuario que inicia sesión
+	 * @param texto       mensaje opcional
+	 * @return respuesta con el token
+	 */
+	private ResponseEntity<Object> respuestaConToken(HttpStatus status, UserDetails userDetails, String texto) {
+		return ResponseEntity.status(status).body(cuerpoConToken(userDetails, texto));
+	}
+
+	/**
+	 * Arma el cuerpo de la respuesta con el token: genera el JWT y agrega el
+	 * rol (sin el prefijo {@code ROLE_}) y el correo.
+	 *
+	 * @param userDetails usuario que inicia sesión
+	 * @param texto       mensaje opcional; si es {@code null} no se incluye
+	 * @return cuerpo de la respuesta
+	 */
+	private Map<String, String> cuerpoConToken(UserDetails userDetails, String texto) {
+		String rol = userDetails.getAuthorities().stream().findFirst()
 				.map(a -> a.getAuthority().replaceFirst("^ROLE_", "")).orElse(null);
+
 		Map<String, String> respuesta = new LinkedHashMap<>();
-		respuesta.put("message", "Correo verificado correctamente.");
-		respuesta.put("token", jwtUtil.generateToken(usuario));
+		if (texto != null) {
+			respuesta.put("message", texto);
+		}
+		respuesta.put("token", jwtUtil.generateToken(userDetails));
 		respuesta.put("rol", rol);
-		respuesta.put("correo", usuario.getUsername());
-		return ResponseEntity.ok(respuesta);
+		respuesta.put("correo", userDetails.getUsername());
+		return respuesta;
 	}
 }
