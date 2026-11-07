@@ -1,0 +1,877 @@
+openapi: 3.0.3
+info:
+  title: Reservas y pagos
+  version: 0.1.0
+  description: |
+    Contrato de los servicios S06 Tarifas y cotización, S07 Reservas, S08 Pagos y S09 Cancelaciones
+    (ver `docs/services/lista-servicios.md`). Rutas, campos y códigos alineados con el borrador
+    `marketplace-backend` (ReservaController y PagoController). La configuración global de tarifas
+    (`/admin/tarifas`) está en `administracion-reportes.yaml`.
+
+    | Requisito | HU | CA |
+    |---|---|---|
+    | RF-002 Registro de cancelación | HU-01 | CA-001, CA-004, CA-007, CA-009 |
+    | RF-020 Bloquear período reservado | HU-22 | CA-076 |
+    | RF-021 Creación de reserva por el huésped | HU-22, HU-31 | CA-070, CA-071, CA-072, CA-083, CA-179, CA-183 |
+    | RF-022 Consulta de estado e historial de reservas | HU-25 | CA-078, CA-079 |
+    | RF-023 Configurabilidad de tarifas porcentuales | HU-24, HU-31 | CA-084 |
+    | RF-028 Procesamiento de pago simulado | HU-27 | CA-160, CA-161, CA-162 |
+    | RNF-008 Prevención de duplicados ante reintentos | — | CA-140, CA-141 |
+    | RNF-019 Prevención de reservas superpuestas con revalidación | HU-22 | CA-072, CA-074 |
+
+    **Flujo.** El huésped cotiza (`POST /cotizaciones`) y la cotización sirve 30 minutos. Luego
+    reserva y paga en una sola petición (`POST /reservas`). No hay ruta aparte para cobrar: el cobro
+    y la devolución ocurren dentro de la reserva y de la cancelación. El bloqueo del período (RF-020)
+    y su liberación tampoco tienen ruta propia.
+
+    **Idempotencia (RNF-008).** Crear y cancelar una reserva exigen la cabecera `Idempotency-Key`.
+    Si se repite la misma petición con la misma clave, no se reserva ni se cobra otra vez: se devuelve
+    la respuesta original con la cabecera `Idempotent-Replayed: true`. Las respuestas 5xx no se guardan,
+    así que después de un 502 o un 500 se puede reintentar con la misma clave.
+
+    **Pagos.** Son de prueba y no mueven dinero real (CA-160): Stripe en modo de prueba si hay
+    clave, o el simulador local si no la hay. `GET /pagos/configuracion` indica el modo.
+
+    **Fechas y horas.** Las fechas de estancia usan `format: date`. Los momentos usan `format: date-time`,
+    igual que en la parte 1, pero el backend los entrega sin zona horaria (`2026-11-07T10:30:00`).
+
+    **Respuestas de error.** `{"message": "..."}` (esquema `Mensaje`), igual que en `identidad.yaml`.
+    Solo los pagos no confirmados (402 y 502) agregan `dato` con la reserva cancelada (`ErrorPago`).
+servers:
+  - url: /
+    description: Raíz del backend, sin prefijo (en local, http://localhost:8081)
+tags:
+  - name: Cotización
+    description: Cotizar una estancia antes de reservar (S06)
+  - name: Reservas
+    description: Crear, pagar y consultar reservas (S07)
+  - name: Cancelaciones
+    description: Simular y cancelar reservas según la política (S09)
+  - name: Pagos
+    description: Configuración de los pagos de prueba (S08)
+paths:
+  /cotizaciones:
+    post:
+      tags: [Cotización]
+      operationId: cotizar
+      summary: Cotizar una estancia
+      description: |
+        HU-31, RF-021, RF-023. Devuelve noches, precio base, descuento, limpieza, servicio, adicionales
+        y total (CA-179). El total incluye solo los servicios elegidos (CA-183) y aplica los porcentajes
+        vigentes (CA-084). La cotización sirve 30 minutos para reservar. Exige sesión, con cualquier rol.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CotizacionEntrada'
+      responses:
+        '201':
+          description: Cotización con el desglose; sirve 30 minutos para reservar (CA-179)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cotizacion'
+        '400':
+          description: Falta el alojamiento o las fechas, fechas inválidas, huéspedes no positivos o sobre la capacidad (CA-083), o un servicio adicional que no pertenece al alojamiento
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/AlojamientoNoEncontrado'
+        '409':
+          description: El alojamiento no está disponible para reservas (estado no ACTIVA, CA-071) o no está libre en esas fechas (CA-083)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /reservas:
+    post:
+      tags: [Reservas]
+      operationId: crearReserva
+      summary: Crear y pagar una reserva (HUESPED)
+      description: |
+        HU-22, HU-27, RF-021, RF-028. Revalida la disponibilidad antes de confirmar (CA-074). Si el pago
+        se aprueba, la reserva queda CONFIRMADA de inmediato con el monto cotizado (CA-070) y el período
+        bloqueado (CA-076). Si el pago se rechaza o falla, la reserva queda CANCELADA (CA-162) y la
+        cotización se puede reutilizar con otro método de pago.
+
+        `metodoPago` es un PaymentMethod de Stripe: uno de prueba (ver `GET /pagos/configuracion`) o el
+        que crea Stripe Elements con una tarjeta de prueba. Si se omite, usa `pm_card_visa`.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservaEntrada'
+      responses:
+        '201':
+          description: Reserva CONFIRMADA y pagada, con su pago (CA-070, CA-161)
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+        '400':
+          description: Falta la cotización, el método de pago no es válido, la cabecera Idempotency-Key falta o es inválida, o las fechas cotizadas ya no son válidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '402':
+          description: 'El pago fue rechazado, por ejemplo "El pago fue rechazado: La tarjeta no tiene fondos suficientes. La reserva no quedó pagada." (CA-162)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorPago'
+        '403':
+          description: El usuario no tiene el rol HUESPED (CA-131) o "No puedes reservar tu propio alojamiento."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '404':
+          description: La cotización o el alojamiento no existe, o la cotización es de otro usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '409':
+          description: La cotización venció o ya se usó, el alojamiento no está ACTIVA (CA-071), otra reserva tomó el período (CA-072) o la petición con esa clave sigue en proceso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '422':
+          $ref: '#/components/responses/ClaveReutilizada'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+        '502':
+          description: 'No se pudo confirmar el pago, por ejemplo "No se pudo confirmar el pago: No se pudo comunicar con la pasarela de pago. La reserva no quedó pagada." (CA-162)'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorPago'
+  /reservas/mias:
+    get:
+      tags: [Reservas]
+      operationId: misReservas
+      summary: Mis reservas como huésped
+      description: |
+        HU-25, RF-022. Reservas del usuario del token con su estado actual, las más recientes primero
+        (CA-078). La ruta exige sesión pero no un rol: un usuario sin reservas recibe una página vacía.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de reservas del huésped (CA-078)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReservas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /reservas/anfitrion:
+    get:
+      tags: [Reservas]
+      operationId: reservasDeAnfitrion
+      summary: Reservas de mis alojamientos (ANFITRION)
+      description: HU-25, RF-022. Solo las reservas de los alojamientos del anfitrión del token, las más recientes primero (CA-079).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de reservas de los alojamientos del anfitrión (CA-079)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReservas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /reservas/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdReserva'
+    get:
+      tags: [Reservas]
+      operationId: detalleReserva
+      summary: Detalle de una reserva (huésped, anfitrión o ADMIN)
+      description: |
+        HU-25, RF-022. Incluye el pago, datos del alojamiento y la cancelación. La ven su huésped, el
+        anfitrión del alojamiento y los administradores; para los demás responde 404, no 403.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reserva con pago, alojamiento y cancelación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reserva'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          $ref: '#/components/responses/ReservaNoEncontrada'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /reservas/{id}/simularcancelacion:
+    parameters:
+      - $ref: '#/components/parameters/IdReserva'
+    get:
+      tags: [Cancelaciones]
+      operationId: simularCancelacion
+      summary: Simular la cancelación de una reserva (HUESPED)
+      description: |
+        HU-01, RF-002. Devuelve la política, los días de anticipación, el porcentaje y el valor que se
+        devolvería si se cancelara hoy (CA-001). No cancela nada. Solo aplica a las reservas propias.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Devolución que recibiría si cancela hoy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulacionCancelacion'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/ReservaNoEncontrada'
+        '409':
+          $ref: '#/components/responses/ReservaNoCancelable'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /reservas/{id}/cancelar:
+    parameters:
+      - $ref: '#/components/parameters/IdReserva'
+    post:
+      tags: [Cancelaciones]
+      operationId: cancelarReserva
+      summary: Cancelar una reserva futura (HUESPED)
+      description: |
+        HU-01, RF-002. Aplica la política de cancelación del alojamiento (CA-001), devuelve el valor que
+        corresponde, libera o conserva el período según la política (CA-007, CA-009) y registra usuario,
+        fecha, motivo, devolución y estado final (CA-004). Solo aplica a las reservas propias en estado
+        CONFIRMADA o EN_REVISION cuya llegada aún no llegó.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotivoEntrada'
+      responses:
+        '200':
+          description: Cancelación con la devolución según la política (CA-004)
+          headers:
+            Idempotent-Replayed:
+              $ref: '#/components/headers/IdempotentReplayed'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cancelacion'
+        '400':
+          description: El motivo falta o supera 500 caracteres, o la cabecera Idempotency-Key falta o es inválida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/ReservaNoEncontrada'
+        '409':
+          description: La reserva no se puede cancelar en su estado, solo se pueden cancelar reservas futuras, o la petición con esa clave sigue en proceso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '422':
+          $ref: '#/components/responses/ClaveReutilizada'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /pagos/configuracion:
+    get:
+      tags: [Pagos]
+      operationId: configuracionPagos
+      summary: Configuración de pagos para el front (público)
+      description: |
+        HU-27, RF-028. Modo STRIPE_TEST (cobros en el modo de prueba de Stripe) o SIMULADO (sin clave de
+        Stripe), clave publicable para Stripe Elements, moneda y métodos de prueba con su resultado.
+      security: []
+      responses:
+        '200':
+          description: Configuración de pagos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfiguracionPago'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: 'identidad.yaml#/components/securitySchemes/bearerAuth'
+  headers:
+    IdempotentReplayed:
+      description: Vale `true` cuando la respuesta es la guardada de una petición repetida con la misma clave (CA-141)
+      schema:
+        type: string
+        enum: ['true']
+  parameters:
+    IdReserva:
+      name: id
+      in: path
+      required: true
+      description: Identificador de la reserva
+      schema:
+        type: integer
+        format: int64
+        example: 15
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Clave única por intento de la operación, por usuario (RNF-008). Repítela solo al reintentar la misma petición.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 100
+        example: 3f2b8c1e-7a44-4d0b-9e21-6c1f0a7d5e10
+    Pagina:
+      $ref: 'alojamientos.yaml#/components/parameters/Pagina'
+    Tamanio:
+      $ref: 'alojamientos.yaml#/components/parameters/Tamanio'
+  responses:
+    NoAutenticado:
+      $ref: 'identidad.yaml#/components/responses/NoAutenticado'
+    SinPermiso:
+      $ref: 'alojamientos.yaml#/components/responses/SinPermiso'
+    AlojamientoNoEncontrado:
+      $ref: 'alojamientos.yaml#/components/responses/AlojamientoNoEncontrado'
+    ParametroInvalido:
+      description: Un parámetro no tiene el tipo esperado, por ejemplo "El valor de id no es válido."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mensaje'
+    ErrorInterno:
+      description: Ocurrió un error inesperado. Intenta de nuevo.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mensaje'
+    ReservaNoEncontrada:
+      description: La reserva no existe o el usuario no puede verla.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mensaje'
+    ReservaNoCancelable:
+      description: La reserva no se puede cancelar en su estado o ya no es futura, por ejemplo "Solo se pueden cancelar reservas futuras."
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mensaje'
+    ClaveReutilizada:
+      description: Esta Idempotency-Key ya se usó con una petición diferente.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mensaje'
+  schemas:
+    EstadoReserva:
+      type: string
+      description: EN_REVISION marca las reservas futuras de un alojamiento bloqueado (CA-112)
+      enum: [PENDIENTE_PAGO, CONFIRMADA, EN_REVISION, CANCELADA]
+    EstadoPago:
+      type: string
+      enum: [PENDIENTE, APROBADO, RECHAZADO, ERROR, REEMBOLSADO]
+    EstadoCancelacion:
+      type: string
+      enum: [SOLICITADA, APROBADA, RECHAZADA, COMPLETADA]
+    CotizacionEntrada:
+      type: object
+      description: Datos que manda el huésped. El resto de la cotización lo calcula el servidor.
+      required: [idAlojamiento, fechaEntrada, fechaSalida]
+      properties:
+        idAlojamiento:
+          type: integer
+          format: int64
+          description: Alojamiento a cotizar
+          example: 7
+        fechaEntrada:
+          type: string
+          format: date
+          description: Día de llegada; no puede estar en el pasado
+          example: '2026-12-10'
+        fechaSalida:
+          type: string
+          format: date
+          description: Día de salida; debe ser posterior a la llegada (CA-083)
+          example: '2026-12-13'
+        huespedes:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Cantidad de huéspedes; no puede superar la capacidad (CA-083)
+          example: 2
+        serviciosSeleccionados:
+          type: array
+          description: Ids de los servicios adicionales elegidos; deben ser del alojamiento (CA-183)
+          items:
+            type: integer
+            format: int64
+          example: [3]
+    Cotizacion:
+      type: object
+      description: Desglose de la estancia (CA-179).
+      required: [idCotizacion, idAlojamiento, fechaEntrada, fechaSalida, huespedes, noches, precioNoche, precioBase, descuento, porcentajeLimpieza, valorLimpieza, porcentajeServicio, valorServicio, valorAdicionales, total, fechaExpiracion]
+      properties:
+        idCotizacion:
+          type: integer
+          format: int64
+          description: Se envía en `POST /reservas`
+          example: 42
+        idAlojamiento:
+          type: integer
+          format: int64
+          example: 7
+        fechaEntrada:
+          type: string
+          format: date
+          example: '2026-12-10'
+        fechaSalida:
+          type: string
+          format: date
+          example: '2026-12-13'
+        huespedes:
+          type: integer
+          example: 2
+        noches:
+          type: integer
+          example: 3
+        precioNoche:
+          type: number
+          description: Precio por noche
+          example: 200000
+        precioBase:
+          type: number
+          description: Precio por noche multiplicado por las noches
+          example: 600000
+        descuento:
+          type: number
+          description: Descuento aplicado
+          example: 0
+        porcentajeLimpieza:
+          type: number
+          description: Porcentaje de limpieza aplicado (CA-084)
+          example: 5
+        valorLimpieza:
+          type: number
+          example: 30000
+        porcentajeServicio:
+          type: number
+          description: Porcentaje de la tarifa de servicio aplicado (CA-084)
+          example: 10
+        valorServicio:
+          type: number
+          example: 60000
+        valorAdicionales:
+          type: number
+          description: Suma de los servicios adicionales elegidos (CA-183)
+          example: 50000
+        total:
+          type: number
+          description: Valor total a pagar
+          example: 740000
+        serviciosSeleccionados:
+          type: array
+          description: Ids de los servicios elegidos
+          items:
+            type: integer
+            format: int64
+        serviciosAdicionales:
+          type: array
+          description: Servicios adicionales incluidos, con su costo
+          items:
+            $ref: '#/components/schemas/ServicioAdicional'
+        serviciosDisponibles:
+          type: array
+          description: Todos los servicios adicionales que ofrece el alojamiento
+          items:
+            $ref: '#/components/schemas/ServicioAdicional'
+        fechaExpiracion:
+          type: string
+          format: date-time
+          description: Momento en que deja de servir para reservar (30 minutos después de cotizar)
+          example: '2026-11-07T11:00:00'
+        idReserva:
+          type: integer
+          format: int64
+          nullable: true
+          description: Reserva creada con esta cotización; null si aún no se usa
+        idUsuario:
+          type: integer
+          format: int64
+          description: Usuario que pidió la cotización
+          example: 12
+        fechaCreacion:
+          type: string
+          format: date-time
+          description: Momento en que se cotizó
+          example: '2026-11-07T10:30:00'
+        desglose:
+          type: string
+          description: Servicios adicionales elegidos en JSON, con nombre y costo congelados
+          example: '[{"idServicio":3,"nombre":"Desayuno","costo":50000}]'
+    ReservaEntrada:
+      type: object
+      required: [idCotizacion]
+      properties:
+        idCotizacion:
+          type: integer
+          format: int64
+          description: Cotización vigente a reservar (CA-070)
+          example: 42
+        metodoPago:
+          type: string
+          pattern: '^pm_\w{1,200}$'
+          description: PaymentMethod de Stripe. Si se omite, usa pm_card_visa.
+          example: pm_card_visa
+    Reserva:
+      type: object
+      description: Reserva con su desglose congelado, el último pago y los datos que muestran las pantallas de reservas.
+      required: [idReserva, fechaEntrada, fechaSalida, noches, huespedes, estado, total, idHuesped, idAlojamiento, fechaCreacion]
+      properties:
+        idReserva:
+          type: integer
+          format: int64
+          example: 15
+        fechaEntrada:
+          type: string
+          format: date
+          example: '2026-12-10'
+        fechaSalida:
+          type: string
+          format: date
+          example: '2026-12-13'
+        noches:
+          type: integer
+          example: 3
+        huespedes:
+          type: integer
+          example: 2
+        estado:
+          $ref: '#/components/schemas/EstadoReserva'
+        total:
+          type: number
+          description: Igual al total cotizado (CA-086)
+          example: 740000
+        desglose:
+          type: string
+          description: Desglose de precios congelado, en JSON
+        idHuesped:
+          type: integer
+          format: int64
+          example: 12
+        idAlojamiento:
+          type: integer
+          format: int64
+          example: 7
+        tituloAlojamiento:
+          type: string
+          example: Apartamento en Chapinero
+        idCotizacion:
+          type: integer
+          format: int64
+          description: Cotización de la que salió el precio
+          example: 42
+        fechaCreacion:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:35:00'
+        completada:
+          type: boolean
+          description: Está CONFIRMADA y la fecha de salida ya llegó; habilita la reseña (CA-016)
+        pago:
+          type: object
+          nullable: true
+          description: Último pago de la reserva
+          allOf:
+            - $ref: '#/components/schemas/Pago'
+        imagenAlojamiento:
+          type: string
+          nullable: true
+          description: URL de la imagen principal del alojamiento
+        ciudad:
+          type: string
+          example: Bogotá
+        ubicacion:
+          type: string
+          description: Dirección del alojamiento
+        tipoAlojamiento:
+          type: string
+          example: Apartamento
+        capacidadAlojamiento:
+          type: integer
+          example: 4
+        nombrePolitica:
+          type: string
+          description: Política de cancelación del alojamiento
+          example: Flexible
+        nombreHuesped:
+          type: string
+        idAnfitrion:
+          type: integer
+          format: int64
+          example: 5
+        nombreAnfitrion:
+          type: string
+        tieneResena:
+          type: boolean
+          description: Indica si el huésped ya reseñó esta reserva
+        cancelacion:
+          type: object
+          nullable: true
+          description: Datos de la cancelación; null si el huésped no la canceló
+          allOf:
+            - $ref: '#/components/schemas/Cancelacion'
+    PaginaReservas:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reserva'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    Pago:
+      type: object
+      description: Pago de prueba de una reserva; no mueve dinero real (CA-160).
+      required: [idPago, valor, estado, idReserva]
+      properties:
+        idPago:
+          type: integer
+          format: int64
+          example: 30
+        referencia:
+          type: string
+          description: Referencia del proveedor (id del PaymentIntent en Stripe)
+          example: pi_3Q0example
+        proveedor:
+          type: string
+          description: Proveedor que procesó el pago
+          enum: [STRIPE_TEST, SIMULADO]
+        valor:
+          type: number
+          description: Valor cobrado
+          example: 740000
+        estado:
+          $ref: '#/components/schemas/EstadoPago'
+        detalle:
+          type: string
+          nullable: true
+          description: Mensaje de la pasarela, por ejemplo la causa de un rechazo
+        fecha:
+          type: string
+          format: date-time
+          example: '2026-11-07T10:35:02'
+        metodo:
+          type: string
+          description: Método de pago usado
+          example: pm_card_visa
+        valorReembolsado:
+          type: number
+          nullable: true
+          description: Valor devuelto al cancelar; null si no hubo devolución
+        referenciaReembolso:
+          type: string
+          nullable: true
+          description: Id de la devolución en el proveedor
+        idReserva:
+          type: integer
+          format: int64
+          example: 15
+    MotivoEntrada:
+      type: object
+      required: [motivo]
+      properties:
+        motivo:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Motivo de la operación
+          example: Cambio de planes
+    Cancelacion:
+      type: object
+      description: Registro de la cancelación (CA-004).
+      required: [idCancelacion, motivo, porcentajeReembolso, valorReembolso, estado, estadoFinalReserva, fecha, idUsuario, idReserva]
+      properties:
+        idCancelacion:
+          type: integer
+          format: int64
+          example: 4
+        motivo:
+          type: string
+          example: Cambio de planes
+        politica:
+          type: string
+          description: Política aplicada
+          example: Flexible
+        porcentajeReembolso:
+          type: integer
+          description: Porcentaje devuelto
+          example: 100
+        valorReembolso:
+          type: number
+          description: Valor devuelto
+          example: 740000
+        estado:
+          $ref: '#/components/schemas/EstadoCancelacion'
+        estadoFinalReserva:
+          $ref: '#/components/schemas/EstadoReserva'
+        fecha:
+          type: string
+          format: date-time
+          example: '2026-11-08T09:00:00'
+        idUsuario:
+          type: integer
+          format: int64
+          description: Usuario que canceló
+          example: 12
+        idReserva:
+          type: integer
+          format: int64
+          example: 15
+    SimulacionCancelacion:
+      type: object
+      description: Devolución estimada si el huésped cancelara hoy. No cambia nada.
+      required: [idReserva, diasAnticipacion, porcentajeReembolso, valorReembolso, totalPagado]
+      properties:
+        idReserva:
+          type: integer
+          format: int64
+          example: 15
+        politica:
+          type: string
+          description: Política de cancelación del alojamiento
+          example: Flexible
+        diasAnticipacion:
+          type: integer
+          format: int64
+          description: Días que faltan para la llegada, contados desde hoy
+          example: 33
+        porcentajeReembolso:
+          type: integer
+          description: Porcentaje que se devolvería
+          example: 100
+        valorReembolso:
+          type: number
+          description: Valor que se devolvería
+          example: 740000
+        totalPagado:
+          type: number
+          description: Total pagado por la reserva
+          example: 740000
+    ConfiguracionPago:
+      type: object
+      required: [modo, moneda, metodosPrueba]
+      properties:
+        modo:
+          type: string
+          description: A dónde van los cobros
+          enum: [STRIPE_TEST, SIMULADO]
+        clavePublica:
+          type: string
+          nullable: true
+          description: Clave publicable de Stripe (pk_test_...); null en modo SIMULADO
+        moneda:
+          type: string
+          description: Moneda en que se cobra
+          example: COP
+        metodosPrueba:
+          type: array
+          description: Tarjetas de prueba disponibles y qué resultado da cada una
+          items:
+            $ref: '#/components/schemas/MetodoPagoPrueba'
+    MetodoPagoPrueba:
+      type: object
+      required: [metodo, descripcion, resultado]
+      properties:
+        metodo:
+          type: string
+          description: Id del método de pago
+          example: pm_card_visa
+        descripcion:
+          type: string
+          description: Descripción para el usuario
+          example: Visa aprobada
+        resultado:
+          type: string
+          description: Resultado que produce
+          enum: [APROBADO, RECHAZADO, ERROR]
+    ErrorPago:
+      description: Error de `Mensaje` con la reserva CANCELADA en `dato`. Solo en los pagos no confirmados (402 y 502).
+      allOf:
+        - $ref: '#/components/schemas/Mensaje'
+        - type: object
+          required: [dato]
+          properties:
+            dato:
+              $ref: '#/components/schemas/Reserva'
+    ServicioAdicional:
+      $ref: 'alojamientos.yaml#/components/schemas/ServicioAdicional'
+    Mensaje:
+      $ref: 'identidad.yaml#/components/schemas/Mensaje'

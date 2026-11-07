@@ -1,0 +1,494 @@
+openapi: 3.0.3
+info:
+  title: Reseñas y notificaciones
+  version: 0.1.0
+  description: |
+    Contrato de los servicios S10 Reseñas y S11 Notificaciones (ver `docs/services/lista-servicios.md`).
+    Rutas, campos y códigos alineados con el borrador `marketplace-backend` (ResenaController y
+    NotificacionController). La moderación de reseñas (`/admin/resenas`) está en
+    `administracion-reportes.yaml`.
+
+    | Requisito | HU | CA |
+    |---|---|---|
+    | RF-003 Registro/Consulta de notificaciones | HU-02 | CA-010, CA-013 |
+    | RF-004 Registro/Consulta de reseñas y calificaciones | HU-03 | CA-016, CA-018, CA-019 |
+
+    **Reseñas.** Solo se reseña una reserva propia completada: CONFIRMADA y con la fecha de salida ya
+    alcanzada (CA-016). Hay una reseña por reserva. El alojamiento y el autor los fija el servidor (CA-018).
+
+    **Visibilidad.** Las consultas por alojamiento y por anfitrión muestran solo reseñas PUBLICADA.
+    El huésped ve las suyas con su estado, incluidas las OCULTA.
+
+    **Notificaciones.** Son internas de la plataforma: no hay correo, SMS ni push. El sistema las crea
+    con los eventos (CA-010), por eso no hay ruta para crearlas. Cada usuario ve y marca solo las suyas
+    (CA-013).
+
+    **Fechas y horas.** Usan `format: date-time`, igual que en la parte 1, pero el backend las entrega
+    sin zona horaria (`2026-11-07T10:30:00`).
+
+    **Respuestas de error.** `{"message": "..."}` (esquema `Mensaje`), igual que en `identidad.yaml`.
+servers:
+  - url: /
+    description: Raíz del backend, sin prefijo (en local, http://localhost:8081)
+tags:
+  - name: Reseñas
+    description: Calificaciones de estancias completadas (S10)
+  - name: Notificaciones
+    description: Notificaciones dentro de la plataforma (S11)
+paths:
+  /resenas:
+    post:
+      tags: [Reseñas]
+      operationId: crearResena
+      summary: Reseñar una estancia completada (HUESPED)
+      description: |
+        HU-03, RF-004. Una reseña por reserva, con calificación de 1 a 5. Solo si la reserva es propia y
+        está completada (CA-016). Queda PUBLICADA, asociada a huésped, reserva y alojamiento (CA-018), y
+        se notifica al anfitrión.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResenaEntrada'
+      responses:
+        '201':
+          description: Reseña publicada; se notifica al anfitrión (CA-018)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resena'
+        '400':
+          description: Falta la reserva, la calificación no está entre 1 y 5 o el comentario supera 2000 caracteres
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          description: La reserva no existe o es de otro huésped.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '409':
+          description: Solo puedes reseñar una estancia completada (CA-016) o ya registraste una reseña para esta reserva.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /resenas/mias:
+    get:
+      tags: [Reseñas]
+      operationId: misResenas
+      summary: Mis reseñas, incluidas las ocultas (HUESPED)
+      description: HU-03, RF-004. Reseñas del huésped del token con su estado, las más recientes primero.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de reseñas del huésped con su estado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaResenas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /resenas/anfitrion:
+    get:
+      tags: [Reseñas]
+      operationId: resenasDeAnfitrion
+      summary: Reseñas visibles de mis alojamientos con promedio y cantidad (ANFITRION)
+      description: HU-03, RF-004. Con `idAlojamiento` filtra las de ese alojamiento, que debe ser propio.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: idAlojamiento
+          in: query
+          required: false
+          description: Alojamiento propio a filtrar
+          schema:
+            type: integer
+            format: int64
+            example: 7
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Reseñas de los alojamientos del anfitrión con promedio y cantidad
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumenResenas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          description: El alojamiento no existe o es de otro anfitrión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /alojamientos/{idAlojamiento}/resenas:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    get:
+      tags: [Reseñas]
+      operationId: resenasDeAlojamiento
+      summary: Reseñas visibles de un alojamiento con promedio y cantidad (público)
+      description: HU-03, RF-004. Solo las reseñas PUBLICADA de ese alojamiento (CA-019), las más recientes primero.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Reseñas visibles con promedio y cantidad (CA-019)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumenResenas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '404':
+          description: El alojamiento no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /notificaciones:
+    get:
+      tags: [Notificaciones]
+      operationId: listarNotificaciones
+      summary: Mis notificaciones, de la más reciente a la más antigua
+      description: HU-02, RF-003. Solo las del usuario del token (CA-013).
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de notificaciones, las más recientes primero (CA-013)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaNotificaciones'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /notificaciones/noleidas:
+    get:
+      tags: [Notificaciones]
+      operationId: contarNoLeidas
+      summary: Cantidad de notificaciones sin leer (contador de la campana)
+      description: HU-02, RF-003. Cuenta solo las del usuario del token.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notificaciones sin leer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContadorNoLeidas'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /notificaciones/leidas:
+    patch:
+      tags: [Notificaciones]
+      operationId: marcarTodasLeidas
+      summary: Marcar todas mis notificaciones como leídas
+      description: HU-02, RF-003. Devuelve cuántas se marcaron.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Cantidad de notificaciones marcadas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContadorActualizadas'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /notificaciones/{id}/leida:
+    parameters:
+      - $ref: '#/components/parameters/IdNotificacion'
+    patch:
+      tags: [Notificaciones]
+      operationId: marcarLeida
+      summary: Marcar una notificación propia como leída
+      description: HU-02, RF-003. Si la notificación es de otro usuario responde 404 (CA-013).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notificación marcada como leída
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notificacion'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '404':
+          description: La notificación no existe o es de otro usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: 'identidad.yaml#/components/securitySchemes/bearerAuth'
+  parameters:
+    IdAlojamiento:
+      $ref: 'disponibilidad-busqueda.yaml#/components/parameters/IdAlojamiento'
+    IdNotificacion:
+      name: id
+      in: path
+      required: true
+      description: Identificador de la notificación
+      schema:
+        type: integer
+        format: int64
+        example: 21
+    Pagina:
+      $ref: 'alojamientos.yaml#/components/parameters/Pagina'
+    Tamanio:
+      $ref: 'alojamientos.yaml#/components/parameters/Tamanio'
+  responses:
+    NoAutenticado:
+      $ref: 'identidad.yaml#/components/responses/NoAutenticado'
+    SinPermiso:
+      $ref: 'alojamientos.yaml#/components/responses/SinPermiso'
+    ParametroInvalido:
+      $ref: 'reservas-pagos.yaml#/components/responses/ParametroInvalido'
+    ErrorInterno:
+      $ref: 'reservas-pagos.yaml#/components/responses/ErrorInterno'
+  schemas:
+    EstadoResena:
+      type: string
+      description: OCULTA la deja un administrador (CA-066); la reseña no se borra
+      enum: [PUBLICADA, OCULTA]
+    ResenaEntrada:
+      type: object
+      required: [idReserva, calificacion]
+      properties:
+        idReserva:
+          type: integer
+          format: int64
+          description: Reserva propia y completada (CA-016)
+          example: 15
+        calificacion:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Calificación de 1 a 5
+          example: 5
+        comentario:
+          type: string
+          maxLength: 2000
+          description: Comentario del huésped
+          example: Muy buena ubicación y todo muy limpio.
+    Resena:
+      type: object
+      description: Reseña asociada a huésped, reserva, alojamiento y fecha (CA-018).
+      required: [idResena, calificacion, estado, fecha, idUsuario, idReserva, idAlojamiento]
+      properties:
+        idResena:
+          type: integer
+          format: int64
+          example: 9
+        calificacion:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 5
+        comentario:
+          type: string
+          nullable: true
+          example: Muy buena ubicación y todo muy limpio.
+        estado:
+          $ref: '#/components/schemas/EstadoResena'
+        fecha:
+          type: string
+          format: date-time
+          description: Momento en que se publicó
+          example: '2026-12-14T08:15:00'
+        idUsuario:
+          type: integer
+          format: int64
+          description: Huésped que la escribió
+          example: 12
+        idReserva:
+          type: integer
+          format: int64
+          example: 15
+        idAlojamiento:
+          type: integer
+          format: int64
+          example: 7
+        nombreUsuario:
+          type: string
+          description: Nombre del huésped que la escribió
+          example: Ana Pérez
+        tituloAlojamiento:
+          type: string
+          description: Título del alojamiento reseñado
+          example: Apartamento en Chapinero
+    PaginaResenas:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resena'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    ResumenResenas:
+      type: object
+      required: [cantidad, resenas]
+      properties:
+        idAlojamiento:
+          type: integer
+          format: int64
+          nullable: true
+          description: Alojamiento consultado; null en la consulta del anfitrión sin filtro
+          example: 7
+        promedio:
+          type: number
+          format: double
+          nullable: true
+          description: Promedio con una cifra decimal; null si no hay reseñas visibles
+          example: 4.5
+        cantidad:
+          type: integer
+          format: int64
+          description: Cantidad de reseñas visibles
+          example: 8
+        resenas:
+          $ref: '#/components/schemas/PaginaResenas'
+    TipoNotificacion:
+      type: string
+      description: Evento que originó la notificación (CA-010)
+      enum:
+        - RESERVA_CONFIRMADA
+        - RESERVA_CANCELADA
+        - RESERVA_EN_REVISION
+        - PAGO_NO_CONFIRMADO
+        - ALOJAMIENTO_APROBADO
+        - ALOJAMIENTO_RECHAZADO
+        - ALOJAMIENTO_BLOQUEADO
+        - RESENA_RECIBIDA
+        - RESENA_OCULTA
+        - CUENTA_RESTRINGIDA
+        - CUENTA_LIBERADA
+        - MENSAJE_RECIBIDO
+    Notificacion:
+      type: object
+      required: [idNotificacion, tipo, mensaje, fecha, leida, idUsuario]
+      properties:
+        idNotificacion:
+          type: integer
+          format: int64
+          example: 21
+        tipo:
+          $ref: '#/components/schemas/TipoNotificacion'
+        mensaje:
+          type: string
+          description: Texto que ve el usuario
+          example: Tu reserva 15 del 2026-12-10 al 2026-12-13 está confirmada.
+        fecha:
+          type: string
+          format: date-time
+          description: Momento en que se generó
+          example: '2026-11-07T10:35:03'
+        leida:
+          type: boolean
+          description: Indica si el usuario ya la leyó
+          example: false
+        idUsuario:
+          type: integer
+          format: int64
+          description: Usuario que la recibe
+          example: 12
+    PaginaNotificaciones:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notificacion'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    ContadorNoLeidas:
+      type: object
+      required: [cantidad]
+      properties:
+        cantidad:
+          type: integer
+          format: int64
+          description: Notificaciones sin leer
+          example: 3
+    ContadorActualizadas:
+      type: object
+      required: [actualizadas]
+      properties:
+        actualizadas:
+          type: integer
+          description: Cuántas notificaciones se marcaron como leídas
+          example: 3
+    Mensaje:
+      $ref: 'identidad.yaml#/components/schemas/Mensaje'
