@@ -1,0 +1,1328 @@
+openapi: 3.0.3
+info:
+  title: Administración y reportes
+  version: 0.1.0
+  description: |
+    Contrato de los servicios S14 Auditoría y trazabilidad, S15 Administración y moderación y S16
+    Analítica y reportes (ver `docs/services/lista-servicios.md`). También incluye las rutas de
+    administración de usuarios que `identidad.yaml` dejó para este contrato. Rutas, campos y códigos
+    alineados con el borrador `marketplace-backend` (AdminController, ReporteController y las rutas
+    de administración de UsuarioController).
+
+    | Requisito | HU | CA |
+    |---|---|---|
+    | RF-005 Consulta de dashboard | HU-04 | CA-022 |
+    | RF-006 Exportación de reportes | HU-05 | CA-027 |
+    | RF-013 Bloqueo de publicaciones | HU-11 | CA-054, CA-112 |
+    | RF-014 Restricción de usuarios | HU-12 | CA-058, CA-059 |
+    | RF-015 Consulta de eventos de auditoría | HU-13 | CA-062, CA-065 |
+    | RF-016 Moderación de reseñas | HU-14 | CA-066, CA-069 |
+    | RF-023 Configurabilidad de tarifas porcentuales | HU-24 | CA-084 |
+    | RF-027 Gestión del estado de revisión del alojamiento | HU-32 | CA-158, CA-195, CA-196 |
+    | RNF-006 Registro de operaciones relevantes | HU-26 | CA-136, CA-137, CA-138 |
+    | RNF-007 Conservación de información para auditoría | HU-26 | CA-139 |
+
+    **Permisos.** Todo `/admin/**` exige el rol ADMIN; con otro rol responde 403 (CA-065, CA-069).
+    En `/usuarios/**`, `crearadministrador`, `listar` y `obtenercorreo` también exigen ADMIN, y
+    `obtener/{id}` admite además al propio usuario.
+
+    **Estados.** Aprobar, rechazar, bloquear y desbloquear completan las transiciones de
+    `alojamientos.yaml` (CA-104). Cada decisión queda en la auditoría (CA-196).
+
+    **Auditoría.** Los eventos son de solo consulta: no hay rutas para modificarlos ni eliminarlos.
+
+    **Fechas y horas.** Usan `format: date-time`, igual que en la parte 1, pero el backend las entrega
+    sin zona horaria (`2026-11-07T10:30:00`).
+
+    **Respuestas de error.** `{"message": "..."}` (esquema `Mensaje`), igual que en `identidad.yaml`.
+servers:
+  - url: /
+    description: Raíz del backend, sin prefijo (en local, http://localhost:8081)
+tags:
+  - name: Gestión de usuarios
+    description: Consultar, crear, restringir y liberar usuarios (S02, S15)
+  - name: Moderación de publicaciones
+    description: Revisar, aprobar, rechazar, bloquear y desbloquear alojamientos (S15)
+  - name: Reservas de la plataforma
+    description: Consulta administrativa de reservas (S15)
+  - name: Moderación de reseñas
+    description: Ocultar y volver a mostrar reseñas (S15)
+  - name: Tarifas
+    description: Porcentajes globales de limpieza y servicio (S06, S15)
+  - name: Auditoría
+    description: Consulta de eventos registrados (S14)
+  - name: Dashboard y reportes
+    description: Indicadores y exportación en PDF o Excel (S16)
+paths:
+  /admin/usuarios:
+    get:
+      tags: [Gestión de usuarios]
+      operationId: listarUsuarios
+      summary: Usuarios, paginados (ADMIN)
+      description: HU-12. Ordenados por id.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de usuarios
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaUsuarios'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/usuarios/{id}/reservas:
+    parameters:
+      - $ref: '#/components/parameters/IdUsuario'
+    get:
+      tags: [Gestión de usuarios]
+      operationId: reservasDeUsuario
+      summary: Reservas de un usuario como huésped (ADMIN)
+      description: HU-12. Para el detalle de usuario, las más recientes primero. Vacía si no tiene reservas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Reservas del usuario como huésped (vacía si no tiene)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReservas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/usuarios/{id}/alojamientos:
+    parameters:
+      - $ref: '#/components/parameters/IdUsuario'
+    get:
+      tags: [Gestión de usuarios]
+      operationId: alojamientosDeUsuario
+      summary: Alojamientos de un usuario como anfitrión, en cualquier estado (ADMIN)
+      description: HU-12. Para el detalle de usuario, los más recientes primero.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Alojamientos del usuario como anfitrión, en cualquier estado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaAlojamientos'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/usuarios/{id}/restringir:
+    parameters:
+      - $ref: '#/components/parameters/IdUsuario'
+    patch:
+      tags: [Gestión de usuarios]
+      operationId: restringirUsuario
+      summary: Restringir un usuario con motivo (ADMIN)
+      description: |
+        HU-12, RF-014. Registra y aplica la restricción, que se muestra al consultar el estado del
+        usuario (CA-058). Se notifica el motivo al usuario. A un administrador no se le puede restringir.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotivoEntrada'
+      responses:
+        '200':
+          description: Usuario RESTRINGIDO; se le notifica el motivo (CA-058)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          description: El motivo de la restricción es obligatorio y puede tener máximo 500 caracteres.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: El usuario no es ADMIN (CA-131) o "No se puede restringir a un administrador."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/usuarios/{id}/liberar:
+    parameters:
+      - $ref: '#/components/parameters/IdUsuario'
+    patch:
+      tags: [Gestión de usuarios]
+      operationId: liberarUsuario
+      summary: Activar un usuario restringido o inactivo (ADMIN)
+      description: HU-12, RF-014. El motivo es opcional y el cuerpo se puede omitir. Se notifica al usuario.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotivoOpcionalEntrada'
+      responses:
+        '200':
+          description: Usuario ACTIVO; se le notifica
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+        '409':
+          description: La cuenta ya está activa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /usuarios/crearadministrador:
+    post:
+      tags: [Gestión de usuarios]
+      operationId: crearAdministrador
+      summary: Crear un administrador (ADMIN)
+      description: Fuera de las HU. El registro público nunca crea administradores (ver `identidad.yaml`). Si se envía un rol, se ignora.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdministradorEntrada'
+      responses:
+        '201':
+          description: Administrador creado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Datos incompletos o inválidos, o contraseña débil (CA-135)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '409':
+          description: Ya existe un usuario con ese correo electrónico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          description: No se pudo crear el administrador.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /usuarios/listar:
+    get:
+      tags: [Gestión de usuarios]
+      operationId: listarTodosUsuarios
+      summary: Todos los usuarios, sin paginar (ADMIN)
+      description: HU-12. Para listados paginados usa `GET /admin/usuarios`.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Todos los usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /usuarios/obtener/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdUsuario'
+    get:
+      tags: [Gestión de usuarios]
+      operationId: obtenerUsuario
+      summary: Consultar un usuario por id (el propio o ADMIN)
+      description: HU-12. Un usuario consulta solo su propio id; un administrador, cualquiera.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          description: No tienes permisos para consultar este usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /usuarios/obtenercorreo:
+    get:
+      tags: [Gestión de usuarios]
+      operationId: obtenerUsuarioPorCorreo
+      summary: Consultar un usuario por correo (ADMIN)
+      description: HU-12. El correo se compara sin distinguir mayúsculas ni espacios en los extremos.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: correo
+          in: query
+          required: true
+          description: Correo a buscar
+          schema:
+            type: string
+            format: email
+            example: ana@correo.com
+      responses:
+        '200':
+          description: Usuario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '400':
+          description: Falta el parámetro correo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/alojamientos:
+    get:
+      tags: [Moderación de publicaciones]
+      operationId: listarAlojamientosAdmin
+      summary: Alojamientos por estado (ADMIN)
+      description: HU-32. Por ejemplo, la cola PENDIENTE_REVISION. Sin `estado`, todos; los más recientes primero.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: Estado a filtrar
+          schema:
+            $ref: '#/components/schemas/EstadoAlojamiento'
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de alojamientos, todos o los del estado indicado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaAlojamientos'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/alojamientos/{id}/aprobar:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Moderación de publicaciones]
+      operationId: aprobarAlojamiento
+      summary: 'Aprobar: PENDIENTE_REVISION → ACTIVA (ADMIN)'
+      description: |
+        HU-32, RF-027. La publicación queda disponible y se notifica al anfitrión (CA-158). Exige que el
+        alojamiento tenga fechas de disponibilidad desde hoy. La decisión queda en la auditoría (CA-196).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Alojamiento en ACTIVA; se notifica al anfitrión (CA-158)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alojamiento'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/AlojamientoNoEncontrado'
+        '409':
+          description: La transición no está permitida (CA-104) o "El alojamiento no tiene fechas de disponibilidad desde hoy; el anfitrión debe agregarlas antes de publicarlo."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/alojamientos/{id}/rechazar:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Moderación de publicaciones]
+      operationId: rechazarAlojamiento
+      summary: 'Rechazar con motivo: PENDIENTE_REVISION → BORRADOR (ADMIN)'
+      description: HU-32, RF-027. Registra el motivo y lo notifica al anfitrión (CA-195). La decisión queda en la auditoría (CA-196).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotivoEntrada'
+      responses:
+        '200':
+          description: Alojamiento devuelto a BORRADOR; se notifica el motivo al anfitrión (CA-195)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alojamiento'
+        '400':
+          description: El motivo del rechazo es obligatorio y puede tener máximo 500 caracteres.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/AlojamientoNoEncontrado'
+        '409':
+          $ref: '#/components/responses/TransicionNoPermitida'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/alojamientos/{id}/bloquear:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Moderación de publicaciones]
+      operationId: bloquearAlojamiento
+      summary: Bloquear con motivo (ADMIN)
+      description: |
+        HU-11, RF-013. Desde cualquier estado distinto de BLOQUEADA (CA-054). Las reservas futuras se
+        conservan y pasan a EN_REVISION (CA-112). Se notifica al anfitrión y a cada huésped afectado.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotivoEntrada'
+      responses:
+        '200':
+          description: Alojamiento en BLOQUEADA; sus reservas futuras pasan a EN_REVISION (CA-054, CA-112)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alojamiento'
+        '400':
+          description: El motivo del bloqueo es obligatorio y puede tener máximo 500 caracteres.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/AlojamientoNoEncontrado'
+        '409':
+          $ref: '#/components/responses/TransicionNoPermitida'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/alojamientos/{id}/desbloquear:
+    parameters:
+      - $ref: '#/components/parameters/Id'
+    post:
+      tags: [Moderación de publicaciones]
+      operationId: desbloquearAlojamiento
+      summary: 'Desbloquear: BLOQUEADA → PAUSADA (ADMIN)'
+      description: HU-11, RF-013. Queda PAUSADA para que el anfitrión decida cuándo reanudarla.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Alojamiento en PAUSADA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alojamiento'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/AlojamientoNoEncontrado'
+        '409':
+          $ref: '#/components/responses/TransicionNoPermitida'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/reservas:
+    get:
+      tags: [Reservas de la plataforma]
+      operationId: listarReservasAdmin
+      summary: Todas las reservas, opcionalmente por estado (ADMIN)
+      description: Resumen por reserva, las más recientes primero. Con `estado=EN_REVISION` muestra las marcadas para revisión manual (CA-112).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: Estado a filtrar
+          schema:
+            $ref: '#/components/schemas/EstadoReserva'
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de reservas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaReservasAdmin'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/resenas:
+    get:
+      tags: [Moderación de reseñas]
+      operationId: listarResenasAdmin
+      summary: Todas las reseñas para moderar, opcionalmente por estado (ADMIN)
+      description: HU-14, RF-016. De la más reciente a la más antigua.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: estado
+          in: query
+          required: false
+          description: Estado a filtrar
+          schema:
+            $ref: '#/components/schemas/EstadoResena'
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de reseñas, de la más reciente a la más antigua
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaResenas'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/resenas/{id}/ocultar:
+    parameters:
+      - $ref: '#/components/parameters/IdResena'
+    patch:
+      tags: [Moderación de reseñas]
+      operationId: ocultarResena
+      summary: Ocultar una reseña con motivo (ADMIN)
+      description: HU-14, RF-016. La reseña no se borra, deja de mostrarse (CA-066) y se notifica el motivo a su autor.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MotivoEntrada'
+      responses:
+        '200':
+          description: Reseña OCULTA; se notifica el motivo a su autor (CA-066)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resena'
+        '400':
+          description: El motivo para ocultar la reseña es obligatorio.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/ResenaNoEncontrada'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/resenas/{id}/mostrar:
+    parameters:
+      - $ref: '#/components/parameters/IdResena'
+    patch:
+      tags: [Moderación de reseñas]
+      operationId: mostrarResena
+      summary: Volver a mostrar una reseña oculta (ADMIN)
+      description: HU-14, RF-016.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Reseña PUBLICADA de nuevo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resena'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/ResenaNoEncontrada'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/tarifas:
+    get:
+      tags: [Tarifas]
+      operationId: consultarTarifas
+      summary: Porcentajes globales vigentes de limpieza y servicio (ADMIN)
+      description: HU-24, RF-023. Sin configuración guardada devuelve los valores por defecto (5 % y 10 %) con `porDefecto` en true.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Porcentajes vigentes de limpieza y servicio
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfiguracionTarifa'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    put:
+      tags: [Tarifas]
+      operationId: actualizarTarifas
+      summary: Cambiar los porcentajes globales (ADMIN)
+      description: HU-24, RF-023. Aplican a las cotizaciones nuevas (CA-084), no a las reservas ya creadas.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfiguracionTarifaEntrada'
+      responses:
+        '200':
+          description: Configuración nueva; aplica a las cotizaciones siguientes (CA-084)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfiguracionTarifa'
+        '400':
+          description: Los porcentajes de limpieza y servicio son obligatorios y deben estar entre 0 y 100.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/auditoria:
+    get:
+      tags: [Auditoría]
+      operationId: consultarAuditoria
+      summary: Consultar la auditoría con filtros (ADMIN)
+      description: HU-13, RF-015. Filtros opcionales por acción, actor y fechas. Del evento más reciente al más antiguo (CA-062).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: accion
+          in: query
+          required: false
+          description: |
+            Acción exacta, sin distinguir mayúsculas. Valores que registra el backend: REGISTRO_USUARIO,
+            CREACION_ADMINISTRADOR, LOGIN, PERFIL_ACTUALIZADO, CUENTA_DESACTIVADA, CUENTA_REACTIVADA,
+            RECUPERACION_SOLICITADA, CONTRASENIA_RESTABLECIDA, CODIGO_VERIFICACION_ENVIADO,
+            CORREO_VERIFICADO, ALOJAMIENTO_CREADO, ALOJAMIENTO_ACTUALIZADO, ALOJAMIENTO_CAMBIO_ESTADO,
+            IMAGEN_ALOJAMIENTO, SERVICIO_ADICIONAL, DISPONIBILIDAD, TARIFA_ACTUALIZADA, RESERVA_CREADA,
+            PAGO, CANCELACION, RESENA_CREADA, RESENA_MODERADA, USUARIO_RESTRINGIDO, USUARIO_LIBERADO,
+            REPORTE_EXPORTADO, SEGUNDO_FACTOR, ACCESO_DENEGADO y ERROR_INTERNO.
+          schema:
+            type: string
+            example: LOGIN
+        - name: idActor
+          in: query
+          required: false
+          description: Usuario que hizo la acción
+          schema:
+            type: integer
+            format: int64
+            example: 12
+        - name: desde
+          in: query
+          required: false
+          description: Fecha y hora mínima, en ISO
+          schema:
+            type: string
+            format: date-time
+            example: '2026-11-01T00:00:00'
+        - name: hasta
+          in: query
+          required: false
+          description: Fecha y hora máxima, en ISO
+          schema:
+            type: string
+            format: date-time
+            example: '2026-11-30T23:59:59'
+        - $ref: '#/components/parameters/Pagina'
+        - name: tamanio
+          in: query
+          required: false
+          description: Elementos por página (máximo 100). Aquí el valor por defecto es 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Página de eventos, del más reciente al más antiguo (CA-062)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaEventosAuditoria'
+        '400':
+          description: Un filtro no tiene el formato esperado, por ejemplo "El valor de desde no es válido."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/auditoria/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador del evento
+        schema:
+          type: integer
+          format: int64
+          example: 310
+    get:
+      tags: [Auditoría]
+      operationId: detalleEventoAuditoria
+      summary: Detalle de un evento de auditoría (ADMIN)
+      description: HU-13, RF-015. Muestra el usuario, la fecha, el resultado y el recurso afectado (CA-062, CA-138).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Evento de auditoría (CA-062)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventoAuditoria'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          description: El evento de auditoría no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/dashboard:
+    get:
+      tags: [Dashboard y reportes]
+      operationId: dashboard
+      summary: Indicadores del dashboard (ADMIN)
+      description: HU-04, RF-005. Usuarios, alojamientos y reservas por estado, y ciudades con más reservas (CA-022).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: topCiudades
+          in: query
+          required: false
+          description: Cantidad de ciudades del ranking. Los valores fuera de rango se ajustan a 1 o a 50.
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 5
+      responses:
+        '200':
+          description: Indicadores del dashboard (CA-022)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/reportes/historial:
+    get:
+      tags: [Dashboard y reportes]
+      operationId: historialExportaciones
+      summary: Historial de exportaciones (ADMIN)
+      description: HU-05, RF-006. Quién exportó, qué, en qué formato y cuándo (CA-027), de lo más reciente a lo más antiguo.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamanio'
+      responses:
+        '200':
+          description: Página de exportaciones con quién las hizo (CA-027)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaExportaciones'
+        '400':
+          $ref: '#/components/responses/ParametroInvalido'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+  /admin/reportes/{tipo}:
+    parameters:
+      - name: tipo
+        in: path
+        required: true
+        description: Reporte a exportar, sin distinguir mayúsculas
+        schema:
+          type: string
+          enum: [usuarios, alojamientos, reservas, ingresos, demanda]
+          example: reservas
+    get:
+      tags: [Dashboard y reportes]
+      operationId: exportarReporte
+      summary: Exportar un reporte en PDF o Excel (ADMIN)
+      description: HU-05, RF-006. Genera el archivo y registra quién lo exportó (CA-027).
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: formato
+          in: query
+          required: false
+          description: Formato del archivo, sin distinguir mayúsculas
+          schema:
+            type: string
+            enum: [pdf, excel]
+            default: pdf
+      responses:
+        '200':
+          description: Archivo `reporte-{tipo}.pdf` o `reporte-{tipo}.xlsx` para descargar (CA-027)
+          headers:
+            Content-Disposition:
+              description: Nombre del archivo, por ejemplo `attachment; filename="reporte-reservas.pdf"`
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: 'Reporte no válido. Tipos: usuarios, alojamientos, reservas, ingresos, demanda; formatos: pdf, excel.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth:
+      $ref: 'identidad.yaml#/components/securitySchemes/bearerAuth'
+  parameters:
+    Id:
+      $ref: 'alojamientos.yaml#/components/parameters/Id'
+    IdUsuario:
+      name: id
+      in: path
+      required: true
+      description: Identificador del usuario
+      schema:
+        type: integer
+        format: int64
+        example: 12
+    IdResena:
+      name: id
+      in: path
+      required: true
+      description: Identificador de la reseña
+      schema:
+        type: integer
+        format: int64
+        example: 9
+    Pagina:
+      $ref: 'alojamientos.yaml#/components/parameters/Pagina'
+    Tamanio:
+      $ref: 'alojamientos.yaml#/components/parameters/Tamanio'
+  responses:
+    NoAutenticado:
+      $ref: 'identidad.yaml#/components/responses/NoAutenticado'
+    UsuarioNoEncontrado:
+      $ref: 'identidad.yaml#/components/responses/UsuarioNoEncontrado'
+    SinPermiso:
+      $ref: 'alojamientos.yaml#/components/responses/SinPermiso'
+    AlojamientoNoEncontrado:
+      $ref: 'alojamientos.yaml#/components/responses/AlojamientoNoEncontrado'
+    TransicionNoPermitida:
+      $ref: 'alojamientos.yaml#/components/responses/TransicionNoPermitida'
+    ParametroInvalido:
+      $ref: 'reservas-pagos.yaml#/components/responses/ParametroInvalido'
+    ErrorInterno:
+      $ref: 'reservas-pagos.yaml#/components/responses/ErrorInterno'
+    ResenaNoEncontrada:
+      description: La reseña no existe.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Mensaje'
+  schemas:
+    MotivoOpcionalEntrada:
+      type: object
+      properties:
+        motivo:
+          type: string
+          description: Motivo de la liberación; queda en la auditoría
+          example: Se revisó el caso y se levanta la restricción
+    AdministradorEntrada:
+      type: object
+      required: [nombre, correo, contrasenia]
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+          maxLength: 255
+          example: Ana Pérez
+        correo:
+          type: string
+          format: email
+          maxLength: 150
+          example: ana@correo.com
+        contrasenia:
+          $ref: '#/components/schemas/Contrasenia'
+        telefono:
+          $ref: '#/components/schemas/Telefono'
+    PaginaUsuarios:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/Usuario'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    ReservaAdmin:
+      type: object
+      description: Resumen de una reserva para el listado del administrador.
+      required: [idReserva, fechaEntrada, fechaSalida, noches, total, estado]
+      properties:
+        idReserva:
+          type: integer
+          format: int64
+          example: 15
+        nombreHuesped:
+          type: string
+          example: Ana Pérez
+        tituloAlojamiento:
+          type: string
+          example: Apartamento en Chapinero
+        ciudad:
+          type: string
+          example: Bogotá
+        nombreAnfitrion:
+          type: string
+          example: Luis Gómez
+        fechaEntrada:
+          type: string
+          format: date
+          example: '2026-12-10'
+        fechaSalida:
+          type: string
+          format: date
+          example: '2026-12-13'
+        noches:
+          type: integer
+          example: 3
+        total:
+          type: number
+          example: 740000
+        estado:
+          $ref: '#/components/schemas/EstadoReserva'
+        completada:
+          type: boolean
+          description: Está CONFIRMADA y la fecha de salida ya llegó
+    PaginaReservasAdmin:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservaAdmin'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    ConfiguracionTarifaEntrada:
+      type: object
+      required: [porcentajeLimpieza, porcentajeServicio]
+      properties:
+        porcentajeLimpieza:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Porcentaje sobre el precio base que se cobra por limpieza
+          example: 5
+        porcentajeServicio:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: Porcentaje sobre el precio base que se cobra como tarifa de servicio
+          example: 10
+    ConfiguracionTarifa:
+      description: Si `porDefecto` es true, aún no hay configuración guardada y los demás campos opcionales vienen en null.
+      allOf:
+        - $ref: '#/components/schemas/ConfiguracionTarifaEntrada'
+        - type: object
+          required: [porDefecto]
+          properties:
+            idConfiguracion:
+              type: integer
+              format: int64
+              nullable: true
+              description: Identificador de la configuración guardada
+              example: 3
+            idUsuario:
+              type: integer
+              format: int64
+              nullable: true
+              description: Administrador que hizo el último cambio
+              example: 1
+            fecha:
+              type: string
+              format: date-time
+              nullable: true
+              description: Momento del último cambio
+              example: '2026-11-01T09:00:00'
+            porDefecto:
+              type: boolean
+              description: Indica si son los valores por defecto
+              example: false
+    ResultadoAuditoria:
+      type: string
+      enum: [EXITOSO, RECHAZADO, ERROR]
+    EventoAuditoria:
+      type: object
+      required: [idEvento, accion, fecha, resultado]
+      properties:
+        idEvento:
+          type: integer
+          format: int64
+          example: 310
+        accion:
+          type: string
+          description: Acción realizada
+          example: LOGIN
+        fecha:
+          type: string
+          format: date-time
+          description: Momento del evento
+          example: '2026-11-07T10:30:00'
+        detalle:
+          type: string
+          nullable: true
+          description: Información adicional del evento
+        idUsuario:
+          type: integer
+          format: int64
+          nullable: true
+          description: Usuario que hizo la acción; null si no se conoce
+          example: 12
+        entidad:
+          type: string
+          nullable: true
+          description: Tipo de recurso afectado
+          example: USUARIO
+        idEntidad:
+          type: integer
+          format: int64
+          nullable: true
+          description: Id del recurso afectado
+          example: 12
+        resultado:
+          $ref: '#/components/schemas/ResultadoAuditoria'
+    PaginaEventosAuditoria:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventoAuditoria'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    ConteoPorEstado:
+      type: object
+      required: [total, porEstado]
+      properties:
+        total:
+          type: integer
+          format: int64
+          example: 120
+        porEstado:
+          type: object
+          description: Cantidad por estado; trae todos los estados, con 0 si no hay
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            CONFIRMADA: 90
+            CANCELADA: 30
+        confirmadasFinalizadas:
+          type: integer
+          format: int64
+          description: Reservas confirmadas con salida ya pasada. Solo en el conteo de reservas.
+          example: 60
+    DemandaCiudad:
+      type: object
+      required: [ciudad, totalReservas]
+      properties:
+        ciudad:
+          type: string
+          example: Bogotá
+        totalReservas:
+          type: integer
+          format: int64
+          example: 45
+    Dashboard:
+      type: object
+      required: [totalUsuarios, alojamientos, reservas, ciudadesTop]
+      properties:
+        totalUsuarios:
+          type: integer
+          format: int64
+          example: 250
+        alojamientos:
+          $ref: '#/components/schemas/ConteoPorEstado'
+        reservas:
+          $ref: '#/components/schemas/ConteoPorEstado'
+        ciudadesTop:
+          type: array
+          description: Ciudades con más reservas
+          items:
+            $ref: '#/components/schemas/DemandaCiudad'
+    RegistroExportacion:
+      type: object
+      required: [idRegistro, tipoReporte, formato, cantidadRegistros, idUsuario, fecha]
+      properties:
+        idRegistro:
+          type: integer
+          format: int64
+          example: 8
+        tipoReporte:
+          type: string
+          description: Reporte exportado
+          enum: [usuarios, alojamientos, reservas, ingresos, demanda]
+        formato:
+          type: string
+          description: Formato del archivo
+          enum: [pdf, excel]
+        cantidadRegistros:
+          type: integer
+          description: Cantidad de filas del reporte
+          example: 120
+        idUsuario:
+          type: integer
+          format: int64
+          description: Administrador que lo pidió
+          example: 1
+        nombreUsuario:
+          type: string
+          description: Nombre del administrador que lo pidió
+          example: Ana Pérez
+        fecha:
+          type: string
+          format: date-time
+          description: Momento de la exportación
+          example: '2026-11-07T10:30:00'
+    PaginaExportaciones:
+      type: object
+      required: [contenido, pagina, tamanio, totalElementos, totalPaginas]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/RegistroExportacion'
+        pagina:
+          type: integer
+        tamanio:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+        totalPaginas:
+          type: integer
+    Usuario:
+      $ref: 'identidad.yaml#/components/schemas/Usuario'
+    Contrasenia:
+      $ref: 'identidad.yaml#/components/schemas/Contrasenia'
+    Telefono:
+      $ref: 'identidad.yaml#/components/schemas/Telefono'
+    Alojamiento:
+      $ref: 'alojamientos.yaml#/components/schemas/Alojamiento'
+    PaginaAlojamientos:
+      $ref: 'alojamientos.yaml#/components/schemas/PaginaAlojamientos'
+    EstadoAlojamiento:
+      $ref: 'alojamientos.yaml#/components/schemas/EstadoAlojamiento'
+    EstadoReserva:
+      $ref: 'reservas-pagos.yaml#/components/schemas/EstadoReserva'
+    PaginaReservas:
+      $ref: 'reservas-pagos.yaml#/components/schemas/PaginaReservas'
+    MotivoEntrada:
+      $ref: 'reservas-pagos.yaml#/components/schemas/MotivoEntrada'
+    EstadoResena:
+      $ref: 'resenas-notificaciones.yaml#/components/schemas/EstadoResena'
+    Resena:
+      $ref: 'resenas-notificaciones.yaml#/components/schemas/Resena'
+    PaginaResenas:
+      $ref: 'resenas-notificaciones.yaml#/components/schemas/PaginaResenas'
+    Mensaje:
+      $ref: 'identidad.yaml#/components/schemas/Mensaje'
