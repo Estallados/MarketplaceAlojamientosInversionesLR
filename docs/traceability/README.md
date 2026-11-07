@@ -33,6 +33,8 @@ Caso de uso y caso de prueba se asignan por requisito, igual que en la matriz de
 
 ## Fuentes
 
+Los identificadores de RF, RNF, CA y HU siguen el catálogo único de [`docs/requirements`](../requirements/README.md) (SCRUM-196). Si un documento cita un ID con otra numeración, consulta [equivalencias-ids.md](../requirements/equivalencias-ids.md).
+
 Exportaciones de Confluence del espacio Estallados:
 
 - Requerimientos Funcionales (RF-001 a RF-029): columna "CA relacionado".
