@@ -54,6 +54,26 @@ ng e2e
 
 Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
 
+## Cliente de API y mock (OpenAPI)
+
+El cliente Angular de la API se genera desde el contrato [`docs/openapi/openapi.yaml`](../docs/openapi/openapi.yaml) del repositorio, para que el front pueda trabajar en paralelo al backend.
+
+Requisitos: Java 11 o superior (el generador corre sobre Java). Instala las dependencias con `npm ci` antes de usar los scripts.
+
+Generar el cliente en `src/app/api`:
+
+```bash
+npm run api:gen
+```
+
+Levantar un mock de la API en `http://localhost:4010` a partir del contrato:
+
+```bash
+npm run api:mock
+```
+
+El cliente generado se revisa y se confirma en el repositorio; no se edita a mano. Para actualizarlo, regenera el contrato y vuelve a ejecutar `npm run api:gen`.
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

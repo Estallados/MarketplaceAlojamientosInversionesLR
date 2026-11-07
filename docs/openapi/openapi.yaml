@@ -1,0 +1,3050 @@
+# Generado por scripts de SCRUM-202. No editar a mano; regenerar desde los controladores.
+openapi: "3.0.3"
+info:
+  title: "Marketplace de alojamientos API"
+  version: "0.1.0"
+  description: "Contrato de la API REST (marketplaceInversionesLRBack). Generado desde los controladores y DTO del proyecto SoftwareFake. Los endpoints con respuesta genérica (object) se afinarán en SCRUM-202 y siguientes."
+servers:
+  - url: "http://localhost:8081"
+    description: "Backend local"
+tags:
+  - name: "Admin"
+  - name: "Alojamiento"
+  - name: "Auth"
+  - name: "Disponibilidad"
+  - name: "Favorito"
+  - name: "Mensajeria"
+  - name: "Notificacion"
+  - name: "Pago"
+  - name: "Reporte"
+  - name: "Resena"
+  - name: "Reserva"
+  - name: "SegundoFactor"
+  - name: "Usuario"
+paths:
+  /admin/usuarios:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_usuarios"
+      summary: "Admin: usuarios"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/usuarios/{id}/reservas:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_reservasDeUsuario"
+      summary: "Admin: reservasDeUsuario"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/usuarios/{id}/alojamientos:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_alojamientosDeUsuario"
+      summary: "Admin: alojamientosDeUsuario"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/usuarios/{id}/restringir:
+    patch:
+      tags:
+        - "Admin"
+      operationId: "Admin_restringir"
+      summary: "Admin: restringir"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MotivoDTO"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/usuarios/{id}/liberar:
+    patch:
+      tags:
+        - "Admin"
+      operationId: "Admin_liberar"
+      summary: "Admin: liberar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: false
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MotivoDTO"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/alojamientos:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_alojamientos"
+      summary: "Admin: alojamientos"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "estado"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "BORRADOR"
+              - "PENDIENTE_REVISION"
+              - "ACTIVA"
+              - "PAUSADA"
+              - "BLOQUEADA"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/alojamientos/{id}/aprobar:
+    post:
+      tags:
+        - "Admin"
+      operationId: "Admin_aprobar"
+      summary: "Admin: aprobar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/alojamientos/{id}/rechazar:
+    post:
+      tags:
+        - "Admin"
+      operationId: "Admin_rechazar"
+      summary: "Admin: rechazar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MotivoDTO"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/alojamientos/{id}/bloquear:
+    post:
+      tags:
+        - "Admin"
+      operationId: "Admin_bloquear"
+      summary: "Admin: bloquear"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MotivoDTO"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/alojamientos/{id}/desbloquear:
+    post:
+      tags:
+        - "Admin"
+      operationId: "Admin_desbloquear"
+      summary: "Admin: desbloquear"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/reservas:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_reservas"
+      summary: "Admin: reservas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "estado"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "PENDIENTE_PAGO"
+              - "CONFIRMADA"
+              - "EN_REVISION"
+              - "CANCELADA"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/resenas:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_resenas"
+      summary: "Admin: resenas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "estado"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            enum:
+              - "PUBLICADA"
+              - "OCULTA"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/resenas/{id}/ocultar:
+    patch:
+      tags:
+        - "Admin"
+      operationId: "Admin_ocultarResena"
+      summary: "Admin: ocultarResena"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MotivoDTO"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/resenas/{id}/mostrar:
+    patch:
+      tags:
+        - "Admin"
+      operationId: "Admin_mostrarResena"
+      summary: "Admin: mostrarResena"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/tarifas:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_tarifas"
+      summary: "Admin: tarifas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      description: "Solo ADMIN."
+    put:
+      tags:
+        - "Admin"
+      operationId: "Admin_actualizarTarifas"
+      summary: "Admin: actualizarTarifas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ConfiguracionTarifaDTO"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /admin/auditoria:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_auditoria"
+      summary: "Admin: auditoria"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "accion"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "idActor"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "desde"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date-time"
+        - name: "hasta"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date-time"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 50
+      description: "Solo ADMIN."
+  /admin/auditoria/{id}:
+    get:
+      tags:
+        - "Admin"
+      operationId: "Admin_evento"
+      summary: "Admin: evento"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      description: "Solo ADMIN."
+  /alojamientos/disponibles:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_disponibles"
+      summary: "Alojamiento: disponibles"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "orden"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+  /alojamientos:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_buscar"
+      summary: "Alojamiento: buscar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "ciudad"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "llegada"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "salida"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "huespedes"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+        - name: "tipo"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "precioMinimo"
+          in: "query"
+          required: false
+          schema:
+            type: "number"
+        - name: "precioMaximo"
+          in: "query"
+          required: false
+          schema:
+            type: "number"
+        - name: "amenidades"
+          in: "query"
+          required: false
+          schema:
+            type: "array"
+            items:
+              type: "string"
+        - name: "orden"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 12
+    post:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_crear"
+      summary: "Alojamiento: crear"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema:
+              type: "object"
+              properties:
+                datos:
+                  type: "string"
+                archivos:
+                  type: "array"
+                  items:
+                    type: "string"
+                    format: "binary"
+      security:
+        - bearerAuth: []
+  /alojamientos/tipos:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_cantidadPorTipo"
+      summary: "Alojamiento: cantidadPorTipo"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                additionalProperties:
+                  type: "integer"
+                  format: "int64"
+        400:
+          description: "Datos inválidos"
+  /alojamientos/politicas:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_politicas"
+      summary: "Alojamiento: politicas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+  /alojamientos/mios:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_mios"
+      summary: "Alojamiento: mios"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_detalle"
+      summary: "Alojamiento: detalle"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_actualizar"
+      summary: "Alojamiento: actualizar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/AlojamientoDTO"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/historial:
+    get:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_historial"
+      summary: "Alojamiento: historial"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/imagenes:
+    post:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_subirImagenes"
+      summary: "Alojamiento: subirImagenes"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "multipart/form-data":
+            schema:
+              type: "object"
+              properties:
+                archivos:
+                  type: "array"
+                  items:
+                    type: "string"
+                    format: "binary"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/imagenes/{idImagen}:
+    delete:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_eliminarImagen"
+      summary: "Alojamiento: eliminarImagen"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "idImagen"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/imagenes/{idImagen}/principal:
+    patch:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_marcarPrincipal"
+      summary: "Alojamiento: marcarPrincipal"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "idImagen"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/enviarrevision:
+    post:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_enviarRevision"
+      summary: "Alojamiento: enviarRevision"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/pausar:
+    post:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_pausar"
+      summary: "Alojamiento: pausar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/reanudar:
+    post:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_reanudar"
+      summary: "Alojamiento: reanudar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/servicios:
+    post:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_agregarServicio"
+      summary: "Alojamiento: agregarServicio"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ServicioAdicionalDTO"
+      security:
+        - bearerAuth: []
+  /alojamientos/{id}/servicios/{idServicio}:
+    put:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_actualizarServicio"
+      summary: "Alojamiento: actualizarServicio"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "idServicio"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ServicioAdicionalDTO"
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - "Alojamiento"
+      operationId: "Alojamiento_eliminarServicio"
+      summary: "Alojamiento: eliminarServicio"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "idServicio"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /auth/login:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_login"
+      summary: "Auth: login"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/LoginDTO"
+  /auth/google/configuracion:
+    get:
+      tags:
+        - "Auth"
+      operationId: "Auth_configuracionGoogle"
+      summary: "Auth: configuracionGoogle"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+  /auth/google:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_google"
+      summary: "Auth: google"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/InicioGoogleDTO"
+  /auth/register:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_register"
+      summary: "Auth: register"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuarioDTO"
+  /auth/verificar:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_verificar"
+      summary: "Auth: verificar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/VerificacionCorreoDTO"
+  /auth/reenviarcodigo:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_reenviarCodigo"
+      summary: "Auth: reenviarCodigo"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuarioDTO"
+  /auth/recuperar:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_recuperar"
+      summary: "Auth: recuperar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuarioDTO"
+  /auth/restablecer:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_restablecer"
+      summary: "Auth: restablecer"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/RestablecerContraseniaDTO"
+  /auth/reactivar:
+    post:
+      tags:
+        - "Auth"
+      operationId: "Auth_reactivar"
+      summary: "Auth: reactivar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuarioDTO"
+  /alojamientos/{idAlojamiento}/disponibilidad:
+    get:
+      tags:
+        - "Disponibilidad"
+      operationId: "Disponibilidad_calendario"
+      summary: "Disponibilidad: calendario"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+    post:
+      tags:
+        - "Disponibilidad"
+      operationId: "Disponibilidad_agregar"
+      summary: "Disponibilidad: agregar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PeriodoDisponibilidadDTO"
+      security:
+        - bearerAuth: []
+  /alojamientos/{idAlojamiento}/disponibilidad/consultar:
+    get:
+      tags:
+        - "Disponibilidad"
+      operationId: "Disponibilidad_consultar"
+      summary: "Disponibilidad: consultar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "llegada"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+        - name: "salida"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            format: "date"
+  /alojamientos/{idAlojamiento}/disponibilidad/{idPeriodo}:
+    put:
+      tags:
+        - "Disponibilidad"
+      operationId: "Disponibilidad_actualizar"
+      summary: "Disponibilidad: actualizar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "idPeriodo"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/PeriodoDisponibilidadDTO"
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - "Disponibilidad"
+      operationId: "Disponibilidad_eliminar"
+      summary: "Disponibilidad: eliminar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "idPeriodo"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /favoritos:
+    get:
+      tags:
+        - "Favorito"
+      operationId: "Favorito_listar"
+      summary: "Favorito: listar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /favoritos/{idAlojamiento}:
+    post:
+      tags:
+        - "Favorito"
+      operationId: "Favorito_agregar"
+      summary: "Favorito: agregar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - "Favorito"
+      operationId: "Favorito_eliminar"
+      summary: "Favorito: eliminar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /conversaciones:
+    post:
+      tags:
+        - "Mensajeria"
+      operationId: "Mensajeria_iniciar"
+      summary: "Mensajeria: iniciar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ConversacionDTO"
+      security:
+        - bearerAuth: []
+    get:
+      tags:
+        - "Mensajeria"
+      operationId: "Mensajeria_listar"
+      summary: "Mensajeria: listar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /conversaciones/{id}/mensajes:
+    get:
+      tags:
+        - "Mensajeria"
+      operationId: "Mensajeria_mensajes"
+      summary: "Mensajeria: mensajes"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 50
+      security:
+        - bearerAuth: []
+    post:
+      tags:
+        - "Mensajeria"
+      operationId: "Mensajeria_enviar"
+      summary: "Mensajeria: enviar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MensajeDTO"
+      security:
+        - bearerAuth: []
+  /notificaciones:
+    get:
+      tags:
+        - "Notificacion"
+      operationId: "Notificacion_listar"
+      summary: "Notificacion: listar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /notificaciones/noleidas:
+    get:
+      tags:
+        - "Notificacion"
+      operationId: "Notificacion_noLeidas"
+      summary: "Notificacion: noLeidas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      security:
+        - bearerAuth: []
+  /notificaciones/leidas:
+    patch:
+      tags:
+        - "Notificacion"
+      operationId: "Notificacion_marcarTodasLeidas"
+      summary: "Notificacion: marcarTodasLeidas"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      security:
+        - bearerAuth: []
+  /notificaciones/{id}/leida:
+    patch:
+      tags:
+        - "Notificacion"
+      operationId: "Notificacion_marcarLeida"
+      summary: "Notificacion: marcarLeida"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /pagos/configuracion:
+    get:
+      tags:
+        - "Pago"
+      operationId: "Pago_configuracion"
+      summary: "Pago: configuracion"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ConfiguracionPagoDTO"
+        400:
+          description: "Datos inválidos"
+  /admin/dashboard:
+    get:
+      tags:
+        - "Reporte"
+      operationId: "Reporte_dashboard"
+      summary: "Reporte: dashboard"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "topCiudades"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 5
+      description: "Solo ADMIN."
+  /admin/reportes/historial:
+    get:
+      tags:
+        - "Reporte"
+      operationId: "Reporte_historial"
+      summary: "Reporte: historial"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      description: "Solo ADMIN."
+  /admin/reportes/{tipo}:
+    get:
+      tags:
+        - "Reporte"
+      operationId: "Reporte_exportar"
+      summary: "Reporte: exportar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        403:
+          description: "Requiere rol ADMIN"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "tipo"
+          in: "path"
+          required: true
+          schema:
+            type: "string"
+        - name: "formato"
+          in: "query"
+          required: false
+          schema:
+            type: "string"
+            default: "pdf"
+      security:
+        - bearerAuth: []
+      description: "Solo ADMIN."
+  /resenas:
+    post:
+      tags:
+        - "Resena"
+      operationId: "Resena_crear"
+      summary: "Resena: crear"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ResenaDTO"
+      security:
+        - bearerAuth: []
+  /resenas/mias:
+    get:
+      tags:
+        - "Resena"
+      operationId: "Resena_mias"
+      summary: "Resena: mias"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /resenas/anfitrion:
+    get:
+      tags:
+        - "Resena"
+      operationId: "Resena_deAnfitrion"
+      summary: "Resena: deAnfitrion"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /alojamientos/{idAlojamiento}/resenas:
+    get:
+      tags:
+        - "Resena"
+      operationId: "Resena_deAlojamiento"
+      summary: "Resena: deAlojamiento"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "idAlojamiento"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+  /cotizaciones:
+    post:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_cotizar"
+      summary: "Reserva: cotizar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/CotizacionDTO"
+      security:
+        - bearerAuth: []
+  /reservas:
+    post:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_crear"
+      summary: "Reserva: crear"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SolicitudReservaDTO"
+      security:
+        - bearerAuth: []
+  /reservas/mias:
+    get:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_mias"
+      summary: "Reserva: mias"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /reservas/anfitrion:
+    get:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_deAnfitrion"
+      summary: "Reserva: deAnfitrion"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "pagina"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 0
+        - name: "tamanio"
+          in: "query"
+          required: false
+          schema:
+            type: "integer"
+            format: "int32"
+            default: 20
+      security:
+        - bearerAuth: []
+  /reservas/{id}:
+    get:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_detalle"
+      summary: "Reserva: detalle"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /reservas/{id}/simularcancelacion:
+    get:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_simularCancelacion"
+      summary: "Reserva: simularCancelacion"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /reservas/{id}/cancelar:
+    post:
+      tags:
+        - "Reserva"
+      operationId: "Reserva_cancelar"
+      summary: "Reserva: cancelar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/MotivoDTO"
+      security:
+        - bearerAuth: []
+  /usuarios/segundofactor/activar:
+    post:
+      tags:
+        - "SegundoFactor"
+      operationId: "SegundoFactor_activar"
+      summary: "SegundoFactor: activar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      security:
+        - bearerAuth: []
+  /usuarios/segundofactor/confirmar:
+    post:
+      tags:
+        - "SegundoFactor"
+      operationId: "SegundoFactor_confirmar"
+      summary: "SegundoFactor: confirmar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SegundoFactorDTO"
+      security:
+        - bearerAuth: []
+  /usuarios/segundofactor/desactivar:
+    post:
+      tags:
+        - "SegundoFactor"
+      operationId: "SegundoFactor_desactivar"
+      summary: "SegundoFactor: desactivar"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/SegundoFactorDTO"
+      security:
+        - bearerAuth: []
+  /usuarios/perfil:
+    get:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_miPerfil"
+      summary: "Usuario: miPerfil"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_actualizarPerfil"
+      summary: "Usuario: actualizarPerfil"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuarioDTO"
+      security:
+        - bearerAuth: []
+  /usuarios/perfil/desactivar:
+    patch:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_desactivarCuenta"
+      summary: "Usuario: desactivarCuenta"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      security:
+        - bearerAuth: []
+  /usuarios/crearadministrador:
+    post:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_crearAdministrador"
+      summary: "Usuario: crearAdministrador"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      requestBody:
+        required: true
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/UsuarioDTO"
+      security:
+        - bearerAuth: []
+  /usuarios/listar:
+    get:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_listarTodos"
+      summary: "Usuario: listarTodos"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "array"
+                items:
+                  "$ref": "#/components/schemas/UsuarioDTO"
+        400:
+          description: "Datos inválidos"
+  /usuarios/obtener/{id}:
+    get:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_obtenerUsuarioPorId"
+      summary: "Usuario: obtenerUsuarioPorId"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        401:
+          description: "Token ausente o inválido"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: "integer"
+            format: "int64"
+      security:
+        - bearerAuth: []
+  /usuarios/obtenercorreo:
+    get:
+      tags:
+        - "Usuario"
+      operationId: "Usuario_obtenerUsuarioPorCorreo"
+      summary: "Usuario: obtenerUsuarioPorCorreo"
+      responses:
+        200:
+          description: "OK"
+          content:
+            "application/json":
+              schema:
+                type: "object"
+                description: "Respuesta según el servicio; ver el controlador"
+        400:
+          description: "Datos inválidos"
+      parameters:
+        - name: "correo"
+          in: "query"
+          required: true
+          schema:
+            type: "string"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: "http"
+      scheme: "bearer"
+      bearerFormat: "JWT"
+  schemas:
+    AlojamientoDTO:
+      type: "object"
+      properties:
+        idAlojamiento:
+          type: "integer"
+          format: "int64"
+        titulo:
+          type: "string"
+        descripcion:
+          type: "string"
+        ubicacion:
+          type: "string"
+        ciudad:
+          type: "string"
+        latitud:
+          type: "number"
+          format: "double"
+        longitud:
+          type: "number"
+          format: "double"
+        tipo:
+          type: "string"
+        capacidad:
+          type: "integer"
+          format: "int32"
+        precioNoche:
+          type: "number"
+        porcentajeLimpieza:
+          type: "number"
+        porcentajeServicio:
+          type: "number"
+        reglas:
+          type: "string"
+        estado:
+          type: "string"
+          enum:
+            - "BORRADOR"
+            - "PENDIENTE_REVISION"
+            - "ACTIVA"
+            - "PAUSADA"
+            - "BLOQUEADA"
+        idAnfitrion:
+          type: "integer"
+          format: "int64"
+        idPolitica:
+          type: "integer"
+          format: "int64"
+        nombrePolitica:
+          type: "string"
+        fechaCreacion:
+          type: "string"
+          format: "date-time"
+        amenidades:
+          type: "array"
+          items:
+            type: "string"
+        imagenes:
+          type: "array"
+          items:
+            type: "string"
+        serviciosAdicionales:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/ServicioAdicionalDTO"
+        habitaciones:
+          type: "integer"
+          format: "int32"
+        camas:
+          type: "integer"
+          format: "int32"
+        banos:
+          type: "integer"
+          format: "int32"
+        horaEntrada:
+          type: "string"
+          format: "time"
+        horaSalida:
+          type: "string"
+          format: "time"
+        fechaActualizacion:
+          type: "string"
+          format: "date-time"
+        detalleImagenes:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/ImagenDTO"
+        promedioCalificacion:
+          type: "number"
+          format: "double"
+        cantidadResenas:
+          type: "integer"
+          format: "int64"
+        cantidadReservas:
+          type: "integer"
+          format: "int64"
+        nombreAnfitrion:
+          type: "string"
+        correoAnfitrion:
+          type: "string"
+        estadoAnfitrion:
+          type: "string"
+          enum:
+            - "ACTIVO"
+            - "INACTIVO"
+            - "RESTRINGIDO"
+    MotivoDTO:
+      type: "object"
+      properties:
+        motivo:
+          type: "string"
+    ImagenDTO:
+      type: "object"
+    SolicitudReservaDTO:
+      type: "object"
+      properties:
+        idCotizacion:
+          type: "integer"
+          format: "int64"
+        metodoPago:
+          type: "string"
+    ConfiguracionTarifaDTO:
+      type: "object"
+      properties:
+        idConfiguracion:
+          type: "integer"
+          format: "int64"
+        porcentajeLimpieza:
+          type: "number"
+        porcentajeServicio:
+          type: "number"
+        idUsuario:
+          type: "integer"
+          format: "int64"
+        fecha:
+          type: "string"
+          format: "date-time"
+        porDefecto:
+          type: "boolean"
+    PeriodoDisponibilidadDTO:
+      type: "object"
+      properties:
+        idPeriodo:
+          type: "integer"
+          format: "int64"
+        idAlojamiento:
+          type: "integer"
+          format: "int64"
+        fechaInicio:
+          type: "string"
+          format: "date"
+        fechaFin:
+          type: "string"
+          format: "date"
+    ConfiguracionPagoDTO:
+      type: "object"
+      properties:
+        modo:
+          type: "string"
+        clavePublica:
+          type: "string"
+        moneda:
+          type: "string"
+        metodosPrueba:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/MetodoPagoPruebaDTO"
+    ServicioAdicionalDTO:
+      type: "object"
+      properties:
+        idServicio:
+          type: "integer"
+          format: "int64"
+        nombre:
+          type: "string"
+        costo:
+          type: "number"
+        idAlojamiento:
+          type: "integer"
+          format: "int64"
+    InicioGoogleDTO:
+      type: "object"
+      properties:
+        idToken:
+          type: "string"
+        rol:
+          type: "string"
+          enum:
+            - "ADMIN"
+            - "HUESPED"
+            - "ANFITRION"
+        codigo:
+          type: "string"
+    RestablecerContraseniaDTO:
+      type: "object"
+      properties:
+        token:
+          type: "string"
+        contrasenia:
+          type: "string"
+    VerificacionCorreoDTO:
+      type: "object"
+      properties:
+        correo:
+          type: "string"
+        codigo:
+          type: "string"
+    UsuarioDTO:
+      type: "object"
+      properties:
+        idUsuario:
+          type: "integer"
+          format: "int64"
+        nombre:
+          type: "string"
+        correo:
+          type: "string"
+        telefono:
+          type: "string"
+        rol:
+          type: "string"
+          enum:
+            - "ADMIN"
+            - "HUESPED"
+            - "ANFITRION"
+        estado:
+          type: "string"
+          enum:
+            - "ACTIVO"
+            - "INACTIVO"
+            - "RESTRINGIDO"
+        contrasenia:
+          type: "string"
+        motivoRestriccion:
+          type: "string"
+        totpHabilitado:
+          type: "boolean"
+        fechaRegistro:
+          type: "string"
+          format: "date-time"
+        correoVerificado:
+          type: "boolean"
+        correoHash:
+          type: "string"
+        secretoTotp:
+          type: "string"
+    LoginDTO:
+      type: "object"
+      properties:
+        correo:
+          type: "string"
+        contrasenia:
+          type: "string"
+        codigo:
+          type: "string"
+    ConversacionDTO:
+      type: "object"
+      properties:
+        idConversacion:
+          type: "integer"
+          format: "int64"
+        fechaCreacion:
+          type: "string"
+          format: "date-time"
+        estado:
+          type: "string"
+          enum:
+            - "ACTIVA"
+            - "CERRADA"
+        idUsuario:
+          type: "integer"
+          format: "int64"
+        idAnfitrion:
+          type: "integer"
+          format: "int64"
+        idAlojamiento:
+          type: "integer"
+          format: "int64"
+        mensaje:
+          type: "string"
+        nombreUsuario:
+          type: "string"
+        nombreAnfitrion:
+          type: "string"
+    CotizacionDTO:
+      type: "object"
+      properties:
+        idCotizacion:
+          type: "integer"
+          format: "int64"
+        idAlojamiento:
+          type: "integer"
+          format: "int64"
+        fechaEntrada:
+          type: "string"
+          format: "date"
+        fechaSalida:
+          type: "string"
+          format: "date"
+        huespedes:
+          type: "integer"
+          format: "int32"
+        noches:
+          type: "integer"
+          format: "int32"
+        precioNoche:
+          type: "number"
+        precioBase:
+          type: "number"
+        descuento:
+          type: "number"
+        porcentajeLimpieza:
+          type: "number"
+        valorLimpieza:
+          type: "number"
+        porcentajeServicio:
+          type: "number"
+        valorServicio:
+          type: "number"
+        valorAdicionales:
+          type: "number"
+        total:
+          type: "number"
+        serviciosSeleccionados:
+          type: "array"
+          items:
+            type: "integer"
+            format: "int64"
+        serviciosAdicionales:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/ServicioAdicionalDTO"
+        serviciosDisponibles:
+          type: "array"
+          items:
+            "$ref": "#/components/schemas/ServicioAdicionalDTO"
+        fechaExpiracion:
+          type: "string"
+          format: "date-time"
+        idReserva:
+          type: "integer"
+          format: "int64"
+        idUsuario:
+          type: "integer"
+          format: "int64"
+        fechaCreacion:
+          type: "string"
+          format: "date-time"
+        desglose:
+          type: "string"
+    ResenaDTO:
+      type: "object"
+      properties:
+        idResena:
+          type: "integer"
+          format: "int64"
+        calificacion:
+          type: "integer"
+          format: "int32"
+        comentario:
+          type: "string"
+        estado:
+          type: "string"
+          enum:
+            - "PUBLICADA"
+            - "OCULTA"
+        fecha:
+          type: "string"
+          format: "date-time"
+        idUsuario:
+          type: "integer"
+          format: "int64"
+        idReserva:
+          type: "integer"
+          format: "int64"
+        idAlojamiento:
+          type: "integer"
+          format: "int64"
+        nombreUsuario:
+          type: "string"
+        tituloAlojamiento:
+          type: "string"
+    SegundoFactorDTO:
+      type: "object"
+      properties:
+        secreto:
+          type: "string"
+        uri:
+          type: "string"
+        codigo:
+          type: "string"
+    MensajeDTO:
+      type: "object"
+      properties:
+        idMensaje:
+          type: "integer"
+          format: "int64"
+        contenido:
+          type: "string"
+        fechaEnvio:
+          type: "string"
+          format: "date-time"
+        idConversacion:
+          type: "integer"
+          format: "int64"
+        idUsuario:
+          type: "integer"
+          format: "int64"
+        nombreUsuario:
+          type: "string"
+    MetodoPagoPruebaDTO:
+      type: "object"
