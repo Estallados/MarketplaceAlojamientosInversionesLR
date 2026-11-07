@@ -42,6 +42,15 @@ public class AuditoriaService {
 	/** Un usuario confirmó su correo. */
 	public static final String CORREO_VERIFICADO = "CORREO_VERIFICADO";
 
+	/** Un usuario intentó iniciar sesión. */
+	public static final String LOGIN = "LOGIN";
+
+	/** Un usuario reactivó su cuenta. */
+	public static final String CUENTA_REACTIVADA = "CUENTA_REACTIVADA";
+
+	/** Se activó, confirmó o desactivó el segundo factor. */
+	public static final String SEGUNDO_FACTOR = "SEGUNDO_FACTOR";
+
 	/** Entidad auditada: usuario. */
 	public static final String ENTIDAD_USUARIO = "USUARIO";
 
