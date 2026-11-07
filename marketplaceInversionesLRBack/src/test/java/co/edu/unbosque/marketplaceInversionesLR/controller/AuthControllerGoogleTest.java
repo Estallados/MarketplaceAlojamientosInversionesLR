@@ -22,6 +22,7 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuthService;
 import co.edu.unbosque.marketplaceInversionesLR.service.InicioGoogleService;
 import co.edu.unbosque.marketplaceInversionesLR.service.SegundoFactorService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
@@ -59,12 +60,15 @@ class AuthControllerGoogleTest {
 	@Mock
 	private InicioGoogleService inicioGoogleService;
 
+	@Mock
+	private AuthService authService;
+
 	private AuthController controlador;
 
 	@BeforeEach
 	void preparar() {
 		controlador = new AuthController(authenticationManager, usuarioService, verificacionCorreoService, jwtUtil,
-				userDetailsService, auditoriaService, segundoFactorService, inicioGoogleService);
+				userDetailsService, auditoriaService, segundoFactorService, inicioGoogleService, authService);
 	}
 
 	@Test

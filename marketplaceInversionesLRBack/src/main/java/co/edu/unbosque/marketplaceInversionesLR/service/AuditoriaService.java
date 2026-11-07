@@ -45,6 +45,12 @@ public class AuditoriaService {
 	/** Un usuario intentó iniciar sesión. */
 	public static final String LOGIN = "LOGIN";
 
+	/** Un usuario pidió recuperar su contraseña. */
+	public static final String RECUPERACION_SOLICITADA = "RECUPERACION_SOLICITADA";
+
+	/** Un usuario restableció su contraseña con el token de recuperación. */
+	public static final String CONTRASENIA_RESTABLECIDA = "CONTRASENIA_RESTABLECIDA";
+
 	/** Un usuario reactivó su cuenta. */
 	public static final String CUENTA_REACTIVADA = "CUENTA_REACTIVADA";
 
