@@ -37,9 +37,14 @@ CA-022;RF-005;Consulta de dashboard;Indicadores del dashboard;Dado que existen u
 CA-027;RF-006;Exportación de reportes;Exportación y trazabilidad del reporte;Dado que un usuario solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel con datos que correspondan a la información disponible en el sistema y registrar solicitante y fecha.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"DashboardReportesTest#exportaEnPdfYRegistraSolicitanteYFecha_CA027_CA029
 DashboardReportesTest#elExcelCorrespondeConLaInformacionDelSistema_CA027_CA028";;38a9302;;;;
 CA-030;RF-001;Registro de usuarios;Crear cuenta con rol;Dado que el usuario no está registrado, cuando proporciona todos los datos obligatorios y un rol válido, entonces el sistema crea la cuenta, le asigna el rol seleccionado y muestra una confirmación.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
-CP-002 Validación de campos obligatorios en registro";AuthFlowTest#registroCreaLaCuentaYEnviaUnCodigoQueEntregaElToken_CA030_CA032_CA033_CA042;;e2f0592;;;;
+CP-002 Validación de campos obligatorios en registro";"UsuarioServiceTest#creaLaCuentaYEnviaElCodigo_CA030
+UsuarioServiceTest#sinRolUsaHuesped_CA030
+RegistroUsuarioTest#registroCreaLaCuentaYEnviaElCodigo_CA030
+RegistroUsuarioTest#verificarEntregaElToken_CA030";Probado (JUnit);;feat/SCRUM-220-be-registro-de-usuario-con-rol;;;
 CA-031;RF-001;Registro de usuarios;Validar campos;Dado que faltan datos obligatorios, cuando el usuario intenta registrarse, entonces el sistema indica los campos faltantes.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
-CP-002 Validación de campos obligatorios en registro";AuthFlowTest#rechazaDatosFaltantesOInvalidos_CA031_CA135;;38a9302;;;;
+CP-002 Validación de campos obligatorios en registro";"UsuarioServiceTest#faltanDatosNoRegistra_CA031
+UsuarioServiceTest#datosInvalidosNoRegistra_CA031
+RegistroUsuarioTest#faltanDatosNoRegistra_CA031";Probado (JUnit);;feat/SCRUM-220-be-registro-de-usuario-con-rol;;;
 CA-034;RF-008;Inicio de sesión;Iniciar sesión e identificar rol;Dado que el usuario está registrado, cuando proporciona credenciales válidas, entonces el sistema permite el acceso e identifica su rol.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
