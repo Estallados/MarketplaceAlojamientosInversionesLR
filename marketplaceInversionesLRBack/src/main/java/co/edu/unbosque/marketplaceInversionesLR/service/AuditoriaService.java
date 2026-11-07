@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -19,8 +21,8 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Registro de auditoría (RNF-006). Cada evento se guarda en la tabla
- * {@code evento_auditoria} y además se escribe como una línea JSON en el log
- * {@code AUDITORIA}.
+ * {@code evento_auditoria} y además se escribe como una línea JSON en el log con la
+ * marca {@code AUDITORIA}.
  * <p>
  * El guardado usa una transacción propia (REQUIRES_NEW): así el evento queda
  * aunque la operación auditada se revierta, y también se guardan las
@@ -46,8 +48,8 @@ public class AuditoriaService {
 	/** Log de la clase. */
 	private static final Logger LOG = LoggerFactory.getLogger(AuditoriaService.class);
 
-	/** Log de auditoría: una línea JSON por evento. */
-	private static final Logger LOG_AUDITORIA = LoggerFactory.getLogger("AUDITORIA");
+	/** Marca de las líneas de auditoría (una línea JSON por evento), para filtrarlas en el log. */
+	private static final Marker AUDITORIA = MarkerFactory.getMarker("AUDITORIA");
 
 	/** Largo máximo del detalle (columna de 1000 caracteres). */
 	private static final int MAX_DETALLE = 1000;
@@ -108,7 +110,7 @@ public class AuditoriaService {
 	}
 
 	/**
-	 * Escribe el evento como una línea JSON en el log {@code AUDITORIA}.
+	 * Escribe el evento como una línea JSON en el log con la marca {@code AUDITORIA}.
 	 *
 	 * @param evento evento a escribir
 	 */
@@ -122,7 +124,7 @@ public class AuditoriaService {
 		linea.put("idEntidad", evento.getIdEntidad());
 		linea.put("detalle", evento.getDetalle());
 		try {
-			LOG_AUDITORIA.info(objectMapper.writeValueAsString(linea));
+			LOG.info(AUDITORIA, objectMapper.writeValueAsString(linea));
 		} catch (JacksonException e) {
 			LOG.error("No se pudo escribir el evento de auditoría {} en el log", evento.getAccion(), e);
 		}

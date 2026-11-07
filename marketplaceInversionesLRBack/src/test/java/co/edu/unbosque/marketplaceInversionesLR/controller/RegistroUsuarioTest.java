@@ -33,6 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import com.jayway.jsonpath.JsonPath;
+
 import co.edu.unbosque.marketplaceInversionesLR.ContenedorPostgres;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
@@ -132,7 +134,7 @@ class RegistroUsuarioTest {
 				.andExpect(jsonPath("$.correo").value("luis@correo.com"))
 				.andReturn().getResponse().getContentAsString();
 
-		String token = respuesta.replaceAll(".*\"token\":\"([^\"]+)\".*", "$1");
+		String token = JsonPath.read(respuesta, "$.token");
 		Usuario usuario = buscar("luis@correo.com");
 		assertThat(usuario.esCorreoVerificado()).isTrue();
 		assertThat(jwtUtil.validateToken(token, usuario)).isTrue();
