@@ -9,13 +9,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -23,12 +31,26 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Seguridad de la API (RNF-003): sin sesión, con las rutas {@code /auth/**}
- * públicas y las demás protegidas. Los errores 401 y 403 responden en JSON con
- * el mismo formato del resto de la API.
+ * Seguridad stateless con JWT (RNF-003). Los roles salen del enum {@code Role}:
+ * HUESPED, ANFITRION y ADMIN, que Spring ve como ROLE_HUESPED, ROLE_ANFITRION
+ * y ROLE_ADMIN. En {@code hasRole(...)} y {@code @PreAuthorize} se escriben sin
+ * el prefijo, por ejemplo {@code hasRole('ANFITRION')}.
+ * <p>
+ * Las rutas {@code /auth/**} son públicas y las demás exigen el token. Los
+ * errores 401 y 403 responden en JSON con el mismo formato del resto de la
+ * API.
+ * </p>
  */
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
+
+	/** Filtro que lee el JWT de cada petición y autentica al usuario. */
+	private final JwtAuthenticationFilter jwtAuthFilter;
+
+	/** Carga los usuarios por correo para el inicio de sesión. */
+	private final UserDetailsService userDetailsService;
 
 	/** Orígenes permitidos para CORS (el front en Angular). */
 	private final List<String> origenesPermitidos;
@@ -36,10 +58,15 @@ public class SecurityConfig {
 	/**
 	 * Crea la configuración.
 	 *
+	 * @param jwtAuthFilter      filtro de autenticación por JWT
+	 * @param userDetailsService servicio que carga los usuarios
 	 * @param origenesPermitidos orígenes permitidos para CORS; por defecto el
 	 *                           front local
 	 */
-	public SecurityConfig(@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos) {
+	public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService,
+			@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos) {
+		this.jwtAuthFilter = jwtAuthFilter;
+		this.userDetailsService = userDetailsService;
 		this.origenesPermitidos = origenesPermitidos;
 	}
 
@@ -76,7 +103,35 @@ public class SecurityConfig {
 						.accessDeniedHandler((req, res, e) -> escribirError(res, HttpServletResponse.SC_FORBIDDEN,
 								"No tienes permisos para esta operación")))
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authenticationProvider(authenticationProvider())
+				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
+	}
+
+	/**
+	 * Proveedor que autentica con correo y contraseña: carga el usuario con
+	 * {@link UserDetailsService} y compara la contraseña con BCrypt.
+	 *
+	 * @return proveedor de autenticación
+	 */
+	@Bean
+	public AuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
+	}
+
+	/**
+	 * Expone el {@link AuthenticationManager} para que el controlador de
+	 * autenticación pueda validar el correo y la contraseña en el login.
+	 *
+	 * @param config configuración de autenticación de Spring
+	 * @return administrador de autenticación
+	 * @throws Exception si Spring no puede crearlo
+	 */
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+		return config.getAuthenticationManager();
 	}
 
 	/**

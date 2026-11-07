@@ -171,6 +171,96 @@ class VerificacionCorreoServiceTest {
 		verifyNoInteractions(auditoriaService);
 	}
 
+	@Test
+	@DisplayName("Al iniciar sesión se envía un código por correo y solo se reenvía pasado un minuto")
+	void enviaElCodigoDeInicio() {
+		when(correoUtil.enviarCorreo(anyString(), anyString(), anyString())).thenReturn(true);
+
+		assertThat(servicio.enviarCodigoInicio(usuario, CORREO)).isEqualTo(VerificacionCorreoService.ENVIADO);
+		ArgumentCaptor<String> cuerpo = ArgumentCaptor.forClass(String.class);
+		verify(correoUtil).enviarCorreo(eq(CORREO), eq("Tu código de inicio de sesión - Marketplace Inversiones LR"),
+				cuerpo.capture());
+		assertThat(cuerpo.getValue()).contains("Hola Ana").contains("iniciar sesión").contains("15 minutos");
+		verify(auditoriaService).registrar(5L, AuditoriaService.CODIGO_VERIFICACION_ENVIADO,
+				AuditoriaService.ENTIDAD_USUARIO, 5L, ResultadoAuditoria.EXITOSO, "Código de inicio de sesión");
+
+		assertThat(servicio.enviarCodigoInicio(usuario, CORREO)).isEqualTo(VerificacionCorreoService.ESPERAR);
+
+		codigoRepo.findVigente(5L).orElseThrow().setFechaCreacion(LocalDateTime.now().minusMinutes(2));
+		assertThat(servicio.enviarCodigoInicio(usuario, CORREO)).isEqualTo(VerificacionCorreoService.ENVIADO);
+	}
+
+	@Test
+	@DisplayName("Si el código de inicio agotó sus intentos se envía otro sin esperar")
+	void codigoDeInicioAgotadoSeReemplaza() {
+		when(correoUtil.enviarCorreo(anyString(), anyString(), anyString())).thenReturn(true);
+		servicio.enviarCodigoInicio(usuario, CORREO);
+		codigoRepo.findVigente(5L).orElseThrow().setIntentos(5);
+
+		assertThat(servicio.enviarCodigoInicio(usuario, CORREO)).isEqualTo(VerificacionCorreoService.ENVIADO);
+		assertThat(codigoRepo.findVigente(5L).orElseThrow().getIntentos()).isZero();
+	}
+
+	@Test
+	@DisplayName("Si el correo de inicio no se puede enviar, el código igual queda guardado y se audita el error")
+	void correoDeInicioFallido() {
+		when(correoUtil.enviarCorreo(anyString(), anyString(), anyString())).thenReturn(false);
+
+		assertThat(servicio.enviarCodigoInicio(usuario, CORREO)).isEqualTo(VerificacionCorreoService.ENVIADO);
+
+		assertThat(codigoRepo.findVigente(5L)).isPresent();
+		verify(auditoriaService).registrar(5L, AuditoriaService.CODIGO_VERIFICACION_ENVIADO,
+				AuditoriaService.ENTIDAD_USUARIO, 5L, ResultadoAuditoria.ERROR, "No se pudo enviar el correo");
+	}
+
+	@Test
+	@DisplayName("El código de inicio correcto se acepta una sola vez")
+	void codigoDeInicioCorrecto() {
+		String codigo = enviarCodigoInicioYObtenerlo();
+
+		assertThat(servicio.verificarCodigoInicio(usuario, " " + codigo + " "))
+				.isEqualTo(VerificacionCorreoService.VERIFICADO);
+		assertThat(codigoRepo.findVigente(5L)).isEmpty();
+		assertThat(servicio.verificarCodigoInicio(usuario, codigo)).isEqualTo(VerificacionCorreoService.CODIGO_INVALIDO);
+	}
+
+	@Test
+	@DisplayName("El código de inicio incorrecto se rechaza y al quinto intento deja de servir")
+	void codigoDeInicioIncorrecto() {
+		String codigo = enviarCodigoInicioYObtenerlo();
+		String incorrecto = codigo.equals("000000") ? "111111" : "000000";
+
+		assertThat(servicio.verificarCodigoInicio(usuario, null)).isEqualTo(VerificacionCorreoService.CODIGO_INVALIDO);
+		for (int i = 0; i < 3; i++) {
+			assertThat(servicio.verificarCodigoInicio(usuario, incorrecto))
+					.isEqualTo(VerificacionCorreoService.CODIGO_INVALIDO);
+		}
+		assertThat(servicio.verificarCodigoInicio(usuario, incorrecto))
+				.isEqualTo(VerificacionCorreoService.INTENTOS_AGOTADOS);
+		assertThat(servicio.verificarCodigoInicio(usuario, codigo)).isEqualTo(VerificacionCorreoService.INTENTOS_AGOTADOS);
+	}
+
+	@Test
+	@DisplayName("El código de inicio vencido o inexistente no sirve")
+	void codigoDeInicioVencido() {
+		assertThat(servicio.verificarCodigoInicio(usuario, "123456")).isEqualTo(VerificacionCorreoService.CODIGO_INVALIDO);
+
+		String codigo = enviarCodigoInicioYObtenerlo();
+		codigoRepo.findVigente(5L).orElseThrow().setFechaExpiracion(LocalDateTime.now().minusSeconds(1));
+		assertThat(servicio.verificarCodigoInicio(usuario, codigo)).isEqualTo(VerificacionCorreoService.CODIGO_INVALIDO);
+	}
+
+	/**
+	 * Envía el código de inicio de sesión y lo saca del cuerpo del correo.
+	 *
+	 * @return código enviado
+	 */
+	private String enviarCodigoInicioYObtenerlo() {
+		when(correoUtil.enviarCorreo(anyString(), anyString(), anyString())).thenReturn(true);
+		servicio.enviarCodigoInicio(usuario, CORREO);
+		return codigoDe(cuerpoEnviado());
+	}
+
 	/**
 	 * Envía el código de bienvenida y lo saca del cuerpo del correo.
 	 *
