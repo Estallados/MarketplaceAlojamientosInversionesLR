@@ -35,6 +35,7 @@
 			estallados
 		</sonar.organization>
 		<jjwt.version>0.12.6</jjwt.version>
+		<jacoco.version>0.8.13</jacoco.version>
 		<!-- springdoc 3.0.x es la línea compatible con Spring Boot 4.0 -->
 		<springdoc.version>3.0.3</springdoc.version>
 		<!-- Clave AES solo para las pruebas (no protege datos reales); en ejecución se usa AES_SECRET_KEY -->
@@ -173,6 +174,27 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<!-- Cobertura de pruebas para SonarCloud: genera target/site/jacoco/jacoco.xml en verify -->
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>preparar-agente</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>reporte</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<!-- Las pruebas reciben la clave AES de prueba como variable de entorno, igual que en ejecución -->

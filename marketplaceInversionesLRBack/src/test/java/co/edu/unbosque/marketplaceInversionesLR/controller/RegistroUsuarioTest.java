@@ -232,6 +232,16 @@ class RegistroUsuarioTest {
 				.andExpect(jsonPath("$.message").value("No autenticado: token ausente, inválido o expirado"));
 	}
 
+	@Test
+	@DisplayName("La documentación de Swagger es pública e incluye el registro con sus respuestas de error")
+	void documentacionSwaggerPublica() throws Exception {
+		mockMvc.perform(get("/v3/api-docs"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.paths['/auth/register'].post.responses['201']").exists())
+				.andExpect(jsonPath("$.paths['/auth/register'].post.responses['409']").exists())
+				.andExpect(jsonPath("$.components.schemas.MensajeError").exists());
+	}
+
 	/**
 	 * Envía una petición de registro.
 	 *

@@ -50,6 +50,9 @@ public class SecurityConfig {
 	 * @return cadena de filtros de seguridad
 	 * @throws Exception si la configuración falla
 	 */
+	// java:S4502: CSRF se desactiva a propósito. La API no usa sesión ni cookies; el JWT viaja en
+	// el header Authorization, que el navegador no envía solo, así que no hay ataque CSRF posible.
+	@SuppressWarnings("java:S4502")
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		return http
