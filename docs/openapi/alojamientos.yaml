@@ -1,0 +1,523 @@
+openapi: 3.0.3
+info:
+  title: Alojamientos y publicaciones
+  version: 0.1.0
+  description: |
+    Contrato del servicio S03 Alojamientos y publicaciones (ver `docs/services/lista-servicios.md`).
+
+    | Requisito | HU | CA |
+    |---|---|---|
+    | RF-017 Crear publicación de alojamiento | HU-15 | CA-094, CA-097, CA-098 |
+    | RF-018 Gestión y actualización de publicación | HU-16, HU-17 | CA-098, CA-100, CA-101, CA-104, CA-108, CA-185 |
+    | RF-019 Consultar publicaciones registradas | HU-18, HU-19 | CA-093, CA-103 |
+    | RF-027 Gestión del estado de revisión del alojamiento | HU-17 | CA-157, CA-159 |
+    | RNF-004 Protección de operaciones | HU-16 | CA-113, CA-114 |
+    | RNF-022 Visualización de ubicación del alojamiento | HU-18 | CA-164 |
+
+    **Estados de una publicación (CA-104):** BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA y BLOQUEADA.
+    Este contrato cubre las transiciones que pide el anfitrión: enviar a revisión
+    (BORRADOR → PENDIENTE_REVISION, CA-157) y pausar (ACTIVA → PAUSADA, CA-108).
+    Aprobar, rechazar y bloquear las hace el administrador (S15, HU-11 y HU-32) y van en el
+    contrato de administración (parte 2).
+
+    **Permisos.** Crear exige el rol ANFITRION. Modificar una publicación o sus servicios
+    adicionales exige ser su propietario o ADMINISTRADOR (CA-113); cualquier otro usuario
+    recibe 403 (CA-101, CA-114). El token lo emite S01 (ver `identidad.yaml`).
+servers:
+  - url: /api
+    description: Backend del marketplace
+tags:
+  - name: Publicaciones
+    description: Crear, actualizar y consultar publicaciones
+  - name: Estados
+    description: Transiciones de estado que pide el anfitrión
+  - name: Servicios adicionales
+    description: Servicios adicionales con costo de una publicación
+paths:
+  /alojamientos:
+    post:
+      tags: [Publicaciones]
+      operationId: crearPublicacion
+      summary: Crear una publicación
+      description: |
+        HU-15, RF-017. Solo ANFITRION. La publicación queda en estado BORRADOR (CA-094).
+        Capacidad y precio por noche deben ser mayores que cero (CA-098).
+        La política de cancelación se asigna al crear la publicación.
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicacionEntrada'
+      responses:
+        '201':
+          description: Publicación creada en estado BORRADOR (CA-094)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publicacion'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+  /alojamientos/mios:
+    get:
+      tags: [Publicaciones]
+      operationId: consultarMisPublicaciones
+      summary: Consultar las publicaciones propias
+      description: HU-19, RF-019. Solo ANFITRION. Devuelve únicamente sus publicaciones con el estado de cada una (CA-103).
+      parameters:
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Publicaciones del anfitrión autenticado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaResumenPublicacion'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+  /alojamientos/{idAlojamiento}:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    get:
+      tags: [Publicaciones]
+      operationId: consultarPublicacion
+      summary: Consultar el detalle de una publicación
+      description: |
+        HU-18, RF-019. Cualquier usuario puede ver el detalle de una publicación ACTIVA (CA-093),
+        incluida la ubicación para el mapa (CA-164). Una publicación en otro estado solo la ven
+        su propietario y el ADMINISTRADOR; para los demás responde 404.
+      security:
+        - {}
+        - bearerJwt: []
+      responses:
+        '200':
+          description: Detalle de la publicación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publicacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    put:
+      tags: [Publicaciones]
+      operationId: actualizarPublicacion
+      summary: Actualizar una publicación
+      description: |
+        HU-16, RF-018. Propietario o ADMINISTRADOR (CA-113). Guarda y devuelve la información
+        actualizada (CA-100). Capacidad y precio deben ser mayores que cero (CA-098).
+        Un cambio de política de cancelación aplica solo a reservas nuevas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicacionEntrada'
+      responses:
+        '200':
+          description: Publicación actualizada (CA-100)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publicacion'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+  /alojamientos/{idAlojamiento}/envio-revision:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    post:
+      tags: [Estados]
+      operationId: enviarARevision
+      summary: Enviar la publicación a revisión
+      description: |
+        HU-17, RF-027. Propietario. Cambia de BORRADOR a PENDIENTE_REVISION (CA-157); pasa a
+        ACTIVA solo cuando un administrador la aprueba (HU-32). Si falta información mínima,
+        incluida la política de cancelación, responde 422 con los datos faltantes (CA-097).
+      responses:
+        '200':
+          description: Publicación en PENDIENTE_REVISION (CA-157)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publicacion'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/TransicionNoPermitida'
+        '422':
+          description: Falta información mínima; `detalles` indica los datos faltantes (CA-097)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /alojamientos/{idAlojamiento}/pausa:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    post:
+      tags: [Estados]
+      operationId: pausarPublicacion
+      summary: Pausar una publicación activa
+      description: |
+        HU-17, RF-018. Propietario. Cambia de ACTIVA a PAUSADA (CA-108). Una publicación PAUSADA
+        no acepta nuevas reservas ni aparece como disponible (CA-159).
+      responses:
+        '200':
+          description: Publicación en PAUSADA (CA-108)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Publicacion'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/TransicionNoPermitida'
+  /alojamientos/{idAlojamiento}/servicios-adicionales:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    post:
+      tags: [Servicios adicionales]
+      operationId: registrarServicioAdicional
+      summary: Registrar un servicio adicional
+      description: |
+        HU-16, RF-018, CA-185. Propietario o ADMINISTRADOR. Nombre obligatorio y costo mayor que
+        cero. El cambio aplica a nuevas cotizaciones y no altera las reservas confirmadas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicioAdicionalEntrada'
+      responses:
+        '201':
+          description: Servicio registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicioAdicional'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+  /alojamientos/{idAlojamiento}/servicios-adicionales/{idServicio}:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+      - name: idServicio
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    put:
+      tags: [Servicios adicionales]
+      operationId: modificarServicioAdicional
+      summary: Modificar un servicio adicional
+      description: HU-16, CA-185. Propietario o ADMINISTRADOR; si no, 403 (CA-101).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServicioAdicionalEntrada'
+      responses:
+        '200':
+          description: Servicio modificado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServicioAdicional'
+        '400':
+          $ref: '#/components/responses/DatosInvalidos'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    delete:
+      tags: [Servicios adicionales]
+      operationId: eliminarServicioAdicional
+      summary: Eliminar un servicio adicional
+      description: HU-16, CA-185. Propietario o ADMINISTRADOR; si no, 403 (CA-101).
+      responses:
+        '204':
+          description: Servicio eliminado
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+security:
+  - bearerJwt: []
+components:
+  securitySchemes:
+    bearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token emitido por S01 (ver identidad.yaml). Incluye el identificador del usuario y su rol.
+  parameters:
+    IdAlojamiento:
+      name: idAlojamiento
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Identificador único de la solicitud. Un reenvío con la misma clave no crea una segunda publicación (RNF-008, CA-140).
+      schema:
+        type: string
+        maxLength: 100
+    Pagina:
+      name: pagina
+      in: query
+      required: false
+      description: Número de página, desde 0
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Tamano:
+      name: tamano
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    DatosInvalidos:
+      description: Datos faltantes o inválidos; `detalles` indica cada campo (CA-098, RNF-013, CA-149)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoAutenticado:
+      description: Falta el token o no es válido (CA-134)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    SinPermiso:
+      description: El rol no lo permite o el usuario no es propietario ni ADMINISTRADOR (CA-101, CA-114, CA-131)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoEncontrado:
+      description: La publicación o el servicio no existe, o no es visible para el usuario
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TransicionNoPermitida:
+      description: El estado actual no permite la transición pedida (CA-104)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    EstadoPublicacion:
+      type: string
+      description: Estados permitidos (CA-104)
+      enum: [BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA, BLOQUEADA]
+    Ubicacion:
+      type: object
+      required: [direccion, ciudad]
+      properties:
+        direccion:
+          type: string
+        ciudad:
+          type: string
+        latitud:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Para mostrar el mapa (CA-164)
+        longitud:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Para mostrar el mapa (CA-164)
+    PublicacionEntrada:
+      type: object
+      description: |
+        Datos de la publicación (CA-094). Al crear se permite guardar un borrador incompleto;
+        la información mínima completa se exige al enviarla a revisión (CA-097).
+      required: [titulo, capacidad, precioPorNoche]
+      properties:
+        titulo:
+          type: string
+          minLength: 1
+        descripcion:
+          type: string
+        ubicacion:
+          $ref: '#/components/schemas/Ubicacion'
+        tipo:
+          type: string
+          description: Tipo de alojamiento, por ejemplo apartamento (CP-030)
+        capacidad:
+          type: integer
+          minimum: 1
+          description: Mayor que cero (CA-098)
+        precioPorNoche:
+          type: number
+          format: double
+          exclusiveMinimum: true
+          minimum: 0
+          description: Mayor que cero (CA-098)
+        servicios:
+          type: array
+          description: Servicios incluidos que se usan como filtro de búsqueda, por ejemplo Wi-Fi o parqueadero (CP-030)
+          items:
+            type: string
+        reglas:
+          type: string
+        idPoliticaCancelacion:
+          type: integer
+          format: int64
+          description: Política de cancelación asignada; obligatoria para enviar a revisión (HU-15)
+        imagenes:
+          type: array
+          description: Rutas o referencias de las imágenes (S03)
+          items:
+            type: string
+    Publicacion:
+      allOf:
+        - $ref: '#/components/schemas/PublicacionEntrada'
+        - type: object
+          required: [id, idAnfitrion, estado]
+          properties:
+            id:
+              type: integer
+              format: int64
+            idAnfitrion:
+              type: integer
+              format: int64
+            estado:
+              $ref: '#/components/schemas/EstadoPublicacion'
+            serviciosAdicionales:
+              type: array
+              items:
+                $ref: '#/components/schemas/ServicioAdicional'
+    ResumenPublicacion:
+      type: object
+      required: [id, titulo, estado]
+      properties:
+        id:
+          type: integer
+          format: int64
+        titulo:
+          type: string
+        ciudad:
+          type: string
+        tipo:
+          type: string
+        capacidad:
+          type: integer
+        precioPorNoche:
+          type: number
+          format: double
+        estado:
+          $ref: '#/components/schemas/EstadoPublicacion'
+        imagenPrincipal:
+          type: string
+    PaginaResumenPublicacion:
+      type: object
+      required: [contenido, pagina, tamano, totalElementos]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResumenPublicacion'
+        pagina:
+          type: integer
+        tamano:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+    ServicioAdicionalEntrada:
+      type: object
+      required: [nombre, costo]
+      properties:
+        nombre:
+          type: string
+          minLength: 1
+        costo:
+          type: number
+          format: double
+          exclusiveMinimum: true
+          minimum: 0
+          description: Costo positivo (CA-185)
+    ServicioAdicional:
+      allOf:
+        - $ref: '#/components/schemas/ServicioAdicionalEntrada'
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: integer
+              format: int64
+    Error:
+      type: object
+      description: Formato único de error. Debe ser el mismo en todos los contratos (parte 1 y parte 2).
+      required: [codigo, mensaje, fecha]
+      properties:
+        codigo:
+          type: string
+          description: Código estable del error, por ejemplo DATOS_INVALIDOS o TRANSICION_NO_PERMITIDA
+        mensaje:
+          type: string
+          description: Mensaje claro con el motivo del rechazo (CA-149)
+        detalles:
+          type: array
+          description: Un elemento por campo inválido o faltante (CA-097, CA-098)
+          items:
+            $ref: '#/components/schemas/ErrorCampo'
+        fecha:
+          type: string
+          format: date-time
+        ruta:
+          type: string
+    ErrorCampo:
+      type: object
+      required: [campo, mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string

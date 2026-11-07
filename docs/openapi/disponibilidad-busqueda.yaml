@@ -1,0 +1,453 @@
+openapi: 3.0.3
+info:
+  title: Disponibilidad y búsqueda
+  version: 0.1.0
+  description: |
+    Contrato de los servicios S04 Disponibilidad y S05 Búsqueda (ver `docs/services/lista-servicios.md`).
+
+    | Requisito | HU | CA |
+    |---|---|---|
+    | RF-025 Registrar y actualizar períodos disponibles | HU-20 | CA-115, CA-117, CA-118 |
+    | RF-026 Consultar disponibilidad | HU-21 | CA-119, CA-120 |
+    | RF-024 Búsqueda de alojamientos | HU-23 | CA-087 |
+    | RNF-018 Validación cronológica de fechas | HU-21 | CA-082 |
+
+    **Fechas.** Toda operación con llegada y salida exige que la salida sea posterior a la
+    llegada; si es igual o anterior responde 400 e indica que las fechas son inválidas (CA-082).
+
+    **Visibilidad.** La consulta de disponibilidad y la búsqueda solo tienen en cuenta
+    publicaciones ACTIVA (RF-024, RF-026). Una publicación PAUSADA o BLOQUEADA no aparece
+    como disponible (CA-159).
+
+    **Bloqueo por reserva.** El bloqueo del período al confirmar una reserva (RF-020) y su
+    liberación al cancelar los hacen S07 y S09 internamente; no tienen ruta pública en este contrato.
+
+    **Permisos.** Registrar, modificar y eliminar períodos exige ser el ANFITRION propietario
+    del alojamiento (RNF-004). La consulta de disponibilidad y la búsqueda son públicas.
+servers:
+  - url: /api
+    description: Backend del marketplace
+tags:
+  - name: Períodos de disponibilidad
+    description: Períodos que el anfitrión abre para reservas (S04)
+  - name: Disponibilidad
+    description: Consulta de disponibilidad para unas fechas (S04)
+  - name: Búsqueda
+    description: Búsqueda de alojamientos con filtros (S05)
+paths:
+  /alojamientos/{idAlojamiento}/periodos:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    get:
+      tags: [Períodos de disponibilidad]
+      operationId: listarPeriodos
+      summary: Listar los períodos de disponibilidad de un alojamiento
+      description: HU-20. Propietario. Muestra cada período con su estado (RNF-014).
+      responses:
+        '200':
+          description: Períodos del alojamiento
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Periodo'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    post:
+      tags: [Períodos de disponibilidad]
+      operationId: registrarPeriodo
+      summary: Registrar un período disponible
+      description: |
+        HU-20, RF-025. Propietario. Guarda las fechas asociadas al alojamiento (CA-115).
+        La fecha de fin debe ser posterior a la de inicio (CA-082).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodoEntrada'
+      responses:
+        '201':
+          description: Período registrado y asociado al alojamiento (CA-115)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Periodo'
+        '400':
+          $ref: '#/components/responses/FechasInvalidas'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+  /alojamientos/{idAlojamiento}/periodos/{idPeriodo}:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+      - name: idPeriodo
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+    put:
+      tags: [Períodos de disponibilidad]
+      operationId: actualizarPeriodo
+      summary: Modificar un período disponible
+      description: |
+        HU-20, RF-025. Propietario. Guarda y devuelve la disponibilidad actualizada si el
+        período no está reservado (CA-117). Si el cambio afecta una reserva, responde 409 (CA-118).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodoEntrada'
+      responses:
+        '200':
+          description: Período actualizado (CA-117)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Periodo'
+        '400':
+          $ref: '#/components/responses/FechasInvalidas'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/PeriodoReservado'
+    delete:
+      tags: [Períodos de disponibilidad]
+      operationId: eliminarPeriodo
+      summary: Eliminar un período disponible
+      description: HU-20. Propietario. Si el período tiene una reserva, responde 409 (CA-118).
+      responses:
+        '204':
+          description: Período eliminado
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/SinPermiso'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/PeriodoReservado'
+  /alojamientos/{idAlojamiento}/disponibilidad:
+    parameters:
+      - $ref: '#/components/parameters/IdAlojamiento'
+    get:
+      tags: [Disponibilidad]
+      operationId: consultarDisponibilidad
+      summary: Consultar si un alojamiento está disponible para unas fechas
+      description: |
+        HU-21, RF-026. Responde disponible si las fechas están dentro de un período disponible
+        y sin reservas superpuestas (CA-119); si incluyen fechas reservadas o no disponibles,
+        responde no disponible (CA-120). La respuesta corresponde al momento de la consulta.
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/Llegada'
+        - $ref: '#/components/parameters/Salida'
+      responses:
+        '200':
+          description: Resultado de la consulta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Disponibilidad'
+        '400':
+          $ref: '#/components/responses/FechasInvalidas'
+        '404':
+          description: El alojamiento no existe o no está ACTIVA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /busqueda/alojamientos:
+    get:
+      tags: [Búsqueda]
+      operationId: buscarAlojamientos
+      summary: Buscar alojamientos con filtros
+      description: |
+        HU-23, RF-024, CA-087. Muestra solo publicaciones ACTIVA que cumplan todos los filtros
+        indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por
+        noche dentro del rango y servicios seleccionados. Los filtros se pueden combinar; con
+        varios servicios, el alojamiento debe ofrecerlos todos. Si se envía una fecha, se deben
+        enviar las dos.
+      security: []
+      parameters:
+        - name: ciudad
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: llegada
+          in: query
+          required: false
+          description: Fecha de llegada (AAAA-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: salida
+          in: query
+          required: false
+          description: Fecha de salida (AAAA-MM-DD); posterior a la llegada (CA-082)
+          schema:
+            type: string
+            format: date
+        - name: huespedes
+          in: query
+          required: false
+          description: Cantidad de huéspedes; se muestran alojamientos con capacidad suficiente
+          schema:
+            type: integer
+            minimum: 1
+        - name: tipo
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: precioMinimo
+          in: query
+          required: false
+          description: Precio mínimo por noche
+          schema:
+            type: number
+            format: double
+            minimum: 0
+        - name: precioMaximo
+          in: query
+          required: false
+          description: Precio máximo por noche
+          schema:
+            type: number
+            format: double
+            minimum: 0
+        - name: servicios
+          in: query
+          required: false
+          description: Servicios requeridos; el alojamiento debe ofrecerlos todos
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+        - $ref: '#/components/parameters/Pagina'
+        - $ref: '#/components/parameters/Tamano'
+      responses:
+        '200':
+          description: Publicaciones ACTIVA que cumplen los filtros
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginaResultadoBusqueda'
+        '400':
+          description: Fechas inválidas o filtros incoherentes, por ejemplo precio mínimo mayor que el máximo (CA-082)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+security:
+  - bearerJwt: []
+components:
+  securitySchemes:
+    bearerJwt:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token emitido por S01 (ver identidad.yaml). Incluye el identificador del usuario y su rol.
+  parameters:
+    IdAlojamiento:
+      name: idAlojamiento
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    Llegada:
+      name: llegada
+      in: query
+      required: true
+      description: Fecha de llegada (AAAA-MM-DD)
+      schema:
+        type: string
+        format: date
+    Salida:
+      name: salida
+      in: query
+      required: true
+      description: Fecha de salida (AAAA-MM-DD); posterior a la llegada (CA-082)
+      schema:
+        type: string
+        format: date
+    Pagina:
+      name: pagina
+      in: query
+      required: false
+      description: Número de página, desde 0
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Tamano:
+      name: tamano
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  responses:
+    FechasInvalidas:
+      description: La salida no es posterior a la llegada u otro dato es inválido (CA-082, CA-149)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoAutenticado:
+      description: Falta el token o no es válido (CA-134)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    SinPermiso:
+      description: El usuario no es el anfitrión propietario del alojamiento (RNF-004, CA-114)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoEncontrado:
+      description: El alojamiento o el período no existe
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    PeriodoReservado:
+      description: El cambio afecta una reserva existente y se rechaza (CA-118)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    EstadoPeriodo:
+      type: string
+      description: Estado del período visible para el anfitrión (RNF-014)
+      enum: [DISPONIBLE, RESERVADO, BLOQUEADO]
+    PeriodoEntrada:
+      type: object
+      required: [fechaInicio, fechaFin]
+      properties:
+        fechaInicio:
+          type: string
+          format: date
+        fechaFin:
+          type: string
+          format: date
+          description: Posterior a fechaInicio (CA-082)
+    Periodo:
+      allOf:
+        - $ref: '#/components/schemas/PeriodoEntrada'
+        - type: object
+          required: [id, idAlojamiento, estado]
+          properties:
+            id:
+              type: integer
+              format: int64
+            idAlojamiento:
+              type: integer
+              format: int64
+            estado:
+              $ref: '#/components/schemas/EstadoPeriodo'
+    Disponibilidad:
+      type: object
+      required: [idAlojamiento, llegada, salida, disponible]
+      properties:
+        idAlojamiento:
+          type: integer
+          format: int64
+        llegada:
+          type: string
+          format: date
+        salida:
+          type: string
+          format: date
+        disponible:
+          type: boolean
+          description: true si el período está libre (CA-119); false si incluye fechas reservadas o no disponibles (CA-120)
+    ResultadoBusqueda:
+      type: object
+      required: [id, titulo, ciudad, tipo, capacidad, precioPorNoche]
+      properties:
+        id:
+          type: integer
+          format: int64
+        titulo:
+          type: string
+        ciudad:
+          type: string
+        tipo:
+          type: string
+        capacidad:
+          type: integer
+        precioPorNoche:
+          type: number
+          format: double
+        servicios:
+          type: array
+          items:
+            type: string
+        imagenPrincipal:
+          type: string
+    PaginaResultadoBusqueda:
+      type: object
+      required: [contenido, pagina, tamano, totalElementos]
+      properties:
+        contenido:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResultadoBusqueda'
+        pagina:
+          type: integer
+        tamano:
+          type: integer
+        totalElementos:
+          type: integer
+          format: int64
+    Error:
+      type: object
+      description: Formato único de error. Debe ser el mismo en todos los contratos (parte 1 y parte 2).
+      required: [codigo, mensaje, fecha]
+      properties:
+        codigo:
+          type: string
+          description: Código estable del error, por ejemplo FECHAS_INVALIDAS o PERIODO_RESERVADO
+        mensaje:
+          type: string
+          description: Mensaje claro con el motivo del rechazo (CA-149)
+        detalles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorCampo'
+        fecha:
+          type: string
+          format: date-time
+        ruta:
+          type: string
+    ErrorCampo:
+      type: object
+      required: [campo, mensaje]
+      properties:
+        campo:
+          type: string
+        mensaje:
+          type: string
