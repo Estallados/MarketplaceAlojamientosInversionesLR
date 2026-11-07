@@ -4,7 +4,8 @@ info:
   version: 0.1.0
   description: |
     Contrato de los servicios S01 Identidad y acceso y S02 Gestión de usuarios
-    (ver `docs/services/lista-servicios.md`).
+    (ver `docs/services/lista-servicios.md`). Rutas, campos y códigos alineados con el
+    borrador `marketplace-backend` (AuthController, UsuarioController y SegundoFactorController).
 
     | Requisito | HU | CA |
     |---|---|---|
@@ -19,35 +20,41 @@ info:
     | RNF-005 Validación de contraseñas | — | CA-135 |
     | RNF-023 Autenticación multifactor | HU-30 | CA-174, CA-177, CA-178 |
 
-    **Autenticación.** S01 emite un JWT que incluye el rol del usuario (HUESPED,
-    ANFITRION o ADMINISTRADOR). Las operaciones protegidas lo reciben en la cabecera
-    `Authorization: Bearer <token>`. Sin token válido responden 401 (CA-037, CA-134);
-    con un rol no permitido responden 403 (CA-131).
+    **Autenticación.** Las rutas `/auth/**` son públicas. Las demás exigen el JWT en
+    `Authorization: Bearer <token>`; sin token válido responden 401 (CA-037, CA-134) y con
+    un rol no permitido, 403 (CA-131).
 
-    **Datos propios.** El perfil, el estado de la cuenta y el segundo factor solo se
-    exponen en `/usuarios/me`: la API no ofrece rutas para leer o modificar la cuenta de
-    otro usuario (CA-049, CA-053, CA-133). La restricción de cuentas la decide el
-    administrador y queda en el contrato de administración (parte 2).
+    **Datos propios.** El perfil, la desactivación y el segundo factor actúan siempre sobre
+    el usuario del token, nunca sobre un id enviado en la petición (CA-049, CA-053, CA-133).
+
+    **Respuestas de error.** Todas usan `{"message": "..."}` (esquema `Mensaje`). Los errores
+    de seguridad agregan `status`.
+
+    **Fuera de las HU.** La verificación del correo con código (registro e inicio de sesión)
+    y el inicio de sesión con Google están en el borrador y en la responsabilidad de S01, pero
+    no en las HU de este contrato. Las rutas de administración de usuarios (crear administrador,
+    listar, consultar por id o correo, restringir) van en el contrato de administración (parte 2).
 servers:
-  - url: /api
-    description: Backend del marketplace
+  - url: /
+    description: Raíz del backend, sin prefijo (en local, http://localhost:8081)
 tags:
   - name: Autenticación
-    description: Registro, inicio de sesión y recuperación de contraseña (S01)
+    description: Registro, verificación del correo, inicio de sesión, recuperación y reactivación (S01)
   - name: Perfil
     description: Perfil y estado de la cuenta propia (S02)
   - name: Segundo factor
     description: Autenticación multifactor TOTP (S01, RNF-023)
 paths:
-  /auth/registro:
+  /auth/register:
     post:
       tags: [Autenticación]
-      operationId: registrarUsuario
-      summary: Registrar un usuario con su rol
+      operationId: registrar
+      summary: Registrarse como HUESPED o ANFITRION
       description: |
-        HU-06, RF-001. Crea la cuenta con el rol seleccionado y la deja en estado ACTIVO (CA-030).
-        Si faltan datos obligatorios, responde 400 con los campos faltantes (CA-031).
-        La contraseña debe cumplir las condiciones mínimas de RNF-005 (CA-135).
+        HU-06, RF-001. Crea la cuenta con el rol pedido (HUESPED por defecto) y envía un código
+        de verificación al correo; el token se obtiene en `/auth/verificar` (CA-030).
+        Si faltan datos o son inválidos responde 400 (CA-031). La contraseña debe cumplir
+        RNF-005 (CA-135). Nunca crea administradores.
       security: []
       requestBody:
         required: true
@@ -57,30 +64,112 @@ paths:
               $ref: '#/components/schemas/RegistroEntrada'
       responses:
         '201':
-          description: Cuenta creada (CA-030)
+          description: Usuario registrado; se envió el código de verificación (CA-030)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Usuario'
+                $ref: '#/components/schemas/RegistroRespuesta'
         '400':
-          $ref: '#/components/responses/DatosInvalidos'
-        '409':
-          description: Ya existe una cuenta con ese correo
+          description: Datos incompletos o inválidos (CA-031) o contraseña débil (CA-135)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Mensaje'
+        '403':
+          description: Solo puedes registrarte como HUESPED o ANFITRION.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '409':
+          description: Ya existe un usuario con ese correo electrónico.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /auth/verificar:
+    post:
+      tags: [Autenticación]
+      operationId: verificarCorreo
+      summary: Verificar el correo con el código recibido
+      description: El código vence a los 15 minutos y admite 5 intentos. Devuelve el token de sesión.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodigoCorreoEntrada'
+      responses:
+        '200':
+          description: Correo verificado. Si la cuenta tiene segundo factor, no trae token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sesion'
+        '400':
+          description: Faltan datos o el código no es válido o ya venció
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '409':
+          description: El correo ya está verificado. Inicia sesión.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '429':
+          description: Superaste los intentos permitidos para este código.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /auth/reenviarcodigo:
+    post:
+      tags: [Autenticación]
+      operationId: reenviarCodigo
+      summary: Reenviar el código de verificación del correo
+      description: Invalida el código anterior. Solo se permite una vez por minuto. Responde igual exista o no la cuenta.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorreoEntrada'
+      responses:
+        '200':
+          description: Si la cuenta existe y no está verificada, se envió un código nuevo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Debes enviar el correo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '429':
+          description: Espera un minuto antes de pedir otro código.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
   /auth/login:
     post:
       tags: [Autenticación]
-      operationId: iniciarSesion
+      operationId: login
       summary: Iniciar sesión
       description: |
-        HU-07, RF-008. Con credenciales válidas devuelve el token y el rol (CA-034).
-        Si la cuenta tiene el segundo factor habilitado, no entrega el token de acceso:
-        devuelve `requiereSegundoFactor: true` y un token temporal para completar el
-        acceso en `/auth/login/segundo-factor` (CA-174). Si está deshabilitado, sigue
-        el mecanismo normal (CA-177).
+        HU-07, RF-008. Con credenciales válidas devuelve `{token, rol, correo}` (CA-034).
+        Es una sola ruta en varios pasos:
+        - Si la cuenta tiene segundo factor y no se envía `codigo`, responde 401 con
+          `requiereSegundoFactor: true`; se repite la petición con el código TOTP (CA-174).
+        - Si no tiene segundo factor (y no es ADMIN), en cada inicio de sesión se envía un código
+          al correo: sin `codigo` responde 401 con `requiereCodigoCorreo: true` (CA-177).
+        - Si el correo no está verificado responde 403 con `requiereVerificacion: true`.
       security: []
       requestBody:
         required: true
@@ -90,109 +179,141 @@ paths:
               $ref: '#/components/schemas/LoginEntrada'
       responses:
         '200':
-          description: Credenciales válidas
+          description: Sesión iniciada (CA-034)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginRespuesta'
+                $ref: '#/components/schemas/Sesion'
         '400':
-          $ref: '#/components/responses/DatosInvalidos'
-        '401':
-          description: Credenciales incorrectas (CA-035)
+          description: Debes enviar el correo y la contraseña.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          description: Credenciales inválidas (CA-035), o falta o es incorrecto el código del segundo factor o del correo (CA-174)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasoPendienteLogin'
         '403':
-          description: La cuenta está restringida o inactiva
+          description: Correo sin verificar (requiereVerificacion) o cuenta restringida o desactivada
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /auth/login/segundo-factor:
-    post:
-      tags: [Segundo factor]
-      operationId: validarSegundoFactor
-      summary: Completar el inicio de sesión con el segundo factor
-      description: HU-30, RNF-023. Concede el acceso solo si el código es válido (CA-174).
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SegundoFactorEntrada'
-      responses:
-        '200':
-          description: Código válido; acceso concedido
+                $ref: '#/components/schemas/PasoPendienteLogin'
+        '429':
+          description: Superaste los intentos permitidos para el código del correo.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LoginRespuesta'
-        '400':
-          $ref: '#/components/responses/DatosInvalidos'
-        '401':
-          description: Código incorrecto o token temporal vencido; se rechaza el inicio de sesión (CA-174)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /auth/recuperacion:
+                $ref: '#/components/schemas/PasoPendienteLogin'
+  /auth/recuperar:
     post:
       tags: [Autenticación]
       operationId: solicitarRecuperacion
-      summary: Iniciar la recuperación de contraseña (simulada)
+      summary: Solicitar la recuperación de contraseña
       description: |
-        HU-08, RF-009, CA-038. El proceso es simulado y no usa un mecanismo externo:
-        en lugar de enviar un correo, la respuesta incluye el token de recuperación.
+        HU-08, RF-009, CA-038. Genera un token de recuperación válido por 30 minutos. Responde igual
+        exista o no la cuenta, para no revelar qué correos están registrados.
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RecuperacionEntrada'
+              $ref: '#/components/schemas/CorreoEntrada'
       responses:
         '200':
-          description: Solicitud procesada
+          description: Si el correo está registrado, se generó el enlace de recuperación
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RecuperacionRespuesta'
+                $ref: '#/components/schemas/Mensaje'
         '400':
-          $ref: '#/components/responses/DatosInvalidos'
-        '404':
-          $ref: '#/components/responses/NoEncontrado'
-  /auth/recuperacion/confirmacion:
+          description: Debes enviar el correo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /auth/restablecer:
     post:
       tags: [Autenticación]
-      operationId: confirmarRecuperacion
-      summary: Confirmar la recuperación con la nueva contraseña
-      description: HU-08, CA-038. La nueva contraseña debe cumplir RNF-005 (CA-135).
+      operationId: restablecerContrasenia
+      summary: Restablecer la contraseña con el token de recuperación
+      description: HU-08, CA-038. La contraseña nueva debe cumplir RNF-005 (CA-135).
       security: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ConfirmacionRecuperacionEntrada'
+              $ref: '#/components/schemas/RestablecerEntrada'
       responses:
-        '204':
-          description: Contraseña actualizada; el proceso queda confirmado
-        '400':
-          $ref: '#/components/responses/DatosInvalidos'
-        '401':
-          description: Token de recuperación inválido o vencido
+        '200':
+          description: Contraseña actualizada. Ya puedes iniciar sesión.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /usuarios/me:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: Token inválido o vencido, contraseña débil o faltan datos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /auth/reactivar:
+    post:
+      tags: [Autenticación]
+      operationId: reactivarCuenta
+      summary: Reactivar la cuenta propia
+      description: |
+        HU-10, RF-012, CA-050. Reactiva una cuenta INACTIVA (desactivada por su dueño) e inicia
+        sesión. Una cuenta RESTRINGIDA por un administrador no puede reactivarse por esta vía.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CredencialesEntrada'
+      responses:
+        '200':
+          description: Cuenta reactivada; incluye el nuevo estado. Si tiene segundo factor, no trae token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sesion'
+        '400':
+          description: Debes enviar el correo y la contraseña.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          description: Correo o contraseña inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '403':
+          description: La cuenta fue restringida por un administrador y no puede reactivarse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '409':
+          description: La cuenta ya está activa.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /usuarios/perfil:
     get:
       tags: [Perfil]
-      operationId: consultarPerfil
+      operationId: miPerfil
       summary: Consultar el perfil propio
-      description: HU-09, RF-010. Muestra los datos básicos de la cuenta autenticada (CA-042). Sin sesión, 401 (CA-044).
+      description: HU-09, RF-010. Datos básicos de la cuenta del token (CA-042). Sin sesión, 401 (CA-044).
       responses:
         '200':
           description: Perfil del usuario autenticado
@@ -202,14 +323,15 @@ paths:
                 $ref: '#/components/schemas/Usuario'
         '401':
           $ref: '#/components/responses/NoAutenticado'
-    patch:
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+    put:
       tags: [Perfil]
       operationId: actualizarPerfil
       summary: Actualizar el perfil propio
       description: |
-        HU-09, RF-011. Guarda los cambios válidos y devuelve el perfil actualizado (CA-046).
-        Con datos inválidos o incompletos responde 400 (CA-047). Solo modifica la cuenta
-        autenticada (CA-049).
+        HU-09, RF-011. Solo cambia nombre y teléfono; los demás campos enviados se ignoran (CA-046).
+        Con datos inválidos responde 400 (CA-047). Solo actúa sobre la cuenta del token (CA-049).
       requestBody:
         required: true
         content:
@@ -218,256 +340,325 @@ paths:
               $ref: '#/components/schemas/PerfilEntrada'
       responses:
         '200':
-          description: Perfil actualizado (CA-046)
+          description: Perfil actualizado correctamente.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Usuario'
+                $ref: '#/components/schemas/Mensaje'
         '400':
-          $ref: '#/components/responses/DatosInvalidos'
+          description: Envía un nombre no vacío (máximo 255 caracteres) y/o un teléfono de 7 a 15 dígitos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
         '401':
           $ref: '#/components/responses/NoAutenticado'
-  /usuarios/me/estado:
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+  /usuarios/perfil/desactivar:
     patch:
       tags: [Perfil]
-      operationId: cambiarEstadoCuenta
-      summary: Activar o desactivar la cuenta propia
+      operationId: desactivarCuenta
+      summary: Desactivar la cuenta propia
       description: |
-        HU-10, RF-012. Cambia la cuenta entre ACTIVO e INACTIVO y devuelve el nuevo estado (CA-050).
-        Solo actúa sobre la cuenta autenticada (CA-053). El estado RESTRINGIDO lo asigna el
-        administrador y no se puede cambiar desde aquí.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EstadoCuentaEntrada'
+        HU-10, RF-012. Pasa la cuenta del token a INACTIVO y devuelve el nuevo estado (CA-050, CA-053).
+        Se reactiva con `POST /auth/reactivar`.
       responses:
         '200':
-          description: Estado actualizado (CA-050)
+          description: Cuenta desactivada correctamente
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Usuario'
-        '400':
-          $ref: '#/components/responses/DatosInvalidos'
+                $ref: '#/components/schemas/CambioEstado'
         '401':
           $ref: '#/components/responses/NoAutenticado'
-        '409':
-          description: La cuenta está RESTRINGIDA y su estado no se puede cambiar
+        '403':
+          description: Esta cuenta no se puede desactivar.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  /usuarios/me/segundo-factor:
+                $ref: '#/components/schemas/Mensaje'
+        '404':
+          $ref: '#/components/responses/UsuarioNoEncontrado'
+  /usuarios/segundofactor/activar:
     post:
       tags: [Segundo factor]
       operationId: activarSegundoFactor
-      summary: Iniciar la activación del segundo factor
-      description: |
-        HU-30, RNF-023. Genera el secreto TOTP de la cuenta autenticada. La activación se
-        completa al confirmar un código en `/usuarios/me/segundo-factor/confirmacion`.
-        La configuración queda asociada solo a esa cuenta (CA-178).
+      summary: Generar el secreto TOTP (paso 1)
+      description: HU-30, RNF-023. Devuelve el secreto y la URI otpauth para la app autenticadora (CA-178).
       responses:
         '200':
-          description: Secreto generado
+          description: Secreto generado; la URI se muestra como código QR
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ActivacionSegundoFactor'
+                $ref: '#/components/schemas/SecretoTotp'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '409':
-          description: El segundo factor ya está habilitado
+          description: El segundo factor ya está habilitado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      tags: [Segundo factor]
-      operationId: deshabilitarSegundoFactor
-      summary: Deshabilitar el segundo factor
-      description: HU-30. Después, el inicio de sesión sigue el mecanismo normal (CA-177).
-      responses:
-        '204':
-          description: Segundo factor deshabilitado
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-  /usuarios/me/segundo-factor/confirmacion:
+                $ref: '#/components/schemas/Mensaje'
+  /usuarios/segundofactor/confirmar:
     post:
       tags: [Segundo factor]
       operationId: confirmarSegundoFactor
-      summary: Confirmar la activación con un código válido
-      description: HU-30, CA-178.
+      summary: Confirmar la activación con un código (paso 2)
+      description: HU-30, CA-178. La configuración queda asociada solo a la cuenta del token.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CodigoTotp'
+              $ref: '#/components/schemas/CodigoEntrada'
       responses:
-        '204':
-          description: Segundo factor habilitado para la cuenta
-        '400':
-          $ref: '#/components/responses/DatosInvalidos'
-        '401':
-          $ref: '#/components/responses/NoAutenticado'
-        '422':
-          description: El código no es válido; el segundo factor no se habilita
+        '200':
+          description: Segundo factor habilitado.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: El código no es válido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          description: Primero solicita la activación del segundo factor.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /usuarios/segundofactor/desactivar:
+    post:
+      tags: [Segundo factor]
+      operationId: desactivarSegundoFactor
+      summary: Deshabilitar el segundo factor con un código actual
+      description: HU-30. Después, el inicio de sesión sigue el mecanismo normal (CA-177).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CodigoEntrada'
+      responses:
+        '200':
+          description: Segundo factor deshabilitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '400':
+          description: El código no es válido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '409':
+          description: El segundo factor no está habilitado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
 security:
-  - bearerJwt: []
+  - bearerAuth: []
 components:
   securitySchemes:
-    bearerJwt:
+    bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: Token emitido por S01. Incluye el identificador del usuario y su rol.
+      description: Token entregado por /auth/login, /auth/verificar o /auth/reactivar.
   responses:
-    DatosInvalidos:
-      description: Datos faltantes o inválidos; `detalles` indica cada campo (RNF-013, CA-149)
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
     NoAutenticado:
-      description: Falta el token o no es válido (CA-037, CA-044, CA-134)
+      description: 'No autenticado: token ausente, inválido o expirado (CA-037, CA-044, CA-134)'
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
-    NoEncontrado:
-      description: El recurso no existe
+            $ref: '#/components/schemas/Mensaje'
+    UsuarioNoEncontrado:
+      description: Usuario no encontrado.
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: '#/components/schemas/Mensaje'
   schemas:
     Rol:
       type: string
-      enum: [HUESPED, ANFITRION, ADMINISTRADOR]
-    EstadoCuenta:
+      description: Roles del borrador. Los documentos de requisitos llaman ADMINISTRADOR al rol ADMIN.
+      enum: [ADMIN, HUESPED, ANFITRION]
+    EstadoUsuario:
       type: string
-      description: Estados de la cuenta definidos en S02.
       enum: [ACTIVO, INACTIVO, RESTRINGIDO]
-    Contrasena:
+    Contrasenia:
       type: string
       format: password
-      description: Debe cumplir las condiciones mínimas de seguridad de RNF-005 (CA-135). Por definir el detalle de las condiciones.
+      minLength: 8
+      maxLength: 64
+      description: Entre 8 y 64 caracteres, con una mayúscula, una minúscula, un número y un símbolo (RNF-005, CA-135).
+    Telefono:
+      type: string
+      pattern: '^[0-9]{7,15}$'
+      description: De 7 a 15 dígitos
     RegistroEntrada:
       type: object
-      required: [nombre, correo, contrasena, rol]
+      required: [nombre, correo, contrasenia]
       properties:
         nombre:
           type: string
           minLength: 1
+          maxLength: 255
         correo:
           type: string
           format: email
-        contrasena:
-          $ref: '#/components/schemas/Contrasena'
+          maxLength: 150
+        contrasenia:
+          $ref: '#/components/schemas/Contrasenia'
+        telefono:
+          $ref: '#/components/schemas/Telefono'
         rol:
           type: string
-          description: Rol seleccionado al registrarse. CP-001 usa HUESPED o ANFITRION.
+          description: HUESPED por defecto
           enum: [HUESPED, ANFITRION]
-    LoginEntrada:
+    RegistroRespuesta:
       type: object
-      required: [correo, contrasena]
+      required: [message, correo, requiereVerificacion]
       properties:
+        message:
+          type: string
         correo:
           type: string
           format: email
-        contrasena:
-          type: string
-          format: password
-    LoginRespuesta:
-      type: object
-      required: [requiereSegundoFactor]
-      properties:
-        requiereSegundoFactor:
+        requiereVerificacion:
           type: boolean
-          description: true si falta validar el segundo factor (CA-174)
-        token:
-          type: string
-          description: JWT de acceso. Solo viene cuando requiereSegundoFactor es false.
-        rol:
-          $ref: '#/components/schemas/Rol'
-        tokenTemporal:
-          type: string
-          description: Token para `/auth/login/segundo-factor`. Solo viene cuando requiereSegundoFactor es true.
-    SegundoFactorEntrada:
-      type: object
-      required: [tokenTemporal, codigo]
-      properties:
-        tokenTemporal:
-          type: string
-        codigo:
-          type: string
-          pattern: '^[0-9]{6}$'
-    CodigoTotp:
-      type: object
-      required: [codigo]
-      properties:
-        codigo:
-          type: string
-          pattern: '^[0-9]{6}$'
-    ActivacionSegundoFactor:
-      type: object
-      required: [secreto, uriOtpauth]
-      properties:
-        secreto:
-          type: string
-          description: Secreto TOTP en Base32
-        uriOtpauth:
-          type: string
-          description: URI otpauth:// para registrar la cuenta en una aplicación de autenticación
-    RecuperacionEntrada:
+    CorreoEntrada:
       type: object
       required: [correo]
       properties:
         correo:
           type: string
           format: email
-    RecuperacionRespuesta:
+    CodigoCorreoEntrada:
       type: object
-      required: [tokenRecuperacion]
+      required: [correo, codigo]
       properties:
-        tokenRecuperacion:
+        correo:
           type: string
-          description: Se devuelve en la respuesta porque la recuperación es simulada (RF-009)
-    ConfirmacionRecuperacionEntrada:
+          format: email
+        codigo:
+          type: string
+          pattern: '^[0-9]{6}$'
+    CredencialesEntrada:
       type: object
-      required: [tokenRecuperacion, nuevaContrasena]
+      required: [correo, contrasenia]
       properties:
-        tokenRecuperacion:
+        correo:
           type: string
-        nuevaContrasena:
-          $ref: '#/components/schemas/Contrasena'
+          format: email
+        contrasenia:
+          type: string
+          format: password
+    LoginEntrada:
+      type: object
+      required: [correo, contrasenia]
+      properties:
+        correo:
+          type: string
+          format: email
+        contrasenia:
+          type: string
+          format: password
+        codigo:
+          type: string
+          description: Código del segundo factor (TOTP) o el enviado al correo, en el segundo paso
+    Sesion:
+      type: object
+      description: Respuesta de sesión iniciada. Sin token si la cuenta tiene segundo factor y debe iniciar sesión con su código.
+      properties:
+        message:
+          type: string
+        token:
+          type: string
+        rol:
+          $ref: '#/components/schemas/Rol'
+        correo:
+          type: string
+          format: email
+        estado:
+          $ref: '#/components/schemas/EstadoUsuario'
+    PasoPendienteLogin:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        requiereSegundoFactor:
+          type: boolean
+          description: Falta o es incorrecto el código (CA-174)
+        requiereCodigoCorreo:
+          type: boolean
+          description: Se envió un código al correo y hay que repetir el login con él
+        metodoSegundoFactor:
+          type: string
+          enum: [CORREO]
+        requiereVerificacion:
+          type: boolean
+          description: El correo aún no está verificado
+    RestablecerEntrada:
+      type: object
+      required: [token, contrasenia]
+      properties:
+        token:
+          type: string
+        contrasenia:
+          $ref: '#/components/schemas/Contrasenia'
     PerfilEntrada:
       type: object
-      description: Datos básicos editables del perfil. CP-009 modifica nombre o teléfono.
+      description: Solo se aplican nombre y teléfono (CP-009); los demás campos se ignoran.
       properties:
         nombre:
           type: string
           minLength: 1
+          maxLength: 255
         telefono:
-          type: string
-    EstadoCuentaEntrada:
+          $ref: '#/components/schemas/Telefono'
+    CambioEstado:
       type: object
-      required: [estado]
+      required: [message, estado]
       properties:
-        estado:
+        message:
           type: string
-          enum: [ACTIVO, INACTIVO]
+        estado:
+          $ref: '#/components/schemas/EstadoUsuario'
+    CodigoEntrada:
+      type: object
+      required: [codigo]
+      properties:
+        codigo:
+          type: string
+          pattern: '^[0-9]{6}$'
+    SecretoTotp:
+      type: object
+      required: [secreto, uri]
+      properties:
+        secreto:
+          type: string
+          description: Secreto TOTP en Base32
+        uri:
+          type: string
+          description: URI otpauth:// para la app autenticadora
     Usuario:
       type: object
-      required: [id, nombre, correo, rol, estado]
+      required: [idUsuario, nombre, correo, rol, estado]
       properties:
-        id:
+        idUsuario:
           type: integer
           format: int64
         nombre:
@@ -480,35 +671,24 @@ components:
         rol:
           $ref: '#/components/schemas/Rol'
         estado:
-          $ref: '#/components/schemas/EstadoCuenta'
-        segundoFactorHabilitado:
+          $ref: '#/components/schemas/EstadoUsuario'
+        motivoRestriccion:
+          type: string
+        totpHabilitado:
           type: boolean
-    Error:
-      type: object
-      description: Formato único de error. Debe ser el mismo en todos los contratos (parte 1 y parte 2).
-      required: [codigo, mensaje, fecha]
-      properties:
-        codigo:
-          type: string
-          description: Código estable del error, por ejemplo DATOS_INVALIDOS o NO_AUTENTICADO
-        mensaje:
-          type: string
-          description: Mensaje claro con el motivo del rechazo (CA-149)
-        detalles:
-          type: array
-          description: Un elemento por campo inválido o faltante (CA-031, CA-047)
-          items:
-            $ref: '#/components/schemas/ErrorCampo'
-        fecha:
+        correoVerificado:
+          type: boolean
+        fechaRegistro:
           type: string
           format: date-time
-        ruta:
-          type: string
-    ErrorCampo:
+    Mensaje:
       type: object
-      required: [campo, mensaje]
+      description: Formato de respuesta y de error de toda la API (RNF-013, CA-149).
+      required: [message]
       properties:
-        campo:
+        message:
           type: string
-        mensaje:
-          type: string
+          description: Mensaje claro con el resultado o la causa del rechazo
+        status:
+          type: integer
+          description: Solo en los errores de seguridad (401 y 403)
