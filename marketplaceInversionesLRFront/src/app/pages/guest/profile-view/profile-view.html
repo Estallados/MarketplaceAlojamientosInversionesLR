@@ -1,0 +1,272 @@
+
+<main class="mx-auto max-w-[1050px] px-4 py-10 sm:px-8 sm:py-14">
+
+  <!-- ENCABEZADO -->
+  <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+        Inversiones LR
+      </p>
+
+      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">
+        Mi perfil
+      </h1>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Consulta y actualiza los datos básicos de tu cuenta.
+      </p>
+    </div>
+
+    @if (!editing()) {
+      <button
+        type="button"
+        (click)="startEditing()"
+        [disabled]="cargando()"
+        class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:opacity-50"
+      >
+        Editar perfil
+      </button>
+    }
+  </div>
+
+  <!-- MENSAJES -->
+  @if (error()) {
+    <div
+      role="alert"
+      class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700"
+    >
+      {{ error() }}
+    </div>
+  }
+
+  @if (mensaje()) {
+    <div
+      role="status"
+      class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800"
+    >
+      {{ mensaje() }}
+    </div>
+  }
+
+  @if (cargando()) {
+    <p class="mt-5 text-sm text-slate-500">
+      Consultando tus datos...
+    </p>
+  }
+
+  <!-- CONTENIDO -->
+  <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+
+    <!-- INFORMACIÓN PERSONAL -->
+    <section class="min-w-0 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8">
+
+      <div class="flex items-center gap-5 border-b border-slate-100 pb-7">
+        <span class="grid size-20 shrink-0 place-items-center rounded-full bg-emerald-100 text-xl font-bold text-emerald-800">
+          {{ initials() }}
+        </span>
+
+        <div class="min-w-0">
+          <h2 class="font-display break-words text-xl font-bold text-slate-900 sm:text-2xl">
+            {{ nombreVisible() }}
+          </h2>
+
+          <p class="mt-1 break-all text-sm text-slate-500">
+            {{ profile().email }}
+          </p>
+
+          <span class="mt-2 inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            {{ role }}
+          </span>
+        </div>
+      </div>
+
+      <!-- EDITAR PERFIL -->
+      @if (editing()) {
+        <div class="mt-7">
+          <h3 class="mb-5 text-lg font-bold text-slate-900">
+            Editar información personal
+          </h3>
+
+          <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            @for (f of editFields; track f.key) {
+              <label class="block">
+                <span class="mb-2 block text-sm font-bold text-slate-700">
+                  {{ f.label }}
+                </span>
+
+                <input
+                  [value]="form()[f.key]"
+                  (input)="setField(f.key, $event)"
+                  [type]="f.key === 'phone' ? 'tel' : 'text'"
+                  [attr.autocomplete]="f.key === 'phone' ? 'tel' : 'name'"
+                  class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                />
+              </label>
+            }
+          </div>
+
+          <!-- DATOS NO EDITABLES -->
+          <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+
+
+            <div>
+              <span class="mb-2 block text-sm font-bold text-slate-700">
+                Correo electrónico
+              </span>
+
+              <div class="break-all rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+                {{ profile().email }}
+              </div>
+            </div>
+          </div>
+
+          @if (!valid()) {
+            <p class="mt-4 text-sm font-semibold text-red-600">
+              Ingresa un nombre y un teléfono válido de 7 a 15 dígitos.
+            </p>
+          }
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button
+              type="button"
+              (click)="cancelEdit()"
+              [disabled]="guardando()"
+              class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+
+            <button
+              type="button"
+              (click)="save()"
+              [disabled]="!valid() || guardando()"
+              class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-45"
+            >
+              {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </div>
+      } @else {
+
+        <!-- DETALLES -->
+        <div class="mt-7 grid grid-cols-1 gap-6 text-sm sm:grid-cols-2">
+          @for (d of details(); track d.label) {
+            <div class="min-w-0">
+              <span class="block text-xs text-slate-500">
+                {{ d.label }}
+              </span>
+
+              <strong class="mt-1 block break-words font-semibold text-slate-900">
+                {{ d.value }}
+              </strong>
+            </div>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ESTADO DE LA CUENTA -->
+    <aside class="h-fit rounded-2xl border border-slate-200 bg-white p-7">
+      <h2 class="font-display text-xl font-bold text-slate-900">
+        Estado de la cuenta
+      </h2>
+
+      <div class="mt-5">
+        @if (estadoConsultado()) {
+          <span
+            class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
+            [class]="profile().active
+              ? 'bg-emerald-50 text-emerald-700'
+              : 'bg-slate-100 text-slate-600'"
+          >
+            {{ profile().active ? 'Activa' : 'Inactiva' }}
+          </span>
+        } @else {
+          <span class="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+            Sin consultar
+          </span>
+        }
+      </div>
+
+      <p class="mt-4 text-sm leading-6 text-slate-500">
+        @if (estadoConsultado()) {
+          {{
+            profile().active
+              ? 'Tu cuenta puede utilizar las funciones disponibles para tu rol.'
+              : 'Tu cuenta figura como inactiva.'
+          }}
+        } @else {
+          El estado de tu cuenta todavía no se ha consultado en el servidor.
+        }
+      </p>
+
+      <!-- ROL -->
+      <div class="mt-6 border-t border-slate-100 pt-5">
+        <p class="text-xs font-semibold text-slate-500">
+          Tipo de cuenta
+        </p>
+
+        <p class="mt-2 text-sm font-bold text-emerald-700">
+          {{ role }}
+        </p>
+
+        <p class="mt-2 text-xs leading-5 text-slate-500">
+          El rol de tu cuenta es asignado por el sistema y no puede modificarse desde esta página.
+        </p>
+      </div>
+
+      <!-- DESACTIVACIÓN -->
+      @if (estadoConsultado() && profile().active) {
+        <button
+          type="button"
+          (click)="confirmAccount.set(true)"
+          [disabled]="desactivando()"
+          class="mt-6 w-full rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+        >
+          Desactivar cuenta
+        </button>
+      }
+    </aside>
+  </div>
+
+  <!-- CONFIRMACIÓN DE DESACTIVACIÓN -->
+  @if (confirmAccount()) {
+    <div class="fixed inset-0 z-[80] grid place-items-center bg-slate-950/55 p-6">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="titulo-desactivar"
+        class="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl"
+      >
+        <h2 id="titulo-desactivar" class="text-2xl font-bold text-slate-900">
+          Desactivar cuenta
+        </h2>
+
+        <p class="mt-4 text-sm leading-6 text-slate-500">
+          ¿Estás seguro de que deseas desactivar tu cuenta?
+          Para volver a utilizarla tendrás que realizar el proceso de reactivación.
+        </p>
+
+        <div class="mt-7 flex flex-wrap gap-3">
+          <button
+            type="button"
+            (click)="confirmAccount.set(false)"
+            class="flex-1 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-800"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            (click)="toggleAccount()"
+            [disabled]="desactivando()"
+            class="flex-1 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50"
+          >
+            {{ desactivando() ? 'Procesando...' : 'Confirmar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</main>

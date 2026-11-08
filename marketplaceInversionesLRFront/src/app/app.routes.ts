@@ -5,6 +5,7 @@ import { Recover } from './login/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard } from './guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
+import { ProfileView } from './pages/guest/profile-view/profile-view';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -24,6 +25,17 @@ export const routes: Routes = [
   // ====================================
 
   { path: 'restablecer-contrasena', component: Recover },
+
+  // ====================================
+  // PERFIL DE USUARIO (HU-09)
+  // CUALQUIER USUARIO CON SESIÓN
+  // ====================================
+
+  {
+    path: 'perfil',
+    component: ProfileView,
+    canActivate: [roleGuard]
+  },
 
   // ====================================
   // CONFIGURAR PORCENTAJES DE TARIFAS (HU-24)
