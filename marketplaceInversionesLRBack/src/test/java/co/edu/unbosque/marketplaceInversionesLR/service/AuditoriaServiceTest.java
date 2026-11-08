@@ -3,13 +3,24 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.EventoAuditoria;
@@ -61,5 +72,38 @@ class AuditoriaServiceTest {
 
 		assertThatCode(() -> servicio.registrar(null, AuditoriaService.CORREO_VERIFICADO, null, null,
 				ResultadoAuditoria.ERROR, null)).doesNotThrowAnyException();
+	}
+
+	@Test
+	@DisplayName("CA-139 La consulta ordena del más reciente al más antiguo, limpia la acción y acota la página")
+	void consultaConFiltros_CA139() {
+		AuditoriaService servicio = new AuditoriaService(repositorio, transacciones, JsonMapper.builder().build());
+		LocalDateTime desde = LocalDateTime.now().minusDays(1);
+		Page<EventoAuditoria> pagina = new PageImpl<>(List.of(new EventoAuditoria()));
+		when(repositorio.buscar(any(), any(), any(), any(), any())).thenReturn(pagina);
+
+		assertThat(servicio.consultar(" LOGIN ", 4L, desde, null, -2, 500)).isSameAs(pagina);
+
+		ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
+		verify(repositorio).buscar(eq("LOGIN"), eq(4L), eq(desde), isNull(), pageable.capture());
+		assertThat(pageable.getValue().getPageNumber()).isZero();
+		assertThat(pageable.getValue().getPageSize()).isEqualTo(AuditoriaService.MAX_TAMANIO_PAGINA);
+		assertThat(pageable.getValue().getSort().getOrderFor("fecha").getDirection()).isEqualTo(Sort.Direction.DESC);
+
+		servicio.consultar("  ", null, null, null, 1, 0);
+		verify(repositorio).buscar(isNull(), isNull(), isNull(), isNull(),
+				eq(PageRequest.of(1, 1, Sort.by(Sort.Direction.DESC, "fecha").and(Sort.by(Sort.Direction.DESC,
+						"idEvento")))));
+	}
+
+	@Test
+	@DisplayName("CA-138 El detalle de un evento se consulta por su id")
+	void detalle_CA138() {
+		AuditoriaService servicio = new AuditoriaService(repositorio, transacciones, JsonMapper.builder().build());
+		EventoAuditoria evento = new EventoAuditoria();
+		when(repositorio.findById(9L)).thenReturn(Optional.of(evento));
+
+		assertThat(servicio.detalle(9L)).containsSame(evento);
+		assertThat(servicio.detalle(null)).isEmpty();
 	}
 }

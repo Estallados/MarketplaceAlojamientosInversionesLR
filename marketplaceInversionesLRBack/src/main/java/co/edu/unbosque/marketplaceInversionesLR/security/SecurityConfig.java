@@ -19,6 +19,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,6 +29,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.exception.ManejadorGlobalExcepciones;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
@@ -55,6 +61,9 @@ public class SecurityConfig {
 	/** Orígenes permitidos para CORS (el front en Angular). */
 	private final List<String> origenesPermitidos;
 
+	/** Registra en la auditoría los accesos denegados. */
+	private final AuditoriaService auditoriaService;
+
 	/**
 	 * Crea la configuración.
 	 *
@@ -62,12 +71,15 @@ public class SecurityConfig {
 	 * @param userDetailsService servicio que carga los usuarios
 	 * @param origenesPermitidos orígenes permitidos para CORS; por defecto el
 	 *                           front local
+	 * @param auditoriaService   auditoría de los accesos denegados
 	 */
 	public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService,
-			@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos) {
+			@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos,
+			AuditoriaService auditoriaService) {
 		this.jwtAuthFilter = jwtAuthFilter;
 		this.userDetailsService = userDetailsService;
 		this.origenesPermitidos = origenesPermitidos;
+		this.auditoriaService = auditoriaService;
 	}
 
 	/**
@@ -105,8 +117,7 @@ public class SecurityConfig {
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint((req, res, e) -> escribirError(res,
 								HttpServletResponse.SC_UNAUTHORIZED, "No autenticado: token ausente, inválido o expirado"))
-						.accessDeniedHandler((req, res, e) -> escribirError(res, HttpServletResponse.SC_FORBIDDEN,
-								"No tienes permisos para esta operación")))
+						.accessDeniedHandler((req, res, e) -> accesoDenegado(req, res)))
 				.sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authenticationProvider(authenticationProvider())
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
@@ -165,6 +176,21 @@ public class SecurityConfig {
 		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 		source.registerCorsConfiguration("/**", config);
 		return source;
+	}
+
+	/**
+	 * Responde 403 cuando el rol del usuario no tiene acceso a la ruta y lo deja
+	 * en la auditoría con el usuario que lo intentó (HU-26, CA-137).
+	 *
+	 * @param req petición rechazada
+	 * @param res respuesta HTTP
+	 * @throws IOException si no se puede escribir la respuesta
+	 */
+	private void accesoDenegado(HttpServletRequest req, HttpServletResponse res) throws IOException {
+		auditoriaService.registrar(RespuestaUtil.idUsuario(SecurityContextHolder.getContext().getAuthentication()),
+				AuditoriaService.ACCESO_DENEGADO, null, null, ResultadoAuditoria.RECHAZADO,
+				req.getMethod() + " " + req.getRequestURI());
+		escribirError(res, HttpServletResponse.SC_FORBIDDEN, ManejadorGlobalExcepciones.SIN_PERMISO);
 	}
 
 	/**

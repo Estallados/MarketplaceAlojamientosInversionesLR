@@ -15,8 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
+import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -47,15 +50,21 @@ public class AlojamientoController {
 	/** Lee el JSON del alojamiento que llega como texto en el formulario. */
 	private final ObjectMapper objectMapper;
 
+	/** Deja en la auditoría la creación de publicaciones (HU-26). */
+	private final AuditoriaService auditoriaService;
+
 	/**
 	 * Crea el controlador.
 	 *
 	 * @param publicacionService servicio de publicaciones
 	 * @param objectMapper       conversor de JSON
+	 * @param auditoriaService   auditoría de las publicaciones
 	 */
-	public AlojamientoController(PublicacionService publicacionService, ObjectMapper objectMapper) {
+	public AlojamientoController(PublicacionService publicacionService, ObjectMapper objectMapper,
+			AuditoriaService auditoriaService) {
 		this.publicacionService = publicacionService;
 		this.objectMapper = objectMapper;
+		this.auditoriaService = auditoriaService;
 	}
 
 	/** Solo para Swagger: los dos campos del formulario de {@link #crear}. */
@@ -139,15 +148,34 @@ public class AlojamientoController {
 	public ResponseEntity<Object> crear(@Parameter(hidden = true) @RequestPart("datos") String datos,
 			@Parameter(hidden = true) @RequestPart(value = "archivos", required = false) List<MultipartFile> archivos,
 			Authentication authentication) {
+		Long idAnfitrion = RespuestaUtil.idUsuario(authentication);
 		AlojamientoDTO alojamiento;
 		try {
 			alojamiento = objectMapper.readValue(datos, AlojamientoDTO.class);
 		} catch (JacksonException e) {
-			return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST,
-					"El campo 'datos' debe ser el JSON del alojamiento: " + e.getOriginalMessage());
+			String mensaje = "El campo 'datos' debe ser el JSON del alojamiento: " + e.getOriginalMessage();
+			auditar(idAnfitrion, null, ResultadoAuditoria.RECHAZADO, mensaje);
+			return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, mensaje);
 		}
-		return RespuestaUtil.desde(
-				publicacionService.crear(alojamiento, archivos, RespuestaUtil.idUsuario(authentication)),
-				HttpStatus.CREATED);
+		Resultado<AlojamientoDTO> resultado = publicacionService.crear(alojamiento, archivos, idAnfitrion);
+		if (resultado.esExito()) {
+			auditar(idAnfitrion, resultado.getDato().getIdAlojamiento(), ResultadoAuditoria.EXITOSO, null);
+		} else {
+			auditar(idAnfitrion, null, ResultadoAuditoria.RECHAZADO, resultado.getMensaje());
+		}
+		return RespuestaUtil.desde(resultado, HttpStatus.CREATED);
+	}
+
+	/**
+	 * Deja en la auditoría el intento de crear una publicación (HU-26).
+	 *
+	 * @param idAnfitrion   anfitrión que la creó
+	 * @param idAlojamiento alojamiento creado; null si se rechazó
+	 * @param resultado     EXITOSO o RECHAZADO
+	 * @param detalle       motivo del rechazo; null si se creó
+	 */
+	private void auditar(Long idAnfitrion, Long idAlojamiento, ResultadoAuditoria resultado, String detalle) {
+		auditoriaService.registrar(idAnfitrion, AuditoriaService.ALOJAMIENTO_CREADO, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, resultado, detalle);
 	}
 }

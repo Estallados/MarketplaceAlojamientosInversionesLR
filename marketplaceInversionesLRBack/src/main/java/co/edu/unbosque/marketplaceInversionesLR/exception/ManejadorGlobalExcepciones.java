@@ -7,26 +7,54 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Convierte los errores de la API en respuestas {@code {"message": "..."}},
- * para que el frontend las lea siempre igual (RNF-013, CA-149).
+ * para que el frontend las lea siempre igual (RNF-013, CA-149). Los accesos
+ * denegados y los errores inesperados quedan además en la auditoría (HU-26).
  */
 @RestControllerAdvice
 public class ManejadorGlobalExcepciones {
 
+	/** Mensaje del 403. */
+	public static final String SIN_PERMISO = "No tienes permisos para esta operación";
+
+	/** Mensaje del 500. */
+	public static final String ERROR_INESPERADO = "Ocurrió un error inesperado. Intenta de nuevo.";
+
 	/** Log de la clase. */
 	private static final Logger LOG = LoggerFactory.getLogger(ManejadorGlobalExcepciones.class);
+
+	/** Registra en la auditoría los accesos denegados y los errores inesperados. */
+	private final AuditoriaService auditoriaService;
+
+	/**
+	 * Crea el manejador.
+	 *
+	 * @param auditoriaService auditoría de los accesos denegados y los errores
+	 */
+	public ManejadorGlobalExcepciones(AuditoriaService auditoriaService) {
+		this.auditoriaService = auditoriaService;
+	}
 
 	/**
 	 * Cuerpo que no es un JSON válido o con un valor no permitido, por ejemplo
@@ -130,5 +158,89 @@ public class ManejadorGlobalExcepciones {
 	public ResponseEntity<Object> conflictoDeDatos(DataIntegrityViolationException e) {
 		LOG.warn("Conflicto de datos: {}", e.getMostSpecificCause().getMessage());
 		return RespuestaUtil.mensaje(HttpStatus.CONFLICT, "El registro ya existe. Actualiza la página e intenta de nuevo.");
+	}
+
+	/**
+	 * Un parámetro de la ruta o de la URL no se pudo convertir al tipo esperado
+	 * (por ejemplo, un id que no es número o una fecha mal escrita).
+	 *
+	 * @param e excepción con el nombre del parámetro
+	 * @return 400 indicando qué valor no es válido
+	 */
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	public ResponseEntity<Object> tipoInvalido(MethodArgumentTypeMismatchException e) {
+		return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "El valor de " + e.getName() + " no es válido.");
+	}
+
+	/**
+	 * El cliente pidió un formato que la API no entrega (una cabecera
+	 * {@code Accept} distinta de JSON). Se responde sin cuerpo, porque un JSON
+	 * tampoco lo aceptaría.
+	 *
+	 * @return 406 sin cuerpo
+	 */
+	@ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+	public ResponseEntity<Void> formatoNoAceptable() {
+		return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).build();
+	}
+
+	/**
+	 * El cliente cerró la conexión antes de recibir la respuesta. No hay a quién
+	 * responder y no es un error del servidor, así que solo queda en el log de
+	 * depuración.
+	 *
+	 * @param e       excepción de la conexión cerrada
+	 * @param request petición que se estaba atendiendo
+	 */
+	@ExceptionHandler(AsyncRequestNotUsableException.class)
+	public void clienteDesconectado(AsyncRequestNotUsableException e, HttpServletRequest request) {
+		LOG.debug("El cliente cerró la conexión en {} {}: {}", request.getMethod(), request.getRequestURI(),
+				e.getMessage());
+	}
+
+	/**
+	 * El usuario no tiene el rol que pide la ruta. Lo lanza {@code @PreAuthorize}
+	 * y queda en la auditoría con el usuario que lo intentó (HU-26, CA-137).
+	 *
+	 * @param request petición rechazada
+	 * @return 403 con el mensaje
+	 */
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<Object> accesoDenegado(HttpServletRequest request) {
+		auditoriaService.registrar(idActorActual(), AuditoriaService.ACCESO_DENEGADO, null, null,
+				ResultadoAuditoria.RECHAZADO, request.getMethod() + " " + request.getRequestURI());
+		return RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, SIN_PERMISO);
+	}
+
+	/**
+	 * Cualquier otro error. Si es una excepción de Spring que ya trae un estado
+	 * 4xx (la culpa es de la petición), se respeta ese estado. Si no, es un
+	 * error inesperado: queda en el log con su traza, en la auditoría (HU-26) y
+	 * se responde un mensaje genérico sin detalles internos.
+	 *
+	 * @param e       excepción no controlada
+	 * @param request petición que se estaba atendiendo
+	 * @return el 4xx de la excepción o un 500 genérico
+	 */
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<Object> errorInesperado(Exception e, HttpServletRequest request) {
+		if (e instanceof ErrorResponse respuesta && respuesta.getStatusCode().is4xxClientError()) {
+			return RespuestaUtil.mensaje(HttpStatus.valueOf(respuesta.getStatusCode().value()),
+					"La petición no es válida para esta ruta.");
+		}
+		LOG.error("Error inesperado en {} {}", request.getMethod(), request.getRequestURI(), e);
+		auditoriaService.registrar(idActorActual(), AuditoriaService.ERROR_INTERNO, null, null,
+				ResultadoAuditoria.ERROR,
+				request.getMethod() + " " + request.getRequestURI() + ": " + e.getClass().getSimpleName());
+		return RespuestaUtil.mensaje(HttpStatus.INTERNAL_SERVER_ERROR, ERROR_INESPERADO);
+	}
+
+	/**
+	 * Usuario autenticado de la petición actual.
+	 *
+	 * @return su id, o {@code null} si no hay sesión
+	 */
+	private static Long idActorActual() {
+		return RespuestaUtil.idUsuario(SecurityContextHolder.getContext().getAuthentication());
 	}
 }

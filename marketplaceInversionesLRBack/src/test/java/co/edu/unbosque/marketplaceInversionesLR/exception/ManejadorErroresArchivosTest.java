@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplaceInversionesLR.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 
 import java.util.List;
 import java.util.Map;
@@ -13,13 +14,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+
 /**
  * Pruebas de las respuestas de error de las rutas que reciben archivos.
  */
 class ManejadorErroresArchivosTest {
 
 	/** Manejador bajo prueba. */
-	private final ManejadorGlobalExcepciones manejador = new ManejadorGlobalExcepciones();
+	private final ManejadorGlobalExcepciones manejador = new ManejadorGlobalExcepciones(mock(AuditoriaService.class));
 
 	@Test
 	@DisplayName("El 415 indica multipart/form-data en las rutas de archivos y JSON en las demás")

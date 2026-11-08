@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ConfiguracionTarifa;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ConfiguracionTarifaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
@@ -36,13 +37,18 @@ public class TarifaService {
 	/** Repositorio de la configuración de tarifas. */
 	private final ConfiguracionTarifaRepository configuracionRepo;
 
+	/** Deja en la auditoría cada cambio de los porcentajes (HU-26). */
+	private final AuditoriaService auditoriaService;
+
 	/**
 	 * Crea el servicio.
 	 *
 	 * @param configuracionRepo repositorio de la configuración de tarifas
+	 * @param auditoriaService  auditoría de los cambios
 	 */
-	public TarifaService(ConfiguracionTarifaRepository configuracionRepo) {
+	public TarifaService(ConfiguracionTarifaRepository configuracionRepo, AuditoriaService auditoriaService) {
 		this.configuracionRepo = configuracionRepo;
+		this.auditoriaService = auditoriaService;
 	}
 
 	/**
@@ -83,8 +89,10 @@ public class TarifaService {
 	public Resultado<ConfiguracionTarifaDTO> actualizar(ConfiguracionTarifaDTO datos, Long idActor) {
 		if (datos == null || !porcentajeValido(datos.getPorcentajeLimpieza())
 				|| !porcentajeValido(datos.getPorcentajeServicio())) {
-			return Resultado.error(Resultado.DATOS_INVALIDOS,
-					"Los porcentajes de limpieza y servicio son obligatorios y deben estar entre 0 y 100.");
+			String mensaje = "Los porcentajes de limpieza y servicio son obligatorios y deben estar entre 0 y 100.";
+			auditoriaService.registrar(idActor, AuditoriaService.TARIFA_ACTUALIZADA,
+					AuditoriaService.ENTIDAD_CONFIGURACION, null, ResultadoAuditoria.RECHAZADO, mensaje);
+			return Resultado.error(Resultado.DATOS_INVALIDOS, mensaje);
 		}
 		ConfiguracionTarifa configuracion = new ConfiguracionTarifa();
 		configuracion.setPorcentajeLimpieza(datos.getPorcentajeLimpieza());
@@ -92,7 +100,11 @@ public class TarifaService {
 		configuracion.setIdUsuario(idActor);
 		configuracion.setFecha(LocalDateTime.now());
 		configuracionRepo.save(configuracion);
-		return Resultado.exito(vigente());
+		ConfiguracionTarifaDTO nueva = vigente();
+		auditoriaService.registrar(idActor, AuditoriaService.TARIFA_ACTUALIZADA, AuditoriaService.ENTIDAD_CONFIGURACION,
+				nueva.getIdConfiguracion(), ResultadoAuditoria.EXITOSO, "Limpieza " + datos.getPorcentajeLimpieza()
+						+ "%, servicio " + datos.getPorcentajeServicio() + "%");
+		return Resultado.exito(nueva);
 	}
 
 	/**
