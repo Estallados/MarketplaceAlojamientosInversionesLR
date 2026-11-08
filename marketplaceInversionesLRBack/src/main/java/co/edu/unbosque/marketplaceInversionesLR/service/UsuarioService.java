@@ -1,9 +1,11 @@
 package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
+import org.modelmapper.ModelMapper;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -71,6 +73,9 @@ public class UsuarioService {
 	/** Codificador de contraseñas. */
 	private final PasswordEncoder passwordEncoder;
 
+	/** Copia los datos de la entidad al DTO. */
+	private final ModelMapper modelMapper;
+
 	/**
 	 * Crea el servicio.
 	 *
@@ -78,13 +83,16 @@ public class UsuarioService {
 	 * @param auditoriaService          servicio de auditoría
 	 * @param verificacionCorreoService servicio de verificación del correo
 	 * @param passwordEncoder           codificador de contraseñas
+	 * @param modelMapper               copiador de entidades a DTO
 	 */
 	public UsuarioService(UsuarioRepository usuarioRepo, AuditoriaService auditoriaService,
-			VerificacionCorreoService verificacionCorreoService, PasswordEncoder passwordEncoder) {
+			VerificacionCorreoService verificacionCorreoService, PasswordEncoder passwordEncoder,
+			ModelMapper modelMapper) {
 		this.usuarioRepo = usuarioRepo;
 		this.auditoriaService = auditoriaService;
 		this.verificacionCorreoService = verificacionCorreoService;
 		this.passwordEncoder = passwordEncoder;
+		this.modelMapper = modelMapper;
 	}
 
 	/**
@@ -233,6 +241,82 @@ public class UsuarioService {
 	private void auditarRechazo(String motivo) {
 		auditoriaService.registrar(null, AuditoriaService.REGISTRO_USUARIO, AuditoriaService.ENTIDAD_USUARIO, null,
 				ResultadoAuditoria.RECHAZADO, motivo);
+	}
+
+	/**
+	 * Busca un usuario por su correo.
+	 *
+	 * @param correo correo a buscar
+	 * @return el usuario, o {@code null} si no existe o el correo está vacío
+	 */
+	public UsuarioDTO obtenerUsuarioPorCorreo(String correo) {
+		if (esVacio(correo)) {
+			return null;
+		}
+
+		return usuarioRepo.findByCorreoHash(hashCorreo(correo)).map(this::convertirDTO).orElse(null);
+	}
+
+	/**
+	 * Actualiza el perfil propio. Solo se pueden cambiar el nombre y el
+	 * teléfono; el correo, el rol, el estado y la contraseña no se tocan por
+	 * esta vía. Los campos que lleguen en {@code null} se dejan como están.
+	 *
+	 * @param correo   correo del usuario autenticado (sale del token)
+	 * @param nombre   nombre nuevo; si se envía no puede estar vacío
+	 * @param telefono teléfono nuevo: 7 a 15 dígitos, opcionalmente con + y
+	 *                 separadores (espacios, guiones, puntos o paréntesis)
+	 * @return 0 si se actualizó; 1 si el usuario no existe; 2 si los datos no
+	 *         son válidos o no hay nada que actualizar
+	 */
+	public int actualizarPerfil(String correo, String nombre, String telefono) {
+		if ((nombre == null && telefono == null) || (nombre != null && nombre.isBlank())
+				|| LimitesTexto.excede(nombre, LimitesTexto.CORTO)
+				|| (telefono != null && !telefonoValido(telefono))) {
+			return 2;
+		}
+
+		Optional<Usuario> usuarioOpt = esVacio(correo) ? Optional.empty()
+				: usuarioRepo.findByCorreoHash(hashCorreo(correo));
+		if (usuarioOpt.isEmpty()) {
+			return 1;
+		}
+
+		Usuario usuario = usuarioOpt.get();
+		StringBuilder cambios = new StringBuilder();
+		if (nombre != null) {
+			usuario.setNombre(nombre.trim());
+			cambios.append("nombre ");
+		}
+		if (telefono != null) {
+			usuario.setTelefono(normalizarTelefono(telefono));
+			cambios.append("telefono");
+		}
+		usuarioRepo.save(usuario);
+
+		auditoriaService.registrar(usuario.getIdUsuario(), AuditoriaService.PERFIL_ACTUALIZADO,
+				AuditoriaService.ENTIDAD_USUARIO, usuario.getIdUsuario(), ResultadoAuditoria.EXITOSO,
+				"Campos: " + cambios.toString().trim());
+		return 0;
+	}
+
+	/**
+	 * Convierte un usuario a DTO: descifra el correo y quita la contraseña, el
+	 * hash del correo y el secreto del segundo factor.
+	 *
+	 * @param usuario usuario
+	 * @return usuario para la API
+	 */
+	private UsuarioDTO convertirDTO(Usuario usuario) {
+		UsuarioDTO dto = modelMapper.map(usuario, UsuarioDTO.class);
+		dto.setIdUsuario(usuario.getIdUsuario());
+		dto.setNombre(usuario.getNombre());
+		dto.setCorreo(AESUtil.decrypt(usuario.getCorreo()));
+		dto.setContrasenia(null);
+		dto.setCorreoHash(null);
+		dto.setSecretoTotp(null);
+
+		return dto;
 	}
 
 	/**

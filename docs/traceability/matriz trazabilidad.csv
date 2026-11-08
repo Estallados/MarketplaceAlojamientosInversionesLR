@@ -66,18 +66,21 @@ InicioSesionTest#sinSesionNoSeAccedeAFuncionesRestringidas_CA037";Probado (JUnit
 CA-038;RF-009;Recuperación de contraseña;Proceso de recuperación;Dado que el usuario no puede acceder a su cuenta, cuando selecciona recuperación de contraseña y envía la información requerida, entonces el sistema procesa la solicitud y confirma el proceso si la información es válida, mediante un proceso simulado que no requiere un mecanismo externo.;HU-08;CU-003;CP-006 Recuperación de contraseña;"AuthServiceTest#solicitaLaRecuperacion
 RecuperacionContraseniaTest#recuperaLaContrasenia_CA038";Probado (JUnit);;feat/SCRUM-165-be-recuperacion-contrasenia;;;
 CA-042;RF-010;Consulta de perfil;Consulta y visualización de información del perfil;Dado que el usuario ha iniciado sesión y tiene información registrada en su cuenta, cuando consulta su perfil, entonces el sistema debe mostrar de forma clara la información básica asociada a su cuenta, permitiéndole identificar sus datos registrados.;HU-09;CU-004;"CP-007 Consulta de perfil
-CP-008 Consulta de perfil sin autenticación";AuthFlowTest#registroCreaLaCuentaYEnviaUnCodigoQueEntregaElToken_CA030_CA032_CA033_CA042;;e2f0592;;;;
+CP-008 Consulta de perfil sin autenticación";"PerfilUsuarioServiceTest#consultaElPerfil_CA042
+PerfilUsuarioTest#consultaElPerfil_CA042";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
 CA-044;RF-010;Consulta de perfil;Restringir perfil;Dado que el usuario no ha iniciado sesión, cuando intenta consultar su perfil, entonces el sistema impide el acceso.;HU-09;CU-004;"CP-007 Consulta de perfil
-CP-008 Consulta de perfil sin autenticación";AuthFlowTest#sinSesionNoSePuedeAccederAFuncionesRestringidas_CA037_CA044_CA134;;38a9302;;;;
+CP-008 Consulta de perfil sin autenticación";PerfilUsuarioTest#sinSesionNoAccede_CA044;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
 CA-046;RF-011;Actualización de perfil;Actualizar y mostrar perfil;Dado que el usuario ha iniciado sesión, cuando modifica datos válidos y guarda los cambios, entonces el sistema actualiza el perfil y muestra la información actualizada al consultarlo.;HU-09;CU-005;"CP-009 Actualización de perfil
 CP-010 Actualización de perfil con datos inválidos
-CP-011 Acceso o modificación de información de otro usuario";IdentidadPerfilTest#debeActualizarSoloNombreYTelefonoYMostrarLosCambios_CA046_CA048;;38a9302;;;;
+CP-011 Acceso o modificación de información de otro usuario";"PerfilUsuarioServiceTest#actualizaElPerfil_CA046
+PerfilUsuarioTest#actualizaElPerfil_CA046";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
 CA-047;RF-011;Actualización de perfil;Validar actualización;Dado que existen datos inválidos o incompletos, cuando el usuario intenta guardar los cambios, entonces el sistema informa el error.;HU-09;CU-005;"CP-009 Actualización de perfil
 CP-010 Actualización de perfil con datos inválidos
-CP-011 Acceso o modificación de información de otro usuario";IdentidadPerfilTest#debeRechazarTelefonoInvalidoONombreVacio_CA047;;38a9302;;;;
+CP-011 Acceso o modificación de información de otro usuario";"PerfilUsuarioServiceTest#rechazaDatosInvalidos_CA047
+PerfilUsuarioTest#datosInvalidos_CA047";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
 CA-049;RF-011;Actualización de perfil;Proteger perfil;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la modificación.;HU-09;CU-005;"CP-009 Actualización de perfil
 CP-010 Actualización de perfil con datos inválidos
-CP-011 Acceso o modificación de información de otro usuario";IdentidadPerfilTest#unUsuarioNoPuedeConsultarNiModificarOtraCuenta_CA049_CA053_CA133;;38a9302;;;;
+CP-011 Acceso o modificación de información de otro usuario";PerfilUsuarioTest#noModificaOtraCuenta_CA049;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
 CA-050;RF-012;Activación y desactivación de cuenta;Cambio y visualización del estado de la cuenta;Dado que la cuenta del usuario se encuentra en estado ACTIVA o INACTIVA, cuando el usuario solicita cambiar su estado, entonces el sistema debe actualizarla al estado contrario correspondiente (de ACTIVA a INACTIVA o de INACTIVA a ACTIVA) y mostrar el nuevo estado.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
 CP-012 Activación y desactivación de cuenta";IdentidadPerfilTest#debeDesactivarYReactivarLaCuentaPropiaMostrandoElEstado_CA050_CA052;;38a9302;;;;
 CA-053;RF-012;Activación y desactivación de cuenta;Proteger estado;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la operación.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
