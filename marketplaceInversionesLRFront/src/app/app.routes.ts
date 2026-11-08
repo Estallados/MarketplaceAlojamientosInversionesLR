@@ -6,6 +6,7 @@ import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard } from './guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 import { ProfileView } from './pages/guest/profile-view/profile-view';
+import { Availability } from './pages/host/availability/availability';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -64,6 +65,18 @@ export const routes: Routes = [
   {
     path: 'host/alojamientos/crear',
     component: CrearPublicacion,
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  // ====================================
+  // PERÍODOS DE DISPONIBILIDAD (HU-20)
+  // SOLO ANFITRIÓN
+  // ====================================
+
+  {
+    path: 'host/alojamientos/:id/disponibilidad',
+    component: Availability,
     canActivate: [roleGuard],
     data: { roles: ['Anfitrión'] }
   },
