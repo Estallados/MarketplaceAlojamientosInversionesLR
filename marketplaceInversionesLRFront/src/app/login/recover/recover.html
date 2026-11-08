@@ -1,0 +1,496 @@
+
+<main class="min-h-[calc(100vh-160px)] bg-white px-5 py-10 sm:px-8">
+
+  <section class="mx-auto w-full max-w-lg">
+
+    <!-- ======================================
+         ENCABEZADO
+         ====================================== -->
+
+    <div class="text-center">
+
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+        Inversiones LR
+      </p>
+
+      <h1 class="mt-3 text-3xl font-bold text-slate-900">
+
+        @switch (paso()) {
+
+          @case ('solicitar') {
+            Recuperar contraseña
+          }
+
+          @case ('restablecer') {
+            Crear nueva contraseña
+          }
+
+          @case ('finalizado') {
+            Contraseña actualizada
+          }
+
+        }
+
+      </h1>
+
+      <p class="mt-3 text-sm leading-6 text-slate-500">
+
+        @switch (paso()) {
+
+          @case ('solicitar') {
+            Escribe el correo asociado a tu cuenta
+              para recibir un código de recuperación.
+          }
+
+          @case ('restablecer') {
+            Copia el código recibido en tu correo
+              y escribe tu nueva contraseña.
+          }
+
+          @case ('finalizado') {
+            Ya puedes volver a iniciar sesión
+              con tu contraseña nueva.
+          }
+
+        }
+
+      </p>
+
+    </div>
+
+    <!-- ======================================
+         TARJETA CON EFECTO LUMINOSO
+         ====================================== -->
+
+    <div
+      class="group relative mt-8 overflow-hidden rounded-2xl bg-[#24443b] p-[2px] shadow-xl shadow-emerald-950/10 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+    >
+
+      <!-- BRILLO BLANCO -->
+
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white blur-[50px] transition-transform duration-700 group-hover:translate-x-10"
+      ></div>
+
+      <!-- BRILLO VERDE -->
+
+      <div
+        aria-hidden="true"
+        class="pointer-events-none absolute -bottom-20 -right-16 h-44 w-44 rounded-full bg-emerald-300/60 blur-[55px]"
+      ></div>
+
+      <!-- CONTENIDO PRINCIPAL -->
+
+      <div class="relative z-10 rounded-[14px] bg-white p-6 sm:p-8">
+
+        <!-- ======================================
+             NUEVO ICONO CANDADO
+             ESTILO KEENICONS LOCK-2
+             ====================================== -->
+
+        <div
+          class="mx-auto mb-6 flex h-20 w-24 items-center justify-center rounded-2xl bg-[#f8fafc]"
+          aria-hidden="true"
+        >
+
+          <svg
+            class="h-10 w-10 transition-transform duration-300 group-hover:scale-110"
+            viewBox="0 0 40 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+
+            <!-- ARCO SUPERIOR -->
+
+            <path
+              d="M13 17V13a7 7 0 0 1 14 0v4"
+              stroke="#324960"
+              stroke-width="2.3"
+              stroke-linecap="round"
+            />
+
+            <!-- CUERPO DEL CANDADO -->
+
+            <rect
+              x="9"
+              y="17"
+              width="22"
+              height="17"
+              rx="5.2"
+              fill="#b4c1cc"
+            />
+
+            <!-- TRES PUNTOS -->
+
+            <circle
+              cx="15"
+              cy="25.5"
+              r="1.3"
+              fill="#405367"
+            />
+
+            <circle
+              cx="20"
+              cy="25.5"
+              r="1.3"
+              fill="#405367"
+            />
+
+            <circle
+              cx="25"
+              cy="25.5"
+              r="1.3"
+              fill="#405367"
+            />
+
+          </svg>
+
+        </div>
+
+        <!-- ======================================
+             MENSAJES DE ERROR
+             ====================================== -->
+
+        @if (error()) {
+
+          <p
+            role="alert"
+            class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            {{ error() }}
+          </p>
+
+        }
+
+        <!-- ======================================
+             MENSAJES INFORMATIVOS
+             ====================================== -->
+
+        @if (mensaje()) {
+
+          <p
+            role="status"
+            class="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800"
+          >
+            {{ mensaje() }}
+          </p>
+
+        }
+
+        <!-- ======================================
+             PASO 1: SOLICITAR CÓDIGO
+             ====================================== -->
+
+        @if (paso() === 'solicitar') {
+
+          <form
+            #correoForm="ngForm"
+            (ngSubmit)="solicitar(correoForm)"
+            class="space-y-5"
+          >
+
+            <!-- CORREO ELECTRÓNICO -->
+
+            <div>
+
+              <label
+                for="correo-recuperacion"
+                class="mb-2 block text-sm font-bold text-slate-800"
+              >
+                Correo electrónico
+              </label>
+
+              <input
+                id="correo-recuperacion"
+                name="correo"
+                type="email"
+                [(ngModel)]="correo"
+                required
+                email
+                maxlength="200"
+                autocomplete="email"
+                placeholder="tu@correo.com"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              />
+
+            </div>
+
+            <!-- INFORMACIÓN -->
+
+            <p
+              class="rounded-xl bg-emerald-50 p-4 text-xs leading-5 text-emerald-800"
+            >
+              Si tu cuenta existe y el correo se puede enviar,
+              recibirás un código válido por 30 minutos.
+              Solo puede utilizarse una vez.
+            </p>
+
+            <!-- ENVIAR CÓDIGO -->
+
+            <button
+              type="submit"
+              [disabled]="cargando() || correoForm.invalid"
+              class="w-full rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {{
+                cargando()
+                  ? 'Solicitando código...'
+                  : 'Enviar código de recuperación'
+              }}
+            </button>
+
+            <!-- YA TENGO UN CÓDIGO -->
+
+            <button
+              type="button"
+              (click)="yaTengoCodigo()"
+              class="w-full text-sm font-semibold text-emerald-700 hover:underline"
+            >
+              Ya tengo un código
+            </button>
+
+          </form>
+
+        }
+
+        <!-- ======================================
+             PASO 2: RESTABLECER CONTRASEÑA
+             ====================================== -->
+
+        @if (paso() === 'restablecer') {
+
+          <form
+            #restablecerForm="ngForm"
+            (ngSubmit)="restablecer(restablecerForm)"
+            class="space-y-5"
+          >
+
+            <!-- CÓDIGO RECIBIDO -->
+
+            <div>
+
+              <label
+                for="codigo-recuperacion"
+                class="mb-2 block text-sm font-bold text-slate-800"
+              >
+                Código de recuperación
+              </label>
+
+              <input
+                id="codigo-recuperacion"
+                name="token"
+                type="text"
+                [(ngModel)]="token"
+                required
+                autocomplete="off"
+                [spellcheck]="false"
+                placeholder="Pega aquí el código completo"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 font-mono text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              />
+
+              <p class="mt-2 text-xs text-slate-500">
+                Copia el código completo recibido en tu correo.
+                No es un PIN de seis dígitos.
+              </p>
+
+            </div>
+
+            <!-- ======================================
+                 NUEVA CONTRASEÑA
+                 ====================================== -->
+
+            <div>
+
+              <label
+                for="nueva-clave"
+                class="mb-2 block text-sm font-bold text-slate-800"
+              >
+                Nueva contraseña
+              </label>
+
+              <div class="relative">
+
+                <input
+                  id="nueva-clave"
+                  name="contrasenia"
+                  [type]="mostrarContrasenia ? 'text' : 'password'"
+                  [(ngModel)]="contrasenia"
+                  required
+                  minlength="8"
+                  maxlength="64"
+                  autocomplete="new-password"
+                  placeholder="Ingresa la nueva contraseña"
+                  class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 pr-12 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+                />
+
+                <!-- MOSTRAR / OCULTAR CONTRASEÑA -->
+
+                <button
+                  type="button"
+                  (click)="mostrarContrasenia = !mostrarContrasenia"
+                  [attr.aria-label]="mostrarContrasenia ? 'Ocultar contraseñas' : 'Mostrar contraseñas'"
+                  [attr.aria-pressed]="mostrarContrasenia"
+                  class="absolute right-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center text-slate-500 hover:text-emerald-700"
+                >
+
+                  <svg
+                    class="size-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+
+                    @if (mostrarContrasenia) {
+
+                      <path d="M3 3 21 21"/>
+                      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8"/>
+                      <path d="M9.9 5.2A10.9 10.9 0 0 1 12 5c5 0 9 7 9 7a14 14 0 0 1-3 3.6"/>
+                      <path d="M6.1 6.1C3.7 7.7 3 12 3 12s4 7 9 7a9.5 9.5 0 0 0 4-.9"/>
+
+                    } @else {
+
+                      <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/>
+                      <circle cx="12" cy="12" r="3"/>
+
+                    }
+
+                  </svg>
+
+                </button>
+
+              </div>
+
+            </div>
+
+            <!-- ======================================
+                 CONFIRMAR CONTRASEÑA
+                 ====================================== -->
+
+            <div>
+
+              <label
+                for="confirmar-clave"
+                class="mb-2 block text-sm font-bold text-slate-800"
+              >
+                Confirmar contraseña
+              </label>
+
+              <input
+                id="confirmar-clave"
+                name="confirmarContrasenia"
+                [type]="mostrarContrasenia ? 'text' : 'password'"
+                [(ngModel)]="confirmarContrasenia"
+                required
+                autocomplete="new-password"
+                placeholder="Repite la nueva contraseña"
+                class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+              />
+
+              @if (confirmarContrasenia && !coinciden) {
+
+                <p class="mt-2 text-xs text-red-600">
+                  Las contraseñas no coinciden.
+                </p>
+
+              }
+
+            </div>
+
+            <!-- REQUISITOS DE CONTRASEÑA -->
+
+            <p
+              class="rounded-xl bg-emerald-50 p-4 text-xs leading-5 text-emerald-800"
+            >
+              La contraseña debe tener entre 8 y 64 caracteres,
+              al menos una mayúscula, una minúscula,
+              un número y un símbolo.
+            </p>
+
+            @if (contrasenia && !contraseniaValida) {
+
+              <p class="text-xs text-amber-700">
+                La contraseña todavía no cumple todos
+                los requisitos.
+              </p>
+
+            }
+
+            <!-- CAMBIAR CONTRASEÑA -->
+
+            <button
+              type="submit"
+              [disabled]="cargando() || restablecerForm.invalid || !contraseniaValida || !coinciden"
+              class="w-full rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {{
+                cargando()
+                  ? 'Actualizando...'
+                  : 'Cambiar contraseña'
+              }}
+            </button>
+
+            <!-- SOLICITAR NUEVO CÓDIGO -->
+
+            <button
+              type="button"
+              (click)="volverASolicitar()"
+              class="w-full text-sm font-semibold text-emerald-700 hover:underline"
+            >
+              Solicitar otro código
+            </button>
+
+          </form>
+
+        }
+
+        <!-- ======================================
+             PASO 3: CONTRASEÑA ACTUALIZADA
+             ====================================== -->
+
+        @if (paso() === 'finalizado') {
+
+          <div class="space-y-4 text-center">
+
+            <p class="text-sm text-slate-600">
+              Por seguridad, el código utilizado
+              ya no sirve.
+            </p>
+
+            <a
+              routerLink="/login"
+              class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800"
+            >
+              Ir a iniciar sesión
+            </a>
+
+          </div>
+
+        }
+
+        <!-- ======================================
+             VOLVER AL LOGIN
+             ====================================== -->
+
+        <div class="mt-7 border-t border-slate-100 pt-5 text-center">
+
+          <a
+            routerLink="/login"
+            class="text-sm font-semibold text-emerald-700 hover:underline"
+          >
+            Volver al inicio de sesión
+          </a>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
