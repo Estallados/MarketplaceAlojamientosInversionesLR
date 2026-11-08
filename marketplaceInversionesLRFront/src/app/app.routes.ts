@@ -4,6 +4,7 @@ import { Login } from './login/login';
 import { Recover } from './login/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard } from './guards/role.guard';
+import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -41,6 +42,18 @@ export const routes: Routes = [
     component: Tarifas,
     canActivate: [roleGuard],
     data: { roles: ['Administrador'] }
+  },
+
+  // ====================================
+  // CREAR ALOJAMIENTO (HU-15)
+  // SOLO ANFITRIÓN
+  // ====================================
+
+  {
+    path: 'host/alojamientos/crear',
+    component: CrearPublicacion,
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
   },
 
   { path: '**', redirectTo: 'login' }
