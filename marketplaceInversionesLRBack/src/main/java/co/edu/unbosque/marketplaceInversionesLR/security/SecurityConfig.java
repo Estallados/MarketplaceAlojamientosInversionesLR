@@ -96,6 +96,9 @@ public class SecurityConfig {
 						// una ruta pública se convierte en un 401 engañoso
 						.requestMatchers("/error").permitAll()
 						.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+						// HU-24: el anfitrión y el administrador configuran los porcentajes de tarifa
+						.requestMatchers("/admin/tarifas").hasAnyRole("ADMIN", "ANFITRION")
+						.requestMatchers("/admin/**").hasRole("ADMIN")
 						.anyRequest().authenticated())
 				.exceptionHandling(ex -> ex
 						.authenticationEntryPoint((req, res, e) -> escribirError(res,
