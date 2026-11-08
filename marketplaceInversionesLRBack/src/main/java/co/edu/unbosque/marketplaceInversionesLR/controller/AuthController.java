@@ -97,13 +97,11 @@ public class AuthController {
 	 * @param segundoFactorService      servicio del segundo factor
 	 * @param inicioGoogleService       servicio de inicio de sesión con Google
 	 * @param authService               servicio de recuperación de contraseña
-
 	 */
 	public AuthController(AuthenticationManager authenticationManager, UsuarioService usuarioService,
 			VerificacionCorreoService verificacionCorreoService, JwtUtil jwtUtil, UserDetailsService userDetailsService,
 			AuditoriaService auditoriaService, SegundoFactorService segundoFactorService,
 			InicioGoogleService inicioGoogleService, AuthService authService) {
-			InicioGoogleService inicioGoogleService) {
 		this.authenticationManager = authenticationManager;
 		this.usuarioService = usuarioService;
 		this.verificacionCorreoService = verificacionCorreoService;
