@@ -1,0 +1,671 @@
+
+<main class="mx-auto max-w-[1100px] px-4 py-10 sm:px-8">
+
+  <!-- ENCABEZADO -->
+  <div>
+    <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+      Inversiones LR
+    </p>
+
+    <h1 class="mt-2 text-3xl font-bold text-slate-900">
+      Crear alojamiento
+    </h1>
+
+    <p class="mt-2 text-sm text-slate-500">
+      Completa la información de tu propiedad
+      para publicarla en el Marketplace.
+    </p>
+  </div>
+
+  <!-- BORRADOR EXISTENTE -->
+  @if (borradorId() !== null) {
+    <div
+      data-borrador
+      class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+    >
+      <p class="text-sm font-bold text-emerald-800">
+        Borrador #{{ borradorId() }}
+        @if (estado()) {
+          <span
+            data-estado
+            class="ml-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700"
+          >
+            {{ estado() }}
+          </span>
+        }
+      </p>
+      <p class="mt-1 text-xs text-emerald-700">
+        El alojamiento ya existe en el servidor.
+        Puedes seguir completando su información.
+      </p>
+    </div>
+  }
+
+  <!-- ERRORES -->
+  @if (error()) {
+    <div
+      role="alert"
+      class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+    >
+      {{ error() }}
+
+      <!-- DATOS FALTANTES PARA ENVIAR A REVISIÓN (CA-097) -->
+      @if (faltantes().length > 0) {
+        <ul data-faltantes class="mt-3 space-y-2">
+          @for (faltante of faltantes(); track faltante.nombre) {
+            <li class="flex items-center justify-between gap-3">
+              <span>{{ faltante.nombre }}</span>
+              <button
+                type="button"
+                (click)="irAPaso(faltante.paso)"
+                class="shrink-0 text-xs font-bold text-red-700 underline hover:text-red-900"
+              >
+                Ir al paso {{ faltante.paso }}
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <!-- MENSAJES -->
+  @if (mensaje()) {
+    <div
+      role="status"
+      class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+    >
+      {{ mensaje() }}
+    </div>
+  }
+
+  <!-- FORMULARIO -->
+  <form
+    (ngSubmit)="paso() === pasos.length ? submit() : siguiente()"
+    novalidate
+    class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+  >
+
+    <!-- PROGRESO DE LOS PASOS -->
+    <div>
+
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+        Paso {{ paso() }} de {{ pasos.length }}
+      </p>
+
+      <div
+        class="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100"
+        role="progressbar"
+        [attr.aria-valuenow]="paso()"
+        aria-valuemin="1"
+        [attr.aria-valuemax]="pasos.length"
+      >
+        <div
+          class="h-full rounded-full bg-emerald-700 transition-all duration-300"
+          [style.width.%]="progreso"
+        ></div>
+      </div>
+
+      <ol class="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        @for (p of pasos; track p.numero) {
+          <li>
+            <button
+              type="button"
+              (click)="irAPaso(p.numero)"
+              [disabled]="guardando()"
+              [attr.aria-current]="p.numero === paso() ? 'step' : null"
+              class="w-full rounded-xl border px-3 py-2 text-left text-xs font-bold transition disabled:cursor-not-allowed disabled:opacity-50"
+              [class.border-emerald-200]="p.numero === paso()"
+              [class.bg-emerald-50]="p.numero === paso()"
+              [class.text-emerald-700]="p.numero === paso()"
+              [class.border-slate-200]="p.numero !== paso()"
+              [class.text-slate-500]="p.numero !== paso()"
+            >
+              {{ p.numero }}. {{ p.titulo }}
+            </button>
+          </li>
+        }
+      </ol>
+
+    </div>
+
+    <!-- ====================================== -->
+    <!-- PASO 1: INFORMACIÓN DEL ALOJAMIENTO -->
+    <!-- ====================================== -->
+
+    @if (paso() === 1) {
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+    <h2 class="text-xl font-bold text-slate-900">
+      Información del alojamiento
+    </h2>
+
+    <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+      <!-- TÍTULO -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Título del alojamiento
+          <span class="text-red-500">*</span>
+        </span>
+        <input
+          id="titulo"
+          name="titulo"
+          type="text"
+          required
+          maxlength="255"
+          [(ngModel)]="draft.titulo"
+          (blur)="marcarTocado('titulo')"
+          placeholder="Casa campestre en Villa de Leyva"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('titulo')) {
+          <span data-error="titulo" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('titulo') }}
+          </span>
+        }
+      </label>
+
+      <!-- CIUDAD -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Ciudad
+        </span>
+        <input
+          id="ciudad"
+          name="ciudad"
+          type="text"
+          maxlength="255"
+          [(ngModel)]="draft.ciudad"
+          (blur)="marcarTocado('ciudad')"
+          placeholder="Bogotá"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('ciudad')) {
+          <span data-error="ciudad" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('ciudad') }}
+          </span>
+        }
+      </label>
+
+      <!-- DESCRIPCIÓN -->
+      <label class="block sm:col-span-2">
+        <span class="mb-2 block text-sm font-bold">
+          Descripción
+        </span>
+        <textarea
+          id="descripcion"
+          name="descripcion"
+          rows="4"
+          maxlength="2000"
+          [(ngModel)]="draft.descripcion"
+          (blur)="marcarTocado('descripcion')"
+          placeholder="Describe tu alojamiento, sus espacios y características..."
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        ></textarea>
+        @if (mostrarError('descripcion')) {
+          <span data-error="descripcion" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('descripcion') }}
+          </span>
+        }
+      </label>
+
+      <!-- UBICACIÓN -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Ubicación o dirección
+        </span>
+        <input
+          id="ubicacion"
+          name="ubicacion"
+          type="text"
+          maxlength="255"
+          [(ngModel)]="draft.ubicacion"
+          (blur)="marcarTocado('ubicacion')"
+          placeholder="Calle 123 #45-67"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('ubicacion')) {
+          <span data-error="ubicacion" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('ubicacion') }}
+          </span>
+        }
+      </label>
+
+      <!-- TIPO -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Tipo de alojamiento
+        </span>
+        <select
+          id="tipo"
+          name="tipo"
+          [(ngModel)]="draft.tipo"
+          class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-emerald-500"
+        >
+          <option value="">Selecciona un tipo</option>
+          <option value="Casa">Casa</option>
+          <option value="Apartamento">Apartamento</option>
+          <option value="Cabaña">Cabaña</option>
+          <option value="Finca">Finca</option>
+          <option value="Habitación">Habitación</option>
+          <option value="Hotel">Hotel</option>
+        </select>
+      </label>
+
+      <!-- CAPACIDAD -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Capacidad de huéspedes
+        </span>
+        <input
+          id="capacidad"
+          name="capacidad"
+          type="number"
+          min="1"
+          step="1"
+          [(ngModel)]="draft.capacidad"
+          (input)="revisarNumero('capacidad', $event)"
+          (blur)="marcarTocado('capacidad')"
+          placeholder="6"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('capacidad')) {
+          <span data-error="capacidad" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('capacidad') }}
+          </span>
+        }
+      </label>
+
+      <!-- HABITACIONES -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Habitaciones
+        </span>
+        <input
+          id="habitaciones"
+          name="habitaciones"
+          type="number"
+          min="0"
+          step="1"
+          [(ngModel)]="draft.habitaciones"
+          (input)="revisarNumero('habitaciones', $event)"
+          (blur)="marcarTocado('habitaciones')"
+          placeholder="3"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('habitaciones')) {
+          <span data-error="habitaciones" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('habitaciones') }}
+          </span>
+        }
+      </label>
+
+      <!-- CAMAS -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Camas
+        </span>
+        <input
+          id="camas"
+          name="camas"
+          type="number"
+          min="0"
+          step="1"
+          [(ngModel)]="draft.camas"
+          (input)="revisarNumero('camas', $event)"
+          (blur)="marcarTocado('camas')"
+          placeholder="4"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('camas')) {
+          <span data-error="camas" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('camas') }}
+          </span>
+        }
+      </label>
+
+      <!-- BAÑOS -->
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Baños
+        </span>
+        <input
+          id="banos"
+          name="banos"
+          type="number"
+          min="0"
+          step="1"
+          [(ngModel)]="draft.banos"
+          (input)="revisarNumero('banos', $event)"
+          (blur)="marcarTocado('banos')"
+          placeholder="2"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('banos')) {
+          <span data-error="banos" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('banos') }}
+          </span>
+        }
+      </label>
+
+      <!-- PRECIO -->
+      <label class="block sm:col-span-2">
+        <span class="mb-2 block text-sm font-bold">
+          Precio por noche (COP)
+        </span>
+        <input
+          id="precioNoche"
+          name="precioNoche"
+          type="number"
+          min="1"
+          step="1000"
+          [(ngModel)]="draft.precioNoche"
+          (input)="revisarNumero('precioNoche', $event)"
+          (blur)="marcarTocado('precioNoche')"
+          placeholder="245000"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        <span class="mt-2 block text-xs text-slate-500">
+          Introduce el valor sin puntos ni símbolo de moneda.
+        </span>
+        @if (mostrarError('precioNoche')) {
+          <span data-error="precioNoche" class="mt-2 block text-xs text-red-600">
+            {{ errorCampo('precioNoche') }}
+          </span>
+        }
+      </label>
+
+    </div>
+
+    </section>
+
+    }
+
+    <!-- ====================================== -->
+    <!-- PASO 2: HORARIOS Y REGLAS -->
+    <!-- ====================================== -->
+
+    @if (paso() === 2) {
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Horarios y reglas
+      </h2>
+
+      <div class="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Hora de entrada (check-in)
+          </span>
+          <input
+            id="horaEntrada"
+            name="horaEntrada"
+            type="time"
+            [(ngModel)]="draft.horaEntrada"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+        </label>
+
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Hora de salida (check-out)
+          </span>
+          <input
+            id="horaSalida"
+            name="horaSalida"
+            type="time"
+            [(ngModel)]="draft.horaSalida"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+        </label>
+
+        <label class="block sm:col-span-2">
+          <span class="mb-2 block text-sm font-bold">
+            Reglas de la casa
+          </span>
+          <textarea
+            id="reglas"
+            name="reglas"
+            rows="3"
+            maxlength="2000"
+            [(ngModel)]="draft.reglas"
+            (blur)="marcarTocado('reglas')"
+            placeholder="Ejemplo: No se permiten fiestas ni fumar dentro de la propiedad."
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          ></textarea>
+          @if (mostrarError('reglas')) {
+            <span data-error="reglas" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('reglas') }}
+            </span>
+          }
+        </label>
+
+        <!-- POLÍTICA DE CANCELACIÓN -->
+        <label class="block sm:col-span-2">
+          <span class="mb-2 block text-sm font-bold">
+            Política de cancelación
+          </span>
+          <select
+            id="idPolitica"
+            name="idPolitica"
+            [(ngModel)]="draft.idPolitica"
+            class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-emerald-500"
+          >
+            <option [ngValue]="null">
+              Selecciona una política
+            </option>
+
+            @for (politica of politicas(); track politica.idPolitica) {
+              <option [ngValue]="politica.idPolitica">
+                {{ politica.nombre }} — {{ politica.condiciones }}
+              </option>
+            }
+          </select>
+
+          @if (cargandoPoliticas()) {
+            <span class="mt-2 block text-xs text-slate-500">
+              Cargando políticas de cancelación...
+            </span>
+          }
+        </label>
+
+      </div>
+    </section>
+
+    }
+
+    <!-- ====================================== -->
+    <!-- PASO 3: SERVICIOS INCLUIDOS -->
+    <!-- ====================================== -->
+
+    @if (paso() === 3) {
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Servicios incluidos
+      </h2>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Selecciona los servicios que ofrece tu alojamiento.
+      </p>
+
+      <div class="mt-5 flex flex-wrap gap-3">
+
+        @for (servicio of servicios; track servicio) {
+          <label
+            class="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <input
+              type="checkbox"
+              [checked]="draft.amenidades.includes(servicio)"
+              (change)="toggleService(servicio)"
+              class="mr-2 accent-emerald-700"
+            />
+            {{ servicio }}
+          </label>
+        }
+
+      </div>
+    </section>
+
+    }
+
+    <!-- ====================================== -->
+    <!-- PASO 4: FOTOGRAFÍAS -->
+    <!-- ====================================== -->
+
+    @if (paso() === 4) {
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Fotografías del alojamiento
+      </h2>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Debes subir al menos una fotografía para crear el borrador.
+        Máximo 15 imágenes JPG, PNG o WEBP, de 5 MB cada una.
+      </p>
+
+      <div class="mt-5 rounded-2xl border-2 border-dashed border-slate-200 p-6 text-center sm:p-10">
+
+        <svg
+          class="mx-auto text-emerald-700"
+          width="36"
+          height="36"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+
+        <p class="mt-3 font-bold text-slate-900">
+          Agrega fotografías de tu propiedad
+        </p>
+
+        <input
+          id="imagenes"
+          type="file"
+          multiple
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          (change)="seleccionarImagenes($event)"
+          [disabled]="guardando()"
+          class="mx-auto mt-6 block w-full max-w-md text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-3 file:font-bold file:text-emerald-700 disabled:opacity-50"
+        />
+
+        <!-- FOTOS GUARDADAS -->
+        @if (imagenesGuardadas() > 0) {
+          <p class="mt-4 text-sm font-semibold text-emerald-700">
+            {{ imagenesGuardadas() }}
+            fotografía(s) guardada(s) en el servidor.
+          </p>
+        }
+
+        <!-- FOTOS SELECCIONADAS -->
+        @if (imagenesSeleccionadas.length > 0) {
+
+          <div class="mx-auto mt-6 max-w-lg space-y-2 text-left">
+
+            @for (archivo of imagenesSeleccionadas; track $index) {
+
+              <div
+                data-imagen
+                class="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-4 py-3 text-xs"
+              >
+                <span class="min-w-0 truncate text-slate-700">
+                  {{ archivo.name }}
+                </span>
+
+                <button
+                  type="button"
+                  (click)="quitarImagen($index)"
+                  [disabled]="guardando()"
+                  class="shrink-0 font-bold text-red-600 hover:text-red-800 disabled:opacity-50"
+                >
+                  Quitar
+                </button>
+              </div>
+
+            }
+
+          </div>
+
+        }
+
+      </div>
+    </section>
+
+    }
+
+    <!-- NAVEGACIÓN ENTRE PASOS -->
+    <div
+      class="mt-10 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-8"
+    >
+
+      <button
+        type="button"
+        data-anterior
+        (click)="anterior()"
+        [disabled]="guardando() || paso() === 1"
+        class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Anterior
+      </button>
+
+      <div class="flex flex-wrap justify-end gap-3">
+
+        <!-- GUARDAR BORRADOR -->
+        <button
+          type="button"
+          data-guardar-borrador
+          (click)="saveDraft()"
+          [disabled]="guardando()"
+          class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ guardando() ? 'Guardando...' : 'Guardar borrador' }}
+        </button>
+
+        @if (paso() < pasos.length) {
+
+          <!-- SIGUIENTE -->
+          <button
+            type="button"
+            data-siguiente
+            (click)="siguiente()"
+            [disabled]="guardando()"
+            class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Siguiente
+          </button>
+
+        } @else {
+
+          <!-- ENVIAR A REVISIÓN -->
+          <button
+            type="submit"
+            data-enviar-revision
+            [disabled]="guardando()"
+            class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {{ guardando() ? 'Procesando...' : 'Enviar a revisión' }}
+          </button>
+
+        }
+
+      </div>
+
+    </div>
+
+  </form>
+
+</main>
