@@ -69,7 +69,7 @@ class InicioSesionTest {
 	/** Mensaje del 401 de las rutas protegidas. */
 	private static final String NO_AUTENTICADO = "No autenticado: token ausente, inválido o expirado";
 
-	/** Ruta protegida de ejemplo (aún no implementada: con token válido responde 404, no 401). */
+	/** Ruta protegida de ejemplo: el perfil propio (HU-09). */
 	private static final String RUTA_PROTEGIDA = "/usuarios/perfil";
 
 	/** Código de 6 dígitos dentro del cuerpo del correo. */
@@ -134,9 +134,9 @@ class InicioSesionTest {
 		Usuario ana = buscar("ana@correo.com");
 		assertThat(jwtUtil.validateToken(token, ana)).isTrue();
 
-		// Con el token pasa la seguridad: la ruta aún no existe, así que responde 404 y no 401
+		// Con el token pasa la seguridad y obtiene su perfil
 		mockMvc.perform(get(RUTA_PROTEGIDA).header("Authorization", "Bearer " + token))
-				.andExpect(status().isNotFound());
+				.andExpect(status().isOk());
 
 		assertThat(auditoriaRepository.findByAccionOrderByFechaDesc(AuditoriaService.LOGIN)).anySatisfy(evento -> {
 			assertThat(evento.getResultado()).isEqualTo(ResultadoAuditoria.EXITOSO);
