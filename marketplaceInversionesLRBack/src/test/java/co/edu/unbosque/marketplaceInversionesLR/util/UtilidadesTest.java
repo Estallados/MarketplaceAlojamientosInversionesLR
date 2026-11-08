@@ -8,6 +8,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+
+import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 
 /**
  * Pruebas de las utilidades de texto y de respuestas.
@@ -29,5 +33,25 @@ class UtilidadesTest {
 
 		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 		assertThat(respuesta.getBody()).isEqualTo(Map.of("message", "Ya existe"));
+	}
+
+	@Test
+	@DisplayName("esAdmin reconoce el rol ADMIN y no a los demás roles ni a la petición sin sesión")
+	void esAdmin() {
+		assertThat(RespuestaUtil.esAdmin(sesion(Role.ADMIN))).isTrue();
+		assertThat(RespuestaUtil.esAdmin(sesion(Role.ANFITRION))).isFalse();
+		assertThat(RespuestaUtil.esAdmin(null)).isFalse();
+	}
+
+	/**
+	 * Sesión de un usuario con el rol indicado.
+	 *
+	 * @param rol rol del usuario
+	 * @return autenticación con sus autoridades
+	 */
+	private static UsernamePasswordAuthenticationToken sesion(Role rol) {
+		Usuario usuario = new Usuario();
+		usuario.setRol(rol);
+		return new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
 	}
 }

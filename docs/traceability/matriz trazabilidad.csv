@@ -239,15 +239,19 @@ CP-011 Acceso o modificación de información de otro usuario";PublicacionesTest#o
 CA-115;RF-025;Registrar y actualizar períodos disponibles;Registro y asociación de disponibilidad;Dado que un anfitrión tiene un alojamiento registrado, cuando ingresa un período válido de disponibilidad, entonces el sistema debe guardar las fechas correspondientes asociadas a dicho alojamiento.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
-CP-026 Modificación de período reservado";DisponibilidadBusquedaTest#debeRegistrarUnPeriodoAsociadoAlAlojamiento_CA115_CA116;;38a9302;;;;
+CP-026 Modificación de período reservado";"CalendarioServiceTest#registraPeriodo_CA115
+CalendarioServiceTest#administradorRegistraPeriodo_CA115
+DisponibilidadTest#registraPeriodo_CA115";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
 CA-117;RF-025;Registrar y actualizar períodos disponibles;Actualización de períodos;Dado que un anfitrión tiene períodos de disponibilidad registrados para su alojamiento, cuando modifica un período no reservado, entonces el sistema debe guardar y mostrar la disponibilidad actualizada.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
-CP-026 Modificación de período reservado";DisponibilidadBusquedaTest#debeActualizarUnPeriodoNoReservado_CA117;;38a9302;;;;
+CP-026 Modificación de período reservado";"CalendarioServiceTest#modificaPeriodoNoReservado_CA117
+DisponibilidadTest#modificaPeriodo_CA117";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
 CA-118;RF-025;Registrar y actualizar períodos disponibles;Protección de períodos reservados;Dado que un alojamiento tiene un período reservado, cuando el anfitrión intenta modificar su disponibilidad de manera que afecte dicha reserva, entonces el sistema debe rechazar la modificación.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
-CP-026 Modificación de período reservado";DisponibilidadBusquedaTest#noDebePermitirModificarOEliminarUnPeriodoQueAfecteUnaReserva_CA118;;38a9302;;;;
+CP-026 Modificación de período reservado";"CalendarioServiceTest#rechazaCambioQueAfectaReserva_CA118
+DisponibilidadTest#rechazaCambioQueAfectaReserva_CA118";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
 CA-119;RF-026;Consultar disponibilidad;Consulta de período disponible;Dado que una publicación se encuentra ACTIVA y tiene un período disponible, cuando el huésped consulta fechas comprendidas dentro de dicho período y sin reservas superpuestas, entonces el sistema debe mostrar el alojamiento como disponible.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
 CP-029 Validación de fechas";DisponibilidadBusquedaTest#debeMostrarDisponibleUnPeriodoLibre_CA119_CA121;;38a9302;;;;

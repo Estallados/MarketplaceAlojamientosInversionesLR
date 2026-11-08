@@ -110,6 +110,9 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
 						// Políticas de cancelación que el anfitrión elige al crear la publicación (HU-15)
 						.requestMatchers(HttpMethod.GET, "/alojamientos/politicas").permitAll()
+						// HU-20: el calendario es público; el servicio solo lo muestra si la publicación está
+						// ACTIVA o si quien consulta es su anfitrión o un administrador
+						.requestMatchers(HttpMethod.GET, "/alojamientos/*/disponibilidad").permitAll()
 						// HU-24: el anfitrión y el administrador configuran los porcentajes de tarifa
 						.requestMatchers("/admin/tarifas").hasAnyRole("ADMIN", "ANFITRION")
 						.requestMatchers("/admin/**").hasRole("ADMIN")

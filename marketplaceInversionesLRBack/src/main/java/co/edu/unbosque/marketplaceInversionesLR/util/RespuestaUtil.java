@@ -15,6 +15,9 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
  */
 public final class RespuestaUtil {
 
+	/** Autoridad de Spring del rol ADMIN. */
+	private static final String ROL_ADMIN = "ROLE_ADMIN";
+
 	private RespuestaUtil() {
 		throw new IllegalStateException("Clase utilitaria");
 	}
@@ -96,5 +99,16 @@ public final class RespuestaUtil {
 			return usuario.getIdUsuario();
 		}
 		return null;
+	}
+
+	/**
+	 * Indica si quien hizo la petición es administrador.
+	 *
+	 * @param authentication autenticación de la petición; puede ser {@code null}
+	 * @return {@code true} si tiene el rol ADMIN
+	 */
+	public static boolean esAdmin(Authentication authentication) {
+		return authentication != null && authentication.getAuthorities().stream()
+				.anyMatch(a -> ROL_ADMIN.equals(a.getAuthority()));
 	}
 }
