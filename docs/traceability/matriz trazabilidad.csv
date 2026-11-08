@@ -171,12 +171,12 @@ CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";PublicacionesTest#elDetalleDeUnaPublicacionActivaEsPublicoYElDeUnBorradorNo_CA093_CA102;;38a9302;;;;
 CA-094;RF-017;Crear publicación de alojamiento;Creación de publicación;Dado que el usuario tiene el rol ANFITRION, cuando registra un nuevo alojamiento, entonces el sistema debe permitir crear la publicación ingresando título, descripción, ubicación, tipo, capacidad, precio, servicios, reglas, política de cancelación e imágenes, y guardarla en estado BORRADOR.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
-CP-015 Validación de capacidad y precio del alojamiento";"ImagenesAlojamientoTest#alCrearLaPrimeraImagenQuedaComoPrincipalYSeGuardaEnCloudinary_CA094
-PublicacionesTest#debeCrearPublicacionEnBorradorConLaInformacionMinima_CA094_CA095_CA096";;"598b01a
-38a9302";;;;"SCRUM-196: la política de cancelación se asigna al crear la publicación; validar en backend/front."
+CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#creaEnBorrador_CA094
+CrearPublicacionTest#creaLaPublicacionEnBorrador_CA094";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;;"SCRUM-196: la política de cancelación se asigna al crear la publicación; validar en backend/front."
 CA-097;RF-017;Crear publicación de alojamiento;Validación de información obligatoria;Dado que una publicación no contiene toda la información mínima requerida, cuando el anfitrión intenta enviarla a revisión para su activación, entonces el sistema debe impedirlo e indicar los datos faltantes.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
-CP-015 Validación de capacidad y precio del alojamiento";PublicacionesTest#debeImpedirEnviarARevisionSinInformacionMinimaEIndicarFaltantes_CA097;;38a9302;;;;
+CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#indicaLosDatosFaltantes_CA097
+CrearPublicacionTest#indicaLosDatosFaltantes_CA097";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;;
 CA-098;"RF-017
 RF-018";"Crear publicación de alojamiento
 Gestión y actualización de publicación";Validación de capacidad y precio;Dado que el anfitrión registra o modifica la capacidad o el precio por noche de un alojamiento, cuando ingresa un valor igual o menor que cero, entonces el sistema debe rechazarlo e informar que el valor debe ser mayor que cero.;HU-15;"CU-017
@@ -189,7 +189,8 @@ CP-017 Modificación sin permisos sobre una publicación o recurso
 CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
-CP-073 Registro y modificación de servicio adicional";PublicacionesTest#debeRechazarCapacidadMenorOIgualACero_CA098;;38a9302;;;;
+CP-073 Registro y modificación de servicio adicional";"PublicacionServiceTest#capacidadYPrecioMayoresQueCero_CA098
+CrearPublicacionTest#capacidadYPrecioMayoresQueCero_CA098";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;;
 CA-100;RF-018;Gestión y actualización de publicación;Modificación de información;Dado que el anfitrión tiene una publicación registrada a su nombre, cuando modifica sus datos, entonces el sistema debe guardar y mostrar la información actualizada.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
