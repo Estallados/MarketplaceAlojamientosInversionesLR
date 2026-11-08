@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 import { Register } from './register/register';
 import { Login } from './login/login';
 import { Recover } from './login/recover/recover';
+import { Tarifas } from './cotizacion/tarifas/tarifas';
+import { roleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -21,6 +23,25 @@ export const routes: Routes = [
   // ====================================
 
   { path: 'restablecer-contrasena', component: Recover },
+
+  // ====================================
+  // CONFIGURAR PORCENTAJES DE TARIFAS (HU-24)
+  // ANFITRIÓN Y ADMINISTRADOR
+  // ====================================
+
+  {
+    path: 'host/tarifas',
+    component: Tarifas,
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  {
+    path: 'admin/tarifas',
+    component: Tarifas,
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
 
   { path: '**', redirectTo: 'login' }
 ];
