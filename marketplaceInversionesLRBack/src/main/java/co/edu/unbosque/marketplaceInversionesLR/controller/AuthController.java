@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.InicioGoogleDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.LoginDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.RestablecerContraseniaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.VerificacionCorreoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
@@ -28,6 +29,7 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuthService;
 import co.edu.unbosque.marketplaceInversionesLR.service.InicioGoogleService;
 import co.edu.unbosque.marketplaceInversionesLR.service.SegundoFactorService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
@@ -80,6 +82,9 @@ public class AuthController {
 	/** Inicio de sesión y registro con una cuenta de Google. */
 	private final InicioGoogleService inicioGoogleService;
 
+	/** Recuperación de contraseña. */
+	private final AuthService authService;
+
 	/**
 	 * Crea el controlador.
 	 *
@@ -91,11 +96,12 @@ public class AuthController {
 	 * @param auditoriaService          servicio de auditoría
 	 * @param segundoFactorService      servicio del segundo factor
 	 * @param inicioGoogleService       servicio de inicio de sesión con Google
+	 * @param authService               servicio de recuperación de contraseña
 	 */
 	public AuthController(AuthenticationManager authenticationManager, UsuarioService usuarioService,
 			VerificacionCorreoService verificacionCorreoService, JwtUtil jwtUtil, UserDetailsService userDetailsService,
 			AuditoriaService auditoriaService, SegundoFactorService segundoFactorService,
-			InicioGoogleService inicioGoogleService) {
+			InicioGoogleService inicioGoogleService, AuthService authService) {
 		this.authenticationManager = authenticationManager;
 		this.usuarioService = usuarioService;
 		this.verificacionCorreoService = verificacionCorreoService;
@@ -104,6 +110,7 @@ public class AuthController {
 		this.auditoriaService = auditoriaService;
 		this.segundoFactorService = segundoFactorService;
 		this.inicioGoogleService = inicioGoogleService;
+		this.authService = authService;
 	}
 
 	/**
@@ -417,6 +424,50 @@ public class AuthController {
 		case VerificacionCorreoService.ESPERAR ->
 			RespuestaUtil.mensaje(HttpStatus.TOO_MANY_REQUESTS, "Espera un minuto antes de pedir otro código.");
 		default -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el correo.");
+		};
+	}
+
+	/**
+	 * Solicita la recuperación de contraseña: el token se envía por correo al
+	 * usuario y vence a los 30 minutos. Ruta: {@code POST /auth/recuperar}.
+	 *
+	 * @param solicitud DTO con {@code correo}
+	 * @return 200 siempre que el correo venga (exista o no la cuenta, para no
+	 *         revelar qué cuentas están registradas); 400 si falta el correo
+	 */
+	@Operation(summary = "Solicitar recuperación de contraseña", description = "Envía al correo un código de recuperación válido por 30 minutos.")
+	@ApiResponse(responseCode = "200", description = "Si el correo está registrado, se generó un enlace de "
+			+ "recuperación válido por 30 minutos.")
+	@ApiResponse(responseCode = "400", description = "Debes enviar el correo.")
+	@PostMapping("/recuperar")
+	public ResponseEntity<Object> recuperar(@RequestBody UsuarioDTO solicitud) {
+		if (authService.solicitarRecuperacion(solicitud.getCorreo()) != 0) {
+			return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el correo.");
+		}
+		return RespuestaUtil.mensaje(HttpStatus.OK,
+				"Si el correo está registrado, se generó un enlace de recuperación válido por 30 minutos.");
+	}
+
+	/**
+	 * Cambia la contraseña con un token de recuperación. Ruta:
+	 * {@code POST /auth/restablecer}.
+	 *
+	 * @param datos DTO con {@code token} y {@code contrasenia} nueva
+	 * @return 200 si se cambió; 400 si faltan datos, la contraseña es débil o el
+	 *         token no sirve
+	 */
+	@Operation(summary = "Restablecer la contraseña con el token de recuperación")
+	@ApiResponse(responseCode = "200", description = "Contraseña actualizada. Ya puedes iniciar sesión.")
+	@ApiResponse(responseCode = "400", description = "El enlace de recuperación no es válido o ya venció. | La "
+			+ "contraseña debe tener entre 8 y 64 caracteres, una mayúscula, una minúscula, un número y un símbolo. | "
+			+ "Debes enviar el token y la contraseña nueva.")
+	@PostMapping("/restablecer")
+	public ResponseEntity<Object> restablecer(@RequestBody RestablecerContraseniaDTO datos) {
+		return switch (authService.restablecerContrasenia(datos.getToken(), datos.getContrasenia())) {
+		case 0 -> RespuestaUtil.mensaje(HttpStatus.OK, "Contraseña actualizada. Ya puedes iniciar sesión.");
+		case 1 -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "El enlace de recuperación no es válido o ya venció.");
+		case 3 -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, MENSAJE_CONTRASENIA_DEBIL);
+		default -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el token y la contraseña nueva.");
 		};
 	}
 
