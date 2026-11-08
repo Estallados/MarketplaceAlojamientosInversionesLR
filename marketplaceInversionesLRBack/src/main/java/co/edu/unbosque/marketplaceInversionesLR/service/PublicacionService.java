@@ -1,0 +1,468 @@
+package co.edu.unbosque.marketplaceInversionesLR.service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ImagenDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PoliticaCancelacionDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.HistorialEstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Imagen;
+import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
+import co.edu.unbosque.marketplaceInversionesLR.service.CloudinaryService.ImagenSubida;
+import co.edu.unbosque.marketplaceInversionesLR.service.GeocodingService.Coordenadas;
+import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
+import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
+
+/**
+ * Publicaciones de alojamiento (HU-15): creación en BORRADOR con sus imágenes,
+ * validación de los datos y de la información mínima para enviar a revisión,
+ * y políticas de cancelación disponibles.
+ * <p>
+ * Cada cambio de estado guarda un {@link HistorialEstadoAlojamiento}.
+ * </p>
+ */
+@Service
+public class PublicacionService {
+
+	/** Valor absoluto máximo de la latitud. */
+	private static final int LATITUD_MAXIMA = 90;
+
+	/** Valor absoluto máximo de la longitud. */
+	private static final int LONGITUD_MAXIMA = 180;
+
+	/** Tope del precio por noche (columna NUMERIC). */
+	private static final BigDecimal MONTO_MAXIMO = new BigDecimal("1000000000");
+
+	/** Máximo de imágenes por alojamiento. */
+	public static final int MAXIMO_IMAGENES = 15;
+
+	/** Repositorio de alojamientos. */
+	private final AlojamientoRepository alojamientoRepo;
+
+	/** Almacén de imágenes. */
+	private final ImagenRepository imagenRepo;
+
+	/** Repositorio de políticas de cancelación. */
+	private final PoliticaCancelacionRepository politicaRepo;
+
+	/** Historial de estados. */
+	private final HistorialEstadoAlojamientoRepository historialRepo;
+
+	/** Repositorio de usuarios. */
+	private final UsuarioRepository usuarioRepo;
+
+	/** Valida y guarda las imágenes en Cloudinary. */
+	private final AlmacenamientoService almacenamientoService;
+
+	/** Busca las coordenadas de la dirección. */
+	private final GeocodingService geocodingService;
+
+	/** Copia los datos de la entidad al DTO. */
+	private final ModelMapper modelMapper;
+
+	/**
+	 * Crea el servicio.
+	 *
+	 * @param alojamientoRepo       repositorio de alojamientos
+	 * @param imagenRepo            almacén de imágenes
+	 * @param politicaRepo          repositorio de políticas
+	 * @param historialRepo         historial de estados
+	 * @param usuarioRepo           repositorio de usuarios
+	 * @param almacenamientoService servicio de almacenamiento de imágenes
+	 * @param geocodingService      servicio de coordenadas
+	 * @param modelMapper           copiador de entidades a DTO
+	 */
+	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
+			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
+			UsuarioRepository usuarioRepo, AlmacenamientoService almacenamientoService,
+			GeocodingService geocodingService, ModelMapper modelMapper) {
+		this.alojamientoRepo = alojamientoRepo;
+		this.imagenRepo = imagenRepo;
+		this.politicaRepo = politicaRepo;
+		this.historialRepo = historialRepo;
+		this.usuarioRepo = usuarioRepo;
+		this.almacenamientoService = almacenamientoService;
+		this.geocodingService = geocodingService;
+		this.modelMapper = modelMapper;
+	}
+
+	/**
+	 * Políticas de cancelación disponibles para asignar a un alojamiento.
+	 *
+	 * @return lista de políticas
+	 */
+	public List<PoliticaCancelacionDTO> politicas() {
+		return politicaRepo.findAll().stream().map(p -> modelMapper.map(p, PoliticaCancelacionDTO.class)).toList();
+	}
+
+	/**
+	 * Crea una publicación en BORRADOR con sus imágenes (CA-094). Solo el
+	 * título es obligatorio en el borrador, pero debe llegar con al menos una
+	 * imagen; la primera queda como portada. El id, el estado y el dueño
+	 * enviados se ignoran. Si no llegan coordenadas, se buscan con la dirección
+	 * y la ciudad ({@link GeocodingService}).
+	 *
+	 * @param datos       datos del alojamiento
+	 * @param archivos    imágenes (JPG, PNG o WEBP de hasta 5 MB), entre 1 y
+	 *                    {@link #MAXIMO_IMAGENES}
+	 * @param idAnfitrion anfitrión autenticado
+	 * @return la publicación; o DATOS_INVALIDOS si los datos o las imágenes no
+	 *         son válidos
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> crear(AlojamientoDTO datos, List<MultipartFile> archivos, Long idAnfitrion) {
+		String error = validar(datos, true);
+		if (error == null) {
+			error = errorArchivos(archivos, 0);
+		}
+		if (error != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, error);
+		}
+
+		Alojamiento alojamiento = new Alojamiento();
+		aplicar(datos, alojamiento);
+		if (sinCoordenadas(datos)) {
+			ubicarEnMapa(alojamiento);
+		}
+		alojamiento.setIdAnfitrion(idAnfitrion);
+		alojamiento.setEstado(EstadoAlojamiento.BORRADOR);
+		alojamiento.setFechaCreacion(LocalDateTime.now());
+		alojamiento.setFechaActualizacion(alojamiento.getFechaCreacion());
+		alojamiento = alojamientoRepo.save(alojamiento);
+		guardarArchivos(alojamiento.getIdAlojamiento(), archivos, false);
+		registrarHistorial(alojamiento.getIdAlojamiento(), null, EstadoAlojamiento.BORRADOR, idAnfitrion, null);
+		return Resultado.exito(convertirDTO(alojamiento));
+	}
+
+	/**
+	 * Datos mínimos para enviar a revisión (CA-097): título, descripción,
+	 * ubicación, ciudad, tipo, capacidad, habitaciones, baños, horas de entrada
+	 * y salida, precio, reglas, política de cancelación y al menos una imagen.
+	 * Las fechas de disponibilidad se agregan a esta lista con la historia de
+	 * disponibilidad.
+	 *
+	 * @param alojamiento alojamiento a revisar
+	 * @return nombres de los datos que faltan (vacía si está completo)
+	 */
+	public List<String> camposFaltantes(Alojamiento alojamiento) {
+		List<String> faltantes = new ArrayList<>();
+		agregarSiFalta(faltantes, alojamiento.getTitulo(), "título");
+		agregarSiFalta(faltantes, alojamiento.getDescripcion(), "descripción");
+		agregarSiFalta(faltantes, alojamiento.getUbicacion(), "ubicación");
+		agregarSiFalta(faltantes, alojamiento.getCiudad(), "ciudad");
+		agregarSiFalta(faltantes, alojamiento.getTipo(), "tipo");
+		agregarSiFalta(faltantes, alojamiento.getReglas(), "reglas");
+		if (alojamiento.getCapacidad() == null) {
+			faltantes.add("capacidad");
+		}
+		if (alojamiento.getHabitaciones() == null) {
+			faltantes.add("habitaciones");
+		}
+		if (alojamiento.getBanos() == null) {
+			faltantes.add("baños");
+		}
+		if (alojamiento.getHoraEntrada() == null) {
+			faltantes.add("hora de entrada");
+		}
+		if (alojamiento.getHoraSalida() == null) {
+			faltantes.add("hora de salida");
+		}
+		if (alojamiento.getPrecioNoche() == null) {
+			faltantes.add("precio por noche");
+		}
+		if (alojamiento.getIdPolitica() == null) {
+			faltantes.add("política de cancelación");
+		}
+		if (imagenRepo.findByIdAlojamiento(alojamiento.getIdAlojamiento()).isEmpty()) {
+			faltantes.add("al menos una imagen");
+		}
+		return faltantes;
+	}
+
+	/**
+	 * Convierte la entidad a DTO con las imágenes (la principal primero), el
+	 * nombre de la política y el nombre del anfitrión.
+	 *
+	 * @param alojamiento alojamiento
+	 * @return alojamiento para la API
+	 */
+	public AlojamientoDTO convertirDTO(Alojamiento alojamiento) {
+		AlojamientoDTO dto = modelMapper.map(alojamiento, AlojamientoDTO.class);
+		dto.setAmenidades(new HashSet<>(alojamiento.getAmenidades()));
+		List<ImagenDTO> imagenes = imagenesDTO(alojamiento.getIdAlojamiento());
+		dto.setDetalleImagenes(imagenes);
+		dto.setImagenes(imagenes.stream().map(ImagenDTO::getUrl).toList());
+		if (alojamiento.getIdPolitica() != null) {
+			politicaRepo.findById(alojamiento.getIdPolitica()).ifPresent(p -> dto.setNombrePolitica(p.getNombre()));
+		}
+		usuarioRepo.findById(alojamiento.getIdAnfitrion()).ifPresent(u -> dto.setNombreAnfitrion(u.getNombre()));
+		return dto;
+	}
+
+	/**
+	 * Imágenes del alojamiento con la principal primero y luego en orden de
+	 * carga.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @return lista de imágenes
+	 */
+	public List<ImagenDTO> imagenesDTO(Long idAlojamiento) {
+		return imagenRepo.findByIdAlojamiento(idAlojamiento).stream()
+				.sorted(Comparator.comparing((Imagen i) -> !Boolean.TRUE.equals(i.getPrincipal())))
+				.map(i -> modelMapper.map(i, ImagenDTO.class)).toList();
+	}
+
+	/**
+	 * Guarda un cambio de estado en el historial.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param anterior      estado anterior
+	 * @param nuevo         estado nuevo
+	 * @param idActor       usuario que hizo el cambio
+	 * @param motivo        motivo; puede ser {@code null}
+	 */
+	private void registrarHistorial(Long idAlojamiento, EstadoAlojamiento anterior, EstadoAlojamiento nuevo,
+			Long idActor, String motivo) {
+		HistorialEstadoAlojamiento historial = new HistorialEstadoAlojamiento();
+		historial.setIdAlojamiento(idAlojamiento);
+		historial.setEstadoAnterior(anterior);
+		historial.setEstadoNuevo(nuevo);
+		historial.setIdUsuario(idActor);
+		historial.setMotivo(motivo);
+		historial.setFecha(LocalDateTime.now());
+		historialRepo.save(historial);
+	}
+
+	/**
+	 * Valida los datos enviados del alojamiento (largos, números positivos,
+	 * coordenadas en rango, política existente).
+	 *
+	 * @param datos    datos a validar
+	 * @param creacion {@code true} al crear, {@code false} al editar
+	 * @return el mensaje de error, o {@code null} si son válidos
+	 */
+	private String validar(AlojamientoDTO datos, boolean creacion) {
+		if (datos == null) {
+			return "Debes enviar los datos del alojamiento.";
+		}
+		if (creacion && (datos.getTitulo() == null || datos.getTitulo().isBlank())) {
+			return "El título es obligatorio.";
+		}
+		if (LimitesTexto.excede(datos.getTitulo(), LimitesTexto.CORTO)
+				|| LimitesTexto.excede(datos.getUbicacion(), LimitesTexto.CORTO)
+				|| LimitesTexto.excede(datos.getCiudad(), LimitesTexto.CORTO)
+				|| LimitesTexto.excede(datos.getTipo(), LimitesTexto.CORTO)) {
+			return "El título, la ubicación, la ciudad y el tipo pueden tener máximo " + LimitesTexto.CORTO
+					+ " caracteres.";
+		}
+		if (LimitesTexto.excede(datos.getDescripcion(), LimitesTexto.LARGO)
+				|| LimitesTexto.excede(datos.getReglas(), LimitesTexto.LARGO)) {
+			return "La descripción y las reglas pueden tener máximo " + LimitesTexto.LARGO + " caracteres.";
+		}
+		if (datos.getAmenidades() != null
+				&& datos.getAmenidades().stream().anyMatch(a -> LimitesTexto.excede(a, LimitesTexto.CORTO))) {
+			return "Cada amenidad puede tener máximo " + LimitesTexto.CORTO + " caracteres.";
+		}
+		if (datos.getCapacidad() != null && datos.getCapacidad() <= 0) {
+			return "La capacidad debe ser mayor que cero.";
+		}
+		if ((datos.getHabitaciones() != null && datos.getHabitaciones() < 0)
+				|| (datos.getCamas() != null && datos.getCamas() < 0)
+				|| (datos.getBanos() != null && datos.getBanos() < 0)) {
+			return "Las habitaciones, las camas y los baños no pueden ser negativos.";
+		}
+		if (datos.getPrecioNoche() != null
+				&& (datos.getPrecioNoche().signum() <= 0 || datos.getPrecioNoche().compareTo(MONTO_MAXIMO) > 0)) {
+			return "El precio por noche debe ser positivo y de máximo 1.000.000.000.";
+		}
+		if ((datos.getPorcentajeLimpieza() != null && !TarifaService.porcentajeValido(datos.getPorcentajeLimpieza()))
+				|| (datos.getPorcentajeServicio() != null
+						&& !TarifaService.porcentajeValido(datos.getPorcentajeServicio()))) {
+			return "Los porcentajes de limpieza y servicio deben estar entre 0 y 100.";
+		}
+		if ((datos.getLatitud() != null && Math.abs(datos.getLatitud()) > LATITUD_MAXIMA)
+				|| (datos.getLongitud() != null && Math.abs(datos.getLongitud()) > LONGITUD_MAXIMA)) {
+			return "La latitud debe estar entre -90 y 90 y la longitud entre -180 y 180.";
+		}
+		if (datos.getIdPolitica() != null && !politicaRepo.existsById(datos.getIdPolitica())) {
+			return "La política de cancelación no existe.";
+		}
+		return null;
+	}
+
+	/**
+	 * Indica si los datos no traen ni latitud ni longitud.
+	 *
+	 * @param datos datos enviados
+	 * @return {@code true} si no traen coordenadas
+	 */
+	private static boolean sinCoordenadas(AlojamientoDTO datos) {
+		return datos.getLatitud() == null && datos.getLongitud() == null;
+	}
+
+	/**
+	 * Guarda las coordenadas que corresponden a la dirección y la ciudad. Si no
+	 * se encuentran, las deja en {@code null} (el frontend muestra entonces la
+	 * zona de la ciudad).
+	 *
+	 * @param alojamiento alojamiento a ubicar
+	 */
+	private void ubicarEnMapa(Alojamiento alojamiento) {
+		Optional<Coordenadas> coordenadas = geocodingService.ubicar(alojamiento.getUbicacion(),
+				alojamiento.getCiudad());
+		alojamiento.setLatitud(coordenadas.map(Coordenadas::latitud).orElse(null));
+		alojamiento.setLongitud(coordenadas.map(Coordenadas::longitud).orElse(null));
+	}
+
+	/**
+	 * Copia al alojamiento los campos que no vengan en {@code null}. Las
+	 * amenidades se guardan en minúsculas y sin repetir.
+	 *
+	 * @param datos       datos enviados
+	 * @param alojamiento alojamiento a modificar
+	 */
+	private static void aplicar(AlojamientoDTO datos, Alojamiento alojamiento) {
+		if (datos.getTitulo() != null) {
+			alojamiento.setTitulo(datos.getTitulo().trim());
+		}
+		if (datos.getDescripcion() != null) {
+			alojamiento.setDescripcion(datos.getDescripcion().trim());
+		}
+		if (datos.getUbicacion() != null) {
+			alojamiento.setUbicacion(datos.getUbicacion().trim());
+		}
+		if (datos.getCiudad() != null) {
+			alojamiento.setCiudad(datos.getCiudad().trim());
+		}
+		if (datos.getTipo() != null) {
+			alojamiento.setTipo(datos.getTipo().trim());
+		}
+		if (datos.getReglas() != null) {
+			alojamiento.setReglas(datos.getReglas().trim());
+		}
+		if (datos.getLatitud() != null) {
+			alojamiento.setLatitud(datos.getLatitud());
+		}
+		if (datos.getLongitud() != null) {
+			alojamiento.setLongitud(datos.getLongitud());
+		}
+		if (datos.getCapacidad() != null) {
+			alojamiento.setCapacidad(datos.getCapacidad());
+		}
+		if (datos.getHabitaciones() != null) {
+			alojamiento.setHabitaciones(datos.getHabitaciones());
+		}
+		if (datos.getCamas() != null) {
+			alojamiento.setCamas(datos.getCamas());
+		}
+		if (datos.getBanos() != null) {
+			alojamiento.setBanos(datos.getBanos());
+		}
+		if (datos.getHoraEntrada() != null) {
+			alojamiento.setHoraEntrada(datos.getHoraEntrada());
+		}
+		if (datos.getHoraSalida() != null) {
+			alojamiento.setHoraSalida(datos.getHoraSalida());
+		}
+		if (datos.getPrecioNoche() != null) {
+			alojamiento.setPrecioNoche(datos.getPrecioNoche());
+		}
+		if (datos.getPorcentajeLimpieza() != null) {
+			alojamiento.setPorcentajeLimpieza(datos.getPorcentajeLimpieza());
+		}
+		if (datos.getPorcentajeServicio() != null) {
+			alojamiento.setPorcentajeServicio(datos.getPorcentajeServicio());
+		}
+		if (datos.getIdPolitica() != null) {
+			alojamiento.setIdPolitica(datos.getIdPolitica());
+		}
+		if (datos.getAmenidades() != null && !datos.getAmenidades().isEmpty()) {
+			Set<String> amenidades = new HashSet<>();
+			for (String amenidad : datos.getAmenidades()) {
+				if (amenidad != null && !amenidad.isBlank()) {
+					amenidades.add(amenidad.trim().toLowerCase());
+				}
+			}
+			alojamiento.setAmenidades(amenidades);
+		}
+	}
+
+	/**
+	 * Valida un lote de imágenes antes de guardar alguna: que venga al menos
+	 * una, que no se supere {@link #MAXIMO_IMAGENES} y que cada archivo sea una
+	 * imagen válida.
+	 *
+	 * @param archivos imágenes recibidas
+	 * @param actuales imágenes que ya tiene el alojamiento
+	 * @return el mensaje de error, o {@code null} si el lote es válido
+	 */
+	private String errorArchivos(List<MultipartFile> archivos, int actuales) {
+		if (archivos == null || archivos.isEmpty()) {
+			return "Debes enviar al menos una imagen.";
+		}
+		if (actuales + archivos.size() > MAXIMO_IMAGENES) {
+			return "Un alojamiento puede tener máximo " + MAXIMO_IMAGENES + " imágenes.";
+		}
+		for (MultipartFile archivo : archivos) {
+			String error = almacenamientoService.errorImagen(archivo);
+			if (error != null) {
+				return archivo == null ? error : error + " (" + archivo.getOriginalFilename() + ")";
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Guarda los archivos ya validados; si el alojamiento no tenía portada, el
+	 * primero queda como principal.
+	 *
+	 * @param idAlojamiento  alojamiento
+	 * @param archivos       imágenes a guardar
+	 * @param tienePrincipal {@code true} si el alojamiento ya tiene portada
+	 */
+	private void guardarArchivos(Long idAlojamiento, List<MultipartFile> archivos, boolean tienePrincipal) {
+		for (MultipartFile archivo : archivos) {
+			long orden = imagenRepo.siguienteOrden();
+			ImagenSubida subida = almacenamientoService.guardarImagen(archivo, idAlojamiento, !tienePrincipal, orden);
+			Imagen imagen = new Imagen();
+			imagen.setIdAlojamiento(idAlojamiento);
+			imagen.setRutaArchivo(subida.publicId());
+			imagen.setUrl(subida.url());
+			imagen.setPrincipal(!tienePrincipal);
+			imagen.setOrden(orden);
+			imagenRepo.save(imagen);
+			tienePrincipal = true;
+		}
+	}
+
+	/**
+	 * Agrega el nombre del dato a la lista de faltantes si el valor está vacío.
+	 *
+	 * @param faltantes lista de datos faltantes
+	 * @param valor     valor a revisar
+	 * @param nombre    nombre del dato para el usuario
+	 */
+	private static void agregarSiFalta(List<String> faltantes, String valor, String nombre) {
+		if (valor == null || valor.isBlank()) {
+			faltantes.add(nombre);
+		}
+	}
+}

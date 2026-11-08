@@ -9,6 +9,9 @@ public final class LimitesTexto {
 	/** Textos cortos como nombres (VARCHAR 255). */
 	public static final int CORTO = 255;
 
+	/** Textos largos como descripciones y reglas (VARCHAR 2000). */
+	public static final int LARGO = 2000;
+
 	/** Correo electrónico. */
 	public static final int CORREO = 150;
 

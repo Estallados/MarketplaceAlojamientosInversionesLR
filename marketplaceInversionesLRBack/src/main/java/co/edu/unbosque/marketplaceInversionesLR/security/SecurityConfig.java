@@ -96,6 +96,8 @@ public class SecurityConfig {
 						// una ruta pública se convierte en un 401 engañoso
 						.requestMatchers("/error").permitAll()
 						.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+						// Políticas de cancelación que el anfitrión elige al crear la publicación (HU-15)
+						.requestMatchers(HttpMethod.GET, "/alojamientos/politicas").permitAll()
 						// HU-24: el anfitrión y el administrador configuran los porcentajes de tarifa
 						.requestMatchers("/admin/tarifas").hasAnyRole("ADMIN", "ANFITRION")
 						.requestMatchers("/admin/**").hasRole("ADMIN")
