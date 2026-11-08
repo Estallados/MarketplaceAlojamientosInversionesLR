@@ -654,6 +654,14 @@ export class CrearPublicacion implements OnInit {
     const datos =
       this.construirDatos();
 
+    // Indica si el borrador se creó en esta misma
+    // operación y en qué etapa ocurrió un error.
+
+    const eraNuevo =
+      this.borradorId() === null;
+
+    let etapa: 'datos' | 'revision' = 'datos';
+
     // PASO 1:
     // Crear o actualizar alojamiento.
 
@@ -668,6 +676,8 @@ export class CrearPublicacion implements OnInit {
           if (!enviarARevision) {
             return of(alojamiento);
           }
+
+          etapa = 'revision';
 
           return this.publicaciones
             .enviarRevision(
@@ -708,6 +718,36 @@ export class CrearPublicacion implements OnInit {
 
           const id =
             this.borradorId();
+
+          // El borrador se creó, pero la operación siguiente
+          // no existe todavía en el servidor (404).
+
+          if (
+            id !== null &&
+            err instanceof HttpErrorResponse &&
+            err.status === 404
+          ) {
+
+            if (eraNuevo) {
+
+              this.intentoGuardar = false;
+
+              this.mensaje.set(
+                `Borrador #${id} guardado correctamente.`
+              );
+            }
+
+            this.error.set(
+              etapa === 'revision'
+                ? `El borrador #${id} está guardado, pero no se pudo ` +
+                  'enviar a revisión: el servidor todavía no tiene ' +
+                  'disponible esta operación.'
+                : `El borrador #${id} ya está guardado, pero el servidor ` +
+                  'todavía no permite actualizarlo ni agregarle fotografías.'
+            );
+
+            return;
+          }
 
           let texto =
             this.mensajeError(err);

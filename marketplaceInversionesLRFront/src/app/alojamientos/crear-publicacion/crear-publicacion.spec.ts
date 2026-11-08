@@ -490,6 +490,61 @@ describe('CrearPublicacion (HU-15)', () => {
 
   });
 
+  it('CA-094 confirma el borrador creado aunque el envío a revisión no esté disponible en el servidor', async () => {
+
+    const c = fixture.componentInstance;
+
+    c.draft = {
+      ...c.draft,
+      titulo: 'Finca en Anapoima',
+      descripcion: 'Finca con piscina',
+      ubicacion: 'Vereda El Rosario',
+      ciudad: 'Anapoima',
+      tipo: 'Finca',
+      capacidad: 10,
+      habitaciones: 4,
+      banos: 3,
+      precioNoche: 600000,
+      horaEntrada: '15:00',
+      horaSalida: '11:00',
+      reglas: 'Sin fiestas',
+      idPolitica: 1
+    };
+
+    await pulsar('ol li:nth-child(4) button');
+
+    await subirImagenes(imagen());
+
+    await pulsar('[data-enviar-revision]');
+
+    http.expectOne(url).flush(
+      { idAlojamiento: 9, idAnfitrion: 7, estado: 'BORRADOR', titulo: 'Finca en Anapoima' },
+      { status: 201, statusText: 'Created' }
+    );
+
+    http.expectOne(`${url}/9/enviarrevision`).flush(
+      { message: 'La ruta solicitada no existe.' },
+      { status: 404, statusText: 'Not Found' }
+    );
+
+    await estable();
+
+    expect(
+      elemento.querySelector('[role="status"]')?.textContent
+    ).toContain('Borrador #9 guardado correctamente.');
+
+    expect(alerta()).toContain(
+      'El borrador #9 está guardado, pero no se pudo enviar a revisión'
+    );
+
+    expect(alerta()).not.toContain('La ruta solicitada no existe.');
+
+    expect(
+      elemento.querySelector('[data-estado]')?.textContent?.trim()
+    ).toBe('BORRADOR');
+
+  });
+
   // ======================================
   // CA-098 CAPACIDAD Y PRECIO
   // ======================================
