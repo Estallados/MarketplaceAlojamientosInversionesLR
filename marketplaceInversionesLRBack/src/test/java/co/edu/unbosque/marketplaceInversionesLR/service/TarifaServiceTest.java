@@ -2,6 +2,9 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -20,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ConfiguracionTarifa;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ConfiguracionTarifaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
@@ -33,11 +37,14 @@ class TarifaServiceTest {
 	@Mock
 	private ConfiguracionTarifaRepository configuracionRepo;
 
+	@Mock
+	private AuditoriaService auditoriaService;
+
 	private TarifaService servicio;
 
 	@BeforeEach
 	void preparar() {
-		servicio = new TarifaService(configuracionRepo);
+		servicio = new TarifaService(configuracionRepo, auditoriaService);
 	}
 
 	@Test
@@ -88,6 +95,18 @@ class TarifaServiceTest {
 		assertThat(guardada.getValue().getPorcentajeServicio()).isEqualByComparingTo("15");
 		assertThat(guardada.getValue().getIdUsuario()).isEqualTo(1L);
 		assertThat(guardada.getValue().getFecha()).isNotNull();
+		// HU-26: el cambio queda en la auditoría con el actor y la configuración nueva
+		verify(auditoriaService).registrar(eq(1L), eq(AuditoriaService.TARIFA_ACTUALIZADA),
+				eq(AuditoriaService.ENTIDAD_CONFIGURACION), eq(4L), eq(ResultadoAuditoria.EXITOSO), anyString());
+	}
+
+	@Test
+	@DisplayName("CA-136 Un cambio de porcentajes rechazado también queda en la auditoría")
+	void rechazoAuditado_CA136() {
+		servicio.actualizar(datos("-1", "10"), 3L);
+
+		verify(auditoriaService).registrar(eq(3L), eq(AuditoriaService.TARIFA_ACTUALIZADA),
+				eq(AuditoriaService.ENTIDAD_CONFIGURACION), isNull(), eq(ResultadoAuditoria.RECHAZADO), anyString());
 	}
 
 	@Test

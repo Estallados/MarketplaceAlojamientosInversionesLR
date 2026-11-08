@@ -3,11 +3,16 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -28,6 +33,10 @@ import tools.jackson.databind.ObjectMapper;
  * aunque la operación auditada se revierta, y también se guardan las
  * operaciones rechazadas. Si la auditoría falla, la operación auditada no se
  * interrumpe; el evento sigue quedando en el log.
+ * </p>
+ * <p>
+ * Los eventos no se modifican ni se borran (RNF-007): el repositorio solo
+ * permite insertar y consultar.
  * </p>
  */
 @Service
@@ -57,8 +66,89 @@ public class AuditoriaService {
 	/** Se activó, confirmó o desactivó el segundo factor. */
 	public static final String SEGUNDO_FACTOR = "SEGUNDO_FACTOR";
 
+	/** Se creó un administrador. */
+	public static final String CREACION_ADMINISTRADOR = "CREACION_ADMINISTRADOR";
+
+	/** Un usuario actualizó su perfil. */
+	public static final String PERFIL_ACTUALIZADO = "PERFIL_ACTUALIZADO";
+
+	/** Un usuario desactivó su cuenta. */
+	public static final String CUENTA_DESACTIVADA = "CUENTA_DESACTIVADA";
+
+	/** Un anfitrión creó una publicación de alojamiento. */
+	public static final String ALOJAMIENTO_CREADO = "ALOJAMIENTO_CREADO";
+
+	/** Se modificaron los datos de un alojamiento. */
+	public static final String ALOJAMIENTO_ACTUALIZADO = "ALOJAMIENTO_ACTUALIZADO";
+
+	/** Un alojamiento cambió de estado (revisión, aprobación, pausa, etc.). */
+	public static final String ALOJAMIENTO_CAMBIO_ESTADO = "ALOJAMIENTO_CAMBIO_ESTADO";
+
+	/** Se subió, eliminó o marcó como principal una imagen de un alojamiento. */
+	public static final String IMAGEN_ALOJAMIENTO = "IMAGEN_ALOJAMIENTO";
+
+	/** Se agregó, modificó o eliminó un servicio adicional de un alojamiento. */
+	public static final String SERVICIO_ADICIONAL = "SERVICIO_ADICIONAL";
+
+	/** Se registró o modificó un periodo de disponibilidad. */
+	public static final String DISPONIBILIDAD = "DISPONIBILIDAD";
+
+	/** Se cambiaron los porcentajes globales de limpieza y servicio. */
+	public static final String TARIFA_ACTUALIZADA = "TARIFA_ACTUALIZADA";
+
+	/** Un huésped creó una reserva. */
+	public static final String RESERVA_CREADA = "RESERVA_CREADA";
+
+	/** Se procesó el pago de una reserva. */
+	public static final String PAGO = "PAGO";
+
+	/** Se canceló una reserva. */
+	public static final String CANCELACION = "CANCELACION";
+
+	/** Un huésped publicó una reseña. */
+	public static final String RESENA_CREADA = "RESENA_CREADA";
+
+	/** Un administrador moderó una reseña. */
+	public static final String RESENA_MODERADA = "RESENA_MODERADA";
+
+	/** Un administrador restringió a un usuario. */
+	public static final String USUARIO_RESTRINGIDO = "USUARIO_RESTRINGIDO";
+
+	/** Un administrador levantó la restricción de un usuario. */
+	public static final String USUARIO_LIBERADO = "USUARIO_LIBERADO";
+
+	/** Se exportó un reporte. */
+	public static final String REPORTE_EXPORTADO = "REPORTE_EXPORTADO";
+
+	/** Se rechazó una petición por falta de permisos (403). */
+	public static final String ACCESO_DENEGADO = "ACCESO_DENEGADO";
+
+	/** Ocurrió un error inesperado del servidor (500). */
+	public static final String ERROR_INTERNO = "ERROR_INTERNO";
+
 	/** Entidad auditada: usuario. */
 	public static final String ENTIDAD_USUARIO = "USUARIO";
+
+	/** Entidad auditada: alojamiento. */
+	public static final String ENTIDAD_ALOJAMIENTO = "ALOJAMIENTO";
+
+	/** Entidad auditada: periodo de disponibilidad. */
+	public static final String ENTIDAD_PERIODO = "PERIODO_DISPONIBILIDAD";
+
+	/** Entidad auditada: configuración de tarifas. */
+	public static final String ENTIDAD_CONFIGURACION = "CONFIGURACION_TARIFA";
+
+	/** Entidad auditada: reserva. */
+	public static final String ENTIDAD_RESERVA = "RESERVA";
+
+	/** Entidad auditada: reseña. */
+	public static final String ENTIDAD_RESENA = "RESENA";
+
+	/** Entidad auditada: reporte. */
+	public static final String ENTIDAD_REPORTE = "REPORTE";
+
+	/** Tamaño máximo de una página de consulta. */
+	public static final int MAX_TAMANIO_PAGINA = 100;
 
 	/** Log de la clase. */
 	private static final Logger LOG = LoggerFactory.getLogger(AuditoriaService.class);
@@ -122,6 +212,38 @@ public class AuditoriaService {
 			// La auditoría nunca debe tumbar la operación auditada; el evento ya quedó en el log
 			LOG.error("No se pudo guardar el evento de auditoría {}", accion, e);
 		}
+	}
+
+	/**
+	 * Consulta los eventos guardados, del más reciente al más antiguo (CA-139).
+	 * Cada filtro en {@code null} no se aplica. La ruta de consulta para el
+	 * administrador es parte de HU-13.
+	 *
+	 * @param accion  acción exacta, por ejemplo LOGIN
+	 * @param idActor usuario que hizo la acción
+	 * @param desde   fecha y hora mínima
+	 * @param hasta   fecha y hora máxima
+	 * @param pagina  número de página, desde 0
+	 * @param tamanio eventos por página, entre 1 y {@link #MAX_TAMANIO_PAGINA}
+	 * @return página de eventos
+	 */
+	public Page<EventoAuditoria> consultar(String accion, Long idActor, LocalDateTime desde, LocalDateTime hasta,
+			int pagina, int tamanio) {
+		int tamanioValido = Math.min(Math.max(tamanio, 1), MAX_TAMANIO_PAGINA);
+		Pageable pageable = PageRequest.of(Math.max(pagina, 0), tamanioValido,
+				Sort.by(Sort.Direction.DESC, "fecha").and(Sort.by(Sort.Direction.DESC, "idEvento")));
+		String accionFiltro = accion == null || accion.isBlank() ? null : accion.trim();
+		return auditoriaRepo.buscar(accionFiltro, idActor, desde, hasta, pageable);
+	}
+
+	/**
+	 * Detalle de un evento (CA-138, CA-139).
+	 *
+	 * @param idEvento id del evento
+	 * @return el evento, si existe
+	 */
+	public Optional<EventoAuditoria> detalle(Long idEvento) {
+		return idEvento == null ? Optional.empty() : auditoriaRepo.findById(idEvento);
 	}
 
 	/**

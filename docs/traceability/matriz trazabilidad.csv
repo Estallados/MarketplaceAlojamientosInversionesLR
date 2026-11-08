@@ -270,13 +270,17 @@ CU-005";CP-075 Contraseña que no cumple condiciones mínimas;"AuthFlowTest#rechaz
 ExceptionChekerTest#debeRechazarContraseniaSinMayuscula_CA135
 ExceptionChekerTest#debeRechazarContraseniaSinMinuscula_CA135
 ExceptionChekerTest#debeAceptarContraseniaQueCumpleTodasLasReglas_CA135";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
-CA-136;RNF-006;Registro de operaciones relevantes;Registro de operaciones relevantes;Dado una operación considerada relevante, cuando esta sea ejecutada, entonces el sistema debe generar un registro asociado a dicha operación.;HU-26;CU-011;CP-076 Registro de operación relevante;"IdentidadPerfilTest#debeAuditarLoginExitosoYFallido_CA136_CA152
-AuditoriaServiceTest#debeGuardarEventoConActorFechaYResultado_CA136_CA137_CA138";;38a9302;;;;
-CA-137;RNF-006;Registro de operaciones relevantes;Usuario responsable de la acción;Dado un usuario autenticado que realice una operación trazable, cuando el sistema genere el registro, entonces este debe identificar al usuario responsable de la acción.;HU-26;CU-011;CP-076 Registro de operación relevante;"AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139
-AuditoriaServiceTest#debeGuardarEventoConActorFechaYResultado_CA136_CA137_CA138";;38a9302;;;;
-CA-138;RNF-006;Registro de operaciones relevantes;Fecha y estado de la operación;Dado un evento registrado, cuando se consulte su información, entonces el registro debe contener la fecha de ejecución y el estado o resultado correspondiente.;HU-26;CU-011;CP-076 Registro de operación relevante;"AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139
-AuditoriaServiceTest#debeGuardarEventoConActorFechaYResultado_CA136_CA137_CA138";;38a9302;;;;
-CA-139;RNF-007;Conservación de información para auditoría;Disponibilidad de registros para auditoría;Dado un evento de auditoría registrado, cuando un usuario autorizado consulte los registros posteriormente, entonces la información debe permanecer disponible para su revisión.;HU-26;CU-011;CP-077 Disponibilidad posterior de registros de auditoría;AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139;;38a9302;;;;
+CA-136;RNF-006;Registro de operaciones relevantes;Registro de operaciones relevantes;Dado una operación considerada relevante, cuando esta sea ejecutada, entonces el sistema debe generar un registro asociado a dicha operación.;HU-26;CU-011;CP-076 Registro de operación relevante;"ManejadorGlobalExcepcionesTest#errorInesperadoAuditado_CA136
+TarifaServiceTest#rechazoAuditado_CA136
+AlojamientoControllerAuditoriaTest#publicacionCreadaAuditada_CA136
+AuditoriaTest#operacionRelevanteGeneraEvento_CA136";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+CA-137;RNF-006;Registro de operaciones relevantes;Usuario responsable de la acción;Dado un usuario autenticado que realice una operación trazable, cuando el sistema genere el registro, entonces este debe identificar al usuario responsable de la acción.;HU-26;CU-011;CP-076 Registro de operación relevante;"ManejadorGlobalExcepcionesTest#accesoDenegadoAuditadoConElUsuario_CA137
+AlojamientoControllerAuditoriaTest#publicacionRechazadaAuditada_CA137
+AuditoriaTest#eventoIdentificaAlUsuario_CA137";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+CA-138;RNF-006;Registro de operaciones relevantes;Fecha y estado de la operación;Dado un evento registrado, cuando se consulte su información, entonces el registro debe contener la fecha de ejecución y el estado o resultado correspondiente.;HU-26;CU-011;CP-076 Registro de operación relevante;"AuditoriaServiceTest#detalle_CA138
+AuditoriaTest#eventoTieneFechaYResultado_CA138";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+CA-139;RNF-007;Conservación de información para auditoría;Disponibilidad de registros para auditoría;Dado un evento de auditoría registrado, cuando un usuario autorizado consulte los registros posteriormente, entonces la información debe permanecer disponible para su revisión.;HU-26;CU-011;CP-077 Disponibilidad posterior de registros de auditoría;"AuditoriaServiceTest#consultaConFiltros_CA139
+AuditoriaTest#eventosDisponiblesParaRevision_CA139";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
 CA-140;RNF-008;Prevención de duplicados y consistencia ante reintentos;Sin duplicados por reenvío;Dado una solicitud que ya fue procesada, cuando la misma solicitud sea enviada nuevamente, entonces el sistema no debe generar una segunda operación equivalente.;;CU-025;CP-078 Solicitud duplicada o reintentada;"CancelacionesTest#cancelarEsIdempotenteYNotificaAlAnfitrion_CA140
 ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
 IdempotenciaServiceTest#debeEjecutarUnaSolaVezYRepetirLaMismaRespuesta_CA140";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
