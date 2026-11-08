@@ -69,6 +69,7 @@ class AuthControllerGoogleTest {
 	void preparar() {
 		controlador = new AuthController(authenticationManager, usuarioService, verificacionCorreoService, jwtUtil,
 				userDetailsService, auditoriaService, segundoFactorService, inicioGoogleService, authService);
+				userDetailsService, auditoriaService, segundoFactorService, inicioGoogleService);
 	}
 
 	@Test
