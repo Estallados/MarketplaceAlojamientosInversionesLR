@@ -16,6 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,7 +54,8 @@ class UsuarioServiceTest {
 
 	@BeforeEach
 	void crearServicio() {
-		servicio = new UsuarioService(usuarioRepo, auditoriaService, verificacionCorreoService, passwordEncoder);
+		servicio = new UsuarioService(usuarioRepo, auditoriaService, verificacionCorreoService, passwordEncoder,
+				new ModelMapper());
 	}
 
 	@Test
