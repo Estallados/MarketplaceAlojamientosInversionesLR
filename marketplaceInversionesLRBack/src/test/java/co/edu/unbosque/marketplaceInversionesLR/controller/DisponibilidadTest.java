@@ -250,13 +250,95 @@ class DisponibilidadTest {
 	}
 
 	@Test
+	@DisplayName("CA-082 La consulta rechaza fechas faltantes, mal escritas, con la salida no posterior a la llegada o en el pasado")
+	void consultaConFechasInvalidas_CA082() throws Exception {
+		activar();
+		LocalDate hoy = LocalDate.now();
+
+		consultar(BASE, BASE).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CalendarioService.SALIDA_NO_POSTERIOR));
+		consultar(BASE, BASE.minusDays(2)).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CalendarioService.SALIDA_NO_POSTERIOR));
+		consultar(hoy.minusDays(1), hoy.plusDays(1)).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CalendarioService.LLEGADA_EN_EL_PASADO));
+		mockMvc.perform(get(ruta(idAlojamiento) + "/consultar").param("llegada", BASE.toString()))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(CalendarioService.FECHAS_FALTANTES));
+		consultar("2026-13-40", BASE).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value("El valor de llegada no es válido."));
+	}
+
+	@Test
+	@DisplayName("CA-119 Una publicación ACTIVA con un período que contiene las fechas y sin reservas se muestra disponible")
+	void disponibleSinReservas_CA119() throws Exception {
+		registrar(tokenAnfitrion, idAlojamiento, BASE, BASE.plusDays(10)).andExpect(status().isCreated());
+		activar();
+		Usuario huesped = crearUsuario("huesped@correo.com", Role.HUESPED);
+		// Una reserva que sale el día en que llega el huésped no se cruza con su estancia
+		crearReserva(huesped.getIdUsuario(), BASE, BASE.plusDays(3), EstadoReserva.CONFIRMADA);
+		// Una reserva pendiente de pago de hace más de 15 minutos ya no retiene las fechas
+		crearReserva(huesped.getIdUsuario(), BASE.plusDays(6), BASE.plusDays(8), EstadoReserva.PENDIENTE_PAGO,
+				LocalDateTime.now().minusHours(1));
+
+		consultar(BASE.plusDays(3), BASE.plusDays(10))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.idAlojamiento").value(idAlojamiento))
+				.andExpect(jsonPath("$.fechaEntrada").value(BASE.plusDays(3).toString()))
+				.andExpect(jsonPath("$.fechaSalida").value(BASE.plusDays(10).toString()))
+				.andExpect(jsonPath("$.disponible").value(true))
+				.andExpect(jsonPath("$.motivo").doesNotExist());
+	}
+
+	@Test
+	@DisplayName("CA-120 Si las fechas incluyen días reservados o fuera de los períodos, no está disponible")
+	void noDisponibleConReservaOFueraDePeriodo_CA120() throws Exception {
+		registrar(tokenAnfitrion, idAlojamiento, BASE, BASE.plusDays(10)).andExpect(status().isCreated());
+		activar();
+		Usuario huesped = crearUsuario("huesped@correo.com", Role.HUESPED);
+		crearReserva(huesped.getIdUsuario(), BASE.plusDays(4), BASE.plusDays(6), EstadoReserva.CONFIRMADA);
+		crearReserva(huesped.getIdUsuario(), BASE.plusDays(8), BASE.plusDays(9), EstadoReserva.PENDIENTE_PAGO);
+
+		consultar(BASE.plusDays(2), BASE.plusDays(5))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.disponible").value(false))
+				.andExpect(jsonPath("$.motivo").value(CalendarioService.CRUCE_CON_RESERVA));
+		// Una reserva pendiente de pago reciente sí retiene las fechas
+		consultar(BASE.plusDays(7), BASE.plusDays(9)).andExpect(jsonPath("$.disponible").value(false));
+		// Se sale del período ofrecido
+		consultar(BASE.plusDays(9), BASE.plusDays(12))
+				.andExpect(jsonPath("$.disponible").value(false))
+				.andExpect(jsonPath("$.motivo").value(CalendarioService.FUERA_DE_PERIODO));
+		// Un rango libre del mismo período sí está disponible
+		consultar(BASE, BASE.plusDays(4)).andExpect(jsonPath("$.disponible").value(true));
+	}
+
+	@Test
+	@DisplayName("La consulta de una publicación que no está ACTIVA responde 404 a terceros y no disponible a su dueño")
+	void consultaDePublicacionNoActiva() throws Exception {
+		registrar(tokenAnfitrion, idAlojamiento, BASE, BASE.plusDays(10)).andExpect(status().isCreated());
+
+		consultar(BASE, BASE.plusDays(2)).andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value(CalendarioService.NO_EXISTE));
+		mockMvc.perform(get(ruta(idAlojamiento) + "/consultar").param("llegada", BASE.toString())
+				.param("salida", BASE.plusDays(2).toString()).header("Authorization", "Bearer " + tokenAnfitrion))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.disponible").value(false))
+				.andExpect(jsonPath("$.motivo").value("El alojamiento no está disponible para nuevas reservas "
+						+ "(estado BORRADOR)."));
+		mockMvc.perform(get(ruta(999_999L) + "/consultar").param("llegada", BASE.toString())
+				.param("salida", BASE.plusDays(2).toString())).andExpect(status().isNotFound());
+	}
+
+	@Test
 	@DisplayName("La documentación de Swagger incluye las rutas de disponibilidad")
 	void documentacion() throws Exception {
 		mockMvc.perform(get("/v3/api-docs"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.paths['/alojamientos/{idAlojamiento}/disponibilidad'].post").exists())
 				.andExpect(jsonPath("$.paths['/alojamientos/{idAlojamiento}/disponibilidad/{idPeriodo}'].put"
-						+ ".responses['409']").exists());
+						+ ".responses['409']").exists())
+				.andExpect(jsonPath("$.paths['/alojamientos/{idAlojamiento}/disponibilidad/consultar'].get"
+						+ ".responses['400']").exists());
 	}
 
 	/**
@@ -338,6 +420,20 @@ class DisponibilidadTest {
 	 * @param estado    estado de la reserva
 	 */
 	private void crearReserva(Long idHuesped, LocalDate entrada, LocalDate salida, EstadoReserva estado) {
+		crearReserva(idHuesped, entrada, salida, estado, LocalDateTime.now());
+	}
+
+	/**
+	 * Guarda una reserva del alojamiento de prueba creada en un momento dado.
+	 *
+	 * @param idHuesped huésped
+	 * @param entrada   día de llegada
+	 * @param salida    día de salida
+	 * @param estado    estado de la reserva
+	 * @param creada    momento en que se creó
+	 */
+	private void crearReserva(Long idHuesped, LocalDate entrada, LocalDate salida, EstadoReserva estado,
+			LocalDateTime creada) {
 		Reserva reserva = new Reserva();
 		reserva.setIdAlojamiento(idAlojamiento);
 		reserva.setIdHuesped(idHuesped);
@@ -348,8 +444,30 @@ class DisponibilidadTest {
 		reserva.setHuespedes(2);
 		reserva.setEstado(estado);
 		reserva.setTotal(new BigDecimal("500000"));
-		reserva.setFechaCreacion(LocalDateTime.now());
+		reserva.setFechaCreacion(creada);
 		reservaRepository.save(reserva);
+	}
+
+	/**
+	 * Pone el alojamiento de prueba en ACTIVA (la publicación aprobada).
+	 */
+	private void activar() {
+		Alojamiento alojamiento = alojamientoRepository.findById(idAlojamiento).orElseThrow();
+		alojamiento.setEstado(EstadoAlojamiento.ACTIVA);
+		alojamientoRepository.save(alojamiento);
+	}
+
+	/**
+	 * Consulta la disponibilidad del alojamiento de prueba sin sesión.
+	 *
+	 * @param llegada día de llegada, como texto (puede ser inválido)
+	 * @param salida  día de salida, como texto (puede ser inválido)
+	 * @return resultado de la petición
+	 * @throws Exception si falla la petición
+	 */
+	private ResultActions consultar(Object llegada, Object salida) throws Exception {
+		return mockMvc.perform(get(ruta(idAlojamiento) + "/consultar").param("llegada", String.valueOf(llegada))
+				.param("salida", String.valueOf(salida)));
 	}
 
 	/**

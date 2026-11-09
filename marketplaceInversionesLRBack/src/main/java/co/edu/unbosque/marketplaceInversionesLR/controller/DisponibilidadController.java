@@ -1,5 +1,8 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -11,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.PeriodoDisponibilidadDTO;
@@ -18,17 +22,19 @@ import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
- * Disponibilidad de los alojamientos (HU-20, servicio S04). Ruta base:
+ * Disponibilidad de los alojamientos (HU-20, HU-21, servicio S04). Ruta base:
  * {@code /alojamientos/{idAlojamiento}/disponibilidad}. Contrato:
  * {@code docs/openapi/disponibilidad-busqueda.yaml}.
  * <p>
- * El calendario es público si el alojamiento está ACTIVA. Registrar,
+ * El calendario y la consulta por fechas son públicos si el alojamiento está
+ * ACTIVA. Registrar,
  * modificar y eliminar períodos exige ser el anfitrión propietario o un
  * administrador (RNF-004).
  * </p>
@@ -74,6 +80,38 @@ public class DisponibilidadController {
 	public ResponseEntity<Object> calendario(@PathVariable Long idAlojamiento, Authentication authentication) {
 		return RespuestaUtil.desde(calendarioService.calendario(idAlojamiento, RespuestaUtil.idUsuario(authentication),
 				RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
+	 * Consulta si el alojamiento está disponible en unas fechas (HU-21). Es
+	 * pública si la publicación está ACTIVA. Ruta:
+	 * {@code GET /alojamientos/{idAlojamiento}/disponibilidad/consultar?llegada=&salida=}.
+	 *
+	 * @param idAlojamiento  alojamiento
+	 * @param llegada        día de llegada (AAAA-MM-DD)
+	 * @param salida         día de salida (AAAA-MM-DD), posterior a la llegada
+	 * @param authentication usuario autenticado; puede ser {@code null}
+	 * @return 200 con {@code disponible} y, si no lo está, el motivo
+	 *         (CA-119, CA-120); 400 si las fechas no son válidas (CA-082); 404
+	 *         si no existe o no se puede ver
+	 */
+	@Operation(summary = "Consultar disponibilidad en unas fechas (público)", description = "Disponible si la "
+			+ "publicación está ACTIVA, las fechas caben en un período ofrecido y no se cruzan con reservas. La "
+			+ "salida no cuenta como noche y debe ser posterior a la llegada.")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "Si está disponible en esas fechas y, si no, el motivo")
+	@ApiResponse(responseCode = "400", description = CalendarioService.FECHAS_FALTANTES + " | "
+			+ CalendarioService.SALIDA_NO_POSTERIOR + " | " + CalendarioService.LLEGADA_EN_EL_PASADO)
+	@ApiResponse(responseCode = "404", description = CalendarioService.NO_EXISTE)
+	@GetMapping("/consultar")
+	public ResponseEntity<Object> consultar(@PathVariable Long idAlojamiento,
+			@Parameter(description = "Fecha de llegada (AAAA-MM-DD)", example = "2026-12-01")
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate llegada,
+			@Parameter(description = "Fecha de salida (AAAA-MM-DD), posterior a la llegada", example = "2026-12-05")
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
+			Authentication authentication) {
+		return RespuestaUtil.desde(calendarioService.consultar(idAlojamiento, llegada, salida,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication)));
 	}
 
 	/**

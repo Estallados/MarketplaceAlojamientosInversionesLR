@@ -146,8 +146,8 @@ CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
 CA-082;RNF-018;Validación cronológica de fechas;Validación de período;Dado que el huésped selecciona una fecha de llegada y una de salida, cuando solicita la cotización, la consulta de disponibilidad o la reserva, entonces el sistema debe procesarla si la salida es posterior a la llegada y, si es igual o anterior, rechazarla e indicar que las fechas son inválidas.;"HU-21
 HU-31";"CU-023
-CU-024";CP-029 Validación de fechas;"DisponibilidadBusquedaTest#debeRechazarSalidaIgualOAnteriorALaLlegada_CA122_CA082
-ReservasPagosTest#debeRechazarCotizacionConFechasInvalidas_CA082_CA181";;38a9302;;;;
+CU-024";CP-029 Validación de fechas;"CalendarioServiceTest#consultaConFechasInvalidas_CA082
+DisponibilidadTest#consultaConFechasInvalidas_CA082";Probado (JUnit);;feat/SCRUM-237-be-consultar-disponibilidad;;;Probado en la consulta de disponibilidad (HU-21); falta en cotización y reserva (HU-22, HU-31)
 CA-083;"RF-021
 RNF-018";"Creación de reserva por el huésped
 Validación cronológica de fechas";Rechazo de cotización por capacidad o fechas;Dado que la capacidad solicitada excede la del alojamiento, la fecha de salida no es posterior a la de llegada o las fechas no están disponibles, cuando el huésped solicita la cotización, entonces el sistema debe rechazarla e informar el motivo.;HU-31;"CU-024
@@ -254,10 +254,13 @@ CP-026 Modificación de período reservado";"CalendarioServiceTest#rechazaCambioQu
 DisponibilidadTest#rechazaCambioQueAfectaReserva_CA118";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
 CA-119;RF-026;Consultar disponibilidad;Consulta de período disponible;Dado que una publicación se encuentra ACTIVA y tiene un período disponible, cuando el huésped consulta fechas comprendidas dentro de dicho período y sin reservas superpuestas, entonces el sistema debe mostrar el alojamiento como disponible.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
-CP-029 Validación de fechas";DisponibilidadBusquedaTest#debeMostrarDisponibleUnPeriodoLibre_CA119_CA121;;38a9302;;;;
+CP-029 Validación de fechas";"CalendarioServiceTest#disponibleDentroDePeriodoSinReservas_CA119
+DisponibilidadTest#disponibleSinReservas_CA119";Probado (JUnit);;feat/SCRUM-237-be-consultar-disponibilidad;;;
 CA-120;RF-026;Consultar disponibilidad;Consulta de período no disponible;Dado que un alojamiento tiene fechas reservadas o no disponibles, cuando el huésped consulta un período que incluye dichas fechas, entonces el sistema debe indicar que el alojamiento no está disponible para el período solicitado.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
-CP-029 Validación de fechas";DisponibilidadBusquedaTest#debeIndicarNoDisponibleSiHayReservaOFueraDelPeriodo_CA120;;38a9302;;;;
+CP-029 Validación de fechas";"CalendarioServiceTest#noDisponibleConReservaOFueraDePeriodo_CA120
+CalendarioServiceTest#publicacionNoActiva_CA120
+DisponibilidadTest#noDisponibleConReservaOFueraDePeriodo_CA120";Probado (JUnit);;feat/SCRUM-237-be-consultar-disponibilidad;;;
 CA-131;RNF-003;Control de acceso por autenticación y roles;Acceso según rol;Dado un usuario con un rol determinado, cuando intente acceder a una funcionalidad, entonces el sistema debe permitir o rechazar el acceso según los permisos definidos para dicho rol.;;CU-002;"CP-074 Acceso según rol
 CP-005 Protección de funcionalidad sin autenticación";"DashboardReportesTest#soloElAdministradorConsultaElDashboard_CA131
 PublicacionesTest#unHuespedNoPuedeCrearPublicaciones_CA131

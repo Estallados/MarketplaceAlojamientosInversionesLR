@@ -42,4 +42,23 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 			+ " order by r.fechaEntrada")
 	List<Reserva> buscarOcupadas(@Param("id") Long idAlojamiento, @Param("desde") LocalDate desde,
 			@Param("activos") Collection<EstadoReserva> activos, @Param("limite") LocalDateTime limite);
+
+	/**
+	 * Indica si alguna reserva que ocupa fechas se cruza con la estancia
+	 * [llegada, salida). Una reserva que sale el día en que llega la otra no se
+	 * cruza (HU-21).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param llegada       día de llegada
+	 * @param salida        día de salida
+	 * @param activos       estados que ocupan fechas
+	 * @param limite        las reservas pendientes de pago creadas antes de
+	 *                      este instante ya no cuentan
+	 * @return {@code true} si hay cruce
+	 */
+	@Query("select case when count(r) > 0 then true else false end from Reserva r where r.idAlojamiento = :id "
+			+ "and r.fechaEntrada < :salida and r.fechaSalida > :llegada and " + OCUPA)
+	boolean existeCruce(@Param("id") Long idAlojamiento, @Param("llegada") LocalDate llegada,
+			@Param("salida") LocalDate salida, @Param("activos") Collection<EstadoReserva> activos,
+			@Param("limite") LocalDateTime limite);
 }

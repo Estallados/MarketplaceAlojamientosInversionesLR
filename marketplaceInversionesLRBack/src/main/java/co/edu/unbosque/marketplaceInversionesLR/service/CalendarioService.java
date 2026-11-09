@@ -3,11 +3,13 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.ConsultaDisponibilidadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.DisponibilidadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PeriodoDisponibilidadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.RangoReservadoDTO;
@@ -23,10 +25,11 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
 /**
- * Calendario de disponibilidad de los alojamientos (HU-20, RF-025). El
- * anfitrión registra los períodos en que ofrece su alojamiento; las fechas
- * reservadas no se guardan aparte, sino que se calculan a partir de las
- * reservas que ocupan fechas.
+ * Calendario de disponibilidad de los alojamientos (HU-20, RF-025) y consulta
+ * de disponibilidad para unas fechas (HU-21, RF-026). El anfitrión registra
+ * los períodos en que ofrece su alojamiento; las fechas reservadas no se
+ * guardan aparte, sino que se calculan a partir de las reservas que ocupan
+ * fechas.
  * <p>
  * Una reserva ocupa fechas si está CONFIRMADA o EN_REVISION, o si está
  * PENDIENTE_PAGO y se creó hace menos de {@value #MINUTOS_PENDIENTE} minutos.
@@ -60,6 +63,23 @@ public class CalendarioService {
 
 	/** Mensaje cuando el período modificado se cruza con otro. */
 	public static final String CRUCE_AL_MODIFICAR = "El período se cruza con otro período ya registrado.";
+
+	/** Mensaje cuando falta alguna fecha de la estancia. */
+	public static final String FECHAS_FALTANTES = "Debes indicar la fecha de llegada y la de salida.";
+
+	/** Mensaje cuando la salida no es posterior a la llegada (CA-082). */
+	public static final String SALIDA_NO_POSTERIOR = "Las fechas son inválidas: la salida debe ser posterior a la "
+			+ "llegada.";
+
+	/** Mensaje cuando la llegada ya pasó. */
+	public static final String LLEGADA_EN_EL_PASADO = "Las fechas son inválidas: la llegada no puede estar en el "
+			+ "pasado.";
+
+	/** Motivo cuando las fechas no caben en un período ofrecido (CA-120). */
+	public static final String FUERA_DE_PERIODO = "El anfitrión no ofrece el alojamiento en esas fechas.";
+
+	/** Motivo cuando las fechas se cruzan con una reserva (CA-120). */
+	public static final String CRUCE_CON_RESERVA = "Las fechas se cruzan con una reserva existente.";
 
 	/** Repositorio de alojamientos. */
 	private final AlojamientoRepository alojamientoRepo;
@@ -125,8 +145,7 @@ public class CalendarioService {
 	@Transactional(readOnly = true)
 	public Resultado<DisponibilidadDTO> calendario(Long idAlojamiento, Long idActor, boolean esAdmin) {
 		Optional<Alojamiento> alojamiento = alojamientoRepo.findById(idAlojamiento);
-		if (alojamiento.isEmpty() || !(alojamiento.get().getEstado() == EstadoAlojamiento.ACTIVA || esAdmin
-				|| alojamiento.get().getIdAnfitrion().equals(idActor))) {
+		if (alojamiento.isEmpty() || !puedeVer(alojamiento.get(), idActor, esAdmin)) {
 			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
 		}
 		DisponibilidadDTO dto = new DisponibilidadDTO();
@@ -136,6 +155,119 @@ public class CalendarioService {
 				.map(CalendarioService::convertirDTO).toList());
 		dto.setReservados(ocupadas(idAlojamiento, LocalDate.now()).stream().map(CalendarioService::rango).toList());
 		return Resultado.exito(dto);
+	}
+
+	/**
+	 * Valida un rango de estancia: las dos fechas presentes, la salida después
+	 * de la llegada (CA-082) y la llegada no en el pasado. Es la misma regla
+	 * para consultar disponibilidad, cotizar y reservar.
+	 *
+	 * @param llegada día de llegada
+	 * @param salida  día de salida
+	 * @return el mensaje de error, o {@code null} si las fechas son válidas
+	 */
+	public static String validarFechas(LocalDate llegada, LocalDate salida) {
+		if (llegada == null || salida == null) {
+			return FECHAS_FALTANTES;
+		}
+		if (!salida.isAfter(llegada)) {
+			return SALIDA_NO_POSTERIOR;
+		}
+		if (llegada.isBefore(LocalDate.now())) {
+			return LLEGADA_EN_EL_PASADO;
+		}
+		return null;
+	}
+
+	/**
+	 * Indica si la estancia [llegada, salida) cabe en un período ofrecido y no
+	 * se cruza con reservas que ocupan fechas. No revisa el estado de la
+	 * publicación.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param llegada       día de llegada
+	 * @param salida        día de salida
+	 * @return {@code true} si las fechas están libres
+	 */
+	public boolean estaLibre(Long idAlojamiento, LocalDate llegada, LocalDate salida) {
+		return periodoRepo.contiene(idAlojamiento, llegada, salida)
+				&& !reservaRepo.existeCruce(idAlojamiento, llegada, salida, ESTADOS_OCUPAN, limitePendiente());
+	}
+
+	/**
+	 * Consulta si un alojamiento está disponible en unas fechas (HU-21). Está
+	 * disponible si la publicación está ACTIVA, un período ofrecido contiene
+	 * las fechas y ninguna reserva se cruza con ellas (CA-119); si no, responde
+	 * no disponible con el motivo (CA-120).
+	 * <p>
+	 * Igual que el calendario, una publicación que no está ACTIVA solo la
+	 * consultan su anfitrión o un administrador; para los demás no existe.
+	 * </p>
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param llegada       día de llegada
+	 * @param salida        día de salida
+	 * @param idActor       usuario que consulta; {@code null} si no hay sesión
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return la respuesta; DATOS_INVALIDOS si las fechas no son válidas
+	 *         (CA-082); NO_ENCONTRADO si el alojamiento no existe o no se puede
+	 *         ver
+	 */
+	@Transactional(readOnly = true)
+	public Resultado<ConsultaDisponibilidadDTO> consultar(Long idAlojamiento, LocalDate llegada, LocalDate salida,
+			Long idActor, boolean esAdmin) {
+		String errorFechas = validarFechas(llegada, salida);
+		if (errorFechas != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, errorFechas);
+		}
+		Optional<Alojamiento> alojamiento = alojamientoRepo.findById(idAlojamiento);
+		if (alojamiento.isEmpty() || !puedeVer(alojamiento.get(), idActor, esAdmin)) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+
+		ConsultaDisponibilidadDTO respuesta = new ConsultaDisponibilidadDTO();
+		respuesta.setIdAlojamiento(idAlojamiento);
+		respuesta.setFechaEntrada(llegada);
+		respuesta.setFechaSalida(salida);
+		respuesta.setMotivo(motivoNoDisponible(alojamiento.get(), llegada, salida));
+		respuesta.setDisponible(respuesta.getMotivo() == null);
+		return Resultado.exito(respuesta);
+	}
+
+	/**
+	 * Motivo por el que no se puede reservar en esas fechas.
+	 *
+	 * @param alojamiento alojamiento consultado
+	 * @param llegada     día de llegada
+	 * @param salida      día de salida
+	 * @return el motivo, o {@code null} si está disponible
+	 */
+	private String motivoNoDisponible(Alojamiento alojamiento, LocalDate llegada, LocalDate salida) {
+		if (alojamiento.getEstado() != EstadoAlojamiento.ACTIVA) {
+			return "El alojamiento no está disponible para nuevas reservas (estado " + alojamiento.getEstado() + ").";
+		}
+		if (!periodoRepo.contiene(alojamiento.getIdAlojamiento(), llegada, salida)) {
+			return FUERA_DE_PERIODO;
+		}
+		if (reservaRepo.existeCruce(alojamiento.getIdAlojamiento(), llegada, salida, ESTADOS_OCUPAN,
+				limitePendiente())) {
+			return CRUCE_CON_RESERVA;
+		}
+		return null;
+	}
+
+	/**
+	 * Indica si el usuario puede ver la disponibilidad del alojamiento: la
+	 * publicación está ACTIVA, o es su anfitrión o un administrador.
+	 *
+	 * @param alojamiento alojamiento
+	 * @param idActor     usuario; {@code null} si no hay sesión
+	 * @param esAdmin     {@code true} si es administrador
+	 * @return {@code true} si la puede ver
+	 */
+	private static boolean puedeVer(Alojamiento alojamiento, Long idActor, boolean esAdmin) {
+		return alojamiento.getEstado() == EstadoAlojamiento.ACTIVA || esAdmin
+				|| Objects.equals(alojamiento.getIdAnfitrion(), idActor);
 	}
 
 	/**
@@ -331,7 +463,7 @@ public class CalendarioService {
 		if (alojamiento.isEmpty()) {
 			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
 		}
-		if (!esAdmin && !alojamiento.get().getIdAnfitrion().equals(idActor)) {
+		if (!esAdmin && !Objects.equals(alojamiento.get().getIdAnfitrion(), idActor)) {
 			auditar(idActor, null, ResultadoAuditoria.RECHAZADO,
 					"Sin permiso sobre la disponibilidad del alojamiento " + idAlojamiento);
 			return Resultado.error(Resultado.SIN_PERMISO, SIN_PERMISO);

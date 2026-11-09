@@ -49,6 +49,21 @@ public interface PeriodoDisponibilidadRepository extends JpaRepository<PeriodoDi
 			@Param("fin") LocalDate fin);
 
 	/**
+	 * Indica si algún período ofrecido contiene la estancia [llegada, salida):
+	 * empieza a más tardar el día de llegada y termina a partir del día de
+	 * salida (HU-21).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param llegada       día de llegada
+	 * @param salida        día de salida
+	 * @return {@code true} si la estancia cabe en un período
+	 */
+	@Query("select case when count(p) > 0 then true else false end from PeriodoDisponibilidad p "
+			+ "where p.idAlojamiento = :id and p.fechaInicio <= :llegada and p.fechaFin >= :salida")
+	boolean contiene(@Param("id") Long idAlojamiento, @Param("llegada") LocalDate llegada,
+			@Param("salida") LocalDate salida);
+
+	/**
 	 * Igual que {@link #existeCruce(Long, LocalDate, LocalDate)}, sin contar el
 	 * período que se está modificando.
 	 *
