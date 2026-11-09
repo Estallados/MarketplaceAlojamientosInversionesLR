@@ -108,6 +108,9 @@ public class AlojamientoDTO {
 	/** Imágenes con su id, URL y si son la principal; la principal primero. */
 	private List<ImagenDTO> detalleImagenes;
 
+	/** Servicios adicionales que ofrece. */
+	private List<ServicioAdicionalDTO> serviciosAdicionales;
+
 	/** Nombre del anfitrión. */
 	private String nombreAnfitrion;
 }
