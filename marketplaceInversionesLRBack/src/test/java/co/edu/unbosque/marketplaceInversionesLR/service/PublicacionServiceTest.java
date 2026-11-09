@@ -41,6 +41,7 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojam
 import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.service.CloudinaryService.ImagenSubida;
 import co.edu.unbosque.marketplaceInversionesLR.service.GeocodingService.Coordenadas;
@@ -70,6 +71,7 @@ class PublicacionServiceTest {
 
 	@Mock
 	private AuditoriaService auditoriaService;
+	private ServicioAdicionalRepository servicioRepo;
 
 	@Mock
 	private PoliticaCancelacionRepository politicaRepo;
@@ -84,6 +86,9 @@ class PublicacionServiceTest {
 	private AlmacenamientoService almacenamientoService;
 
 	@Mock
+	private AuditoriaService auditoriaService;
+
+	@Mock
 	private GeocodingService geocodingService;
 
 	private PublicacionService servicio;
@@ -94,6 +99,7 @@ class PublicacionServiceTest {
 	@BeforeEach
 	void preparar() {
 		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, politicaRepo, historialRepo,
+		servicio = new PublicacionService(alojamientoRepo, imagenRepo, servicioRepo, politicaRepo, historialRepo,
 				usuarioRepo, almacenamientoService, auditoriaService, geocodingService, new ModelMapper());
 	}
 

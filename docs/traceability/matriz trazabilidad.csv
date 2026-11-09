@@ -200,14 +200,18 @@ CP-017 Modificación sin permisos sobre una publicación o recurso
 CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
-CP-073 Registro y modificación de servicio adicional";PublicacionesTest#elPropietarioModificaYVeLosCambios_CA100_CA113;;38a9302;;;;
+CP-073 Registro y modificación de servicio adicional";"PublicacionServiceActualizacionTest#propietarioActualiza_CA100
+AlojamientoControllerActualizacionTest#editarResponde200_CA100
+ActualizarPublicacionTest#elPropietarioModificaYVeLosCambios_CA100_CA113";Probado (JUnit);;feat/SCRUM-173-be-actualizar-publicacion;;;
 CA-101;RF-018;Gestión y actualización de publicación;Restricción de modificación;Dado que el usuario no es propietario de la publicación ni administrador, cuando intenta modificarla o modificar sus servicios adicionales, entonces el sistema debe rechazar la operación.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
 CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
-CP-073 Registro y modificación de servicio adicional";PublicacionesTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114_CA132;;38a9302;;;;
+CP-073 Registro y modificación de servicio adicional";"PublicacionServiceActualizacionTest#sinPermisoNoModifica_CA101
+AlojamientoControllerActualizacionTest#editarSinPermiso_CA101
+ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114";Probado (JUnit);;feat/SCRUM-173-be-actualizar-publicacion;;;
 CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";PublicacionesTest#elAnfitrionConsultaSusPublicacionesConSuEstado_CA103;;38a9302;;;;
@@ -235,12 +239,17 @@ CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#alBl
 CA-113;RNF-004;Protección de operaciones e información de usuarios;Modificación autorizada;Dado que un usuario es el anfitrión propietario de una publicación o tiene el rol ADMINISTRADOR, cuando solicita modificarla, entonces el sistema debe permitir la operación si cumple las demás reglas aplicables.;HU-16;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
-CP-011 Acceso o modificación de información de otro usuario";"PublicacionesTest#elPropietarioModificaYVeLosCambios_CA100_CA113
-PublicacionesTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114_CA132";;38a9302;;;;
+CP-011 Acceso o modificación de información de otro usuario";"PublicacionServiceActualizacionTest#administradorModifica_CA113
+PublicacionServiceActualizacionTest#propietarioCumpleLasReglas_CA113
+AlojamientoControllerActualizacionTest#editarComoAdministrador_CA113
+ActualizarPublicacionTest#elPropietarioModificaYVeLosCambios_CA100_CA113
+ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114";Probado (JUnit);;feat/SCRUM-173-be-actualizar-publicacion;;;
 CA-114;RNF-004;Protección de operaciones e información de usuarios;Modificación no autorizada;Dado un usuario autenticado que no es propietario de un recurso (por ejemplo, una publicación) ni tiene permisos administrativos sobre él, cuando intenta modificarlo, entonces el sistema debe denegar la operación.;HU-16;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
-CP-011 Acceso o modificación de información de otro usuario";PublicacionesTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114_CA132;;38a9302;;;;
+CP-011 Acceso o modificación de información de otro usuario";"PublicacionServiceActualizacionTest#usuarioAjenoDenegado_CA114
+AlojamientoControllerActualizacionTest#eliminarServicioRechazado_CA114
+ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114";Probado (JUnit);;feat/SCRUM-173-be-actualizar-publicacion;;;
 CA-115;RF-025;Registrar y actualizar períodos disponibles;Registro y asociación de disponibilidad;Dado que un anfitrión tiene un alojamiento registrado, cuando ingresa un período válido de disponibilidad, entonces el sistema debe guardar las fechas correspondientes asociadas a dicho alojamiento.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
@@ -422,7 +431,13 @@ CP-017 Modificación sin permisos sobre una publicación o recurso
 CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
-CP-073 Registro y modificación de servicio adicional";PublicacionesTest#elPropietarioRegistraServiciosAdicionalesYOtrosNo_CA185_CA187;;38a9302;;;;
+CP-073 Registro y modificación de servicio adicional";"PublicacionServiceActualizacionTest#registraServicio_CA185
+PublicacionServiceActualizacionTest#modificaServicio_CA185
+PublicacionServiceActualizacionTest#eliminaServicio_CA185
+PublicacionServiceActualizacionTest#rechazaServicioInvalido_CA185
+AlojamientoControllerActualizacionTest#agregarYModificarServicio_CA185
+AlojamientoControllerActualizacionTest#eliminarServicio_CA185
+ActualizarPublicacionTest#elPropietarioRegistraServiciosAdicionalesYOtrosNo_CA185";Probado (JUnit);;feat/SCRUM-173-be-actualizar-publicacion;;;Probado el registro, la modificación y la eliminación. Falta el efecto en cotizaciones y reservas (HU-22, HU-31)
 CA-195;RF-027;Gestión del estado de revisión del alojamiento;Rechazo con motivo;Dado que una publicación no cumple las condiciones, cuando el administrador la rechaza indicando el motivo, entonces el sistema debe registrar el motivo y notificar al anfitrión para que corrija y vuelva a presentarla.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
