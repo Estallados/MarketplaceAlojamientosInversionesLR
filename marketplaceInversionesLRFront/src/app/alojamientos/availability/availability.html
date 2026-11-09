@@ -108,16 +108,24 @@
 
       </div>
 
-      <span
-        class="w-fit rounded-full px-3 py-1 text-xs font-bold"
-        [class]="a.estado === 'ACTIVA'
-          ? 'bg-emerald-50 text-emerald-700'
-          : 'bg-amber-50 text-amber-800'"
-      >
-        {{ a.estado }}
-      </span>
+      <app-insignia-estado [estado]="a.estado" />
 
     </section>
+
+    <!-- PUBLICACIÓN NO DISPONIBLE PARA NUEVAS RESERVAS (HU-17, CA-159) -->
+    @if (a.estado === 'PAUSADA' || a.estado === 'BLOQUEADA') {
+
+      <div
+        data-no-disponible
+        role="status"
+        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+      >
+        La publicación está {{ a.estado === 'PAUSADA' ? 'pausada' : 'bloqueada' }}:
+        no está disponible para nuevas reservas, aunque registres períodos.
+        Las reservas ya confirmadas se mantienen.
+      </div>
+
+    }
 
 
 

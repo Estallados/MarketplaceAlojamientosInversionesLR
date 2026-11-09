@@ -6,7 +6,6 @@ import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 import { ProfileView } from './perfil/profile-view/profile-view';
-import { Availability } from './alojamientos/availability/availability';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -72,11 +71,14 @@ export const routes: Routes = [
   // ====================================
   // PERÍODOS DE DISPONIBILIDAD (HU-20)
   // SOLO ANFITRIÓN
+  // Carga diferida para no aumentar el bundle inicial.
   // ====================================
 
   {
     path: 'host/alojamientos/:id/disponibilidad',
-    component: Availability,
+    loadComponent: () =>
+      import('./alojamientos/availability/availability')
+        .then(m => m.Availability),
     canActivate: [roleGuard],
     data: { roles: ['Anfitrión'] }
   },
