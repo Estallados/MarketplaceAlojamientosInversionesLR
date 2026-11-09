@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -104,7 +105,7 @@ const MAXIMO_IMAGENES = 15;
 @Component({
   selector: 'app-crear-publicacion',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   templateUrl: './crear-publicacion.html'
 })
 export class CrearPublicacion implements OnInit {
