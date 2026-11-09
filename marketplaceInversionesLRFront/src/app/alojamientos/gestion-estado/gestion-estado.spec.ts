@@ -10,10 +10,12 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { GestionEstado } from './gestion-estado';
 import { EditarPublicacion } from '../editar-publicacion/editar-publicacion';
+import { Availability } from '../availability/availability';
 import { AlojamientoRespuesta, EstadoAlojamiento } from '../models/alojamiento';
 import {
   ESTADOS_ALOJAMIENTO,
   accionesPermitidas,
+  aceptaNuevasReservas,
   esEstadoAlojamiento,
   presentacionEstado
 } from '../models/estado-publicacion';
@@ -23,7 +25,7 @@ import { routes } from '../../app.routes';
 
 // ======================================
 // HU-17 ENVIAR A REVISIÓN Y GESTIONAR EL ESTADO
-// Se prueba la pantalla real de edición con el
+// Se prueba la pantalla real de edición (y la de disponibilidad) con el
 // servicio HTTP real; solo el backend se sustituye con HttpTestingController.
 // ======================================
 
@@ -367,5 +369,164 @@ describe('Estados de la publicación (HU-17)', () => {
     expect(insignia().getAttribute('data-valor')).toBe('ACTIVA');
     expect(texto('[data-mensaje-estado]')).toContain('Estado actual: Activa');
     expect(accionesVisibles()).toEqual(['data-pausar']);
+  });
+
+  // ======================================
+  // CA-157 ENVIAR A REVISIÓN
+  // ======================================
+
+  it('CA-157 envía a revisión una publicación completa y la deja PENDIENTE_REVISION sin activarla', async () => {
+
+    await abrirComoPropietario(publicacion('BORRADOR'));
+
+    await pulsar('[data-enviar-revision]');
+
+    const peticion = http.expectOne(`${url}/41/enviarrevision`);
+
+    expect(peticion.request.method).toBe('POST');
+    expect(boton('[data-enviar-revision]')!.disabled).toBe(true);
+    expect(insignia().getAttribute('data-valor')).toBe('BORRADOR');
+
+    peticion.flush(publicacion('PENDIENTE_REVISION'));
+    await estable();
+
+    expect(insignia().textContent?.trim()).toBe('Pendiente de revisión');
+    expect(insignia().getAttribute('data-valor')).toBe('PENDIENTE_REVISION');
+    expect(texto('[data-mensaje-estado]')).toContain('Quedará activa cuando un administrador la apruebe');
+
+    // No se activa: ni disponible para reservas ni acciones de pausa.
+    expect(elemento().querySelector('[data-disponible]')).toBeNull();
+    expect(accionesVisibles()).toEqual([]);
+  });
+
+  it('CA-157 indica los datos que faltan y no envía una publicación incompleta', async () => {
+
+    await abrirComoPropietario(
+      publicacion('BORRADOR', 41, {
+        descripcion: '',
+        idPolitica: undefined,
+        imagenes: [],
+        horaSalida: undefined
+      })
+    );
+
+    await pulsar('[data-enviar-revision]');
+
+    http.expectNone(`${url}/41/enviarrevision`);
+
+    const faltantes = Array.from(
+      elemento().querySelectorAll('[data-faltantes-revision] li')
+    ).map(li => li.textContent?.trim());
+
+    expect(faltantes).toEqual([
+      'descripción',
+      'hora de salida',
+      'política de cancelación',
+      'al menos una imagen'
+    ]);
+
+    expect(texto('[data-error-estado]')).toContain('Completa los datos antes de enviar a revisión');
+    expect(insignia().getAttribute('data-valor')).toBe('BORRADOR');
+  });
+
+  it('CA-157 muestra lo que falta según el servidor cuando solo el backend puede comprobarlo', async () => {
+
+    await abrirComoPropietario(publicacion('BORRADOR'));
+
+    await pulsar('[data-enviar-revision]');
+
+    http.expectOne(`${url}/41/enviarrevision`).flush(
+      { message: 'Completa los datos antes de enviar a revisión. Falta: fechas de disponibilidad desde hoy.' },
+      { status: 409, statusText: 'Conflict' }
+    );
+    await estable();
+
+    expect(texto('[data-error-estado]')).toContain('Falta: fechas de disponibilidad desde hoy.');
+
+    http.expectOne(`${url}/41`).flush(publicacion('BORRADOR'));
+    await estable();
+
+    expect(insignia().getAttribute('data-valor')).toBe('BORRADOR');
+    expect(boton('[data-enviar-revision]')!.disabled).toBe(false);
+  });
+
+  it('CA-157 pide guardar los cambios del formulario antes de enviar a revisión', async () => {
+
+    await abrirComoPropietario(publicacion('BORRADOR'));
+
+    const titulo = elemento().querySelector<HTMLInputElement>('#titulo')!;
+    titulo.value = 'Casa campestre renovada';
+    titulo.dispatchEvent(new Event('input'));
+    await estable();
+
+    await pulsar('[data-enviar-revision]');
+
+    http.expectNone(`${url}/41/enviarrevision`);
+    expect(texto('[data-error-estado]')).toContain('Guarda los cambios');
+  });
+
+  // ======================================
+  // CA-159 PUBLICACIONES NO DISPONIBLES
+  // ======================================
+
+  it('CA-159 solo una publicación ACTIVA se considera disponible para nuevas reservas', () => {
+
+    expect(ESTADOS_ALOJAMIENTO.filter(e => aceptaNuevasReservas(e))).toEqual(['ACTIVA']);
+    expect(aceptaNuevasReservas('PAUSADA')).toBe(false);
+    expect(aceptaNuevasReservas('BLOQUEADA')).toBe(false);
+    expect(aceptaNuevasReservas('DESCONOCIDO')).toBe(false);
+  });
+
+  it('CA-159 muestra una publicación PAUSADA como no disponible para nuevas reservas', async () => {
+
+    await abrirComoPropietario(publicacion('PAUSADA'));
+
+    expect(texto('[data-no-disponible]')).toContain('no está disponible para nuevas reservas');
+    expect(elemento().querySelector('[data-disponible]')).toBeNull();
+
+    // La única acción coherente es reanudar.
+    expect(accionesVisibles()).toEqual(['data-reanudar']);
+  });
+
+  it('CA-159 muestra una publicación BLOQUEADA como no disponible y no ofrece reanudarla ni pausarla', async () => {
+
+    await abrirComoPropietario(publicacion('BLOQUEADA'));
+
+    expect(insignia().textContent?.trim()).toBe('Bloqueada');
+    expect(texto('[data-no-disponible]')).toContain('no está disponible para nuevas reservas');
+    expect(texto('[data-descripcion-estado]')).toContain('no se puede reanudar');
+    expect(elemento().querySelector('[data-disponible]')).toBeNull();
+    expect(accionesVisibles()).toEqual([]);
+  });
+
+  it('CA-159 la pantalla de disponibilidad advierte que una publicación pausada o bloqueada no acepta nuevas reservas', async () => {
+
+    const casos: [EstadoAlojamiento, number, boolean][] = [
+      ['PAUSADA', 51, true],
+      ['BLOQUEADA', 52, true],
+      ['ACTIVA', 53, false]
+    ];
+
+    for (const [estado, id, aviso] of casos) {
+
+      await harness.navigateByUrl(`/host/alojamientos/${id}/disponibilidad`, Availability);
+
+      http.expectOne(`${url}/${id}`).flush(publicacion(estado, id));
+      http.expectOne(`${url}/${id}/disponibilidad`).flush({
+        idAlojamiento: id,
+        estadoAlojamiento: estado,
+        periodos: [],
+        reservados: []
+      });
+      await estable();
+
+      expect(insignia().getAttribute('data-valor')).toBe(estado);
+
+      if (aviso) {
+        expect(texto('[data-no-disponible]')).toContain('no está disponible para nuevas reservas');
+      } else {
+        expect(elemento().querySelector('[data-no-disponible]')).toBeNull();
+      }
+    }
   });
 });
