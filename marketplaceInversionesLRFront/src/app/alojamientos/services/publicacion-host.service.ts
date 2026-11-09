@@ -7,7 +7,10 @@ import {
   AlojamientoRespuesta,
   DatosAlojamiento,
   ImagenAlojamiento,
-  PoliticaCancelacion
+  MensajeServidor,
+  PoliticaCancelacion,
+  ServicioAdicional,
+  ServicioAdicionalEntrada
 } from '../models/alojamiento';
 
 // ======================================
@@ -94,6 +97,21 @@ export class PublicacionHostService {
     datos: DatosAlojamiento
   ): Observable<AlojamientoRespuesta> {
 
+    return this.actualizarAlojamiento(id, datos);
+  }
+
+  /**
+   * Edita la publicación (HU-16). Solo el anfitrión propietario o un
+   * ADMIN; cualquier otro recibe 403 (CA-101, CA-113, CA-114).
+   * Los campos que no se envían no cambian.
+   *
+   * @returns el alojamiento actualizado (CA-100)
+   */
+  actualizarAlojamiento(
+    id: number,
+    datos: DatosAlojamiento
+  ): Observable<AlojamientoRespuesta> {
+
     return this.http.put<AlojamientoRespuesta>(
       `${this.apiUrl}/${id}`,
       datos
@@ -139,6 +157,66 @@ export class PublicacionHostService {
     return this.http.post<AlojamientoRespuesta>(
       `${this.apiUrl}/${id}/enviarrevision`,
       {}
+    );
+  }
+
+  // ====================================
+  // 6. DETALLE DEL ALOJAMIENTO
+  // GET /alojamientos/{id}
+  // ====================================
+
+  /**
+   * Detalle con imágenes y servicios adicionales. Si no está ACTIVA,
+   * solo lo ven su anfitrión o un ADMIN (para los demás responde 404).
+   */
+  obtenerAlojamiento(
+    id: number
+  ): Observable<AlojamientoRespuesta> {
+
+    return this.http.get<AlojamientoRespuesta>(
+      `${this.apiUrl}/${id}`
+    );
+  }
+
+  // ====================================
+  // 7. SERVICIOS ADICIONALES (CA-185)
+  // POST   /alojamientos/{id}/servicios
+  // PUT    /alojamientos/{id}/servicios/{idServicio}
+  // DELETE /alojamientos/{id}/servicios/{idServicio}
+  // Aplican a cotizaciones nuevas; el backend no
+  // altera las reservas ya confirmadas.
+  // ====================================
+
+  agregarServicio(
+    idAlojamiento: number,
+    servicio: ServicioAdicionalEntrada
+  ): Observable<ServicioAdicional> {
+
+    return this.http.post<ServicioAdicional>(
+      `${this.apiUrl}/${idAlojamiento}/servicios`,
+      servicio
+    );
+  }
+
+  actualizarServicio(
+    idAlojamiento: number,
+    idServicio: number,
+    servicio: ServicioAdicionalEntrada
+  ): Observable<ServicioAdicional> {
+
+    return this.http.put<ServicioAdicional>(
+      `${this.apiUrl}/${idAlojamiento}/servicios/${idServicio}`,
+      servicio
+    );
+  }
+
+  eliminarServicio(
+    idAlojamiento: number,
+    idServicio: number
+  ): Observable<MensajeServidor> {
+
+    return this.http.delete<MensajeServidor>(
+      `${this.apiUrl}/${idAlojamiento}/servicios/${idServicio}`
     );
   }
 }
