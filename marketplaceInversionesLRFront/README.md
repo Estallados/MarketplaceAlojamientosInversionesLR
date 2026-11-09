@@ -74,6 +74,8 @@ src/app/
 │   ├── crear-publicacion/       HU-15
 │   ├── editar-publicacion/      HU-16
 │   ├── servicios-adicionales/   HU-16
+│   ├── gestion-estado/          HU-17 (enviar a revisión, pausar y reanudar)
+│   ├── insignia-estado/         HU-17 (insignia del estado de la publicación)
 │   ├── availability/            HU-20
 │   ├── models/
 │   ├── services/                publicacion-host.service (único servicio HTTP de alojamientos)
