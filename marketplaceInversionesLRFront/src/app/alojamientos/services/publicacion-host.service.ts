@@ -166,6 +166,35 @@ export class PublicacionHostService {
   }
 
   // ====================================
+  // 5.1 PAUSAR Y REANUDAR (HU-17)
+  // POST /alojamientos/{id}/pausar    ACTIVA → PAUSADA
+  // POST /alojamientos/{id}/reanudar  PAUSADA → ACTIVA
+  // Solo ANFITRION; 409 si el estado no permite la transición.
+  // ====================================
+
+  /** Pausa la publicación: deja de recibir reservas nuevas (CA-108). */
+  pausar(
+    id: number
+  ): Observable<AlojamientoRespuesta> {
+
+    return this.http.post<AlojamientoRespuesta>(
+      `${this.apiUrl}/${id}/pausar`,
+      {}
+    );
+  }
+
+  /** Reanuda una publicación PAUSADA; una BLOQUEADA no se puede reanudar. */
+  reanudar(
+    id: number
+  ): Observable<AlojamientoRespuesta> {
+
+    return this.http.post<AlojamientoRespuesta>(
+      `${this.apiUrl}/${id}/reanudar`,
+      {}
+    );
+  }
+
+  // ====================================
   // 6. DETALLE DEL ALOJAMIENTO
   // GET /alojamientos/{id}
   // ====================================
