@@ -158,8 +158,16 @@ HU-31";"CU-023
 CU-024";CP-029 Validación de fechas;"CalendarioServiceTest#consultaConFechasInvalidas_CA082
 DisponibilidadTest#consultaConFechasInvalidas_CA082
 CotizacionServiceTest#datosInvalidos
-ReservaTest#datosInvalidos";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
-feat/SCRUM-239-be-crear-reserva-bloqueo-fechas";;;Probado en la consulta de disponibilidad (HU-21) y en la cotización y la reserva (HU-22).
+ReservaTest#datosInvalidos
+consultar-disponibilidad.spec.ts#CA-082 exige la fecha de llegada y la de salida y no consulta sin ellas
+consultar-disponibilidad.spec.ts#CA-082 rechaza una salida igual a la llegada indicando que las fechas son inválidas y sin hacer la petición
+consultar-disponibilidad.spec.ts#CA-082 rechaza una salida anterior a la llegada sin hacer la petición ni permitir continuar
+consultar-disponibilidad.spec.ts#CA-082 rechaza fechas inexistentes, con formato distinto de AAAA-MM-DD o una llegada en el pasado
+consultar-disponibilidad.spec.ts#CA-082 compara días del calendario sin desplazamientos por zona horaria
+consultar-disponibilidad.spec.ts#CA-082 muestra el rechazo del servidor (400) como fechas inválidas, porque el backend es la autoridad";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
+feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
+feat/SCRUM-116-fe-consultar-disponibilidad";;;"Probado en la consulta de disponibilidad (HU-21) y en la cotización y la reserva (HU-22).
+Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-083;"RF-021
 RNF-018";"Creación de reserva por el huésped
 Validación cronológica de fechas";Rechazo de cotización por capacidad o fechas;Dado que la capacidad solicitada excede la del alojamiento, la fecha de salida no es posterior a la de llegada o las fechas no están disponibles, cuando el huésped solicita la cotización, entonces el sistema debe rechazarla e informar el motivo.;HU-31;"CU-024
@@ -296,12 +304,20 @@ DisponibilidadTest#rechazaCambioQueAfectaReserva_CA118";Probado (JUnit);;feat/SC
 CA-119;RF-026;Consultar disponibilidad;Consulta de período disponible;Dado que una publicación se encuentra ACTIVA y tiene un período disponible, cuando el huésped consulta fechas comprendidas dentro de dicho período y sin reservas superpuestas, entonces el sistema debe mostrar el alojamiento como disponible.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
 CP-029 Validación de fechas";"CalendarioServiceTest#disponibleDentroDePeriodoSinReservas_CA119
-DisponibilidadTest#disponibleSinReservas_CA119";Probado (JUnit);;feat/SCRUM-237-be-consultar-disponibilidad;;;
+DisponibilidadTest#disponibleSinReservas_CA119
+consultar-disponibilidad.spec.ts#CA-119 consulta el endpoint real con las fechas en formato AAAA-MM-DD y muestra el alojamiento disponible
+consultar-disponibilidad.spec.ts#CA-119 permite continuar con la reserva y transmite las fechas consultadas al siguiente paso
+consultar-disponibilidad.spec.ts#CA-119 invalida el resultado disponible si el huésped cambia las fechas después de consultar";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
+feat/SCRUM-116-fe-consultar-disponibilidad";;;Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl).
 CA-120;RF-026;Consultar disponibilidad;Consulta de período no disponible;Dado que un alojamiento tiene fechas reservadas o no disponibles, cuando el huésped consulta un período que incluye dichas fechas, entonces el sistema debe indicar que el alojamiento no está disponible para el período solicitado.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
 CP-029 Validación de fechas";"CalendarioServiceTest#noDisponibleConReservaOFueraDePeriodo_CA120
 CalendarioServiceTest#publicacionNoActiva_CA120
-DisponibilidadTest#noDisponibleConReservaOFueraDePeriodo_CA120";Probado (JUnit);;feat/SCRUM-237-be-consultar-disponibilidad;;;
+DisponibilidadTest#noDisponibleConReservaOFueraDePeriodo_CA120
+consultar-disponibilidad.spec.ts#CA-120 indica que no está disponible con el motivo del servidor, conserva las fechas y no permite continuar
+consultar-disponibilidad.spec.ts#CA-120 permite elegir otras fechas y volver a consultar
+consultar-disponibilidad.spec.ts#CA-120 distingue la indisponibilidad de un error de conexión, del servidor o de un alojamiento inexistente";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
+feat/SCRUM-116-fe-consultar-disponibilidad";;;Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl).
 CA-131;RNF-003;Control de acceso por autenticación y roles;Acceso según rol;Dado un usuario con un rol determinado, cuando intente acceder a una funcionalidad, entonces el sistema debe permitir o rechazar el acceso según los permisos definidos para dicho rol.;;CU-002;"CP-074 Acceso según rol
 CP-005 Protección de funcionalidad sin autenticación";"DashboardReportesTest#soloElAdministradorConsultaElDashboard_CA131
 PublicacionesTest#unHuespedNoPuedeCrearPublicaciones_CA131
