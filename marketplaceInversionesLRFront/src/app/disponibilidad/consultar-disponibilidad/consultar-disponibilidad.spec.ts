@@ -2,12 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import {
   HttpTestingController,
+  TestRequest,
   provideHttpClientTesting
 } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { ConsultarDisponibilidad } from './consultar-disponibilidad';
+import { FechasEstadia } from '../models/consulta-disponibilidad';
 import {
   diaDeFecha,
   diaSiguiente,
@@ -121,7 +123,7 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
     return elemento().querySelector(selector)?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
   }
 
-  function peticion() {
+  function peticion(): TestRequest {
     return http.expectOne(r => r.url === urlConsulta);
   }
 
@@ -207,5 +209,175 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
     expect(texto('[data-error-consulta]')).toBe('La fecha de llegada no puede estar en el pasado.');
     expect(existe('[data-disponible]')).toBe(false);
     expect(existe('[data-no-disponible]')).toBe(false);
+  });
+
+  // ======================================
+  // CA-119 ALOJAMIENTO DISPONIBLE
+  // ======================================
+
+  it('CA-119 consulta el endpoint real con las fechas en formato AAAA-MM-DD y muestra el alojamiento disponible', async () => {
+
+    await elegirFechas(llegada, salida);
+
+    expect(texto('[data-resumen-fechas]')).toContain('3 noches');
+
+    await consultar();
+
+    const consulta = peticion();
+
+    expect(consulta.request.method).toBe('GET');
+    expect(consulta.request.params.get('llegada')).toBe(llegada);
+    expect(consulta.request.params.get('salida')).toBe(salida);
+    expect(consulta.request.params.get('llegada')).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
+    // Indicador de carga y sin doble envío.
+    expect(existe('[data-consultando]')).toBe(true);
+    expect(elemento().querySelector<HTMLButtonElement>('[data-consultar]')!.disabled).toBe(true);
+    componente.consultar();
+    http.expectNone(r => r.url === urlConsulta);
+
+    consulta.flush({
+      idAlojamiento: 41,
+      fechaEntrada: llegada,
+      fechaSalida: salida,
+      disponible: true,
+      motivo: null
+    });
+    await estable();
+
+    expect(texto('[data-disponible]')).toContain('El alojamiento está disponible para estas fechas.');
+    expect(existe('[data-no-disponible]')).toBe(false);
+
+    // Las fechas se conservan en el formulario y en la URL.
+    expect(campo('llegada').value).toBe(llegada);
+    expect(campo('salida').value).toBe(salida);
+    expect(TestBed.inject(Router).url).toContain(`llegada=${llegada}`);
+    expect(TestBed.inject(Router).url).toContain(`salida=${salida}`);
+  });
+
+  it('CA-119 permite continuar con la reserva y transmite las fechas consultadas al siguiente paso', async () => {
+
+    const emitidas: FechasEstadia[] = [];
+    componente.continuar.subscribe(fechas => emitidas.push(fechas));
+
+    await elegirFechas(llegada, salida);
+    await consultar();
+
+    peticion().flush({ idAlojamiento: 41, fechaEntrada: llegada, fechaSalida: salida, disponible: true });
+    await estable();
+
+    const continuar = elemento().querySelector<HTMLButtonElement>('[data-continuar]')!;
+
+    expect(continuar.disabled).toBe(false);
+
+    continuar.click();
+    await estable();
+
+    expect(emitidas).toEqual([{ idAlojamiento: 41, llegada, salida }]);
+  });
+
+  it('CA-119 invalida el resultado disponible si el huésped cambia las fechas después de consultar', async () => {
+
+    await elegirFechas(llegada, salida);
+    await consultar();
+
+    peticion().flush({ idAlojamiento: 41, fechaEntrada: llegada, fechaSalida: salida, disponible: true });
+    await estable();
+
+    await elegir('salida', enDias(15));
+
+    expect(existe('[data-disponible]')).toBe(false);
+    expect(existe('[data-continuar]')).toBe(false);
+    expect(componente.puedeContinuar()).toBe(false);
+  });
+
+  // ======================================
+  // CA-120 ALOJAMIENTO NO DISPONIBLE
+  // ======================================
+
+  it('CA-120 indica que no está disponible con el motivo del servidor, conserva las fechas y no permite continuar', async () => {
+
+    const emitidas: FechasEstadia[] = [];
+    componente.continuar.subscribe(fechas => emitidas.push(fechas));
+
+    await elegirFechas(llegada, salida);
+    await consultar();
+
+    peticion().flush({
+      idAlojamiento: 41,
+      fechaEntrada: llegada,
+      fechaSalida: salida,
+      disponible: false,
+      motivo: 'Las fechas se cruzan con una reserva.'
+    });
+    await estable();
+
+    expect(texto('[data-no-disponible]')).toContain('no está disponible para el período solicitado');
+    expect(texto('[data-motivo]')).toBe('Las fechas se cruzan con una reserva.');
+
+    // No es un error de conexión.
+    expect(existe('[data-error-consulta]')).toBe(false);
+    expect(existe('[data-disponible]')).toBe(false);
+
+    // Las fechas se conservan para cambiarlas.
+    expect(campo('llegada').value).toBe(llegada);
+    expect(campo('salida').value).toBe(salida);
+
+    // No se puede continuar con la reserva para ese rango.
+    expect(existe('[data-continuar]')).toBe(false);
+    componente.continuarConReserva();
+    expect(emitidas).toEqual([]);
+  });
+
+  it('CA-120 permite elegir otras fechas y volver a consultar', async () => {
+
+    await elegirFechas(llegada, salida);
+    await consultar();
+
+    peticion().flush({ idAlojamiento: 41, fechaEntrada: llegada, fechaSalida: salida, disponible: false, motivo: 'Las fechas están fuera de los períodos disponibles.' });
+    await estable();
+
+    const otraSalida = enDias(12);
+
+    await elegir('salida', otraSalida);
+
+    expect(existe('[data-no-disponible]')).toBe(false);
+
+    await consultar();
+
+    const nueva = peticion();
+    expect(nueva.request.params.get('salida')).toBe(otraSalida);
+
+    nueva.flush({ idAlojamiento: 41, fechaEntrada: llegada, fechaSalida: otraSalida, disponible: true });
+    await estable();
+
+    expect(existe('[data-disponible]')).toBe(true);
+  });
+
+  it('CA-120 distingue la indisponibilidad de un error de conexión, del servidor o de un alojamiento inexistente', async () => {
+
+    const casos: [number, string][] = [
+      [0, 'No se pudo conectar con el servidor'],
+      [500, 'El servidor no pudo consultar la disponibilidad (HTTP 500)'],
+      [404, 'El alojamiento no existe o no está disponible para consulta.']
+    ];
+
+    await elegirFechas(llegada, salida);
+
+    for (const [status, mensaje] of casos) {
+
+      await consultar();
+
+      if (status === 0) {
+        peticion().error(new ProgressEvent('error'), { status: 0, statusText: 'Unknown Error' });
+      } else {
+        peticion().flush({ message: 'Error' }, { status, statusText: 'Error' });
+      }
+      await estable();
+
+      expect(texto('[data-error-consulta]')).toContain(mensaje);
+      expect(existe('[data-no-disponible]')).toBe(false);
+      expect(existe('[data-disponible]')).toBe(false);
+    }
   });
 });
