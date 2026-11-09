@@ -37,6 +37,7 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.ServicioAdicional;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
@@ -82,6 +83,9 @@ class PublicacionServiceActualizacionTest {
 	private ImagenRepository imagenRepo;
 
 	@Mock
+	private PeriodoDisponibilidadRepository periodoRepo;
+
+	@Mock
 	private ServicioAdicionalRepository servicioRepo;
 
 	@Mock
@@ -109,8 +113,9 @@ class PublicacionServiceActualizacionTest {
 
 	@BeforeEach
 	void preparar() {
-		servicio = new PublicacionService(alojamientoRepo, imagenRepo, servicioRepo, politicaRepo, historialRepo,
-				usuarioRepo, almacenamientoService, auditoriaService, geocodingService, new ModelMapper());
+		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
+				historialRepo, usuarioRepo, almacenamientoService, auditoriaService, geocodingService,
+				new ModelMapper());
 		alojamiento = new Alojamiento();
 		alojamiento.setIdAlojamiento(ID);
 		alojamiento.setIdAnfitrion(ANFITRION);

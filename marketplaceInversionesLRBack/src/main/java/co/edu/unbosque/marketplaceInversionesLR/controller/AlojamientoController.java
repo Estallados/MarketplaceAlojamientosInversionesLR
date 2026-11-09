@@ -188,6 +188,10 @@ public class AlojamientoController {
 	@GetMapping("/{id}/historial")
 	public ResponseEntity<Object> historial(@PathVariable Long id, Authentication authentication) {
 		return RespuestaUtil.desde(publicacionService.historial(id, RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
 	 * Edita un alojamiento (dueño o administrador). Los campos en
 	 * {@code null} no cambian y las amenidades enviadas reemplazan las
 	 * anteriores; las imágenes se manejan con las rutas de {@code /imagenes}.
@@ -276,6 +280,9 @@ public class AlojamientoController {
 	@PostMapping("/{id}/reanudar")
 	public ResponseEntity<Object> reanudar(@PathVariable Long id, Authentication authentication) {
 		return RespuestaUtil.desde(publicacionService.reanudar(id, RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
 	 * Sube una o varias imágenes (dueño o administrador): JPG, PNG o
 	 * WEBP de hasta 5 MB, máximo 15 por alojamiento. Si no había portada, la
 	 * primera queda como principal. Ruta:

@@ -58,6 +58,7 @@ public class PublicacionService {
 	private static final String SIN_PERMISO = "Solo el anfitrión propietario o un administrador puede modificar "
 			+ "este alojamiento.";
 
+	/** Mensaje cuando un servicio adicional no es válido. */
 	private static final String SERVICIO_INVALIDO = "El servicio adicional necesita un nombre (máximo 255 "
 			+ "caracteres) y un costo positivo de máximo 1.000.000.000.";
 
@@ -81,6 +82,7 @@ public class PublicacionService {
 
 	/** Repositorio de períodos de disponibilidad. */
 	private final PeriodoDisponibilidadRepository periodoRepo;
+
 	/** Repositorio de servicios adicionales. */
 	private final ServicioAdicionalRepository servicioRepo;
 
@@ -110,6 +112,7 @@ public class PublicacionService {
 	 *
 	 * @param alojamientoRepo       repositorio de alojamientos
 	 * @param imagenRepo            almacén de imágenes
+	 * @param periodoRepo           repositorio de períodos
 	 * @param servicioRepo          repositorio de servicios adicionales
 	 * @param politicaRepo          repositorio de políticas
 	 * @param historialRepo         historial de estados
@@ -120,9 +123,9 @@ public class PublicacionService {
 	 * @param modelMapper           copiador de entidades a DTO
 	 */
 	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
-			PeriodoDisponibilidadRepository periodoRepo, PoliticaCancelacionRepository politicaRepo,
-			ServicioAdicionalRepository servicioRepo, PoliticaCancelacionRepository politicaRepo,
-			HistorialEstadoAlojamientoRepository historialRepo, UsuarioRepository usuarioRepo,
+			PeriodoDisponibilidadRepository periodoRepo, ServicioAdicionalRepository servicioRepo,
+			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
+			UsuarioRepository usuarioRepo,
 			AlmacenamientoService almacenamientoService, AuditoriaService auditoriaService,
 			GeocodingService geocodingService, ModelMapper modelMapper) {
 		this.alojamientoRepo = alojamientoRepo;
@@ -262,6 +265,9 @@ public class PublicacionService {
 	@Transactional
 	public Resultado<AlojamientoDTO> reanudar(Long idAlojamiento, Long idActor) {
 		return transicionDelAnfitrion(idAlojamiento, idActor, EstadoAlojamiento.PAUSADA, EstadoAlojamiento.ACTIVA);
+	}
+
+	/**
 	 * Edita una publicación (dueño o administrador). Los
 	 * campos en {@code null} se dejan como están y las amenidades enviadas
 	 * reemplazan a las anteriores. El estado, el dueño y las imágenes no se
@@ -564,8 +570,7 @@ public class PublicacionService {
 	}
 
 	/**
-	 * Convierte la entidad a DTO con las imágenes (la principal primero), el
-	 * nombre de la política y el nombre del anfitrión.
+	 * Convierte la entidad a DTO con las imágenes (la principal primero), los
 	 * servicios adicionales, el nombre de la política y el nombre del
 	 * anfitrión.
 	 *
@@ -696,14 +701,6 @@ public class PublicacionService {
 				AuditoriaService.ENTIDAD_ALOJAMIENTO, alojamiento.getIdAlojamiento(), ResultadoAuditoria.RECHAZADO,
 				mensaje);
 		return Resultado.error(Resultado.ESTADO_INVALIDO, mensaje);
-	 * Indica si el usuario es el dueño del alojamiento.
-	 *
-	 * @param alojamiento alojamiento
-	 * @param idActor     usuario; puede ser {@code null}
-	 * @return {@code true} si es el dueño
-	 */
-	private static boolean esPropietario(Alojamiento alojamiento, Long idActor) {
-		return idActor != null && idActor.equals(alojamiento.getIdAnfitrion());
 	}
 
 	/**

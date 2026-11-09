@@ -70,7 +70,6 @@ class PublicacionServiceTest {
 	private PeriodoDisponibilidadRepository periodoRepo;
 
 	@Mock
-	private AuditoriaService auditoriaService;
 	private ServicioAdicionalRepository servicioRepo;
 
 	@Mock
@@ -98,9 +97,9 @@ class PublicacionServiceTest {
 
 	@BeforeEach
 	void preparar() {
-		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, politicaRepo, historialRepo,
-		servicio = new PublicacionService(alojamientoRepo, imagenRepo, servicioRepo, politicaRepo, historialRepo,
-				usuarioRepo, almacenamientoService, auditoriaService, geocodingService, new ModelMapper());
+		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
+				historialRepo, usuarioRepo, almacenamientoService, auditoriaService, geocodingService,
+				new ModelMapper());
 	}
 
 	@Test

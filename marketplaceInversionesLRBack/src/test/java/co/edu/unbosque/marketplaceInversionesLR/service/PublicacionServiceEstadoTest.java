@@ -38,6 +38,7 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
@@ -71,6 +72,9 @@ class PublicacionServiceEstadoTest {
 	private PeriodoDisponibilidadRepository periodoRepo;
 
 	@Mock
+	private ServicioAdicionalRepository servicioRepo;
+
+	@Mock
 	private PoliticaCancelacionRepository politicaRepo;
 
 	@Mock
@@ -98,8 +102,9 @@ class PublicacionServiceEstadoTest {
 
 	@BeforeEach
 	void preparar() {
-		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, politicaRepo, historialRepo,
-				usuarioRepo, almacenamientoService, auditoriaService, geocodingService, new ModelMapper());
+		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
+				historialRepo, usuarioRepo, almacenamientoService, auditoriaService, geocodingService,
+				new ModelMapper());
 		alojamiento = completo();
 		lenient().when(alojamientoRepo.findById(ID)).thenReturn(Optional.of(alojamiento));
 		lenient().when(alojamientoRepo.save(any(Alojamiento.class)))
