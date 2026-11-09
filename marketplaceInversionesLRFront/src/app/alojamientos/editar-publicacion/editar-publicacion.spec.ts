@@ -4,11 +4,20 @@ import {
   HttpTestingController,
   provideHttpClientTesting
 } from '@angular/common/http/testing';
-import { provideRouter } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter
+} from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { firstValueFrom } from 'rxjs';
 
 import { EditarPublicacion, MENSAJE_SIN_PERMISO } from './editar-publicacion';
 import { AlojamientoRespuesta } from '../models/alojamiento';
+import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
+import { roleGuard } from '../../guards/role.guard';
 import { API_URL } from '../../services/api-url';
 import { RolUsuario, SessionService } from '../../services/session.service';
 import { routes } from '../../app.routes';
@@ -193,6 +202,26 @@ describe('EditarPublicacion (HU-16)', () => {
 
   function formulario(): HTMLFormElement | null {
     return elemento().querySelector('[data-formulario-edicion]');
+  }
+
+  /** Ejecuta roleGuard con los datos de la ruta indicada. */
+  function ejecutarGuard(path: string): boolean | UrlTree {
+
+    const ruta = routes.find(r => r.path === path)!;
+
+    return TestBed.runInInjectionContext(() =>
+      roleGuard(
+        { data: ruta.data } as unknown as ActivatedRouteSnapshot,
+        {} as RouterStateSnapshot
+      )
+    ) as boolean | UrlTree;
+  }
+
+  function destino(resultado: boolean | UrlTree): string {
+
+    expect(resultado instanceof UrlTree).toBe(true);
+
+    return TestBed.inject(Router).serializeUrl(resultado as UrlTree);
   }
 
   // ======================================
@@ -461,5 +490,160 @@ describe('EditarPublicacion (HU-16)', () => {
     expect(
       elemento().querySelector('[role="alert"] a')?.getAttribute('href')
     ).toBe('/login');
+  });
+
+  // ======================================
+  // CA-113 PROPIETARIO O ADMINISTRADOR AUTORIZADO
+  // ======================================
+
+  it('CA-113 permite al anfitrión propietario modificar su publicación', async () => {
+
+    // La ruta de anfitrión admite el rol ANFITRION
+
+    expect(ejecutarGuard('host/alojamientos/:id/editar')).toBe(true);
+
+    // Es el propietario: idUsuario del perfil = idAnfitrion
+
+    await abrirComoPropietario();
+
+    expect(componente.acceso()).toBe('permitido');
+
+    expect(formulario()).not.toBeNull();
+
+    expect(elemento().querySelector('[data-servicios-adicionales]')).not.toBeNull();
+
+    await escribir('ciudad', 'Tunja');
+
+    await pulsar('[data-guardar]');
+
+    const actualizar = http.expectOne(`${url}/41`);
+
+    expect(actualizar.request.method).toBe('PUT');
+
+    expect(actualizar.request.body.ciudad).toBe('Tunja');
+
+    actualizar.flush({ ...publicacion, ciudad: 'Tunja' });
+
+    await estable();
+
+    expect(confirmacion()).toBe(
+      'Los cambios de la publicación se guardaron correctamente.'
+    );
+
+    expect(campo('ciudad').value).toBe('Tunja');
+  });
+
+  it('CA-113 permite al ADMINISTRADOR modificar la publicación de otro anfitrión', async () => {
+
+    rolActual = 'Administrador';
+
+    // La ruta de administración admite el rol ADMINISTRADOR
+
+    expect(ejecutarGuard('admin/alojamientos/:id/editar')).toBe(true);
+
+    await abrir('/admin/alojamientos/41/editar');
+
+    // No necesita ser el propietario: no se consulta su perfil
+
+    http.expectNone(urlPerfil);
+
+    await responderPoliticas();
+
+    expect(componente.acceso()).toBe('permitido');
+
+    expect(formulario()).not.toBeNull();
+
+    expect(
+      elemento().querySelector('[data-resumen]')?.textContent
+    ).toContain('Anfitrión: Laura Gómez');
+
+    await escribir('precioNoche', '199000');
+
+    await pulsar('[data-guardar]');
+
+    const actualizar = http.expectOne(`${url}/41`);
+
+    expect(actualizar.request.method).toBe('PUT');
+
+    expect(actualizar.request.body.precioNoche).toBe(199000);
+
+    actualizar.flush({ ...publicacion, precioNoche: 199000 });
+
+    await estable();
+
+    expect(confirmacion()).toBe(
+      'Los cambios de la publicación se guardaron correctamente.'
+    );
+
+    expect(campo('precioNoche').value).toBe('199000');
+  });
+
+  // ======================================
+  // CA-114 DENEGACIÓN A USUARIOS SIN PERMISOS
+  // ======================================
+
+  it('CA-114 deniega el acceso a la edición a un usuario autenticado sin rol de anfitrión ni administrador', async () => {
+
+    rolActual = 'Huésped';
+
+    // Las rutas de edición lo devuelven al inicio
+
+    expect(destino(ejecutarGuard('host/alojamientos/:id/editar'))).toBe('/home');
+
+    expect(destino(ejecutarGuard('admin/alojamientos/:id/editar'))).toBe('/home');
+
+    // El permiso se niega sin consultar el perfil
+
+    const permitido = await firstValueFrom(
+      TestBed.inject(PermisoPublicacionService).puedeModificar(publicacion)
+    );
+
+    expect(permitido).toBe(false);
+
+    http.expectNone(urlPerfil);
+
+    // Un anfitrión tampoco entra por la ruta de administración
+
+    rolActual = 'Anfitrión';
+
+    expect(destino(ejecutarGuard('admin/alojamientos/:id/editar'))).toBe('/home');
+
+    // Sin sesión, al login
+
+    rolActual = null;
+
+    expect(destino(ejecutarGuard('host/alojamientos/:id/editar'))).toBe('/login');
+  });
+
+  it('CA-114 muestra un mensaje claro y no ofrece la edición cuando el servidor deniega el acceso', async () => {
+
+    componente = await harness.navigateByUrl(
+      '/host/alojamientos/41/editar',
+      EditarPublicacion
+    );
+
+    http.expectOne(`${url}/41`).flush(
+      {
+        message: 'Solo el anfitrión propietario o un administrador puede modificar este alojamiento.',
+        status: 403
+      },
+      { status: 403, statusText: 'Forbidden' }
+    );
+
+    await estable();
+
+    expect(componente.acceso()).toBe('denegado');
+
+    expect(formulario()).toBeNull();
+
+    expect(elemento().querySelector('[data-servicios-adicionales]')).toBeNull();
+
+    expect(alerta()).toBe(MENSAJE_SIN_PERMISO);
+
+    componente.guardar();
+
+    http.expectNone(req => req.method === 'PUT');
+
+    http.expectNone(urlPerfil);
   });
 });
