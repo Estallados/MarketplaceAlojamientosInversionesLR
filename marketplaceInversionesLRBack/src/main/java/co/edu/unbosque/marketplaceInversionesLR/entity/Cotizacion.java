@@ -92,6 +92,7 @@ public class Cotizacion {
 	private BigDecimal total;
 
 	/** Servicios adicionales elegidos en JSON; es opcional. */
+	@Column(columnDefinition = "text")
 	private String desglose;
 
 	/** Usuario que pidió la cotización. */
