@@ -320,7 +320,7 @@ DisponibilidadTest#disponibleSinReservas_CA119
 consultar-disponibilidad.spec.ts#CA-119 consulta el endpoint real con las fechas en formato AAAA-MM-DD y muestra el alojamiento disponible
 consultar-disponibilidad.spec.ts#CA-119 permite continuar con la reserva y transmite las fechas consultadas al siguiente paso
 consultar-disponibilidad.spec.ts#CA-119 invalida el resultado disponible si el huésped cambia las fechas después de consultar";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
-feat/SCRUM-116-fe-consultar-disponibilidad";;;Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl).
+feat/SCRUM-116-fe-consultar-disponibilidad";;;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-120;RF-026;Consultar disponibilidad;Consulta de período no disponible;Dado que un alojamiento tiene fechas reservadas o no disponibles, cuando el huésped consulta un período que incluye dichas fechas, entonces el sistema debe indicar que el alojamiento no está disponible para el período solicitado.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
 CP-029 Validación de fechas";"CalendarioServiceTest#noDisponibleConReservaOFueraDePeriodo_CA120
@@ -329,7 +329,7 @@ DisponibilidadTest#noDisponibleConReservaOFueraDePeriodo_CA120
 consultar-disponibilidad.spec.ts#CA-120 indica que no está disponible con el motivo del servidor, conserva las fechas y no permite continuar
 consultar-disponibilidad.spec.ts#CA-120 permite elegir otras fechas y volver a consultar
 consultar-disponibilidad.spec.ts#CA-120 distingue la indisponibilidad de un error de conexión, del servidor o de un alojamiento inexistente";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
-feat/SCRUM-116-fe-consultar-disponibilidad";;;Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl).
+feat/SCRUM-116-fe-consultar-disponibilidad";;;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-131;RNF-003;Control de acceso por autenticación y roles;Acceso según rol;Dado un usuario con un rol determinado, cuando intente acceder a una funcionalidad, entonces el sistema debe permitir o rechazar el acceso según los permisos definidos para dicho rol.;;CU-002;"CP-074 Acceso según rol
 CP-005 Protección de funcionalidad sin autenticación";"DashboardReportesTest#soloElAdministradorConsultaElDashboard_CA131
 PublicacionesTest#unHuespedNoPuedeCrearPublicaciones_CA131
@@ -464,15 +464,21 @@ CP-069 Eliminación de favorito";OpcionalesTest#agregarFavoritoNoDuplicaYSoloMues
 CA-174;RNF-023;Autenticación multifactor;Validación del segundo factor;Dado que el usuario tiene habilitado el segundo factor, cuando valida sus credenciales principales, entonces el sistema debe solicitar el segundo factor y permitir el acceso solo si es válido, rechazando el inicio de sesión si es incorrecto.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
-CP-072 Inicio de sesión con MFA deshabilitado";OpcionalesTest#conSegundoFactorElLoginPideElCodigoYSoloAceptaUnoValido_CA174_CA175_CA176_CA178;;38a9302;;;;
+CP-072 Inicio de sesión con MFA deshabilitado";"SegundoFactorTest#activaYElLoginPideElCodigo_CA174_CA178
+InicioSesionTest#segundoFactorEnElInicioDeSesion
+SegundoFactorServiceTest";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;;"La verificación en el login la dejó HU-07; HU-30 agrega los endpoints para activarlo."
 CA-177;RNF-023;Autenticación multifactor;MFA deshabilitado;Dado que la cuenta tiene el segundo factor deshabilitado, cuando el usuario inicia sesión, entonces el sistema debe continuar con el mecanismo normal de autenticación.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
-CP-072 Inicio de sesión con MFA deshabilitado";OpcionalesTest#sinSegundoFactorElLoginSigueNormal_CA177;;38a9302;;;;
+CP-072 Inicio de sesión con MFA deshabilitado";"SegundoFactorTest#sinSegundoFactorLoginNormal_CA177
+SegundoFactorControllerTest#desactiva_CA177";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;;El mecanismo normal es el código por correo (el ADMIN no lo necesita).
 CA-178;RNF-023;Autenticación multifactor;Activación del segundo factor;Dado que el usuario está autenticado, cuando activa el segundo factor de autenticación, entonces la configuración debe quedar asociada exclusivamente a su cuenta.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
-CP-072 Inicio de sesión con MFA deshabilitado";OpcionalesTest#conSegundoFactorElLoginPideElCodigoYSoloAceptaUnoValido_CA174_CA175_CA176_CA178;;38a9302;;;;
+CP-072 Inicio de sesión con MFA deshabilitado";"SegundoFactorTest#activaYElLoginPideElCodigo_CA174_CA178
+SegundoFactorTest#configuracionExclusivaDeLaCuenta_CA178
+SegundoFactorControllerTest#activa_CA178
+SegundoFactorControllerTest#confirma_CA178";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;;"POST /usuarios/segundofactor/activar, /confirmar y /desactivar usan el usuario del token; el secreto se guarda cifrado con AES."
 CA-179;RF-021;Creación de reserva por el huésped;Desglose de cotización con servicios adicionales;Dado que existe un alojamiento ACTIVA y las fechas seleccionadas son válidas, cuando el huésped solicita la cotización, entonces el sistema debe mostrar noches, precio base, tarifa de limpieza, tarifa de servicio, descuentos, cada servicio adicional definido con su costo y el total.;HU-31;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas
