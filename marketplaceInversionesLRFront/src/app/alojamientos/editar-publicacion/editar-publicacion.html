@@ -501,6 +501,14 @@
 
   </form>
 
+  <!-- SERVICIOS ADICIONALES CON COSTO (CA-185) -->
+  <app-servicios-adicionales
+    [idAlojamiento]="idAlojamiento"
+    [servicios]="serviciosAdicionales()"
+    (serviciosCambiados)="serviciosCambiados($event)"
+    (accesoRevocado)="accesoRevocado($event)"
+  />
+
   }
 
 </main>

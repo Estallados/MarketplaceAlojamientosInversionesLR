@@ -2,6 +2,7 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  computed,
   inject,
   signal
 } from '@angular/core';
@@ -17,8 +18,11 @@ import {
   AlojamientoRespuesta,
   DatosAlojamiento,
   EstadoAlojamiento,
-  PoliticaCancelacion
+  PoliticaCancelacion,
+  ServicioAdicional
 } from '../models/alojamiento';
+
+import { ServiciosAdicionales } from '../servicios-adicionales/servicios-adicionales';
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
 import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
@@ -108,6 +112,8 @@ const CAMPOS: CampoEdicion[] = [
   'reglas'
 ];
 
+const SIN_SERVICIOS: ServicioAdicional[] = [];
+
 /** Mensaje que se muestra cuando no tiene permiso (CA-101, CA-114). */
 export const MENSAJE_SIN_PERMISO =
   'Solo el anfitrión propietario o un administrador ' +
@@ -115,14 +121,15 @@ export const MENSAJE_SIN_PERMISO =
 
 // ======================================
 // COMPONENTE
-// HU-16: actualizar publicación (CA-100) con control
-// de propietario o administrador (CA-101, CA-113, CA-114).
+// HU-16: actualizar publicación (CA-100) y sus servicios
+// adicionales (CA-185) con control de propietario o
+// administrador (CA-101, CA-113, CA-114).
 // ======================================
 
 @Component({
   selector: 'app-editar-publicacion',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink, ServiciosAdicionales],
   templateUrl: './editar-publicacion.html'
 })
 export class EditarPublicacion implements OnInit {
@@ -161,6 +168,11 @@ export class EditarPublicacion implements OnInit {
 
   readonly politicas =
     signal<PoliticaCancelacion[]>([]);
+
+  /** Servicios adicionales actuales de la publicación (CA-185). */
+  readonly serviciosAdicionales = computed(
+    () => this.alojamiento()?.serviciosAdicionales ?? SIN_SERVICIOS
+  );
 
   readonly guardando =
     signal(false);
@@ -609,8 +621,16 @@ export class EditarPublicacion implements OnInit {
   }
 
   // ======================================
-  // 5. PERMISO REVOCADO DESDE LOS SERVICIOS ADICIONALES
+  // 5. SERVICIOS ADICIONALES (CA-185)
   // ======================================
+
+  /** Mantiene la publicación al día tras crear, editar o eliminar un servicio. */
+  serviciosCambiados(servicios: ServicioAdicional[]): void {
+
+    this.alojamiento.update(a =>
+      a ? { ...a, serviciosAdicionales: servicios } : a
+    );
+  }
 
   /** El backend respondió 401 o 403 en una operación de servicios. */
   accesoRevocado(estado: 'denegado' | 'sin-sesion'): void {
