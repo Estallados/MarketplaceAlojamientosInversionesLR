@@ -113,6 +113,8 @@ public class SecurityConfig {
 						// HU-20: el calendario es público; el servicio solo lo muestra si la publicación está
 						// ACTIVA o si quien consulta es su anfitrión o un administrador
 						.requestMatchers(HttpMethod.GET, "/alojamientos/*/disponibilidad").permitAll()
+						// HU-21: la consulta por fechas también es pública, con la misma regla
+						.requestMatchers(HttpMethod.GET, "/alojamientos/*/disponibilidad/consultar").permitAll()
 						// HU-24: el anfitrión y el administrador configuran los porcentajes de tarifa
 						.requestMatchers("/admin/tarifas").hasAnyRole("ADMIN", "ANFITRION")
 						.requestMatchers("/admin/**").hasRole("ADMIN")

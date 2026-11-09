@@ -23,6 +23,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.ConsultaDisponibilidadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.DisponibilidadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PeriodoDisponibilidadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
@@ -37,7 +38,8 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
 /**
- * Pruebas unitarias de HU-20 Registrar períodos de disponibilidad, con los
+ * Pruebas unitarias de HU-20 Registrar períodos de disponibilidad y HU-21
+ * Consultar disponibilidad para fechas seleccionadas, con los
  * repositorios y la auditoría simulados.
  */
 @ExtendWith(MockitoExtension.class)
@@ -282,6 +284,88 @@ class CalendarioServiceTest {
 
 		assertThat(servicio.tieneDisponibilidadFutura(ID_ALOJAMIENTO)).isTrue();
 		assertThat(CalendarioService.limitePendiente()).isBefore(LocalDateTime.now());
+	}
+
+	@Test
+	@DisplayName("CA-082 Se rechaza la consulta si falta una fecha, si la salida no es posterior a la llegada o si la llegada ya pasó")
+	void consultaConFechasInvalidas_CA082() {
+		LocalDate hoy = LocalDate.now();
+
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, null, BASE, null, false).getMensaje())
+				.isEqualTo(CalendarioService.FECHAS_FALTANTES);
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, BASE, null, null, false).getCodigo())
+				.isEqualTo(Resultado.DATOS_INVALIDOS);
+		// Salida igual a la llegada y salida anterior a la llegada
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, BASE, BASE, null, false).getMensaje())
+				.isEqualTo(CalendarioService.SALIDA_NO_POSTERIOR);
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, BASE, BASE.minusDays(1), null, false).getMensaje())
+				.isEqualTo(CalendarioService.SALIDA_NO_POSTERIOR);
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, hoy.minusDays(1), hoy.plusDays(2), null, false).getMensaje())
+				.isEqualTo(CalendarioService.LLEGADA_EN_EL_PASADO);
+		// Hoy sí se puede llegar
+		assertThat(CalendarioService.validarFechas(hoy, hoy.plusDays(1))).isNull();
+		verify(alojamientoRepo, never()).findById(any());
+	}
+
+	@Test
+	@DisplayName("CA-119 Una publicación ACTIVA con período que contiene las fechas y sin reservas está disponible")
+	void disponibleDentroDePeriodoSinReservas_CA119() {
+		alojamiento(EstadoAlojamiento.ACTIVA);
+		when(periodoRepo.contiene(ID_ALOJAMIENTO, BASE, BASE.plusDays(3))).thenReturn(true);
+		when(reservaRepo.existeCruce(eq(ID_ALOJAMIENTO), eq(BASE), eq(BASE.plusDays(3)),
+				eq(CalendarioService.ESTADOS_OCUPAN), any())).thenReturn(false);
+
+		Resultado<ConsultaDisponibilidadDTO> resultado = servicio.consultar(ID_ALOJAMIENTO, BASE, BASE.plusDays(3),
+				null, false);
+
+		assertThat(resultado.esExito()).isTrue();
+		assertThat(resultado.getDato().getDisponible()).isTrue();
+		assertThat(resultado.getDato().getMotivo()).isNull();
+		assertThat(resultado.getDato().getIdAlojamiento()).isEqualTo(ID_ALOJAMIENTO);
+		assertThat(resultado.getDato().getFechaEntrada()).isEqualTo(BASE);
+		assertThat(resultado.getDato().getFechaSalida()).isEqualTo(BASE.plusDays(3));
+		assertThat(servicio.estaLibre(ID_ALOJAMIENTO, BASE, BASE.plusDays(3))).isTrue();
+	}
+
+	@Test
+	@DisplayName("CA-120 No está disponible si las fechas se cruzan con una reserva o están fuera de los períodos")
+	void noDisponibleConReservaOFueraDePeriodo_CA120() {
+		alojamiento(EstadoAlojamiento.ACTIVA);
+		when(periodoRepo.contiene(ID_ALOJAMIENTO, BASE, BASE.plusDays(3))).thenReturn(true);
+		when(reservaRepo.existeCruce(eq(ID_ALOJAMIENTO), eq(BASE), eq(BASE.plusDays(3)),
+				eq(CalendarioService.ESTADOS_OCUPAN), any())).thenReturn(true);
+		when(periodoRepo.contiene(ID_ALOJAMIENTO, BASE.plusDays(40), BASE.plusDays(42))).thenReturn(false);
+
+		ConsultaDisponibilidadDTO reservada = servicio.consultar(ID_ALOJAMIENTO, BASE, BASE.plusDays(3), null, false)
+				.getDato();
+		assertThat(reservada.getDisponible()).isFalse();
+		assertThat(reservada.getMotivo()).isEqualTo(CalendarioService.CRUCE_CON_RESERVA);
+		assertThat(servicio.estaLibre(ID_ALOJAMIENTO, BASE, BASE.plusDays(3))).isFalse();
+
+		ConsultaDisponibilidadDTO fuera = servicio.consultar(ID_ALOJAMIENTO, BASE.plusDays(40), BASE.plusDays(42),
+				null, false).getDato();
+		assertThat(fuera.getDisponible()).isFalse();
+		assertThat(fuera.getMotivo()).isEqualTo(CalendarioService.FUERA_DE_PERIODO);
+	}
+
+	@Test
+	@DisplayName("CA-120 Una publicación que no está ACTIVA no está disponible para su dueño y no existe para los demás")
+	void publicacionNoActiva_CA120() {
+		alojamiento(EstadoAlojamiento.PAUSADA);
+		when(alojamientoRepo.findById(99L)).thenReturn(Optional.empty());
+
+		ConsultaDisponibilidadDTO delDueno = servicio.consultar(ID_ALOJAMIENTO, BASE, BASE.plusDays(3), ID_ANFITRION,
+				false).getDato();
+		assertThat(delDueno.getDisponible()).isFalse();
+		assertThat(delDueno.getMotivo()).contains("PAUSADA");
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, BASE, BASE.plusDays(3), 99L, true).getDato().getDisponible())
+				.isFalse();
+
+		assertThat(servicio.consultar(ID_ALOJAMIENTO, BASE, BASE.plusDays(3), OTRO_ANFITRION, false).getCodigo())
+				.isEqualTo(Resultado.NO_ENCONTRADO);
+		assertThat(servicio.consultar(99L, BASE, BASE.plusDays(3), null, false).getMensaje())
+				.isEqualTo(CalendarioService.NO_EXISTE);
+		verify(periodoRepo, never()).contiene(any(), any(), any());
 	}
 
 	/**
