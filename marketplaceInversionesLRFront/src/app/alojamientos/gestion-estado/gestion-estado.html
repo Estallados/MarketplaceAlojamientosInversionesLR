@@ -1,0 +1,150 @@
+<section
+  data-gestion-estado
+  class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+>
+
+  <h2 class="text-lg font-bold text-slate-900">
+    Estado de la publicación
+  </h2>
+
+  <p data-descripcion-estado class="mt-2 text-sm text-slate-600">
+    {{ presentacion().descripcion }}
+  </p>
+
+  <!-- DISPONIBILIDAD PARA NUEVAS RESERVAS (CA-108, CA-159) -->
+  @if (estado() === 'PAUSADA' || estado() === 'BLOQUEADA') {
+    <p
+      data-no-disponible
+      class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+    >
+      Esta publicación no está disponible para nuevas reservas ni
+      aparece como disponible para los huéspedes.
+    </p>
+  } @else if (disponibleParaReservas()) {
+    <p
+      data-disponible
+      class="mt-3 text-xs font-semibold text-emerald-700"
+    >
+      Disponible para nuevas reservas.
+    </p>
+  }
+
+  <!-- ERRORES Y DATOS FALTANTES (CA-157) -->
+  @if (error()) {
+    <div
+      role="alert"
+      data-error-estado
+      class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+    >
+      {{ error() }}
+
+      @if (faltantes().length > 0) {
+        <ul data-faltantes-revision class="mt-2 list-disc pl-5">
+          @for (faltante of faltantes(); track faltante) {
+            <li>{{ faltante }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <!-- CONFIRMACIÓN -->
+  @if (mensaje()) {
+    <div
+      role="status"
+      data-mensaje-estado
+      class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+    >
+      {{ mensaje() }}
+    </div>
+  }
+
+  <!-- ACCIONES DEL ANFITRIÓN SEGÚN EL ESTADO -->
+  @if (acciones().length > 0) {
+
+    <div class="mt-5 flex flex-wrap items-center gap-3">
+
+      @if (puede('enviarRevision')) {
+        <button
+          type="button"
+          data-enviar-revision
+          (click)="enviarARevision()"
+          [disabled]="procesando() !== null"
+          class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ procesando() === 'enviarRevision' ? 'Enviando...' : 'Enviar a revisión' }}
+        </button>
+      }
+
+      @if (puede('pausar') && !confirmandoPausa()) {
+        <button
+          type="button"
+          data-pausar
+          (click)="solicitarPausa()"
+          [disabled]="procesando() !== null"
+          class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Pausar publicación
+        </button>
+      }
+
+      @if (puede('reanudar')) {
+        <button
+          type="button"
+          data-reanudar
+          (click)="reanudar()"
+          [disabled]="procesando() !== null"
+          class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ procesando() === 'reanudar' ? 'Reanudando...' : 'Reanudar publicación' }}
+        </button>
+      }
+
+    </div>
+
+    <!-- CONFIRMAR PAUSA (CA-108) -->
+    @if (confirmandoPausa()) {
+      <div
+        data-confirmar-pausa
+        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4"
+      >
+        <p class="text-sm text-amber-900">
+          Mientras esté pausada, la publicación no recibirá nuevas
+          reservas. Las reservas ya confirmadas se mantienen.
+        </p>
+
+        <div class="mt-3 flex flex-wrap gap-3">
+          <button
+            type="button"
+            data-confirmar-pausa-si
+            (click)="confirmarPausa()"
+            [disabled]="procesando() !== null"
+            class="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {{ procesando() === 'pausar' ? 'Pausando...' : 'Sí, pausar' }}
+          </button>
+
+          <button
+            type="button"
+            data-confirmar-pausa-no
+            (click)="cancelarPausa()"
+            [disabled]="procesando() !== null"
+            class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    }
+
+  } @else if (!esAnfitrion && estadoReconocido()) {
+
+    <p data-solo-anfitrion class="mt-4 text-xs text-slate-500">
+      Enviar a revisión, pausar y reanudar los solicita el anfitrión
+      propietario. La aprobación de la publicación se gestiona en la
+      revisión administrativa.
+    </p>
+
+  }
+
+</section>

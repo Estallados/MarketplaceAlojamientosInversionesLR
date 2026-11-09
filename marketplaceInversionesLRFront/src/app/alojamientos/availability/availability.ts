@@ -23,6 +23,7 @@ import {
 } from '../models/disponibilidad';
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
+import { InsigniaEstado } from '../insignia-estado/insignia-estado';
 
 import { API_URL } from '../../core/services/api-url';
 
@@ -43,7 +44,7 @@ interface DiaCalendario {
 @Component({
   selector: 'app-host-availability',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, InsigniaEstado],
   templateUrl: './availability.html'
 })
 export class Availability implements OnInit {

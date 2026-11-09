@@ -17,12 +17,13 @@ import { finalize, map, switchMap } from 'rxjs';
 import {
   AlojamientoRespuesta,
   DatosAlojamiento,
-  EstadoAlojamiento,
   PoliticaCancelacion,
   ServicioAdicional
 } from '../models/alojamiento';
 
 import { ServiciosAdicionales } from '../servicios-adicionales/servicios-adicionales';
+import { GestionEstado } from '../gestion-estado/gestion-estado';
+import { InsigniaEstado } from '../insignia-estado/insignia-estado';
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
 import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
@@ -129,7 +130,13 @@ export const MENSAJE_SIN_PERMISO =
 @Component({
   selector: 'app-editar-publicacion',
   standalone: true,
-  imports: [FormsModule, RouterLink, ServiciosAdicionales],
+  imports: [
+    FormsModule,
+    RouterLink,
+    ServiciosAdicionales,
+    GestionEstado,
+    InsigniaEstado
+  ],
   templateUrl: './editar-publicacion.html'
 })
 export class EditarPublicacion implements OnInit {
@@ -647,21 +654,31 @@ export class EditarPublicacion implements OnInit {
   }
 
   // ======================================
-  // 6. ESTADO Y MENSAJES
+  // 6. ESTADO DE LA PUBLICACIÓN (HU-17)
   // ======================================
 
-  nombreEstado(estado: EstadoAlojamiento): string {
+  /**
+   * Publicación que devolvió el servidor tras enviar a revisión, pausar o
+   * reanudar. Solo se actualiza la publicación mostrada: el formulario
+   * conserva lo que el usuario está editando.
+   */
+  estadoCambiado(actualizado: AlojamientoRespuesta): void {
 
-    const nombres: Record<EstadoAlojamiento, string> = {
-      BORRADOR: 'Borrador',
-      PENDIENTE_REVISION: 'Pendiente de revisión',
-      ACTIVA: 'Activa',
-      PAUSADA: 'Pausada',
-      BLOQUEADA: 'Bloqueada'
-    };
-
-    return nombres[estado];
+    this.alojamiento.update(a =>
+      a
+        ? {
+          ...a,
+          ...actualizado,
+          serviciosAdicionales:
+            actualizado.serviciosAdicionales ?? a.serviciosAdicionales
+        }
+        : actualizado
+    );
   }
+
+  // ======================================
+  // 7. MENSAJES
+  // ======================================
 
   /**
    * @param alCargar true si el error ocurrió al cargar la publicación

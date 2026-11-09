@@ -245,7 +245,12 @@ CP-057 Estados permitidos de la publicación
 CP-073 Registro y modificación de servicio adicional";"PublicacionServiceEstadoTest#soloCincoEstados_CA104
 PublicacionServiceEstadoTest#soloTransicionesDefinidas_CA104
 AlojamientoControllerEstadoTest#transicionNoPermitida_CA104
-EstadoPublicacionTest#soloSePermitenLasTransicionesDefinidas_CA104";Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;
+EstadoPublicacionTest#soloSePermitenLasTransicionesDefinidas_CA104
+gestion-estado.spec.ts#CA-104 define únicamente los cinco estados del contrato, cada uno con una insignia distinta
+gestion-estado.spec.ts#CA-104 muestra la insignia del estado %s sin alterar el valor del servidor y solo sus transiciones (un caso por estado)
+gestion-estado.spec.ts#CA-104 muestra un estado desconocido como no reconocido y no ofrece acciones sobre él
+gestion-estado.spec.ts#CA-104 no permite pedir una transición incompatible con el estado actual ni al administrador";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;Front-end (SCRUM-112): probado con Vitest (ng test).
 CA-108;RF-018;Gestión y actualización de publicación;Pausa de publicación;Dado que el anfitrión tiene una publicación ACTIVA, cuando solicita pausarla, entonces el sistema debe cambiar su estado a PAUSADA e impedir la confirmación de nuevas reservas.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -254,7 +259,14 @@ CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
 CP-073 Registro y modificación de servicio adicional";"PublicacionServiceEstadoTest#pausaLaPublicacion_CA108
 AlojamientoControllerEstadoTest#pausar_CA108
-EstadoPublicacionTest#pausarCambiaAPausada_CA108";Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;Probado el cambio a PAUSADA. Falta impedir la confirmación de reservas (HU-31)
+EstadoPublicacionTest#pausarCambiaAPausada_CA108
+gestion-estado.spec.ts#CA-108 pausa una publicación ACTIVA tras confirmar y la muestra PAUSADA sin disponibilidad para nuevas reservas
+gestion-estado.spec.ts#CA-108 cancelar la confirmación no pausa la publicación
+gestion-estado.spec.ts#CA-108 muestra el error del servidor y vuelve a consultar el estado real cuando la pausa no se permite
+gestion-estado.spec.ts#CA-108 trata el 403 del servidor como falta de permiso y retira la gestión
+gestion-estado.spec.ts#CA-108 reanuda una publicación PAUSADA con el endpoint real y muestra el estado que devuelve el servidor";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;"Probado el cambio a PAUSADA. Falta impedir la confirmación de reservas (HU-31)
+Front-end (SCRUM-112): probado con Vitest (ng test). El front muestra la publicación pausada como no disponible; impedir la reserva le corresponde al backend."
 CA-112;RF-013;Bloqueo de publicaciones;Conservación de reservas existentes;Dado que una publicación tiene reservas futuras, cuando un administrador la bloquea, entonces el sistema debe conservar dichas reservas para auditoría y marcarlas para revisión manual.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
 CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#alBloquearSeConservanLasReservasFuturasYQuedanEnRevision_CA112;;38a9302;;;;
 CA-113;RNF-004;Protección de operaciones e información de usuarios;Modificación autorizada;Dado que un usuario es el anfitrión propietario de una publicación o tiene el rol ADMINISTRADOR, cuando solicita modificarla, entonces el sistema debe permitir la operación si cumple las demás reglas aplicables.;HU-16;"CU-009
@@ -376,7 +388,12 @@ CP-059 Rechazo de publicación con motivo
 CP-060 Auditoría de la decisión de revisión";"PublicacionServiceEstadoTest#enviaARevision_CA157
 PublicacionServiceEstadoTest#noEnviaSinDatosCompletos_CA157
 AlojamientoControllerEstadoTest#enviarRevision_CA157
-EstadoPublicacionTest#debeEnviarARevision_CA157";Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;
+EstadoPublicacionTest#debeEnviarARevision_CA157
+gestion-estado.spec.ts#CA-157 envía a revisión una publicación completa y la deja PENDIENTE_REVISION sin activarla
+gestion-estado.spec.ts#CA-157 indica los datos que faltan y no envía una publicación incompleta
+gestion-estado.spec.ts#CA-157 muestra lo que falta según el servidor cuando solo el backend puede comprobarlo
+gestion-estado.spec.ts#CA-157 pide guardar los cambios del formulario antes de enviar a revisión";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;Front-end (SCRUM-112): probado con Vitest (ng test).
 CA-158;RF-027;Gestión del estado de revisión del alojamiento;Aprobación de la publicación;Dado que existe una publicación en estado PENDIENTE_REVISION que cumple las condiciones, cuando un administrador la aprueba, entonces el sistema debe cambiarla a ACTIVA, dejarla disponible para recibir reservas y hacerla visible en las búsquedas.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -386,7 +403,13 @@ CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
 CP-059 Rechazo de publicación con motivo
-CP-060 Auditoría de la decisión de revisión";PublicacionServiceEstadoTest#pausadaOBloqueadaNoDisponible_CA159;Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;Probado que no se muestra disponible. Falta impedir la creación de la reserva (HU-31)
+CP-060 Auditoría de la decisión de revisión";"PublicacionServiceEstadoTest#pausadaOBloqueadaNoDisponible_CA159
+gestion-estado.spec.ts#CA-159 solo una publicación ACTIVA se considera disponible para nuevas reservas
+gestion-estado.spec.ts#CA-159 muestra una publicación PAUSADA como no disponible para nuevas reservas
+gestion-estado.spec.ts#CA-159 muestra una publicación BLOQUEADA como no disponible y no ofrece reanudarla ni pausarla
+gestion-estado.spec.ts#CA-159 la pantalla de disponibilidad advierte que una publicación pausada o bloqueada no acepta nuevas reservas";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;"Probado que no se muestra disponible. Falta impedir la creación de la reserva (HU-31)
+Front-end (SCRUM-112): probado con Vitest (ng test). El front no tiene todavía pantallas de búsqueda ni de reserva para el huésped; impedir la reserva le corresponde al backend."
 CA-160;RF-028;Procesamiento de pago simulado;Inicio del pago de prueba;Dado que el huésped confirma una reserva, cuando el sistema inicia el pago, entonces debe procesarlo únicamente en ambiente de pruebas, sin realizar cobros reales.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";ReglasNegocioTest#nuncaSeCobraConUnaClaveQueNoSeaDePrueba_CA160;;38a9302;;;;
