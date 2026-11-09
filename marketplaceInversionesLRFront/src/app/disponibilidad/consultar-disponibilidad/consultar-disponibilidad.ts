@@ -334,7 +334,7 @@ export class ConsultarDisponibilidad implements OnInit {
       if (err.status === 400) {
         return (
           err.error?.message ??
-          'Las fechas no son válidas: la salida debe ser posterior a la llegada.'
+          'Las fechas son inválidas: la salida debe ser posterior a la llegada.'
         );
       }
 

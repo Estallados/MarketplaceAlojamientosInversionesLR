@@ -148,7 +148,7 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
     await consultar();
 
     expect(texto('[data-error="salida"]')).toBe(
-      'Las fechas no son válidas: la salida debe ser posterior a la llegada.'
+      'Las fechas son inválidas: la salida debe ser posterior a la llegada.'
     );
     http.expectNone(r => r.url === urlConsulta);
   });

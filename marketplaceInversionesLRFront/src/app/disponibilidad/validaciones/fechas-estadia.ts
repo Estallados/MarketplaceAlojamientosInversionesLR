@@ -99,7 +99,7 @@ export function erroresFechas(
     errores.salida = 'La fecha de salida no es válida.';
   } else if (diaLlegada !== null && diaSalida <= diaLlegada) {
     errores.salida =
-      'Las fechas no son válidas: la salida debe ser posterior a la llegada.';
+      'Las fechas son inválidas: la salida debe ser posterior a la llegada.';
   }
 
   return errores;
