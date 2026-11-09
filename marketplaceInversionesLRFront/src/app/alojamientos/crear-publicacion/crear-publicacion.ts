@@ -28,6 +28,16 @@ import {
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
 
+import {
+  TEXTO_CORTO,
+  TEXTO_LARGO,
+  errorCapacidad,
+  errorLongitud,
+  errorNoNegativo,
+  errorPrecioNoche,
+  errorTitulo
+} from '../validaciones/validaciones-alojamiento';
+
 // ======================================
 // INTERFAZ DEL FORMULARIO
 // ======================================
@@ -84,14 +94,6 @@ type CampoNumerico =
   | 'camas'
   | 'banos'
   | 'precioNoche';
-
-// Límites del backend (LimitesTexto y PublicacionService)
-
-const TEXTO_CORTO = 255;
-
-const TEXTO_LARGO = 2000;
-
-const PRECIO_MAXIMO = 1_000_000_000;
 
 const MAXIMO_IMAGENES = 15;
 
@@ -352,131 +354,60 @@ export class CrearPublicacion implements OnInit {
     switch (campo) {
 
       case 'titulo':
-
-        if (!d.titulo.trim()) {
-          return 'Debes indicar el título del alojamiento.';
-        }
-
-        return this.errorLongitud(d.titulo, TEXTO_CORTO);
+        return errorTitulo(d.titulo);
 
       case 'ciudad':
-        return this.errorLongitud(d.ciudad, TEXTO_CORTO);
+        return errorLongitud(d.ciudad, TEXTO_CORTO);
 
       case 'ubicacion':
-        return this.errorLongitud(d.ubicacion, TEXTO_CORTO);
+        return errorLongitud(d.ubicacion, TEXTO_CORTO);
 
       case 'tipo':
-        return this.errorLongitud(d.tipo, TEXTO_CORTO);
+        return errorLongitud(d.tipo, TEXTO_CORTO);
 
       case 'descripcion':
-        return this.errorLongitud(d.descripcion, TEXTO_LARGO);
+        return errorLongitud(d.descripcion, TEXTO_LARGO);
 
       case 'reglas':
-        return this.errorLongitud(d.reglas, TEXTO_LARGO);
+        return errorLongitud(d.reglas, TEXTO_LARGO);
 
-      // CA-098: capacidad mayor que cero
+      // CA-098: capacidad y precio mayores que cero
 
       case 'capacidad':
-
-        if (this.noNumericos.has('capacidad')) {
-          return 'La capacidad debe ser un número entero mayor que cero.';
-        }
-
-        if (
-          d.capacidad !== null &&
-          (
-            !Number.isInteger(d.capacidad) ||
-            d.capacidad <= 0
-          )
-        ) {
-
-          return (
-            'La capacidad debe ser un número ' +
-            'entero mayor que cero.'
-          );
-        }
-
-        return '';
-
-      // CA-098: precio mayor que cero
+        return errorCapacidad(
+          d.capacidad,
+          this.noNumericos.has('capacidad')
+        );
 
       case 'precioNoche':
-
-        if (this.noNumericos.has('precioNoche')) {
-          return 'El precio por noche debe ser mayor que cero.';
-        }
-
-        if (d.precioNoche === null) {
-          return '';
-        }
-
-        if (
-          typeof d.precioNoche !== 'number' ||
-          !(d.precioNoche > 0)
-        ) {
-
-          return (
-            'El precio por noche debe ser mayor que cero.'
-          );
-        }
-
-        if (d.precioNoche > PRECIO_MAXIMO) {
-
-          return (
-            'El precio por noche debe ser positivo ' +
-            'y de máximo 1.000.000.000.'
-          );
-        }
-
-        return '';
+        return errorPrecioNoche(
+          d.precioNoche,
+          this.noNumericos.has('precioNoche')
+        );
 
       // Habitaciones, camas y baños
 
       case 'habitaciones':
-        return this.errorNoNegativo('habitaciones', d.habitaciones);
+        return errorNoNegativo(
+          'habitaciones',
+          d.habitaciones,
+          this.noNumericos.has('habitaciones')
+        );
 
       case 'camas':
-        return this.errorNoNegativo('camas', d.camas);
+        return errorNoNegativo(
+          'camas',
+          d.camas,
+          this.noNumericos.has('camas')
+        );
 
       case 'banos':
-        return this.errorNoNegativo('banos', d.banos, 'baños');
+        return errorNoNegativo(
+          'baños',
+          d.banos,
+          this.noNumericos.has('banos')
+        );
     }
-  }
-
-  private errorNoNegativo(
-    campo: CampoNumerico,
-    valor: number | null,
-    nombre: string = campo
-  ): string {
-
-    if (
-      this.noNumericos.has(campo) ||
-      (
-        valor !== null &&
-        (
-          !Number.isInteger(valor) ||
-          valor < 0
-        )
-      )
-    ) {
-
-      return (
-        `La cantidad de ${nombre} ` +
-        'debe ser un entero no negativo.'
-      );
-    }
-
-    return '';
-  }
-
-  private errorLongitud(
-    valor: string,
-    maximo: number
-  ): string {
-
-    return valor.trim().length > maximo
-      ? `Puede tener máximo ${maximo} caracteres.`
-      : '';
   }
 
   private primerErrorDelPaso(
