@@ -221,14 +221,19 @@ CP-017 Modificación sin permisos sobre una publicación o recurso
 CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
-CP-073 Registro y modificación de servicio adicional";PublicacionesTest#soloSePermitenLasTransicionesDefinidas_CA104;;38a9302;;;;
+CP-073 Registro y modificación de servicio adicional";"PublicacionServiceEstadoTest#soloCincoEstados_CA104
+PublicacionServiceEstadoTest#soloTransicionesDefinidas_CA104
+AlojamientoControllerEstadoTest#transicionNoPermitida_CA104
+EstadoPublicacionTest#soloSePermitenLasTransicionesDefinidas_CA104";Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;
 CA-108;RF-018;Gestión y actualización de publicación;Pausa de publicación;Dado que el anfitrión tiene una publicación ACTIVA, cuando solicita pausarla, entonces el sistema debe cambiar su estado a PAUSADA e impedir la confirmación de nuevas reservas.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
 CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
-CP-073 Registro y modificación de servicio adicional";PublicacionesTest#pausarCambiaAPausadaEImpideNuevasReservas_CA108_CA109;;38a9302;;;;
+CP-073 Registro y modificación de servicio adicional";"PublicacionServiceEstadoTest#pausaLaPublicacion_CA108
+AlojamientoControllerEstadoTest#pausar_CA108
+EstadoPublicacionTest#pausarCambiaAPausada_CA108";Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;Probado el cambio a PAUSADA. Falta impedir la confirmación de reservas (HU-31)
 CA-112;RF-013;Bloqueo de publicaciones;Conservación de reservas existentes;Dado que una publicación tiene reservas futuras, cuando un administrador la bloquea, entonces el sistema debe conservar dichas reservas para auditoría y marcarlas para revisión manual.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
 CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#alBloquearSeConservanLasReservasFuturasYQuedanEnRevision_CA112;;38a9302;;;;
 CA-113;RNF-004;Protección de operaciones e información de usuarios;Modificación autorizada;Dado que un usuario es el anfitrión propietario de una publicación o tiene el rol ADMINISTRADOR, cuando solicita modificarla, entonces el sistema debe permitir la operación si cumple las demás reglas aplicables.;HU-16;"CU-009
@@ -341,7 +346,10 @@ CA-157;RF-027;Gestión del estado de revisión del alojamiento;Envío a revisión;Da
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
 CP-059 Rechazo de publicación con motivo
-CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeEnviarARevisionYAprobarQuedandoVisibleEnBusquedas_CA157_CA158_CA194;;38a9302;;;;
+CP-060 Auditoría de la decisión de revisión";"PublicacionServiceEstadoTest#enviaARevision_CA157
+PublicacionServiceEstadoTest#noEnviaSinDatosCompletos_CA157
+AlojamientoControllerEstadoTest#enviarRevision_CA157
+EstadoPublicacionTest#debeEnviarARevision_CA157";Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;
 CA-158;RF-027;Gestión del estado de revisión del alojamiento;Aprobación de la publicación;Dado que existe una publicación en estado PENDIENTE_REVISION que cumple las condiciones, cuando un administrador la aprueba, entonces el sistema debe cambiarla a ACTIVA, dejarla disponible para recibir reservas y hacerla visible en las búsquedas.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -351,7 +359,7 @@ CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
 CP-059 Rechazo de publicación con motivo
-CP-060 Auditoría de la decisión de revisión";ReservasPagosTest#debeRechazarReservaSiElAlojamientoDejoDeEstarActivo_CA071_CA159;;38a9302;;;;
+CP-060 Auditoría de la decisión de revisión";PublicacionServiceEstadoTest#pausadaOBloqueadaNoDisponible_CA159;Probado (JUnit);;feat/SCRUM-174-be-estado-publicacion;;;Probado que no se muestra disponible. Falta impedir la creación de la reserva (HU-31)
 CA-160;RF-028;Procesamiento de pago simulado;Inicio del pago de prueba;Dado que el huésped confirma una reserva, cuando el sistema inicia el pago, entonces debe procesarlo únicamente en ambiente de pruebas, sin realizar cobros reales.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";ReglasNegocioTest#nuncaSeCobraConUnaClaveQueNoSeaDePrueba_CA160;;38a9302;;;;

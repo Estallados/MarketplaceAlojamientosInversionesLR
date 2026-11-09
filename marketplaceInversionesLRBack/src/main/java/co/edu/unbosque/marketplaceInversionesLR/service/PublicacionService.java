@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.HistorialEstadoAlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ImagenDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PoliticaCancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
@@ -28,6 +30,7 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.ServicioAdicional;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
@@ -77,6 +80,9 @@ public class PublicacionService {
 	/** Almacén de imágenes. */
 	private final ImagenRepository imagenRepo;
 
+	/** Repositorio de períodos de disponibilidad. */
+	private final PeriodoDisponibilidadRepository periodoRepo;
+
 	/** Repositorio de servicios adicionales. */
 	private final ServicioAdicionalRepository servicioRepo;
 
@@ -106,6 +112,7 @@ public class PublicacionService {
 	 *
 	 * @param alojamientoRepo       repositorio de alojamientos
 	 * @param imagenRepo            almacén de imágenes
+	 * @param periodoRepo           repositorio de períodos
 	 * @param servicioRepo          repositorio de servicios adicionales
 	 * @param politicaRepo          repositorio de políticas
 	 * @param historialRepo         historial de estados
@@ -116,12 +123,14 @@ public class PublicacionService {
 	 * @param modelMapper           copiador de entidades a DTO
 	 */
 	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
-			ServicioAdicionalRepository servicioRepo, PoliticaCancelacionRepository politicaRepo,
-			HistorialEstadoAlojamientoRepository historialRepo, UsuarioRepository usuarioRepo,
+			PeriodoDisponibilidadRepository periodoRepo, ServicioAdicionalRepository servicioRepo,
+			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
+			UsuarioRepository usuarioRepo,
 			AlmacenamientoService almacenamientoService, AuditoriaService auditoriaService,
 			GeocodingService geocodingService, ModelMapper modelMapper) {
 		this.alojamientoRepo = alojamientoRepo;
 		this.imagenRepo = imagenRepo;
+		this.periodoRepo = periodoRepo;
 		this.servicioRepo = servicioRepo;
 		this.politicaRepo = politicaRepo;
 		this.historialRepo = historialRepo;
@@ -139,6 +148,26 @@ public class PublicacionService {
 	 */
 	public List<PoliticaCancelacionDTO> politicas() {
 		return politicaRepo.findAll().stream().map(p -> modelMapper.map(p, PoliticaCancelacionDTO.class)).toList();
+	}
+
+	/**
+	 * Historial de estados de un alojamiento (lo ven el dueño o un
+	 * administrador).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       usuario que consulta
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return los cambios de estado; o NO_ENCONTRADO si no existe o el usuario
+	 *         no puede verlo
+	 */
+	public Resultado<List<HistorialEstadoAlojamientoDTO>> historial(Long idAlojamiento, Long idActor,
+			boolean esAdmin) {
+		Optional<Alojamiento> alojamiento = alojamientoRepo.findById(idAlojamiento);
+		if (alojamiento.isEmpty() || !(esAdmin || esPropietario(alojamiento.get(), idActor))) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		return Resultado.exito(historialRepo.findByIdAlojamientoOrderByFechaAscIdHistorialAsc(idAlojamiento).stream()
+				.map(h -> modelMapper.map(h, HistorialEstadoAlojamientoDTO.class)).toList());
 	}
 
 	/**
@@ -178,6 +207,64 @@ public class PublicacionService {
 		guardarArchivos(alojamiento.getIdAlojamiento(), archivos, false);
 		registrarHistorial(alojamiento.getIdAlojamiento(), null, EstadoAlojamiento.BORRADOR, idAnfitrion, null);
 		return Resultado.exito(convertirDTO(alojamiento));
+	}
+
+	/**
+	 * BORRADOR → PENDIENTE_REVISION (anfitrión). Exige la información mínima
+	 * completa e indica los datos que faltan. Que falten datos es un conflicto
+	 * con el estado del borrador, no un error de la petición (que no trae
+	 * cuerpo).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       anfitrión
+	 * @return la publicación; NO_ENCONTRADO; SIN_PERMISO; ESTADO_INVALIDO si el
+	 *         estado no lo permite o faltan datos
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> enviarRevision(Long idAlojamiento, Long idActor) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, false,
+				AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		Alojamiento alojamiento = carga.getDato();
+		if (alojamiento.getEstado() != EstadoAlojamiento.BORRADOR) {
+			return rechazarTransicion(alojamiento, EstadoAlojamiento.PENDIENTE_REVISION, idActor);
+		}
+		List<String> faltantes = camposFaltantes(alojamiento);
+		if (!faltantes.isEmpty()) {
+			String mensaje = "Completa los datos antes de enviar a revisión. Falta: " + String.join(", ", faltantes)
+					+ ".";
+			auditoriaService.registrar(idActor, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+					AuditoriaService.ENTIDAD_ALOJAMIENTO, idAlojamiento, ResultadoAuditoria.RECHAZADO, mensaje);
+			return Resultado.error(Resultado.ESTADO_INVALIDO, mensaje);
+		}
+		return Resultado.exito(cambiarEstado(alojamiento, EstadoAlojamiento.PENDIENTE_REVISION, idActor, null));
+	}
+
+	/**
+	 * ACTIVA → PAUSADA (anfitrión). Una publicación pausada no recibe
+	 * reservas.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       anfitrión
+	 * @return la publicación; NO_ENCONTRADO, SIN_PERMISO o ESTADO_INVALIDO
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> pausar(Long idAlojamiento, Long idActor) {
+		return transicionDelAnfitrion(idAlojamiento, idActor, EstadoAlojamiento.ACTIVA, EstadoAlojamiento.PAUSADA);
+	}
+
+	/**
+	 * PAUSADA → ACTIVA (anfitrión).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       anfitrión
+	 * @return la publicación; NO_ENCONTRADO, SIN_PERMISO o ESTADO_INVALIDO
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> reanudar(Long idAlojamiento, Long idActor) {
+		return transicionDelAnfitrion(idAlojamiento, idActor, EstadoAlojamiento.PAUSADA, EstadoAlojamiento.ACTIVA);
 	}
 
 	/**
@@ -428,9 +515,8 @@ public class PublicacionService {
 	/**
 	 * Datos mínimos para enviar a revisión (CA-097): título, descripción,
 	 * ubicación, ciudad, tipo, capacidad, habitaciones, baños, horas de entrada
-	 * y salida, precio, reglas, política de cancelación y al menos una imagen.
-	 * Las fechas de disponibilidad se agregan a esta lista con la historia de
-	 * disponibilidad.
+	 * y salida, precio, reglas, política de cancelación, al menos una imagen y
+	 * fechas de disponibilidad desde hoy (sin ellas no saldría en el catálogo).
 	 *
 	 * @param alojamiento alojamiento a revisar
 	 * @return nombres de los datos que faltan (vacía si está completo)
@@ -467,7 +553,20 @@ public class PublicacionService {
 		if (imagenRepo.findByIdAlojamiento(alojamiento.getIdAlojamiento()).isEmpty()) {
 			faltantes.add("al menos una imagen");
 		}
+		if (!tieneFechas(alojamiento)) {
+			faltantes.add("fechas de disponibilidad desde hoy");
+		}
 		return faltantes;
+	}
+
+	/**
+	 * Indica si tiene fechas para reservar.
+	 *
+	 * @param alojamiento alojamiento
+	 * @return {@code true} si tiene al menos una noche ofrecida desde hoy
+	 */
+	private boolean tieneFechas(Alojamiento alojamiento) {
+		return periodoRepo.existsByIdAlojamientoAndFechaFinAfter(alojamiento.getIdAlojamiento(), LocalDate.now());
 	}
 
 	/**
@@ -507,6 +606,17 @@ public class PublicacionService {
 	}
 
 	/**
+	 * Indica si el usuario es el dueño del alojamiento.
+	 *
+	 * @param alojamiento alojamiento
+	 * @param idActor     usuario; puede ser {@code null}
+	 * @return {@code true} si es el dueño
+	 */
+	private static boolean esPropietario(Alojamiento alojamiento, Long idActor) {
+		return idActor != null && idActor.equals(alojamiento.getIdAnfitrion());
+	}
+
+	/**
 	 * Carga el alojamiento si el usuario puede modificarlo; si no, registra el
 	 * intento en la auditoría.
 	 *
@@ -531,14 +641,66 @@ public class PublicacionService {
 	}
 
 	/**
-	 * Indica si el usuario es el dueño del alojamiento.
+	 * Cambio de estado que hace el anfitrión: verifica que sea el dueño y que
+	 * el estado actual sea el esperado.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       anfitrión
+	 * @param desde         estado en que debe estar
+	 * @param hacia         estado al que pasa
+	 * @return la publicación; o el error correspondiente
+	 */
+	private Resultado<AlojamientoDTO> transicionDelAnfitrion(Long idAlojamiento, Long idActor,
+			EstadoAlojamiento desde, EstadoAlojamiento hacia) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, false,
+				AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		if (carga.getDato().getEstado() != desde) {
+			return rechazarTransicion(carga.getDato(), hacia, idActor);
+		}
+		return Resultado.exito(cambiarEstado(carga.getDato(), hacia, idActor, null));
+	}
+
+	/**
+	 * Cambia el estado del alojamiento, guarda el historial y lo registra en
+	 * la auditoría.
 	 *
 	 * @param alojamiento alojamiento
-	 * @param idActor     usuario; puede ser {@code null}
-	 * @return {@code true} si es el dueño
+	 * @param nuevo       estado nuevo
+	 * @param idActor     usuario que hace el cambio
+	 * @param motivo      motivo; puede ser {@code null}
+	 * @return la publicación con el estado nuevo
 	 */
-	private static boolean esPropietario(Alojamiento alojamiento, Long idActor) {
-		return idActor != null && idActor.equals(alojamiento.getIdAnfitrion());
+	private AlojamientoDTO cambiarEstado(Alojamiento alojamiento, EstadoAlojamiento nuevo, Long idActor,
+			String motivo) {
+		EstadoAlojamiento anterior = alojamiento.getEstado();
+		alojamiento.setEstado(nuevo);
+		Alojamiento guardado = alojamientoRepo.save(alojamiento);
+		registrarHistorial(guardado.getIdAlojamiento(), anterior, nuevo, idActor, motivo);
+		auditoriaService.registrar(idActor, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, guardado.getIdAlojamiento(), ResultadoAuditoria.EXITOSO,
+				anterior + " -> " + nuevo + (motivo == null ? "" : ". " + motivo));
+		return convertirDTO(guardado);
+	}
+
+	/**
+	 * Registra en la auditoría un cambio de estado no permitido y arma el
+	 * error.
+	 *
+	 * @param alojamiento alojamiento
+	 * @param destino     estado pedido
+	 * @param idActor     usuario que lo pidió
+	 * @return resultado con ESTADO_INVALIDO
+	 */
+	private Resultado<AlojamientoDTO> rechazarTransicion(Alojamiento alojamiento, EstadoAlojamiento destino,
+			Long idActor) {
+		String mensaje = "No se puede pasar de " + alojamiento.getEstado() + " a " + destino + ".";
+		auditoriaService.registrar(idActor, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, alojamiento.getIdAlojamiento(), ResultadoAuditoria.RECHAZADO,
+				mensaje);
+		return Resultado.error(Resultado.ESTADO_INVALIDO, mensaje);
 	}
 
 	/**
