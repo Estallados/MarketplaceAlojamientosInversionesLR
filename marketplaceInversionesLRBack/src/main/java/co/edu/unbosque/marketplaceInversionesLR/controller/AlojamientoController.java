@@ -7,14 +7,21 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
@@ -164,6 +171,187 @@ public class AlojamientoController {
 			auditar(idAnfitrion, null, ResultadoAuditoria.RECHAZADO, resultado.getMensaje());
 		}
 		return RespuestaUtil.desde(resultado, HttpStatus.CREATED);
+	}
+
+	/**
+	 * Edita un alojamiento (dueño o administrador). Los campos en
+	 * {@code null} no cambian y las amenidades enviadas reemplazan las
+	 * anteriores; las imágenes se manejan con las rutas de {@code /imagenes}.
+	 * Ruta: {@code PUT /alojamientos/{id}}.
+	 *
+	 * @param id             alojamiento
+	 * @param datos          datos nuevos
+	 * @param authentication usuario autenticado
+	 * @return 200 con el alojamiento; 400, 403 o 404 según el
+	 *         caso
+	 */
+	@Operation(summary = "Editar alojamiento (propietario o ADMIN)", description = "Los campos en null no cambian; las amenidades enviadas reemplazan las anteriores. Las "
+			+ "imágenes se gestionan con los endpoints de /imagenes.")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Alojamiento actualizado")
+	@ApiResponse(responseCode = "400", description = "La capacidad debe ser mayor que cero. | El precio por noche debe "
+			+ "ser positivo. | Las habitaciones, las camas y los baños no pueden ser negativos. | La política de cancelación "
+			+ "no existe.")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@PutMapping("/{id}")
+	public ResponseEntity<Object> actualizar(@PathVariable Long id, @RequestBody AlojamientoDTO datos,
+			Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.actualizar(id, datos, RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
+	 * Sube una o varias imágenes (dueño o administrador): JPG, PNG o
+	 * WEBP de hasta 5 MB, máximo 15 por alojamiento. Si no había portada, la
+	 * primera queda como principal. Ruta:
+	 * {@code POST /alojamientos/{id}/imagenes}.
+	 *
+	 * @param id             alojamiento
+	 * @param archivos       imágenes a subir (campo {@code archivos})
+	 * @param authentication usuario autenticado
+	 * @return 201 con todas las imágenes, la principal primero; 400, 403, 404,
+	 *         413, 415 o 503 según el caso
+	 */
+	@Operation(summary = "Subir imágenes (propietario o ADMIN)", description = "multipart/form-data con uno o varios archivos en el campo 'archivos'. JPG, PNG o WEBP de "
+			+ "hasta 5 MB, máximo 15 por alojamiento. Si no había portada, la primera queda como principal.")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "201", description = "Todas las imágenes del alojamiento, la principal primero")
+	@ApiResponse(responseCode = "400", description = "Debes enviar al menos una imagen. | Un alojamiento puede tener "
+			+ "máximo 15 imágenes. | Solo se aceptan imágenes JPG, PNG o WEBP. (archivo.pdf) | El archivo está "
+			+ "vacío. (foto.png)")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@ApiResponse(responseCode = "413", description = "El archivo supera el tamaño permitido (5 MB por imagen).")
+	@ApiResponse(responseCode = "415", description = "El cuerpo debe enviarse como multipart/form-data.")
+	@ApiResponse(responseCode = "503", description = "No se pudo guardar la imagen. Intenta de nuevo.")
+	@PostMapping(value = "/{id}/imagenes", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Object> subirImagenes(@PathVariable Long id,
+			@RequestParam("archivos") List<MultipartFile> archivos, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.subirImagenes(id, archivos,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication)), HttpStatus.CREATED);
+	}
+
+	/**
+	 * Elimina una imagen (dueño o administrador). Si era la portada, la
+	 * siguiente pasa a serlo; el alojamiento debe conservar al menos una
+	 * imagen. Ruta: {@code DELETE /alojamientos/{id}/imagenes/{idImagen}}.
+	 *
+	 * @param id             alojamiento
+	 * @param idImagen       imagen
+	 * @param authentication usuario autenticado
+	 * @return 200 con las imágenes restantes; 403; 404; 409 si es la última
+	 *         imagen
+	 */
+	@Operation(summary = "Eliminar una imagen (propietario o ADMIN)", description = "Si era la principal, la siguiente pasa a serlo. El alojamiento debe conservar al menos "
+			+ "una imagen (409 si es la última).")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Imágenes restantes, la principal primero")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe. | La imagen no existe.")
+	@ApiResponse(responseCode = "409", description = "El alojamiento debe conservar al menos una imagen. Sube otra "
+			+ "antes de borrar esta.")
+	@DeleteMapping("/{id}/imagenes/{idImagen}")
+	public ResponseEntity<Object> eliminarImagen(@PathVariable Long id, @PathVariable Long idImagen,
+			Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.eliminarImagen(id, idImagen,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
+	 * Marca una imagen como portada (dueño o administrador). Ruta:
+	 * {@code PATCH /alojamientos/{id}/imagenes/{idImagen}/principal}.
+	 *
+	 * @param id             alojamiento
+	 * @param idImagen       imagen
+	 * @param authentication usuario autenticado
+	 * @return 200 con las imágenes, la principal primero; 403 o 404
+	 */
+	@Operation(summary = "Marcar una imagen como principal (propietario o ADMIN)")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Imágenes, la principal primero")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe. | La imagen no existe.")
+	@PatchMapping("/{id}/imagenes/{idImagen}/principal")
+	public ResponseEntity<Object> marcarPrincipal(@PathVariable Long id, @PathVariable Long idImagen,
+			Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.marcarPrincipal(id, idImagen,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
+	 * Agrega un servicio adicional con costo (dueño o administrador).
+	 * Ruta: {@code POST /alojamientos/{id}/servicios}.
+	 *
+	 * @param id             alojamiento
+	 * @param datos          nombre y costo
+	 * @param authentication usuario autenticado
+	 * @return 201 con el servicio; 400, 403 o 404
+	 */
+	@Operation(summary = "Agregar servicio adicional con costo (propietario o ADMIN)")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "201", description = "Servicio adicional creado")
+	@ApiResponse(responseCode = "400", description = "El servicio adicional necesita un nombre y un costo positivo.")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@PostMapping("/{id}/servicios")
+	public ResponseEntity<Object> agregarServicio(@PathVariable Long id, @RequestBody ServicioAdicionalDTO datos,
+			Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.agregarServicio(id, datos,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication)), HttpStatus.CREATED);
+	}
+
+	/**
+	 * Modifica un servicio adicional (dueño o administrador). Ruta:
+	 * {@code PUT /alojamientos/{id}/servicios/{idServicio}}.
+	 *
+	 * @param id             alojamiento
+	 * @param idServicio     servicio
+	 * @param datos          nombre y costo nuevos
+	 * @param authentication usuario autenticado
+	 * @return 200 con el servicio; 400, 403 o 404
+	 */
+	@Operation(summary = "Modificar servicio adicional (propietario o ADMIN)")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Servicio adicional actualizado")
+	@ApiResponse(responseCode = "400", description = "El servicio adicional necesita un nombre y un costo positivo.")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe. | El servicio adicional no existe.")
+	@PutMapping("/{id}/servicios/{idServicio}")
+	public ResponseEntity<Object> actualizarServicio(@PathVariable Long id, @PathVariable Long idServicio,
+			@RequestBody ServicioAdicionalDTO datos, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.actualizarServicio(id, idServicio, datos,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
+	 * Elimina un servicio adicional (dueño o administrador). Ruta:
+	 * {@code DELETE /alojamientos/{id}/servicios/{idServicio}}.
+	 *
+	 * @param id             alojamiento
+	 * @param idServicio     servicio
+	 * @param authentication usuario autenticado
+	 * @return 200 si se eliminó; 403 o 404
+	 */
+	@Operation(summary = "Eliminar servicio adicional (propietario o ADMIN)")
+	@PreAuthorize("hasAnyRole('ANFITRION','ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Servicio adicional eliminado.")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe. | El servicio adicional no existe.")
+	@DeleteMapping("/{id}/servicios/{idServicio}")
+	public ResponseEntity<Object> eliminarServicio(@PathVariable Long id, @PathVariable Long idServicio,
+			Authentication authentication) {
+		Resultado<Void> resultado = publicacionService.eliminarServicio(id, idServicio,
+				RespuestaUtil.idUsuario(authentication), RespuestaUtil.esAdmin(authentication));
+		return resultado.esExito() ? RespuestaUtil.mensaje(HttpStatus.OK, "Servicio adicional eliminado.")
+				: RespuestaUtil.desde(resultado);
 	}
 
 	/**

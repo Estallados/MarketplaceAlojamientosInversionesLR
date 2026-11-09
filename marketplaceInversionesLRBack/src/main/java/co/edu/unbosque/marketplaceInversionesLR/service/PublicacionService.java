@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,14 +18,18 @@ import org.springframework.web.multipart.MultipartFile;
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ImagenDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PoliticaCancelacionDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.HistorialEstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Imagen;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ServicioAdicional;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.service.CloudinaryService.ImagenSubida;
 import co.edu.unbosque.marketplaceInversionesLR.service.GeocodingService.Coordenadas;
@@ -32,9 +37,10 @@ import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
 /**
- * Publicaciones de alojamiento (HU-15): creación en BORRADOR con sus imágenes,
- * validación de los datos y de la información mínima para enviar a revisión,
- * y políticas de cancelación disponibles.
+ * Publicaciones de alojamiento: creación en BORRADOR con sus imágenes (HU-15),
+ * edición, imágenes y servicios adicionales (HU-16), validación de los datos y
+ * de la información mínima para enviar a revisión, y políticas de cancelación
+ * disponibles.
  * <p>
  * Cada cambio de estado guarda un {@link HistorialEstadoAlojamiento}.
  * </p>
@@ -42,13 +48,24 @@ import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 @Service
 public class PublicacionService {
 
+	/** Mensaje cuando el alojamiento no existe. */
+	private static final String NO_EXISTE = "El alojamiento no existe.";
+
+	/** Mensaje cuando el usuario no es el dueño ni administrador. */
+	private static final String SIN_PERMISO = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.";
+
+	/** Mensaje cuando un servicio adicional no es válido. */
+	private static final String SERVICIO_INVALIDO = "El servicio adicional necesita un nombre (máximo 255 "
+			+ "caracteres) y un costo positivo de máximo 1.000.000.000.";
+
 	/** Valor absoluto máximo de la latitud. */
 	private static final int LATITUD_MAXIMA = 90;
 
 	/** Valor absoluto máximo de la longitud. */
 	private static final int LONGITUD_MAXIMA = 180;
 
-	/** Tope del precio por noche (columna NUMERIC). */
+	/** Tope del precio por noche y de cada servicio adicional (columnas NUMERIC). */
 	private static final BigDecimal MONTO_MAXIMO = new BigDecimal("1000000000");
 
 	/** Máximo de imágenes por alojamiento. */
@@ -59,6 +76,9 @@ public class PublicacionService {
 
 	/** Almacén de imágenes. */
 	private final ImagenRepository imagenRepo;
+
+	/** Repositorio de servicios adicionales. */
+	private final ServicioAdicionalRepository servicioRepo;
 
 	/** Repositorio de políticas de cancelación. */
 	private final PoliticaCancelacionRepository politicaRepo;
@@ -72,6 +92,9 @@ public class PublicacionService {
 	/** Valida y guarda las imágenes en Cloudinary. */
 	private final AlmacenamientoService almacenamientoService;
 
+	/** Servicio de auditoría. */
+	private final AuditoriaService auditoriaService;
+
 	/** Busca las coordenadas de la dirección. */
 	private final GeocodingService geocodingService;
 
@@ -83,23 +106,28 @@ public class PublicacionService {
 	 *
 	 * @param alojamientoRepo       repositorio de alojamientos
 	 * @param imagenRepo            almacén de imágenes
+	 * @param servicioRepo          repositorio de servicios adicionales
 	 * @param politicaRepo          repositorio de políticas
 	 * @param historialRepo         historial de estados
 	 * @param usuarioRepo           repositorio de usuarios
 	 * @param almacenamientoService servicio de almacenamiento de imágenes
+	 * @param auditoriaService      servicio de auditoría
 	 * @param geocodingService      servicio de coordenadas
 	 * @param modelMapper           copiador de entidades a DTO
 	 */
 	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
-			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
-			UsuarioRepository usuarioRepo, AlmacenamientoService almacenamientoService,
+			ServicioAdicionalRepository servicioRepo, PoliticaCancelacionRepository politicaRepo,
+			HistorialEstadoAlojamientoRepository historialRepo, UsuarioRepository usuarioRepo,
+			AlmacenamientoService almacenamientoService, AuditoriaService auditoriaService,
 			GeocodingService geocodingService, ModelMapper modelMapper) {
 		this.alojamientoRepo = alojamientoRepo;
 		this.imagenRepo = imagenRepo;
+		this.servicioRepo = servicioRepo;
 		this.politicaRepo = politicaRepo;
 		this.historialRepo = historialRepo;
 		this.usuarioRepo = usuarioRepo;
 		this.almacenamientoService = almacenamientoService;
+		this.auditoriaService = auditoriaService;
 		this.geocodingService = geocodingService;
 		this.modelMapper = modelMapper;
 	}
@@ -153,6 +181,251 @@ public class PublicacionService {
 	}
 
 	/**
+	 * Edita una publicación (dueño o administrador). Los
+	 * campos en {@code null} se dejan como están y las amenidades enviadas
+	 * reemplazan a las anteriores. El estado, el dueño y las imágenes no se
+	 * cambian por esta vía: las imágenes se manejan con {@link #subirImagenes},
+	 * {@link #eliminarImagen} y {@link #marcarPrincipal}. Si cambian la
+	 * dirección o la ciudad y no llegan coordenadas, se vuelven a buscar.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param datos         datos nuevos
+	 * @param idActor       usuario que edita
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return la publicación; NO_ENCONTRADO, DATOS_INVALIDOS o SIN_PERMISO
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> actualizar(Long idAlojamiento, AlojamientoDTO datos, Long idActor,
+			boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.ALOJAMIENTO_ACTUALIZADO);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		String error = validar(datos, false);
+		if (error != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, error);
+		}
+
+		Alojamiento alojamiento = carga.getDato();
+		String direccionAnterior = alojamiento.getUbicacion();
+		String ciudadAnterior = alojamiento.getCiudad();
+		aplicar(datos, alojamiento);
+		boolean cambioDireccion = !Objects.equals(direccionAnterior, alojamiento.getUbicacion())
+				|| !Objects.equals(ciudadAnterior, alojamiento.getCiudad());
+		if (cambioDireccion && sinCoordenadas(datos)) {
+			ubicarEnMapa(alojamiento);
+		}
+		alojamiento.setFechaActualizacion(LocalDateTime.now());
+		alojamiento = alojamientoRepo.save(alojamiento);
+
+		auditoriaService.registrar(idActor, AuditoriaService.ALOJAMIENTO_ACTUALIZADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, idAlojamiento, ResultadoAuditoria.EXITOSO, null);
+		return Resultado.exito(convertirDTO(alojamiento));
+	}
+
+	/**
+	 * Sube una o varias imágenes (JPG, PNG o WEBP de hasta 5 MB) al
+	 * alojamiento. Se validan todas antes de guardar alguna. Si el alojamiento
+	 * no tenía portada, la primera imagen subida queda como principal.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param archivos      imágenes a subir
+	 * @param idActor       usuario que sube
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return todas las imágenes del alojamiento (la principal primero);
+	 *         NO_ENCONTRADO; DATOS_INVALIDOS si los archivos no sirven o se
+	 *         supera el máximo; SIN_PERMISO
+	 */
+	@Transactional
+	public Resultado<List<ImagenDTO>> subirImagenes(Long idAlojamiento, List<MultipartFile> archivos, Long idActor,
+			boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.IMAGEN_ALOJAMIENTO);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		List<Imagen> actuales = imagenRepo.findByIdAlojamiento(idAlojamiento);
+		String error = errorArchivos(archivos, actuales.size());
+		if (error != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, error);
+		}
+
+		guardarArchivos(idAlojamiento, archivos,
+				actuales.stream().anyMatch(i -> Boolean.TRUE.equals(i.getPrincipal())));
+		marcarActualizado(carga.getDato());
+		auditoriaService.registrar(idActor, AuditoriaService.IMAGEN_ALOJAMIENTO, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, ResultadoAuditoria.EXITOSO, "Subidas: " + archivos.size());
+		return Resultado.exito(imagenesDTO(idAlojamiento));
+	}
+
+	/**
+	 * Elimina una imagen (y su archivo, si fue subido). Si era la portada, la
+	 * siguiente pasa a serlo. Todo alojamiento, también en BORRADOR, debe
+	 * conservar al menos una imagen.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idImagen      imagen a eliminar
+	 * @param idActor       usuario que elimina
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return las imágenes restantes; NO_ENCONTRADO; SIN_PERMISO;
+	 *         ESTADO_INVALIDO si es la última imagen
+	 */
+	@Transactional
+	public Resultado<List<ImagenDTO>> eliminarImagen(Long idAlojamiento, Long idImagen, Long idActor,
+			boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.IMAGEN_ALOJAMIENTO);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		Optional<Imagen> imagen = imagenRepo.findByIdImagenAndIdAlojamiento(idImagen, idAlojamiento);
+		if (imagen.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, "La imagen no existe.");
+		}
+		List<Imagen> actuales = imagenRepo.findByIdAlojamiento(idAlojamiento);
+		if (actuales.size() == 1) {
+			return Resultado.error(Resultado.ESTADO_INVALIDO,
+					"El alojamiento debe conservar al menos una imagen. Sube otra antes de borrar esta.");
+		}
+
+		imagenRepo.delete(imagen.get());
+		almacenamientoService.eliminar(imagen.get().getRutaArchivo());
+		if (Boolean.TRUE.equals(imagen.get().getPrincipal())) {
+			actuales.stream().filter(i -> !i.getIdImagen().equals(idImagen)).findFirst().ifPresent(siguiente -> {
+				siguiente.setPrincipal(true);
+				imagenRepo.save(siguiente);
+			});
+		}
+		marcarActualizado(carga.getDato());
+		auditoriaService.registrar(idActor, AuditoriaService.IMAGEN_ALOJAMIENTO, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, ResultadoAuditoria.EXITOSO, "Eliminada la imagen " + idImagen);
+		return Resultado.exito(imagenesDTO(idAlojamiento));
+	}
+
+	/**
+	 * Marca una imagen como portada; las demás dejan de serlo.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idImagen      imagen a marcar
+	 * @param idActor       usuario que la marca
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return las imágenes (la principal primero); NO_ENCONTRADO o SIN_PERMISO
+	 */
+	@Transactional
+	public Resultado<List<ImagenDTO>> marcarPrincipal(Long idAlojamiento, Long idImagen, Long idActor,
+			boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.IMAGEN_ALOJAMIENTO);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		if (imagenRepo.findByIdImagenAndIdAlojamiento(idImagen, idAlojamiento).isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, "La imagen no existe.");
+		}
+		for (Imagen imagen : imagenRepo.findByIdAlojamiento(idAlojamiento)) {
+			imagen.setPrincipal(imagen.getIdImagen().equals(idImagen));
+			imagenRepo.save(imagen);
+		}
+		marcarActualizado(carga.getDato());
+		auditoriaService.registrar(idActor, AuditoriaService.IMAGEN_ALOJAMIENTO, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, ResultadoAuditoria.EXITOSO, "Principal: imagen " + idImagen);
+		return Resultado.exito(imagenesDTO(idAlojamiento));
+	}
+
+	/**
+	 * Agrega un servicio adicional con nombre y costo positivo.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param datos         nombre y costo
+	 * @param idActor       usuario que lo agrega
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return el servicio; NO_ENCONTRADO, DATOS_INVALIDOS o SIN_PERMISO
+	 */
+	@Transactional
+	public Resultado<ServicioAdicionalDTO> agregarServicio(Long idAlojamiento, ServicioAdicionalDTO datos,
+			Long idActor, boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.SERVICIO_ADICIONAL);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		if (!servicioValido(datos)) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, SERVICIO_INVALIDO);
+		}
+		ServicioAdicional servicio = new ServicioAdicional();
+		servicio.setIdAlojamiento(idAlojamiento);
+		servicio.setNombre(datos.getNombre().trim());
+		servicio.setCosto(datos.getCosto());
+		servicio = servicioRepo.save(servicio);
+		auditoriaService.registrar(idActor, AuditoriaService.SERVICIO_ADICIONAL, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, ResultadoAuditoria.EXITOSO, "Agregado: " + servicio.getNombre());
+		return Resultado.exito(modelMapper.map(servicio, ServicioAdicionalDTO.class));
+	}
+
+	/**
+	 * Modifica un servicio adicional. El cambio aplica a las cotizaciones
+	 * nuevas; las reservas ya confirmadas conservan su desglose congelado.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idServicio    servicio
+	 * @param datos         nombre y costo nuevos
+	 * @param idActor       usuario que lo modifica
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return el servicio; NO_ENCONTRADO, DATOS_INVALIDOS o SIN_PERMISO
+	 */
+	@Transactional
+	public Resultado<ServicioAdicionalDTO> actualizarServicio(Long idAlojamiento, Long idServicio,
+			ServicioAdicionalDTO datos, Long idActor, boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.SERVICIO_ADICIONAL);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		Optional<ServicioAdicional> servicio = servicioRepo.findByIdServicioAndIdAlojamiento(idServicio,
+				idAlojamiento);
+		if (servicio.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, "El servicio adicional no existe.");
+		}
+		if (!servicioValido(datos)) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, SERVICIO_INVALIDO);
+		}
+		servicio.get().setNombre(datos.getNombre().trim());
+		servicio.get().setCosto(datos.getCosto());
+		ServicioAdicional guardado = servicioRepo.save(servicio.get());
+		auditoriaService.registrar(idActor, AuditoriaService.SERVICIO_ADICIONAL, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, ResultadoAuditoria.EXITOSO, "Modificado: " + guardado.getNombre());
+		return Resultado.exito(modelMapper.map(guardado, ServicioAdicionalDTO.class));
+	}
+
+	/**
+	 * Elimina un servicio adicional; las reservas confirmadas no cambian.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idServicio    servicio
+	 * @param idActor       usuario que lo elimina
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return éxito; NO_ENCONTRADO o SIN_PERMISO
+	 */
+	@Transactional
+	public Resultado<Void> eliminarServicio(Long idAlojamiento, Long idServicio, Long idActor, boolean esAdmin) {
+		Resultado<Alojamiento> carga = cargarModificable(idAlojamiento, idActor, esAdmin,
+				AuditoriaService.SERVICIO_ADICIONAL);
+		if (!carga.esExito()) {
+			return Resultado.error(carga.getCodigo(), carga.getMensaje());
+		}
+		Optional<ServicioAdicional> servicio = servicioRepo.findByIdServicioAndIdAlojamiento(idServicio,
+				idAlojamiento);
+		if (servicio.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, "El servicio adicional no existe.");
+		}
+		servicioRepo.delete(servicio.get());
+		auditoriaService.registrar(idActor, AuditoriaService.SERVICIO_ADICIONAL, AuditoriaService.ENTIDAD_ALOJAMIENTO,
+				idAlojamiento, ResultadoAuditoria.EXITOSO, "Eliminado: " + servicio.get().getNombre());
+		return Resultado.exito(null);
+	}
+
+	/**
 	 * Datos mínimos para enviar a revisión (CA-097): título, descripción,
 	 * ubicación, ciudad, tipo, capacidad, habitaciones, baños, horas de entrada
 	 * y salida, precio, reglas, política de cancelación y al menos una imagen.
@@ -198,8 +471,9 @@ public class PublicacionService {
 	}
 
 	/**
-	 * Convierte la entidad a DTO con las imágenes (la principal primero), el
-	 * nombre de la política y el nombre del anfitrión.
+	 * Convierte la entidad a DTO con las imágenes (la principal primero), los
+	 * servicios adicionales, el nombre de la política y el nombre del
+	 * anfitrión.
 	 *
 	 * @param alojamiento alojamiento
 	 * @return alojamiento para la API
@@ -210,6 +484,8 @@ public class PublicacionService {
 		List<ImagenDTO> imagenes = imagenesDTO(alojamiento.getIdAlojamiento());
 		dto.setDetalleImagenes(imagenes);
 		dto.setImagenes(imagenes.stream().map(ImagenDTO::getUrl).toList());
+		dto.setServiciosAdicionales(servicioRepo.findByIdAlojamientoOrderByIdServicio(alojamiento.getIdAlojamiento())
+				.stream().map(s -> modelMapper.map(s, ServicioAdicionalDTO.class)).toList());
 		if (alojamiento.getIdPolitica() != null) {
 			politicaRepo.findById(alojamiento.getIdPolitica()).ifPresent(p -> dto.setNombrePolitica(p.getNombre()));
 		}
@@ -228,6 +504,41 @@ public class PublicacionService {
 		return imagenRepo.findByIdAlojamiento(idAlojamiento).stream()
 				.sorted(Comparator.comparing((Imagen i) -> !Boolean.TRUE.equals(i.getPrincipal())))
 				.map(i -> modelMapper.map(i, ImagenDTO.class)).toList();
+	}
+
+	/**
+	 * Carga el alojamiento si el usuario puede modificarlo; si no, registra el
+	 * intento en la auditoría.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       usuario
+	 * @param esAdmin       {@code true} si es administrador
+	 * @param accion        acción que se audita si se rechaza
+	 * @return el alojamiento; NO_ENCONTRADO o SIN_PERMISO
+	 */
+	private Resultado<Alojamiento> cargarModificable(Long idAlojamiento, Long idActor, boolean esAdmin,
+			String accion) {
+		Optional<Alojamiento> alojamiento = alojamientoRepo.findById(idAlojamiento);
+		if (alojamiento.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		if (!esAdmin && !esPropietario(alojamiento.get(), idActor)) {
+			auditoriaService.registrar(idActor, accion, AuditoriaService.ENTIDAD_ALOJAMIENTO, idAlojamiento,
+					ResultadoAuditoria.RECHAZADO, "Sin permiso sobre el alojamiento");
+			return Resultado.error(Resultado.SIN_PERMISO, SIN_PERMISO);
+		}
+		return Resultado.exito(alojamiento.get());
+	}
+
+	/**
+	 * Indica si el usuario es el dueño del alojamiento.
+	 *
+	 * @param alojamiento alojamiento
+	 * @param idActor     usuario; puede ser {@code null}
+	 * @return {@code true} si es el dueño
+	 */
+	private static boolean esPropietario(Alojamiento alojamiento, Long idActor) {
+		return idActor != null && idActor.equals(alojamiento.getIdAnfitrion());
 	}
 
 	/**
@@ -451,6 +762,30 @@ public class PublicacionService {
 			imagenRepo.save(imagen);
 			tienePrincipal = true;
 		}
+	}
+
+	/**
+	 * Pone la fecha de actualización del alojamiento en este momento y lo
+	 * guarda.
+	 *
+	 * @param alojamiento alojamiento
+	 */
+	private void marcarActualizado(Alojamiento alojamiento) {
+		alojamiento.setFechaActualizacion(LocalDateTime.now());
+		alojamientoRepo.save(alojamiento);
+	}
+
+	/**
+	 * Indica si un servicio adicional tiene nombre (máximo 255 caracteres) y un
+	 * costo positivo dentro del máximo.
+	 *
+	 * @param datos servicio a revisar
+	 * @return {@code true} si es válido
+	 */
+	private static boolean servicioValido(ServicioAdicionalDTO datos) {
+		return datos != null && datos.getNombre() != null && !datos.getNombre().isBlank()
+				&& !LimitesTexto.excede(datos.getNombre(), LimitesTexto.CORTO) && datos.getCosto() != null
+				&& datos.getCosto().signum() > 0 && datos.getCosto().compareTo(MONTO_MAXIMO) <= 0;
 	}
 
 	/**
