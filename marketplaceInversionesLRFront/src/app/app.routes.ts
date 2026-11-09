@@ -81,5 +81,30 @@ export const routes: Routes = [
     data: { roles: ['Anfitrión'] }
   },
 
+  // ====================================
+  // EDITAR PUBLICACIÓN Y SERVICIOS ADICIONALES (HU-16)
+  // ANFITRIÓN PROPIETARIO Y ADMINISTRADOR
+  // La propiedad la verifica el componente y el backend (403).
+  // Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'host/alojamientos/:id/editar',
+    loadComponent: () =>
+      import('./alojamientos/editar-publicacion/editar-publicacion')
+        .then(m => m.EditarPublicacion),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  {
+    path: 'admin/alojamientos/:id/editar',
+    loadComponent: () =>
+      import('./alojamientos/editar-publicacion/editar-publicacion')
+        .then(m => m.EditarPublicacion),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
   { path: '**', redirectTo: 'login' }
 ];

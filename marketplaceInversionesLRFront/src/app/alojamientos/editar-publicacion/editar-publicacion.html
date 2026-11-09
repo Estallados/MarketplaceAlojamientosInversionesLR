@@ -1,0 +1,506 @@
+<main class="mx-auto max-w-[1100px] px-4 py-10 sm:px-8">
+
+  <!-- ENCABEZADO -->
+  <div>
+    <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+      Inversiones LR
+    </p>
+
+    <h1 class="mt-2 text-3xl font-bold text-slate-900">
+      Editar publicación
+    </h1>
+
+    <p class="mt-2 text-sm text-slate-500">
+      Actualiza los datos, precios, reglas y servicios
+      adicionales de tu alojamiento.
+    </p>
+  </div>
+
+  <!-- CARGANDO -->
+  @if (acceso() === 'cargando') {
+    <div
+      data-cargando
+      class="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500"
+    >
+      Cargando la publicación...
+    </div>
+  }
+
+  <!-- RESUMEN DE LA PUBLICACIÓN -->
+  @if (alojamiento(); as a) {
+    @if (puedeEditar) {
+      <div
+        data-resumen
+        class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+      >
+        <div>
+          <p class="text-sm font-bold text-emerald-800">
+            Publicación #{{ a.idAlojamiento }} · {{ a.titulo }}
+            <span
+              data-estado
+              class="ml-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700"
+            >
+              {{ nombreEstado(a.estado) }}
+            </span>
+          </p>
+          @if (esAdministrador && a.nombreAnfitrion) {
+            <p class="mt-1 text-xs text-emerald-700">
+              Anfitrión: {{ a.nombreAnfitrion }}
+            </p>
+          }
+        </div>
+
+        @if (!esAdministrador) {
+          <a
+            [routerLink]="['/host/alojamientos', a.idAlojamiento, 'disponibilidad']"
+            class="text-xs font-bold text-emerald-700 underline hover:text-emerald-900"
+          >
+            Gestionar disponibilidad
+          </a>
+        }
+      </div>
+    }
+  }
+
+  <!-- ERRORES -->
+  @if (error()) {
+    <div
+      role="alert"
+      class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+    >
+      {{ error() }}
+
+      @if (acceso() === 'sin-sesion') {
+        <a
+          routerLink="/login"
+          class="ml-2 font-bold underline hover:text-red-900"
+        >
+          Ir al inicio de sesión
+        </a>
+      }
+    </div>
+  }
+
+  <!-- CONFIRMACIÓN -->
+  @if (mensaje()) {
+    <div
+      role="status"
+      class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+    >
+      {{ mensaje() }}
+    </div>
+  }
+
+  <!-- FORMULARIO: SOLO PROPIETARIO O ADMINISTRADOR (CA-113) -->
+  @if (puedeEditar) {
+
+  <form
+    data-formulario-edicion
+    (ngSubmit)="guardar()"
+    novalidate
+    class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+  >
+
+    <!-- ====================================== -->
+    <!-- INFORMACIÓN DEL ALOJAMIENTO -->
+    <!-- ====================================== -->
+
+    <section>
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Información del alojamiento
+      </h2>
+
+      <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+        <!-- TÍTULO -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Título del alojamiento
+            <span class="text-red-500">*</span>
+          </span>
+          <input
+            id="titulo"
+            name="titulo"
+            type="text"
+            required
+            maxlength="255"
+            [(ngModel)]="draft.titulo"
+            (blur)="marcarTocado('titulo')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('titulo')) {
+            <span data-error="titulo" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('titulo') }}
+            </span>
+          }
+        </label>
+
+        <!-- CIUDAD -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Ciudad
+          </span>
+          <input
+            id="ciudad"
+            name="ciudad"
+            type="text"
+            maxlength="255"
+            [(ngModel)]="draft.ciudad"
+            (blur)="marcarTocado('ciudad')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('ciudad')) {
+            <span data-error="ciudad" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('ciudad') }}
+            </span>
+          }
+        </label>
+
+        <!-- DESCRIPCIÓN -->
+        <label class="block sm:col-span-2">
+          <span class="mb-2 block text-sm font-bold">
+            Descripción
+          </span>
+          <textarea
+            id="descripcion"
+            name="descripcion"
+            rows="4"
+            maxlength="2000"
+            [(ngModel)]="draft.descripcion"
+            (blur)="marcarTocado('descripcion')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          ></textarea>
+          @if (mostrarError('descripcion')) {
+            <span data-error="descripcion" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('descripcion') }}
+            </span>
+          }
+        </label>
+
+        <!-- UBICACIÓN -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Ubicación o dirección
+          </span>
+          <input
+            id="ubicacion"
+            name="ubicacion"
+            type="text"
+            maxlength="255"
+            [(ngModel)]="draft.ubicacion"
+            (blur)="marcarTocado('ubicacion')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('ubicacion')) {
+            <span data-error="ubicacion" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('ubicacion') }}
+            </span>
+          }
+        </label>
+
+        <!-- TIPO -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Tipo de alojamiento
+          </span>
+          <select
+            id="tipo"
+            name="tipo"
+            [(ngModel)]="draft.tipo"
+            class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-emerald-500"
+          >
+            <option value="">Selecciona un tipo</option>
+            @for (tipo of tipos; track tipo) {
+              <option [value]="tipo">{{ tipo }}</option>
+            }
+            @if (draft.tipo && !tipos.includes(draft.tipo)) {
+              <option [value]="draft.tipo">{{ draft.tipo }}</option>
+            }
+          </select>
+        </label>
+
+      </div>
+    </section>
+
+    <!-- ====================================== -->
+    <!-- CAPACIDAD Y PRECIO -->
+    <!-- ====================================== -->
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Capacidad y precio
+      </h2>
+
+      <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+        <!-- CAPACIDAD -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Capacidad de huéspedes
+          </span>
+          <input
+            id="capacidad"
+            name="capacidad"
+            type="number"
+            min="1"
+            step="1"
+            [(ngModel)]="draft.capacidad"
+            (input)="revisarNumero('capacidad', $event)"
+            (blur)="marcarTocado('capacidad')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('capacidad')) {
+            <span data-error="capacidad" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('capacidad') }}
+            </span>
+          }
+        </label>
+
+        <!-- HABITACIONES -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Habitaciones
+          </span>
+          <input
+            id="habitaciones"
+            name="habitaciones"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="draft.habitaciones"
+            (input)="revisarNumero('habitaciones', $event)"
+            (blur)="marcarTocado('habitaciones')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('habitaciones')) {
+            <span data-error="habitaciones" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('habitaciones') }}
+            </span>
+          }
+        </label>
+
+        <!-- CAMAS -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Camas
+          </span>
+          <input
+            id="camas"
+            name="camas"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="draft.camas"
+            (input)="revisarNumero('camas', $event)"
+            (blur)="marcarTocado('camas')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('camas')) {
+            <span data-error="camas" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('camas') }}
+            </span>
+          }
+        </label>
+
+        <!-- BAÑOS -->
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Baños
+          </span>
+          <input
+            id="banos"
+            name="banos"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="draft.banos"
+            (input)="revisarNumero('banos', $event)"
+            (blur)="marcarTocado('banos')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          @if (mostrarError('banos')) {
+            <span data-error="banos" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('banos') }}
+            </span>
+          }
+        </label>
+
+        <!-- PRECIO -->
+        <label class="block sm:col-span-2">
+          <span class="mb-2 block text-sm font-bold">
+            Precio por noche (COP)
+          </span>
+          <input
+            id="precioNoche"
+            name="precioNoche"
+            type="number"
+            min="1"
+            step="1000"
+            [(ngModel)]="draft.precioNoche"
+            (input)="revisarNumero('precioNoche', $event)"
+            (blur)="marcarTocado('precioNoche')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+          <span class="mt-2 block text-xs text-slate-500">
+            Introduce el valor sin puntos ni símbolo de moneda.
+          </span>
+          @if (mostrarError('precioNoche')) {
+            <span data-error="precioNoche" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('precioNoche') }}
+            </span>
+          }
+        </label>
+
+      </div>
+    </section>
+
+    <!-- ====================================== -->
+    <!-- HORARIOS Y REGLAS -->
+    <!-- ====================================== -->
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Horarios y reglas
+      </h2>
+
+      <div class="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Hora de entrada (check-in)
+          </span>
+          <input
+            id="horaEntrada"
+            name="horaEntrada"
+            type="time"
+            [(ngModel)]="draft.horaEntrada"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+        </label>
+
+        <label class="block">
+          <span class="mb-2 block text-sm font-bold">
+            Hora de salida (check-out)
+          </span>
+          <input
+            id="horaSalida"
+            name="horaSalida"
+            type="time"
+            [(ngModel)]="draft.horaSalida"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          />
+        </label>
+
+        <label class="block sm:col-span-2">
+          <span class="mb-2 block text-sm font-bold">
+            Reglas de la casa
+          </span>
+          <textarea
+            id="reglas"
+            name="reglas"
+            rows="3"
+            maxlength="2000"
+            [(ngModel)]="draft.reglas"
+            (blur)="marcarTocado('reglas')"
+            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+          ></textarea>
+          @if (mostrarError('reglas')) {
+            <span data-error="reglas" class="mt-2 block text-xs text-red-600">
+              {{ errorCampo('reglas') }}
+            </span>
+          }
+        </label>
+
+        <!-- POLÍTICA DE CANCELACIÓN -->
+        <label class="block sm:col-span-2">
+          <span class="mb-2 block text-sm font-bold">
+            Política de cancelación
+          </span>
+          <select
+            id="idPolitica"
+            name="idPolitica"
+            [(ngModel)]="draft.idPolitica"
+            class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-emerald-500"
+          >
+            <option [ngValue]="null">
+              Selecciona una política
+            </option>
+
+            @for (politica of politicas(); track politica.idPolitica) {
+              <option [ngValue]="politica.idPolitica">
+                {{ politica.nombre }} — {{ politica.condiciones }}
+              </option>
+            }
+          </select>
+        </label>
+
+      </div>
+    </section>
+
+    <!-- ====================================== -->
+    <!-- SERVICIOS INCLUIDOS -->
+    <!-- ====================================== -->
+
+    <section class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Servicios incluidos
+      </h2>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Servicios sin costo que ofrece tu alojamiento.
+      </p>
+
+      <div class="mt-5 flex flex-wrap gap-3">
+
+        @for (servicio of servicios; track servicio) {
+          <label
+            class="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <input
+              type="checkbox"
+              [checked]="tieneAmenidad(servicio)"
+              (change)="toggleAmenidad(servicio)"
+              class="mr-2 accent-emerald-700"
+            />
+            {{ servicio }}
+          </label>
+        }
+
+      </div>
+    </section>
+
+    <!-- ACCIONES -->
+    <div
+      class="mt-10 flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-8"
+    >
+
+      <button
+        type="button"
+        data-descartar
+        (click)="descartar()"
+        [disabled]="guardando() || !hayCambios"
+        class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Descartar cambios
+      </button>
+
+      <button
+        type="submit"
+        data-guardar
+        [disabled]="guardando()"
+        class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+
+    </div>
+
+  </form>
+
+  }
+
+</main>
