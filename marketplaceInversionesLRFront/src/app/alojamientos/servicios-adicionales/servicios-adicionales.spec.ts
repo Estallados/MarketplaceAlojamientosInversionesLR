@@ -7,7 +7,7 @@ import {
 
 import { ServiciosAdicionales } from './servicios-adicionales';
 import { ServicioAdicional } from '../models/alojamiento';
-import { API_URL } from '../../services/api-url';
+import { API_URL } from '../../core/services/api-url';
 
 // ======================================
 // HU-16 SERVICIOS ADICIONALES CON COSTO (CA-185)

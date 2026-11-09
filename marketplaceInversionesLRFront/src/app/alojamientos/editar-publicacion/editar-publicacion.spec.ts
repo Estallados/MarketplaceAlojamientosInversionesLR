@@ -17,9 +17,9 @@ import { firstValueFrom } from 'rxjs';
 import { EditarPublicacion, MENSAJE_SIN_PERMISO } from './editar-publicacion';
 import { AlojamientoRespuesta } from '../models/alojamiento';
 import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
-import { roleGuard } from '../../guards/role.guard';
-import { API_URL } from '../../services/api-url';
-import { RolUsuario, SessionService } from '../../services/session.service';
+import { roleGuard } from '../../core/guards/role.guard';
+import { API_URL } from '../../core/services/api-url';
+import { RolUsuario, SessionService } from '../../core/services/session.service';
 import { routes } from '../../app.routes';
 
 // ======================================

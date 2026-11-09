@@ -1,7 +1,7 @@
 import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { API_URL } from './api-url';
-import { SessionService } from './session.service';
+import { API_URL } from '../services/api-url';
+import { SessionService } from '../services/session.service';
 /**
  * Agrega "Authorization: Bearer <jwt>" a las peticiones hacia nuestro backend.
  * Si no hay sesión vigente, la petición sale sin token (el backend responderá 401).

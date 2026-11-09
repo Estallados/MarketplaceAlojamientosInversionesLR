@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, of } from 'rxjs';
 
-import { SessionService } from '../../services/session.service';
+import { SessionService } from '../../core/services/session.service';
 import { User } from '../../services/user';
 import { AlojamientoRespuesta } from '../models/alojamiento';
 

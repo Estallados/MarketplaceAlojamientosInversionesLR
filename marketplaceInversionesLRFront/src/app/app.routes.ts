@@ -3,7 +3,7 @@ import { Register } from './register/register';
 import { Login } from './login/login';
 import { Recover } from './login/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
-import { roleGuard } from './guards/role.guard';
+import { roleGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 import { ProfileView } from './pages/guest/profile-view/profile-view';
 import { Availability } from './pages/host/availability/availability';

@@ -26,7 +26,7 @@ import { ServiciosAdicionales } from '../servicios-adicionales/servicios-adicion
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
 import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
-import { SessionService } from '../../services/session.service';
+import { SessionService } from '../../core/services/session.service';
 
 import {
   TEXTO_CORTO,

@@ -21,7 +21,7 @@ import {
   RegistroRol
 } from '../services/auth';
 
-import { SessionService } from '../services/session.service';
+import { SessionService } from '../core/services/session.service';
 
 
 interface RespuestaAutenticacion {

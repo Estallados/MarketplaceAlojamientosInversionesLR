@@ -9,7 +9,7 @@ import {
 
 import { Observable } from 'rxjs';
 
-import { SessionService } from './session.service';
+import { SessionService } from '../core/services/session.service';
 
 
 

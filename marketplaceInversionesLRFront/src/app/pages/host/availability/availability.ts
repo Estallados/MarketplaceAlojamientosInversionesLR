@@ -22,7 +22,7 @@ import {
   PublicacionHostService
 } from '../../../services/publicacion-host.service';
 
-import { API_URL } from '../../../services/api-url';
+import { API_URL } from '../../../core/services/api-url';
 
 
 

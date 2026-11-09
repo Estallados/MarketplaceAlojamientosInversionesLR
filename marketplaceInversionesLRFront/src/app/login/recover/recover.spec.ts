@@ -7,7 +7,7 @@ import {
 import { provideRouter } from '@angular/router';
 
 import { Recover } from './recover';
-import { API_URL } from '../../services/api-url';
+import { API_URL } from '../../core/services/api-url';
 
 // ======================================
 // HU-08 RECUPERACIÓN DE CONTRASEÑA
