@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -164,6 +165,86 @@ public class AlojamientoController {
 			auditar(idAnfitrion, null, ResultadoAuditoria.RECHAZADO, resultado.getMensaje());
 		}
 		return RespuestaUtil.desde(resultado, HttpStatus.CREATED);
+	}
+
+	/**
+	 * Historial de estados (dueño o administrador). Ruta:
+	 * {@code GET /alojamientos/{id}/historial}.
+	 *
+	 * @param id             alojamiento
+	 * @param authentication usuario autenticado
+	 * @return 200 con los cambios de estado, del primero al último; 404 si no
+	 *         existe o no se puede ver
+	 */
+	@Operation(summary = "Historial de estados (propietario o ADMIN)")
+	@ApiResponse(responseCode = "200", description = "Cambios de estado, del primero al último")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@GetMapping("/{id}/historial")
+	public ResponseEntity<Object> historial(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.historial(id, RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.esAdmin(authentication)));
+	}
+
+	/**
+	 * Envía a revisión: BORRADOR → PENDIENTE_REVISION (solo anfitriones).
+	 * Ruta: {@code POST /alojamientos/{id}/enviarrevision}.
+	 *
+	 * @param id             alojamiento
+	 * @param authentication anfitrión autenticado
+	 * @return 200 con el alojamiento; 403; 404; 409 si faltan datos o el estado
+	 *         no lo permite
+	 */
+	@Operation(summary = "Enviar a revisión: BORRADOR → PENDIENTE_REVISION (ANFITRION)")
+	@PreAuthorize("hasRole('ANFITRION')")
+	@ApiResponse(responseCode = "200", description = "Alojamiento PENDIENTE_REVISION")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@ApiResponse(responseCode = "409", description = "Completa los datos antes de enviar a revisión. Falta: "
+			+ "descripción, capacidad. | No se puede pasar de ACTIVA a PENDIENTE_REVISION.")
+	@PostMapping("/{id}/enviarrevision")
+	public ResponseEntity<Object> enviarRevision(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.enviarRevision(id, RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
+	 * Pausa una publicación: ACTIVA → PAUSADA (solo anfitriones); deja de
+	 * recibir reservas nuevas. Ruta: {@code POST /alojamientos/{id}/pausar}.
+	 *
+	 * @param id             alojamiento
+	 * @param authentication anfitrión autenticado
+	 * @return 200 con el alojamiento; 403, 404 o 409
+	 */
+	@Operation(summary = "Pausar: ACTIVA → PAUSADA (ANFITRION)")
+	@PreAuthorize("hasRole('ANFITRION')")
+	@ApiResponse(responseCode = "200", description = "Alojamiento PAUSADA: no recibe reservas nuevas")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@ApiResponse(responseCode = "409", description = "No se puede pasar de BORRADOR a PAUSADA.")
+	@PostMapping("/{id}/pausar")
+	public ResponseEntity<Object> pausar(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.pausar(id, RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
+	 * Reanuda una publicación: PAUSADA → ACTIVA (solo anfitriones). Ruta:
+	 * {@code POST /alojamientos/{id}/reanudar}.
+	 *
+	 * @param id             alojamiento
+	 * @param authentication anfitrión autenticado
+	 * @return 200 con el alojamiento; 403, 404 o 409
+	 */
+	@Operation(summary = "Reanudar: PAUSADA → ACTIVA (ANFITRION)")
+	@PreAuthorize("hasRole('ANFITRION')")
+	@ApiResponse(responseCode = "200", description = "Alojamiento ACTIVA")
+	@ApiResponse(responseCode = "403", description = "Solo el anfitrión propietario o un administrador puede modificar "
+			+ "este alojamiento.")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@ApiResponse(responseCode = "409", description = "No se puede pasar de BLOQUEADA a ACTIVA.")
+	@PostMapping("/{id}/reanudar")
+	public ResponseEntity<Object> reanudar(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.reanudar(id, RespuestaUtil.idUsuario(authentication)));
 	}
 
 	/**

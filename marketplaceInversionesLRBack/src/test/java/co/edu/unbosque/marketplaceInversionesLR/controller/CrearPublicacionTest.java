@@ -173,7 +173,8 @@ class CrearPublicacionTest {
 
 		assertThat(publicacionService.camposFaltantes(alojamientoRepository.findById(id).orElseThrow()))
 				.containsExactly("descripción", "ubicación", "tipo", "reglas", "capacidad", "habitaciones", "baños",
-						"hora de entrada", "hora de salida", "precio por noche", "política de cancelación");
+						"hora de entrada", "hora de salida", "precio por noche", "política de cancelación",
+						"fechas de disponibilidad desde hoy");
 	}
 
 	@Test

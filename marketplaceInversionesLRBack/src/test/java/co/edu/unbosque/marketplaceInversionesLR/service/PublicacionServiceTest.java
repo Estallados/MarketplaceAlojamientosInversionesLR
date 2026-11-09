@@ -39,6 +39,7 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.service.CloudinaryService.ImagenSubida;
@@ -65,6 +66,12 @@ class PublicacionServiceTest {
 	private ImagenRepository imagenRepo;
 
 	@Mock
+	private PeriodoDisponibilidadRepository periodoRepo;
+
+	@Mock
+	private AuditoriaService auditoriaService;
+
+	@Mock
 	private PoliticaCancelacionRepository politicaRepo;
 
 	@Mock
@@ -86,8 +93,8 @@ class PublicacionServiceTest {
 
 	@BeforeEach
 	void preparar() {
-		servicio = new PublicacionService(alojamientoRepo, imagenRepo, politicaRepo, historialRepo, usuarioRepo,
-				almacenamientoService, geocodingService, new ModelMapper());
+		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, politicaRepo, historialRepo,
+				usuarioRepo, almacenamientoService, auditoriaService, geocodingService, new ModelMapper());
 	}
 
 	@Test
@@ -244,7 +251,8 @@ class PublicacionServiceTest {
 
 		assertThat(servicio.camposFaltantes(borrador)).containsExactly("descripción", "ubicación", "ciudad", "tipo",
 				"reglas", "capacidad", "habitaciones", "baños", "hora de entrada", "hora de salida",
-				"precio por noche", "política de cancelación", "al menos una imagen");
+				"precio por noche", "política de cancelación", "al menos una imagen",
+				"fechas de disponibilidad desde hoy");
 	}
 
 	@Test
@@ -266,6 +274,7 @@ class PublicacionServiceTest {
 		completo.setPrecioNoche(BigDecimal.TEN);
 		completo.setIdPolitica(1L);
 		when(imagenRepo.findByIdAlojamiento(ID)).thenReturn(List.of(new Imagen()));
+		when(periodoRepo.existsByIdAlojamientoAndFechaFinAfter(eq(ID), any())).thenReturn(true);
 
 		assertThat(servicio.camposFaltantes(completo)).isEmpty();
 	}
