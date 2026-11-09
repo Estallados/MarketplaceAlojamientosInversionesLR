@@ -12,6 +12,11 @@ import {
   ServicioAdicional,
   ServicioAdicionalEntrada
 } from '../models/alojamiento';
+import {
+  CalendarioDisponibilidad,
+  DatosPeriodoDisponibilidad,
+  PeriodoDisponibilidad
+} from '../models/disponibilidad';
 
 // ======================================
 // SERVICIO DE PUBLICACIONES DEL ANFITRIÓN
@@ -217,6 +222,96 @@ export class PublicacionHostService {
 
     return this.http.delete<MensajeServidor>(
       `${this.apiUrl}/${idAlojamiento}/servicios/${idServicio}`
+    );
+  }
+
+  // ====================================
+  // 8. AGREGAR FECHAS DE DISPONIBILIDAD
+  // POST /alojamientos/{id}/disponibilidad
+  // ====================================
+
+  /**
+   * POST /alojamientos/{id}/disponibilidad. Registra un período.
+   *
+   * @param idAlojamiento alojamiento
+   * @param periodo fechas del período
+   * @returns el período creado
+   */
+  agregarPeriodoDisponibilidad(
+    idAlojamiento: number,
+    periodo: DatosPeriodoDisponibilidad
+  ): Observable<PeriodoDisponibilidad> {
+
+    return this.http.post<PeriodoDisponibilidad>(
+      `${this.apiUrl}/${idAlojamiento}/disponibilidad`,
+      periodo
+    );
+  }
+
+  // ====================================
+  // 9. CONSULTAR DISPONIBILIDAD
+  // GET /alojamientos/{id}/disponibilidad
+  // ====================================
+
+  /**
+   * GET /alojamientos/{id}/disponibilidad. Calendario del alojamiento.
+   *
+   * @param idAlojamiento alojamiento
+   * @returns el calendario
+   */
+  obtenerDisponibilidad(
+    idAlojamiento: number
+  ): Observable<CalendarioDisponibilidad> {
+
+    return this.http.get<CalendarioDisponibilidad>(
+      `${this.apiUrl}/${idAlojamiento}/disponibilidad`
+    );
+  }
+
+  // ====================================
+  // 10. ACTUALIZAR PERÍODO
+  // PUT /alojamientos/{id}/disponibilidad/{idPeriodo}
+  // ====================================
+
+  /**
+   * PUT /alojamientos/{id}/disponibilidad/{idPeriodo}. Modifica un período.
+   *
+   * @param idAlojamiento alojamiento
+   * @param idPeriodo período
+   * @param periodo fechas nuevas
+   * @returns el período actualizado
+   */
+  actualizarPeriodoDisponibilidad(
+    idAlojamiento: number,
+    idPeriodo: number,
+    periodo: DatosPeriodoDisponibilidad
+  ): Observable<PeriodoDisponibilidad> {
+
+    return this.http.put<PeriodoDisponibilidad>(
+      `${this.apiUrl}/${idAlojamiento}/disponibilidad/${idPeriodo}`,
+      periodo
+    );
+  }
+
+  // ====================================
+  // 11. ELIMINAR PERÍODO
+  // DELETE /alojamientos/{id}/disponibilidad/{idPeriodo}
+  // ====================================
+
+  /**
+   * DELETE /alojamientos/{id}/disponibilidad/{idPeriodo}. Elimina un período sin reservas.
+   *
+   * @param idAlojamiento alojamiento
+   * @param idPeriodo período
+   * @returns la respuesta con el mensaje
+   */
+  eliminarPeriodoDisponibilidad(
+    idAlojamiento: number,
+    idPeriodo: number
+  ): Observable<MensajeServidor> {
+
+    return this.http.delete<MensajeServidor>(
+      `${this.apiUrl}/${idAlojamiento}/disponibilidad/${idPeriodo}`
     );
   }
 }

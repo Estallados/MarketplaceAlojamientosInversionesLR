@@ -6,7 +6,7 @@ import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 import { ProfileView } from './perfil/profile-view/profile-view';
-import { Availability } from './pages/host/availability/availability';
+import { Availability } from './alojamientos/availability/availability';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },

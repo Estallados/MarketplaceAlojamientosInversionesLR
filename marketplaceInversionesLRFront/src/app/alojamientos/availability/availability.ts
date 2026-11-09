@@ -14,15 +14,17 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize, forkJoin } from 'rxjs';
 
+import { AlojamientoRespuesta } from '../models/alojamiento';
+
 import {
-  AlojamientoRespuesta,
   CalendarioDisponibilidad,
   DatosPeriodoDisponibilidad,
-  PeriodoDisponibilidad,
-  PublicacionHostService
-} from '../../../services/publicacion-host.service';
+  PeriodoDisponibilidad
+} from '../models/disponibilidad';
 
-import { API_URL } from '../../../core/services/api-url';
+import { PublicacionHostService } from '../services/publicacion-host.service';
+
+import { API_URL } from '../../core/services/api-url';
 
 
 
