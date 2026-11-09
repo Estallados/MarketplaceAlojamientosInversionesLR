@@ -80,6 +80,11 @@ src/app/
 │   ├── models/
 │   ├── services/                publicacion-host.service (único servicio HTTP de alojamientos)
 │   └── validaciones/
+├── disponibilidad/       Consultar disponibilidad para fechas seleccionadas (HU-21)
+│   ├── consultar-disponibilidad/
+│   ├── models/
+│   ├── services/                disponibilidad.service (consulta pública, S04)
+│   └── validaciones/            fechas de la estadía (CA-082)
 ├── cotizacion/           Porcentajes de tarifas (HU-24)
 └── api/                  Cliente generado desde OpenAPI (no editar a mano)
 ```

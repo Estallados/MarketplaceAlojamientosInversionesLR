@@ -1,0 +1,172 @@
+<main class="mx-auto max-w-[720px] px-4 py-10 sm:px-8">
+
+  <!-- ENCABEZADO -->
+  <div>
+    <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+      Inversiones LR
+    </p>
+
+    <h1 class="mt-2 text-3xl font-bold text-slate-900">
+      Consultar disponibilidad
+    </h1>
+
+    <p class="mt-2 text-sm text-slate-500">
+      Elige las fechas de tu estadía para saber si el alojamiento
+      @if (idAlojamiento() !== null) { #{{ idAlojamiento() }} }
+      está disponible.
+    </p>
+  </div>
+
+  <!-- SELECTOR DE FECHAS (CA-082) -->
+  <form
+    data-formulario-fechas
+    (ngSubmit)="consultar()"
+    novalidate
+    class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+  >
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Fecha de llegada
+          <span class="text-red-500">*</span>
+        </span>
+        <input
+          id="llegada"
+          name="llegada"
+          type="date"
+          required
+          [min]="hoy"
+          [ngModel]="llegada()"
+          (ngModelChange)="cambiarFecha('llegada', $event)"
+          (blur)="marcarTocado('llegada')"
+          [attr.aria-invalid]="mostrarError('llegada')"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('llegada')) {
+          <span data-error="llegada" class="mt-2 block text-xs text-red-600">
+            {{ errores().llegada }}
+          </span>
+        }
+      </label>
+
+      <label class="block">
+        <span class="mb-2 block text-sm font-bold">
+          Fecha de salida
+          <span class="text-red-500">*</span>
+        </span>
+        <input
+          id="salida"
+          name="salida"
+          type="date"
+          required
+          [min]="salidaMinima()"
+          [ngModel]="salida()"
+          (ngModelChange)="cambiarFecha('salida', $event)"
+          (blur)="marcarTocado('salida')"
+          [attr.aria-invalid]="mostrarError('salida')"
+          class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+        />
+        @if (mostrarError('salida')) {
+          <span data-error="salida" class="mt-2 block text-xs text-red-600">
+            {{ errores().salida }}
+          </span>
+        }
+      </label>
+
+    </div>
+
+    <!-- FECHAS SELECCIONADAS -->
+    @if (noches() > 0) {
+      <p data-resumen-fechas class="mt-5 text-sm text-slate-600">
+        Del {{ fechaLegible(llegada()) }} al {{ fechaLegible(salida()) }}
+        · {{ noches() }} {{ noches() === 1 ? 'noche' : 'noches' }}
+      </p>
+    }
+
+    <div class="mt-6 flex justify-end">
+      <button
+        type="submit"
+        data-consultar
+        [disabled]="consultando() || idAlojamiento() === null"
+        class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {{ consultando() ? 'Consultando...' : 'Consultar disponibilidad' }}
+      </button>
+    </div>
+  </form>
+
+  <!-- RESULTADO -->
+  @switch (estado().tipo) {
+
+    @case ('consultando') {
+      <div
+        data-consultando
+        role="status"
+        class="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500"
+      >
+        Consultando la disponibilidad...
+      </div>
+    }
+
+    <!-- DISPONIBLE (CA-119) -->
+    @case ('disponible') {
+      <div
+        data-disponible
+        role="status"
+        class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-5"
+      >
+        <p class="text-sm font-bold text-emerald-800">
+          ✓ El alojamiento está disponible para estas fechas.
+        </p>
+        <p class="mt-1 text-sm text-emerald-700">
+          Puedes continuar con la reserva del
+          {{ fechaLegible(llegada()) }} al {{ fechaLegible(salida()) }}.
+        </p>
+
+        <button
+          type="button"
+          data-continuar
+          (click)="continuarConReserva()"
+          [disabled]="!puedeContinuar()"
+          class="mt-4 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Continuar con la reserva
+        </button>
+      </div>
+    }
+
+    <!-- NO DISPONIBLE (CA-120) -->
+    @case ('no-disponible') {
+      <div
+        data-no-disponible
+        role="status"
+        class="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5"
+      >
+        <p class="text-sm font-bold text-amber-900">
+          ✕ El alojamiento no está disponible para el período solicitado.
+        </p>
+        @if (motivo()) {
+          <p data-motivo class="mt-1 text-sm text-amber-800">
+            {{ motivo() }}
+          </p>
+        }
+        <p class="mt-2 text-xs text-amber-800">
+          Cambia las fechas y vuelve a consultar.
+        </p>
+      </div>
+    }
+
+    <!-- ERRORES (CONEXIÓN, SERVIDOR, FECHAS RECHAZADAS O ALOJAMIENTO) -->
+    @case ('error') {
+      <div
+        data-error-consulta
+        role="alert"
+        class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+      >
+        {{ textoError() }}
+      </div>
+    }
+  }
+
+</main>
