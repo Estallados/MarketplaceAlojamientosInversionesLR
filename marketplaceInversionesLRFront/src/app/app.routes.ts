@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { Register } from './register/register';
-import { Login } from './login/login';
-import { Recover } from './login/recover/recover';
+import { Register } from './auth/register/register';
+import { Login } from './auth/login/login';
+import { Recover } from './auth/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
