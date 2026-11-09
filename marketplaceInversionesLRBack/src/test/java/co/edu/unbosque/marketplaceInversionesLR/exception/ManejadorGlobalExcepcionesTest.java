@@ -33,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 
 /**
  * Pruebas de las respuestas de error comunes de la API y de su registro en la
@@ -59,6 +60,16 @@ class ManejadorGlobalExcepcionesTest {
 				HttpStatus.UNSUPPORTED_MEDIA_TYPE);
 		assertError(manejador.rutaNoEncontrada(), HttpStatus.NOT_FOUND);
 		assertError(manejador.conflictoDeDatos(new DataIntegrityViolationException("duplicado")), HttpStatus.CONFLICT);
+	}
+
+	@Test
+	@DisplayName("CA-072 Si Neon rechaza dos reservas cruzadas, el 409 dice que otra reserva tomó el período")
+	void cruceDeReservas_CA072() {
+		ResponseEntity<Object> respuesta = manejador.conflictoDeDatos(new DataIntegrityViolationException("error",
+				new IllegalStateException("violates exclusion constraint \"ex_reserva_sin_cruces\"")));
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(respuesta.getBody()).isEqualTo(Map.of("message", ReservaService.PERIODO_TOMADO));
 	}
 
 	@Test

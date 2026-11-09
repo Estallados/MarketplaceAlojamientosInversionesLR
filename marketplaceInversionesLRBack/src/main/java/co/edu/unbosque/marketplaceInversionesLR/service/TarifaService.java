@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ConfiguracionTarifa;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ConfiguracionTarifaRepository;
@@ -73,6 +74,30 @@ public class TarifaService {
 			dto.setPorDefecto(true);
 		}
 		return dto;
+	}
+
+	/**
+	 * Porcentaje de limpieza que se cobra en un alojamiento: el propio del
+	 * alojamiento si lo tiene, o el global vigente.
+	 *
+	 * @param alojamiento alojamiento a cotizar
+	 * @return porcentaje de limpieza
+	 */
+	public BigDecimal porcentajeLimpieza(Alojamiento alojamiento) {
+		return alojamiento.getPorcentajeLimpieza() != null ? alojamiento.getPorcentajeLimpieza()
+				: vigente().getPorcentajeLimpieza();
+	}
+
+	/**
+	 * Porcentaje de servicio que se cobra en un alojamiento: el propio del
+	 * alojamiento si lo tiene, o el global vigente.
+	 *
+	 * @param alojamiento alojamiento a cotizar
+	 * @return porcentaje de servicio
+	 */
+	public BigDecimal porcentajeServicio(Alojamiento alojamiento) {
+		return alojamiento.getPorcentajeServicio() != null ? alojamiento.getPorcentajeServicio()
+				: vigente().getPorcentajeServicio();
 	}
 
 	/**
