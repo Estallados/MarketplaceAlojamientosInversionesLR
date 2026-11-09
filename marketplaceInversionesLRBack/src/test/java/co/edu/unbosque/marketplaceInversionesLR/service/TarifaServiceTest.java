@@ -22,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ConfiguracionTarifa;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ConfiguracionTarifaRepository;
@@ -60,6 +61,28 @@ class TarifaServiceTest {
 		assertThat(vigente.getIdConfiguracion()).isNull();
 		assertThat(vigente.getIdUsuario()).isNull();
 		assertThat(vigente.getFecha()).isNull();
+	}
+
+	@Test
+	@DisplayName("CA-084 Al cotizar se usan los porcentajes propios del alojamiento si los tiene")
+	void porcentajesPropios_CA084() {
+		Alojamiento alojamiento = new Alojamiento();
+		alojamiento.setPorcentajeLimpieza(new BigDecimal("3"));
+		alojamiento.setPorcentajeServicio(new BigDecimal("8"));
+
+		assertThat(servicio.porcentajeLimpieza(alojamiento)).isEqualByComparingTo("3");
+		assertThat(servicio.porcentajeServicio(alojamiento)).isEqualByComparingTo("8");
+		verify(configuracionRepo, never()).findTopByOrderByFechaDescIdConfiguracionDesc();
+	}
+
+	@Test
+	@DisplayName("CA-084 Al cotizar un alojamiento sin porcentajes propios se usan los globales vigentes")
+	void porcentajesGlobales_CA084() {
+		when(configuracionRepo.findTopByOrderByFechaDescIdConfiguracionDesc())
+				.thenReturn(Optional.of(guardada(3L, "7.5", "12", 1L, LocalDateTime.now())));
+
+		assertThat(servicio.porcentajeLimpieza(new Alojamiento())).isEqualByComparingTo("7.5");
+		assertThat(servicio.porcentajeServicio(new Alojamiento())).isEqualByComparingTo("12");
 	}
 
 	@Test

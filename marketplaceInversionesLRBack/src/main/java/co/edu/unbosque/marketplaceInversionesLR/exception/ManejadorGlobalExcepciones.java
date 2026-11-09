@@ -24,6 +24,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -42,7 +43,7 @@ public class ManejadorGlobalExcepciones {
 	public static final String ERROR_INESPERADO = "Ocurrió un error inesperado. Intenta de nuevo.";
 
 	/** Log de la clase. */
-	private static final Logger LOG = LoggerFactory.getLogger(ManejadorGlobalExcepciones.class);
+	private static final Logger LOG =LoggerFactory.getLogger(ManejadorGlobalExcepciones.class);
 
 	/** Registra en la auditoría los accesos denegados y los errores inesperados. */
 	private final AuditoriaService auditoriaService;
@@ -149,14 +150,19 @@ public class ManejadorGlobalExcepciones {
 
 	/**
 	 * Violación de una restricción de la base de datos que no controló el
-	 * servicio.
+	 * servicio. Si es {@value ReservaService#RESTRICCION_CRUCE_RESERVAS} (dos reservas
+	 * confirmadas sobre las mismas fechas, CA-072), lo dice así.
 	 *
 	 * @param e error de la base de datos
 	 * @return 409
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<Object> conflictoDeDatos(DataIntegrityViolationException e) {
-		LOG.warn("Conflicto de datos: {}", e.getMostSpecificCause().getMessage());
+		String causa = String.valueOf(e.getMostSpecificCause().getMessage());
+		LOG.warn("Conflicto de datos: {}", causa);
+		if (causa.contains(ReservaService.RESTRICCION_CRUCE_RESERVAS)) {
+			return RespuestaUtil.mensaje(HttpStatus.CONFLICT, ReservaService.PERIODO_TOMADO);
+		}
 		return RespuestaUtil.mensaje(HttpStatus.CONFLICT, "El registro ya existe. Actualiza la página e intenta de nuevo.");
 	}
 

@@ -92,7 +92,8 @@ public class GoogleClavesService {
 		Instant ahora = Instant.now();
 		boolean desconocida = !cache.claves.containsKey(idClave)
 				&& ahora.isAfter(cache.ultimaDescarga.plus(ESPERA_ENTRE_DESCARGAS));
-		if (ahora.isAfter(cache.vence) || desconocida) {
+		// Vencidas desde el instante de vencimiento: con max-age=0 se descargan en cada consulta
+		if (!ahora.isBefore(cache.vence) || desconocida) {
 			descargar(ahora);
 		}
 		return cache.claves.get(idClave);

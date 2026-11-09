@@ -66,7 +66,12 @@ public class Reserva {
 	@Column(nullable = false)
 	private BigDecimal total;
 
-	/** Desglose del cobro en JSON; es opcional. */
+	/**
+	 * Desglose del cobro en JSON; es opcional. En Neon la columna es
+	 * {@code text}: el JSON de la cotización supera los 255 caracteres de un
+	 * {@code varchar} por defecto.
+	 */
+	@Column(columnDefinition = "text")
 	private String desglose;
 
 	/** Huésped que reservó. */

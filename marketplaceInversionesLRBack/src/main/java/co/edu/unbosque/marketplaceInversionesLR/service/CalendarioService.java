@@ -120,6 +120,17 @@ public class CalendarioService {
 	}
 
 	/**
+	 * Mensaje cuando el alojamiento no recibe reservas por su estado (CA-071).
+	 * Es el mismo al consultar, cotizar y reservar.
+	 *
+	 * @param alojamiento alojamiento que no está ACTIVA
+	 * @return el mensaje
+	 */
+	public static String noActiva(Alojamiento alojamiento) {
+		return "El alojamiento no está disponible para nuevas reservas (estado " + alojamiento.getEstado() + ").";
+	}
+
+	/**
 	 * Indica si el alojamiento tiene algún período que termine después de hoy.
 	 * Es uno de los datos mínimos para enviar la publicación a revisión
 	 * (CA-097).
@@ -244,7 +255,7 @@ public class CalendarioService {
 	 */
 	private String motivoNoDisponible(Alojamiento alojamiento, LocalDate llegada, LocalDate salida) {
 		if (alojamiento.getEstado() != EstadoAlojamiento.ACTIVA) {
-			return "El alojamiento no está disponible para nuevas reservas (estado " + alojamiento.getEstado() + ").";
+			return noActiva(alojamiento);
 		}
 		if (!periodoRepo.contiene(alojamiento.getIdAlojamiento(), llegada, salida)) {
 			return FUERA_DE_PERIODO;
