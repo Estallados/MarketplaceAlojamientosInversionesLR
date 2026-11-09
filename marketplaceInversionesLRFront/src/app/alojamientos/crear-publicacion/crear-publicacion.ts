@@ -30,8 +30,10 @@ import {
 import { PublicacionHostService } from '../services/publicacion-host.service';
 
 import {
+  DatoRequerido,
   TEXTO_CORTO,
   TEXTO_LARGO,
+  datosFaltantesParaRevision,
   errorCapacidad,
   errorLongitud,
   errorNoNegativo,
@@ -67,6 +69,24 @@ interface FormularioAlojamiento {
 // ======================================
 
 export type NumeroPaso = 1 | 2 | 3 | 4;
+
+/** Paso del formulario donde se completa cada dato mínimo. */
+const PASO_DE_DATO: Record<DatoRequerido, NumeroPaso> = {
+  titulo: 1,
+  descripcion: 1,
+  ubicacion: 1,
+  ciudad: 1,
+  tipo: 1,
+  capacidad: 1,
+  habitaciones: 1,
+  banos: 1,
+  precioNoche: 1,
+  horaEntrada: 2,
+  horaSalida: 2,
+  reglas: 2,
+  idPolitica: 2,
+  imagenes: 4
+};
 
 /** Campos que se validan uno por uno. */
 export type CampoValidado =
@@ -855,41 +875,15 @@ export class CrearPublicacion implements OnInit {
 
     const d = this.draft;
 
-    const faltantes: DatoFaltante[] = [];
-
-    const agregar = (
-      falta: boolean,
-      nombre: string,
-      paso: NumeroPaso
-    ) => {
-
-      if (falta) {
-        faltantes.push({ nombre, paso });
-      }
-    };
-
-    agregar(!d.titulo.trim(), 'título', 1);
-    agregar(!d.descripcion.trim(), 'descripción', 1);
-    agregar(!d.ubicacion.trim(), 'ubicación', 1);
-    agregar(!d.ciudad.trim(), 'ciudad', 1);
-    agregar(!d.tipo.trim(), 'tipo de alojamiento', 1);
-    agregar(d.capacidad === null, 'capacidad', 1);
-    agregar(d.habitaciones === null, 'habitaciones', 1);
-    agregar(d.banos === null, 'baños', 1);
-    agregar(d.precioNoche === null, 'precio por noche', 1);
-    agregar(!d.horaEntrada, 'hora de entrada', 2);
-    agregar(!d.horaSalida, 'hora de salida', 2);
-    agregar(!d.reglas.trim(), 'reglas', 2);
-    agregar(d.idPolitica === null, 'política de cancelación', 2);
-
-    agregar(
-      this.imagenesGuardadas() === 0 &&
-      this.imagenesSeleccionadas.length === 0,
-      'al menos una imagen',
-      4
-    );
-
-    return faltantes;
+    return datosFaltantesParaRevision({
+      ...d,
+      cantidadImagenes:
+        this.imagenesGuardadas() +
+        this.imagenesSeleccionadas.length
+    }).map(({ campo, nombre }) => ({
+      nombre,
+      paso: PASO_DE_DATO[campo]
+    }));
   }
 
   // ======================================
