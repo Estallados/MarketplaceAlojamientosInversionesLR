@@ -24,6 +24,21 @@ import co.edu.unbosque.marketplaceInversionesLR.util.TotpUtil;
 @Service
 public class SegundoFactorService {
 
+	/** Mensaje cuando el usuario del token no existe. */
+	public static final String NO_ENCONTRADO = "Usuario no encontrado.";
+
+	/** Mensaje al activar cuando ya está habilitado. */
+	public static final String YA_HABILITADO = "El segundo factor ya está habilitado.";
+
+	/** Mensaje al confirmar sin haber pedido la activación. */
+	public static final String SIN_ACTIVACION = "Primero solicita la activación del segundo factor.";
+
+	/** Mensaje al desactivar cuando no está habilitado. */
+	public static final String NO_HABILITADO = "El segundo factor no está habilitado.";
+
+	/** Mensaje cuando el código de la app autenticadora no es válido. */
+	public static final String CODIGO_INVALIDO = "El código no es válido.";
+
 	/** Nombre de la aplicación que se ve en la app autenticadora. */
 	private static final String EMISOR = "MarketplaceInversionesLR";
 
@@ -66,10 +81,10 @@ public class SegundoFactorService {
 	public Resultado<SegundoFactorDTO> activar(Long idUsuario) {
 		Optional<Usuario> usuario = usuarioRepo.findById(idUsuario);
 		if (usuario.isEmpty()) {
-			return Resultado.error(Resultado.NO_ENCONTRADO, "Usuario no encontrado.");
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_ENCONTRADO);
 		}
 		if (estaHabilitado(usuario.get())) {
-			return Resultado.error(Resultado.ESTADO_INVALIDO, "El segundo factor ya está habilitado.");
+			return Resultado.error(Resultado.ESTADO_INVALIDO, YA_HABILITADO);
 		}
 		String secreto = TotpUtil.generarSecreto();
 		usuario.get().setSecretoTotp(AESUtil.encrypt(secreto));
@@ -95,14 +110,14 @@ public class SegundoFactorService {
 	public Resultado<Void> confirmar(Long idUsuario, String codigo) {
 		Optional<Usuario> usuario = usuarioRepo.findById(idUsuario);
 		if (usuario.isEmpty()) {
-			return Resultado.error(Resultado.NO_ENCONTRADO, "Usuario no encontrado.");
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_ENCONTRADO);
 		}
 		if (usuario.get().getSecretoTotp() == null || estaHabilitado(usuario.get())) {
-			return Resultado.error(Resultado.ESTADO_INVALIDO, "Primero solicita la activación del segundo factor.");
+			return Resultado.error(Resultado.ESTADO_INVALIDO, SIN_ACTIVACION);
 		}
 		if (!verificar(usuario.get(), codigo)) {
 			auditar(idUsuario, ResultadoAuditoria.RECHAZADO, "Código inválido al confirmar");
-			return Resultado.error(Resultado.DATOS_INVALIDOS, "El código no es válido.");
+			return Resultado.error(Resultado.DATOS_INVALIDOS, CODIGO_INVALIDO);
 		}
 		usuario.get().setTotpHabilitado(true);
 		usuarioRepo.save(usuario.get());
@@ -123,14 +138,14 @@ public class SegundoFactorService {
 	public Resultado<Void> desactivar(Long idUsuario, String codigo) {
 		Optional<Usuario> usuario = usuarioRepo.findById(idUsuario);
 		if (usuario.isEmpty()) {
-			return Resultado.error(Resultado.NO_ENCONTRADO, "Usuario no encontrado.");
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_ENCONTRADO);
 		}
 		if (!estaHabilitado(usuario.get())) {
-			return Resultado.error(Resultado.ESTADO_INVALIDO, "El segundo factor no está habilitado.");
+			return Resultado.error(Resultado.ESTADO_INVALIDO, NO_HABILITADO);
 		}
 		if (!verificar(usuario.get(), codigo)) {
 			auditar(idUsuario, ResultadoAuditoria.RECHAZADO, "Código inválido al deshabilitar");
-			return Resultado.error(Resultado.DATOS_INVALIDOS, "El código no es válido.");
+			return Resultado.error(Resultado.DATOS_INVALIDOS, CODIGO_INVALIDO);
 		}
 		usuario.get().setTotpHabilitado(false);
 		usuario.get().setSecretoTotp(null);

@@ -1,10 +1,13 @@
 package co.edu.unbosque.marketplaceInversionesLR.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Datos para activar o confirmar el segundo factor (TOTP). Al activarlo, el
  * servidor responde el secreto y la URI; al confirmarlo, el cliente manda el
- * código de la app autenticadora.
+ * código de la app autenticadora. Los campos vacíos no se envían.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SegundoFactorDTO {
 
 	/** Secreto en Base32, para escribirlo a mano en la app si no se puede leer el QR. */
