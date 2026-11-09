@@ -14,7 +14,7 @@ import { finalize, timeout } from 'rxjs';
 import {
   User,
   UsuarioDTO
-} from '../../../services/user';
+} from '../services/user';
 
 export interface Profile {
   firstName: string;

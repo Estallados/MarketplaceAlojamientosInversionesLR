@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map, of } from 'rxjs';
 
 import { SessionService } from '../../core/services/session.service';
-import { User } from '../../services/user';
+import { User } from '../../perfil/services/user';
 import { AlojamientoRespuesta } from '../models/alojamiento';
 
 // ======================================
