@@ -36,12 +36,7 @@
         <div>
           <p class="text-sm font-bold text-emerald-800">
             Publicación #{{ a.idAlojamiento }} · {{ a.titulo }}
-            <span
-              data-estado
-              class="ml-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-emerald-700"
-            >
-              {{ nombreEstado(a.estado) }}
-            </span>
+            <app-insignia-estado class="ml-2" [estado]="a.estado" />
           </p>
           @if (esAdministrador && a.nombreAnfitrion) {
             <p class="mt-1 text-xs text-emerald-700">
@@ -59,6 +54,14 @@
           </a>
         }
       </div>
+
+      <!-- ESTADO: ENVIAR A REVISIÓN, PAUSAR Y REANUDAR (HU-17) -->
+      <app-gestion-estado
+        [alojamiento]="a"
+        [cambiosSinGuardar]="hayCambios"
+        (estadoCambiado)="estadoCambiado($event)"
+        (accesoRevocado)="accesoRevocado($event)"
+      />
     }
   }
 
