@@ -6,7 +6,7 @@ import {
 } from '@angular/common/http/testing';
 
 import { Tarifas } from './tarifas';
-import { API_URL } from '../../services/api-url';
+import { API_URL } from '../../core/services/api-url';
 
 // ======================================
 // HU-24 CONFIGURAR PORCENTAJES DE TARIFAS

@@ -30,7 +30,7 @@ import {
   timeout
 } from 'rxjs';
 
-import { Auth } from '../../services/auth';
+import { Auth } from '../services/auth';
 
 // ======================================
 // PASOS DE LA RECUPERACIÓN

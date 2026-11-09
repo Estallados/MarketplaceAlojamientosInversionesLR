@@ -8,7 +8,7 @@ import {
 } from '@angular/common/http';
 
 import { routes } from './app.routes';
-import { authInterceptor } from './services/auth.interceptor';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 
 

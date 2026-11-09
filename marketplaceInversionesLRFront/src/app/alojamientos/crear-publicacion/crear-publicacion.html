@@ -38,6 +38,13 @@
         El alojamiento ya existe en el servidor.
         Puedes seguir completando su información.
       </p>
+      <a
+        data-editar-publicacion
+        [routerLink]="['/host/alojamientos', borradorId(), 'editar']"
+        class="mt-2 inline-block text-xs font-bold text-emerald-700 underline hover:text-emerald-900"
+      >
+        Editar publicación y servicios adicionales
+      </a>
     </div>
   }
 

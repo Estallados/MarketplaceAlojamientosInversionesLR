@@ -1,5 +1,5 @@
 // ======================================
-// ALOJAMIENTOS Y PUBLICACIONES (HU-15)
+// ALOJAMIENTOS Y PUBLICACIONES (HU-15, HU-16)
 // Esquemas de docs/openapi/alojamientos.yaml
 // ======================================
 
@@ -86,18 +86,25 @@ export interface ImagenAlojamiento {
 }
 
 // ======================================
-// 4. SERVICIOS ADICIONALES
+// 4. SERVICIOS ADICIONALES (HU-16, CA-185)
+// Esquemas ServicioAdicionalEntrada y ServicioAdicional
 // ======================================
 
-export interface ServicioAdicional {
+/** Datos para registrar o modificar un servicio adicional. */
+export interface ServicioAdicionalEntrada {
+
+  nombre: string;
+
+  /** Costo positivo (CA-185). */
+  costo: number;
+}
+
+export interface ServicioAdicional
+  extends ServicioAdicionalEntrada {
 
   idServicio?: number;
 
   idAlojamiento?: number;
-
-  nombre: string;
-
-  costo: number;
 }
 
 // ======================================
@@ -156,4 +163,17 @@ export interface PoliticaCancelacion {
   diasReembolsoParcial?: number;
 
   porcentajeParcial?: number;
+}
+
+// ======================================
+// 7. MENSAJE DEL SERVIDOR
+// Esquema Mensaje
+// ======================================
+
+export interface MensajeServidor {
+
+  message: string;
+
+  /** Solo en los errores de seguridad (401 y 403). */
+  status?: number;
 }

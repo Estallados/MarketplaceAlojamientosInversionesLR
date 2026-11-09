@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
-import { Register } from './register/register';
-import { Login } from './login/login';
-import { Recover } from './login/recover/recover';
+import { Register } from './auth/register/register';
+import { Login } from './auth/login/login';
+import { Recover } from './auth/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
-import { roleGuard } from './guards/role.guard';
+import { roleGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
-import { ProfileView } from './pages/guest/profile-view/profile-view';
-import { Availability } from './pages/host/availability/availability';
+import { ProfileView } from './perfil/profile-view/profile-view';
+import { Availability } from './alojamientos/availability/availability';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -79,6 +79,31 @@ export const routes: Routes = [
     component: Availability,
     canActivate: [roleGuard],
     data: { roles: ['Anfitrión'] }
+  },
+
+  // ====================================
+  // EDITAR PUBLICACIÓN Y SERVICIOS ADICIONALES (HU-16)
+  // ANFITRIÓN PROPIETARIO Y ADMINISTRADOR
+  // La propiedad la verifica el componente y el backend (403).
+  // Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'host/alojamientos/:id/editar',
+    loadComponent: () =>
+      import('./alojamientos/editar-publicacion/editar-publicacion')
+        .then(m => m.EditarPublicacion),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  {
+    path: 'admin/alojamientos/:id/editar',
+    loadComponent: () =>
+      import('./alojamientos/editar-publicacion/editar-publicacion')
+        .then(m => m.EditarPublicacion),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
   },
 
   { path: '**', redirectTo: 'login' }
