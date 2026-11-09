@@ -106,5 +106,19 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+  // ====================================
+  // CONSULTAR DISPONIBILIDAD (HU-21)
+  // PÚBLICA: el backend responde 404 si el alojamiento no está ACTIVA
+  // y quien consulta no es su anfitrión ni un administrador.
+  // Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'alojamientos/:id/consultar-disponibilidad',
+    loadComponent: () =>
+      import('./disponibilidad/consultar-disponibilidad/consultar-disponibilidad')
+        .then(m => m.ConsultarDisponibilidad)
+  },
+
   { path: '**', redirectTo: 'login' }
 ];
