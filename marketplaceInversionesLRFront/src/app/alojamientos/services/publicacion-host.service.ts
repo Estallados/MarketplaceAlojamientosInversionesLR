@@ -151,6 +151,40 @@ export class PublicacionHostService {
   }
 
   // ====================================
+  // 4.1 ELIMINAR FOTOGRAFÍA (HU-16)
+  // DELETE /alojamientos/{id}/imagenes/{idImagen}
+  // 200: imágenes restantes, la principal primero
+  // 409: debe quedar al menos una imagen
+  // ====================================
+
+  eliminarImagen(
+    idAlojamiento: number,
+    idImagen: number
+  ): Observable<ImagenAlojamiento[]> {
+
+    return this.http.delete<ImagenAlojamiento[]>(
+      `${this.apiUrl}/${idAlojamiento}/imagenes/${idImagen}`
+    );
+  }
+
+  // ====================================
+  // 4.2 MARCAR FOTOGRAFÍA PRINCIPAL (HU-16)
+  // PATCH /alojamientos/{id}/imagenes/{idImagen}/principal
+  // 200: imágenes, la principal primero
+  // ====================================
+
+  marcarImagenPrincipal(
+    idAlojamiento: number,
+    idImagen: number
+  ): Observable<ImagenAlojamiento[]> {
+
+    return this.http.patch<ImagenAlojamiento[]>(
+      `${this.apiUrl}/${idAlojamiento}/imagenes/${idImagen}/principal`,
+      {}
+    );
+  }
+
+  // ====================================
   // 5. ENVIAR A REVISIÓN
   // POST /alojamientos/{id}/enviarrevision
   // ====================================

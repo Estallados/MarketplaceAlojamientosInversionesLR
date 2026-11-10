@@ -12,6 +12,7 @@ import {
   provideRouter
 } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { Location } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 
 import { EditarPublicacion, MENSAJE_SIN_PERMISO } from './editar-publicacion';
@@ -384,6 +385,141 @@ describe('EditarPublicacion (HU-16)', () => {
     await pulsar('[data-descartar]');
 
     expect(campo('precioNoche').value).toBe('300000');
+  });
+
+  // ======================================
+  // CA-100 TARIFAS PROPIAS DEL ALOJAMIENTO (RF-023)
+  // ======================================
+
+  /** Propietario con una publicación que ya tiene tarifa de limpieza propia. */
+  async function abrirConTarifas(): Promise<void> {
+    await abrir('/host/alojamientos/41/editar', {
+      ...publicacion,
+      // Sin porcentajeServicio: usa la tarifa general.
+      porcentajeLimpieza: 5
+    });
+    await responderPerfil(7);
+    await responderPoliticas();
+  }
+
+  function tarifaActual(campoTarifa: string): string {
+    return elemento()
+      .querySelector(`[data-tarifa-actual="${campoTarifa}"]`)
+      ?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  }
+
+  it('CA-100 muestra las tarifas actuales del alojamiento y guarda las nuevas con el PUT de la publicación', async () => {
+
+    await abrirConTarifas();
+
+    expect(campo('porcentajeLimpieza').value).toBe('5');
+    expect(campo('porcentajeServicio').value).toBe('');
+    expect(tarifaActual('porcentajeLimpieza')).toBe('Actual: 5%');
+    expect(tarifaActual('porcentajeServicio')).toBe('Actual: Sin definir');
+
+    await escribir('porcentajeLimpieza', '8');
+    await escribir('porcentajeServicio', '12.5');
+
+    await pulsar('[data-guardar]');
+
+    const actualizar = http.expectOne(`${url}/41`);
+    expect(actualizar.request.method).toBe('PUT');
+    expect(actualizar.request.body.porcentajeLimpieza).toBe(8);
+    expect(actualizar.request.body.porcentajeServicio).toBe(12.5);
+
+    actualizar.flush({ ...publicacion, porcentajeLimpieza: 8, porcentajeServicio: 12.5 });
+    await estable();
+
+    expect(confirmacion()).toBe('Los cambios de la publicación se guardaron correctamente.');
+    expect(tarifaActual('porcentajeLimpieza')).toBe('Actual: 8%');
+    expect(tarifaActual('porcentajeServicio')).toBe('Actual: 12.5%');
+  });
+
+  it('CA-100 valida que las tarifas estén entre 0 y 100 y no envía una tarifa vacía', async () => {
+
+    await abrirConTarifas();
+
+    await escribir('porcentajeLimpieza', '150');
+    expect(errorCampo('porcentajeLimpieza')).toBe('La tarifa de limpieza debe ser un porcentaje entre 0 y 100.');
+
+    await escribir('porcentajeServicio', '-1');
+    expect(errorCampo('porcentajeServicio')).toBe('La tarifa de servicio debe ser un porcentaje entre 0 y 100.');
+
+    await pulsar('[data-guardar]');
+    expect(alerta()).toBe('Revisa los datos marcados antes de guardar.');
+    http.expectNone(`${url}/41`);
+
+    // Una tarifa ya registrada no se puede vaciar: el PUT conserva los valores en null.
+    await escribir('porcentajeLimpieza', '');
+    expect(errorCampo('porcentajeLimpieza')).toBe('Este dato ya estaba registrado; indica un valor.');
+
+    // La de servicio no estaba definida: vacía sigue usando la tarifa general.
+    await escribir('porcentajeLimpieza', '0');
+    await escribir('porcentajeServicio', '');
+    expect(errorCampo('porcentajeLimpieza')).toBeNull();
+    expect(errorCampo('porcentajeServicio')).toBeNull();
+
+    await pulsar('[data-guardar]');
+
+    const actualizar = http.expectOne(`${url}/41`);
+    expect(actualizar.request.body.porcentajeLimpieza).toBe(0);
+    expect(actualizar.request.body).not.toHaveProperty('porcentajeServicio');
+    actualizar.flush({ ...publicacion, porcentajeLimpieza: 0 });
+    await estable();
+  });
+
+  it('CA-100 muestra las fotografías de la publicación y no las pierde al guardar el formulario', async () => {
+
+    const imagenes = [
+      { idImagen: 1, idAlojamiento: 41, url: 'https://res.cloudinary.com/demo/1.jpg', principal: true },
+      { idImagen: 2, idAlojamiento: 41, url: 'https://res.cloudinary.com/demo/2.jpg', principal: false }
+    ];
+
+    await abrir('/host/alojamientos/41/editar', { ...publicacion, detalleImagenes: imagenes });
+    await responderPerfil(7);
+    await responderPoliticas();
+
+    const fotos = () => elemento().querySelectorAll('[data-fotografias] [data-foto]').length;
+    expect(fotos()).toBe(2);
+
+    // Cambiar la principal actualiza la publicación con la lista del backend.
+    elemento().querySelector<HTMLButtonElement>('[data-foto][data-id="2"] [data-principal]')!.click();
+    await estable();
+    http.expectOne(`${url}/41/imagenes/2/principal`).flush([
+      { ...imagenes[1], principal: true },
+      { ...imagenes[0], principal: false }
+    ]);
+    await estable();
+    expect(componente.fotografias()[0].idImagen).toBe(2);
+
+    // El PUT no gestiona imágenes: si su respuesta no las trae, se conservan.
+    await escribir('precioNoche', '260000');
+    await pulsar('[data-guardar]');
+    const actualizar = http.expectOne(`${url}/41`);
+    expect(actualizar.request.body).not.toHaveProperty('imagenes');
+    actualizar.flush({ ...publicacion, precioNoche: 260000 });
+    await estable();
+
+    expect(fotos()).toBe(2);
+    expect(componente.fotografias()[0].idImagen).toBe(2);
+  });
+
+  it('HU-16 el botón Volver regresa a la página anterior', async () => {
+
+    // Página previa dentro de la aplicación (no hace peticiones al abrir).
+    await harness.navigateByUrl('/alojamientos/41/consultar-disponibilidad');
+
+    await abrirComoPropietario();
+
+    const atras = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => undefined);
+
+    const boton = elemento().querySelector<HTMLButtonElement>('[data-volver]')!;
+    expect(boton.textContent?.trim()).toBe('← Volver');
+
+    boton.click();
+    await estable();
+
+    expect(atras).toHaveBeenCalledTimes(1);
   });
 
   // ======================================

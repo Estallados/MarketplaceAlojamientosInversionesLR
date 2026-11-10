@@ -113,4 +113,13 @@ public class AlojamientoDTO {
 
 	/** Nombre del anfitrión. */
 	private String nombreAnfitrion;
+
+	/**
+	 * Promedio de las reseñas publicadas, con una cifra decimal; {@code null} si
+	 * no tiene. Lo calcula el servidor.
+	 */
+	private Double promedioCalificacion;
+
+	/** Cantidad de reseñas publicadas. Lo calcula el servidor. */
+	private Long cantidadResenas;
 }

@@ -9,7 +9,8 @@ import {
 
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { finalize, map, switchMap } from 'rxjs';
@@ -17,17 +18,20 @@ import { finalize, map, switchMap } from 'rxjs';
 import {
   AlojamientoRespuesta,
   DatosAlojamiento,
+  ImagenAlojamiento,
   PoliticaCancelacion,
   ServicioAdicional
 } from '../models/alojamiento';
 
 import { ServiciosAdicionales } from '../servicios-adicionales/servicios-adicionales';
+import { FotografiasPublicacion } from '../fotografias-publicacion/fotografias-publicacion';
 import { GestionEstado } from '../gestion-estado/gestion-estado';
 import { InsigniaEstado } from '../insignia-estado/insignia-estado';
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
 import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
 import { SessionService } from '../../core/services/session.service';
+import { volverAPaginaAnterior } from '../../core/navegacion/volver';
 
 import {
   TEXTO_CORTO,
@@ -35,6 +39,7 @@ import {
   errorCapacidad,
   errorLongitud,
   errorNoNegativo,
+  errorPorcentajeTarifa,
   errorPrecioNoche,
   errorTitulo
 } from '../validaciones/validaciones-alojamiento';
@@ -54,6 +59,10 @@ interface FormularioEdicion {
   camas: number | null;
   banos: number | null;
   precioNoche: number | null;
+  /** Tarifa propia de limpieza (%); vacía usa la general (HU-24). */
+  porcentajeLimpieza: number | null;
+  /** Tarifa propia de servicio (%); vacía usa la general (HU-24). */
+  porcentajeServicio: number | null;
   horaEntrada: string;
   horaSalida: string;
   reglas: string;
@@ -73,6 +82,8 @@ export type CampoEdicion =
   | 'camas'
   | 'banos'
   | 'precioNoche'
+  | 'porcentajeLimpieza'
+  | 'porcentajeServicio'
   | 'reglas';
 
 type CampoNumerico =
@@ -80,7 +91,9 @@ type CampoNumerico =
   | 'habitaciones'
   | 'camas'
   | 'banos'
-  | 'precioNoche';
+  | 'precioNoche'
+  | 'porcentajeLimpieza'
+  | 'porcentajeServicio';
 
 /**
  * Resultado de cargar la publicación:
@@ -110,10 +123,14 @@ const CAMPOS: CampoEdicion[] = [
   'camas',
   'banos',
   'precioNoche',
+  'porcentajeLimpieza',
+  'porcentajeServicio',
   'reglas'
 ];
 
 const SIN_SERVICIOS: ServicioAdicional[] = [];
+
+const SIN_FOTOGRAFIAS: ImagenAlojamiento[] = [];
 
 /** Mensaje que se muestra cuando no tiene permiso (CA-101, CA-114). */
 export const MENSAJE_SIN_PERMISO =
@@ -134,6 +151,7 @@ export const MENSAJE_SIN_PERMISO =
     FormsModule,
     RouterLink,
     ServiciosAdicionales,
+    FotografiasPublicacion,
     GestionEstado,
     InsigniaEstado
   ],
@@ -156,6 +174,12 @@ export class EditarPublicacion implements OnInit {
 
   private readonly route =
     inject(ActivatedRoute);
+
+  private readonly router =
+    inject(Router);
+
+  private readonly location =
+    inject(Location);
 
   private readonly destroyRef =
     inject(DestroyRef);
@@ -181,6 +205,11 @@ export class EditarPublicacion implements OnInit {
     () => this.alojamiento()?.serviciosAdicionales ?? SIN_SERVICIOS
   );
 
+  /** Fotografías actuales de la publicación, la principal primero (HU-16). */
+  readonly fotografias = computed(
+    () => this.alojamiento()?.detalleImagenes ?? SIN_FOTOGRAFIAS
+  );
+
   readonly guardando =
     signal(false);
 
@@ -204,6 +233,12 @@ export class EditarPublicacion implements OnInit {
     'Televisor',
     'Jacuzzi',
     'Admite mascotas'
+  ];
+
+  /** Tarifas propias del alojamiento (RF-023), en el orden en que se muestran. */
+  readonly tarifas: { campo: 'porcentajeLimpieza' | 'porcentajeServicio'; etiqueta: string }[] = [
+    { campo: 'porcentajeLimpieza', etiqueta: 'Tarifa de limpieza' },
+    { campo: 'porcentajeServicio', etiqueta: 'Tarifa de servicio' }
   ];
 
   readonly tipos = [
@@ -322,6 +357,8 @@ export class EditarPublicacion implements OnInit {
       camas: a?.camas ?? null,
       banos: a?.banos ?? null,
       precioNoche: a?.precioNoche ?? null,
+      porcentajeLimpieza: a?.porcentajeLimpieza ?? null,
+      porcentajeServicio: a?.porcentajeServicio ?? null,
       // El backend envía LocalTime (HH:mm:ss); el input usa HH:mm.
       horaEntrada: a?.horaEntrada?.slice(0, 5) ?? '',
       horaSalida: a?.horaSalida?.slice(0, 5) ?? '',
@@ -418,6 +455,14 @@ export class EditarPublicacion implements OnInit {
       case 'precioNoche':
         return this.errorVaciado('precioNoche') ||
           errorPrecioNoche(d.precioNoche, this.noNumericos.has('precioNoche'));
+
+      case 'porcentajeLimpieza':
+        return this.errorVaciado('porcentajeLimpieza') ||
+          errorPorcentajeTarifa('limpieza', d.porcentajeLimpieza, this.noNumericos.has('porcentajeLimpieza'));
+
+      case 'porcentajeServicio':
+        return this.errorVaciado('porcentajeServicio') ||
+          errorPorcentajeTarifa('servicio', d.porcentajeServicio, this.noNumericos.has('porcentajeServicio'));
 
       case 'habitaciones':
         return this.errorVaciado('habitaciones') ||
@@ -544,7 +589,12 @@ export class EditarPublicacion implements OnInit {
             ...actualizado,
             serviciosAdicionales:
               actualizado.serviciosAdicionales ??
-              anterior?.serviciosAdicionales
+              anterior?.serviciosAdicionales,
+            // Las fotografías también se gestionan aparte (/imagenes).
+            imagenes:
+              actualizado.imagenes ?? anterior?.imagenes,
+            detalleImagenes:
+              actualizado.detalleImagenes ?? anterior?.detalleImagenes
           });
 
           this.mensaje.set(
@@ -609,6 +659,15 @@ export class EditarPublicacion implements OnInit {
         ? { precioNoche: d.precioNoche }
         : {}),
 
+      // Tarifas propias (RF-023): si quedan vacías no se envían y se usa la general.
+      ...(d.porcentajeLimpieza !== null
+        ? { porcentajeLimpieza: d.porcentajeLimpieza }
+        : {}),
+
+      ...(d.porcentajeServicio !== null
+        ? { porcentajeServicio: d.porcentajeServicio }
+        : {}),
+
       ...(d.idPolitica !== null
         ? { idPolitica: d.idPolitica }
         : {}),
@@ -625,6 +684,28 @@ export class EditarPublicacion implements OnInit {
 
       amenidades: [...d.amenidades]
     };
+  }
+
+  // ======================================
+  // 4.1 FOTOGRAFÍAS (HU-16)
+  // ======================================
+
+  /**
+   * Mantiene la publicación al día tras subir, eliminar o cambiar la
+   * fotografía principal. Solo cambian las imágenes: no toca lo que se
+   * está editando en el formulario.
+   */
+  fotografiasCambiadas(imagenes: ImagenAlojamiento[]): void {
+
+    this.alojamiento.update(a =>
+      a
+        ? {
+          ...a,
+          detalleImagenes: imagenes,
+          imagenes: imagenes.map(imagen => imagen.url)
+        }
+        : a
+    );
   }
 
   // ======================================
@@ -750,5 +831,14 @@ export class EditarPublicacion implements OnInit {
       'No se pudo completar la operación. ' +
       'Revisa la conexión e inténtalo nuevamente.'
     );
+  }
+
+  // ======================================
+  // NAVEGACIÓN
+  // ======================================
+
+  /** Vuelve a la página anterior (como el botón "Volver" del proyecto base). */
+  volver(): void {
+    volverAPaginaAnterior(this.router, this.location);
   }
 }
