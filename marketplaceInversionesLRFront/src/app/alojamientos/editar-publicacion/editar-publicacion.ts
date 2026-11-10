@@ -9,7 +9,8 @@ import {
 
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { finalize, map, switchMap } from 'rxjs';
@@ -30,6 +31,7 @@ import { InsigniaEstado } from '../insignia-estado/insignia-estado';
 import { PublicacionHostService } from '../services/publicacion-host.service';
 import { PermisoPublicacionService } from '../services/permiso-publicacion.service';
 import { SessionService } from '../../core/services/session.service';
+import { volverAPaginaAnterior } from '../../core/navegacion/volver';
 
 import {
   TEXTO_CORTO,
@@ -172,6 +174,12 @@ export class EditarPublicacion implements OnInit {
 
   private readonly route =
     inject(ActivatedRoute);
+
+  private readonly router =
+    inject(Router);
+
+  private readonly location =
+    inject(Location);
 
   private readonly destroyRef =
     inject(DestroyRef);
@@ -823,5 +831,14 @@ export class EditarPublicacion implements OnInit {
       'No se pudo completar la operación. ' +
       'Revisa la conexión e inténtalo nuevamente.'
     );
+  }
+
+  // ======================================
+  // NAVEGACIÓN
+  // ======================================
+
+  /** Vuelve a la página anterior (como el botón "Volver" del proyecto base). */
+  volver(): void {
+    volverAPaginaAnterior(this.router, this.location);
   }
 }

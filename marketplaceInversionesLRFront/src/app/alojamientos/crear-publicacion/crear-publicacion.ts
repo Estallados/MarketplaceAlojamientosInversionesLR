@@ -7,7 +7,8 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -28,6 +29,7 @@ import {
 } from '../models/alojamiento';
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
+import { volverAPaginaAnterior } from '../../core/navegacion/volver';
 
 import {
   DatoRequerido,
@@ -133,6 +135,10 @@ export class CrearPublicacion implements OnInit {
   // ======================================
   // SERVICIOS
   // ======================================
+
+  private readonly router = inject(Router);
+
+  private readonly location = inject(Location);
 
   private readonly publicaciones =
     inject(PublicacionHostService);
@@ -973,5 +979,14 @@ export class CrearPublicacion implements OnInit {
       'No se pudo completar la operación. ' +
       'Revisa la conexión e inténtalo nuevamente.'
     );
+  }
+
+  // ======================================
+  // NAVEGACIÓN
+  // ======================================
+
+  /** Vuelve a la página anterior (como el botón "Volver" del proyecto base). */
+  volver(): void {
+    volverAPaginaAnterior(this.router, this.location);
   }
 }
