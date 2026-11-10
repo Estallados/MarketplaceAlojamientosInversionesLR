@@ -12,6 +12,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.HistorialEstadoAlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ImagenDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PoliticaCancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
@@ -61,6 +64,20 @@ public class PublicacionService {
 	/** Mensaje cuando un servicio adicional no es válido. */
 	private static final String SERVICIO_INVALIDO = "El servicio adicional necesita un nombre (máximo 255 "
 			+ "caracteres) y un costo positivo de máximo 1.000.000.000.";
+
+	/** Mensaje cuando el motivo del rechazo falta o es muy largo (HU-32). */
+	public static final String MOTIVO_INVALIDO = "El motivo del rechazo es obligatorio y puede tener máximo "
+			+ LimitesTexto.MOTIVO + " caracteres.";
+
+	/** Mensaje cuando se aprueba un alojamiento que ya no tiene fechas (HU-32). */
+	public static final String SIN_FECHAS = "El alojamiento no tiene fechas de disponibilidad desde hoy; el "
+			+ "anfitrión debe agregarlas antes de publicarlo.";
+
+	/** Motivo que queda en el historial al aprobar. */
+	public static final String APROBADA = "Aprobada";
+
+	/** Prefijo del motivo que queda en el historial al rechazar. */
+	public static final String RECHAZADA = "Rechazada: ";
 
 	/** Valor absoluto máximo de la latitud. */
 	private static final int LATITUD_MAXIMA = 90;
@@ -107,6 +124,9 @@ public class PublicacionService {
 	/** Copia los datos de la entidad al DTO. */
 	private final ModelMapper modelMapper;
 
+	/** Avisa al anfitrión las decisiones de revisión (HU-32). */
+	private final NotificacionService notificacionService;
+
 	/**
 	 * Crea el servicio.
 	 *
@@ -120,6 +140,7 @@ public class PublicacionService {
 	 * @param almacenamientoService servicio de almacenamiento de imágenes
 	 * @param auditoriaService      servicio de auditoría
 	 * @param geocodingService      servicio de coordenadas
+	 * @param notificacionService   avisos al anfitrión
 	 * @param modelMapper           copiador de entidades a DTO
 	 */
 	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
@@ -127,7 +148,8 @@ public class PublicacionService {
 			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
 			UsuarioRepository usuarioRepo,
 			AlmacenamientoService almacenamientoService, AuditoriaService auditoriaService,
-			GeocodingService geocodingService, ModelMapper modelMapper) {
+			GeocodingService geocodingService, NotificacionService notificacionService, ModelMapper modelMapper) {
+		this.notificacionService = notificacionService;
 		this.alojamientoRepo = alojamientoRepo;
 		this.imagenRepo = imagenRepo;
 		this.periodoRepo = periodoRepo;
@@ -265,6 +287,86 @@ public class PublicacionService {
 	@Transactional
 	public Resultado<AlojamientoDTO> reanudar(Long idAlojamiento, Long idActor) {
 		return transicionDelAnfitrion(idAlojamiento, idActor, EstadoAlojamiento.PAUSADA, EstadoAlojamiento.ACTIVA);
+	}
+
+	/**
+	 * Alojamientos de un estado, por ejemplo la cola PENDIENTE_REVISION; sin
+	 * estado, todos (vista del administrador, HU-32).
+	 *
+	 * @param estado estado a filtrar; {@code null} para todos
+	 * @param pagina página y orden
+	 * @return página de alojamientos
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<AlojamientoDTO> listarPorEstado(EstadoAlojamiento estado, Pageable pagina) {
+		Page<Alojamiento> encontrados = estado == null ? alojamientoRepo.findAll(pagina)
+				: alojamientoRepo.findByEstado(estado, pagina);
+		return PaginaDTO.de(encontrados, this::convertirDTO);
+	}
+
+	/**
+	 * PENDIENTE_REVISION → ACTIVA (administrador, HU-32): queda disponible para
+	 * reservas y visible en las búsquedas, y se le avisa al anfitrión (CA-158).
+	 * La decisión queda en el historial y en la auditoría (CA-196).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idAdmin       administrador
+	 * @return la publicación ACTIVA; NO_ENCONTRADO; ESTADO_INVALIDO si no está
+	 *         en revisión o ya no tiene fechas de disponibilidad desde hoy
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> aprobar(Long idAlojamiento, Long idAdmin) {
+		Optional<Alojamiento> encontrado = alojamientoRepo.findById(idAlojamiento);
+		if (encontrado.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		Alojamiento alojamiento = encontrado.get();
+		if (alojamiento.getEstado() != EstadoAlojamiento.PENDIENTE_REVISION) {
+			return rechazarTransicion(alojamiento, EstadoAlojamiento.ACTIVA, idAdmin);
+		}
+		// El anfitrión pudo borrar sus fechas mientras estaba en revisión
+		if (!tieneFechas(alojamiento)) {
+			auditoriaService.registrar(idAdmin, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+					AuditoriaService.ENTIDAD_ALOJAMIENTO, idAlojamiento, ResultadoAuditoria.RECHAZADO, SIN_FECHAS);
+			return Resultado.error(Resultado.ESTADO_INVALIDO, SIN_FECHAS);
+		}
+		AlojamientoDTO dto = cambiarEstado(alojamiento, EstadoAlojamiento.ACTIVA, idAdmin, APROBADA);
+		notificacionService.enviar(alojamiento.getIdAnfitrion(), NotificacionService.ALOJAMIENTO_APROBADO,
+				"Tu alojamiento \"" + alojamiento.getTitulo() + "\" fue aprobado y ya está publicado.");
+		return Resultado.exito(dto);
+	}
+
+	/**
+	 * PENDIENTE_REVISION → BORRADOR (administrador, HU-32), con motivo
+	 * obligatorio. El motivo queda en el historial y se le avisa al anfitrión
+	 * para que corrija y la vuelva a enviar (CA-195). La decisión queda en la
+	 * auditoría (CA-196).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idAdmin       administrador
+	 * @param motivo        motivo del rechazo
+	 * @return la publicación en BORRADOR; DATOS_INVALIDOS si falta el motivo o
+	 *         es muy largo; NO_ENCONTRADO; ESTADO_INVALIDO si no está en revisión
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> rechazar(Long idAlojamiento, Long idAdmin, String motivo) {
+		if (motivo == null || motivo.isBlank() || LimitesTexto.excede(motivo, LimitesTexto.MOTIVO)) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, MOTIVO_INVALIDO);
+		}
+		Optional<Alojamiento> encontrado = alojamientoRepo.findById(idAlojamiento);
+		if (encontrado.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		Alojamiento alojamiento = encontrado.get();
+		if (alojamiento.getEstado() != EstadoAlojamiento.PENDIENTE_REVISION) {
+			return rechazarTransicion(alojamiento, EstadoAlojamiento.BORRADOR, idAdmin);
+		}
+		String limpio = motivo.trim();
+		AlojamientoDTO dto = cambiarEstado(alojamiento, EstadoAlojamiento.BORRADOR, idAdmin, RECHAZADA + limpio);
+		notificacionService.enviar(alojamiento.getIdAnfitrion(), NotificacionService.ALOJAMIENTO_RECHAZADO,
+				"Tu alojamiento \"" + alojamiento.getTitulo() + "\" fue rechazado. Motivo: " + limpio
+						+ ". Corrígelo y vuelve a enviarlo a revisión.");
+		return Resultado.exito(dto);
 	}
 
 	/**

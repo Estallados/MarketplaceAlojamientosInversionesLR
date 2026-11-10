@@ -62,8 +62,11 @@ public class HistorialEstadoAlojamiento {
 	@Column(updatable = false)
 	private EstadoAlojamiento estadoNuevo;
 
-	/** Motivo del cambio; es opcional. */
-	@Column(updatable = false)
+	/**
+	 * Motivo del cambio; es opcional. Un rechazo guarda hasta 500 caracteres
+	 * con su prefijo, más que los 255 de un {@code varchar} por defecto.
+	 */
+	@Column(updatable = false, length = 1000)
 	private String motivo;
 
 	/** Usuario que hizo el cambio. */

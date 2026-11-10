@@ -95,6 +95,9 @@ class PublicacionServiceEstadoTest {
 	@Mock
 	private ReservaRepository reservaRepo;
 
+	@Mock
+	private NotificacionService notificacionService;
+
 	private PublicacionService servicio;
 
 	/** Publicación que devuelve el repositorio simulado. */
@@ -104,7 +107,7 @@ class PublicacionServiceEstadoTest {
 	void preparar() {
 		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
 				historialRepo, usuarioRepo, almacenamientoService, auditoriaService, geocodingService,
-				new ModelMapper());
+				notificacionService, new ModelMapper());
 		alojamiento = completo();
 		lenient().when(alojamientoRepo.findById(ID)).thenReturn(Optional.of(alojamiento));
 		lenient().when(alojamientoRepo.save(any(Alojamiento.class)))
