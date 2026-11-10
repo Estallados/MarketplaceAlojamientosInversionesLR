@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -61,4 +63,14 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	boolean existeCruce(@Param("id") Long idAlojamiento, @Param("llegada") LocalDate llegada,
 			@Param("salida") LocalDate salida, @Param("activos") Collection<EstadoReserva> activos,
 			@Param("limite") LocalDateTime limite);
+
+	/**
+	 * Reservas de un huésped, en cualquier estado (detalle de usuario del
+	 * administrador, HU-12).
+	 *
+	 * @param idHuesped huésped
+	 * @param pagina    página y orden
+	 * @return página de reservas
+	 */
+	Page<Reserva> findByIdHuesped(Long idHuesped, Pageable pagina);
 }

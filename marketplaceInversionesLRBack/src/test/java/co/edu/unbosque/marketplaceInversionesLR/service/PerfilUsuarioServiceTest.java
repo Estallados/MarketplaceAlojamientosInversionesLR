@@ -47,6 +47,9 @@ class PerfilUsuarioServiceTest {
 	private VerificacionCorreoService verificacionCorreoService;
 
 	@Mock
+	private NotificacionService notificacionService;
+
+	@Mock
 	private PasswordEncoder passwordEncoder;
 
 	private UsuarioService servicio;
@@ -56,7 +59,7 @@ class PerfilUsuarioServiceTest {
 	@BeforeEach
 	void preparar() {
 		servicio = new UsuarioService(usuarioRepo, auditoriaService, verificacionCorreoService, passwordEncoder,
-				new ModelMapper());
+				new ModelMapper(), notificacionService);
 		usuario = new Usuario();
 		usuario.setIdUsuario(3L);
 		usuario.setNombre("Ana");

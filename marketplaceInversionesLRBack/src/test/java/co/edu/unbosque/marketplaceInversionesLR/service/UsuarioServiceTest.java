@@ -48,6 +48,9 @@ class UsuarioServiceTest {
 	@Mock
 	private VerificacionCorreoService verificacionCorreoService;
 
+	@Mock
+	private NotificacionService notificacionService;
+
 	private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
 
 	private UsuarioService servicio;
@@ -55,7 +58,7 @@ class UsuarioServiceTest {
 	@BeforeEach
 	void crearServicio() {
 		servicio = new UsuarioService(usuarioRepo, auditoriaService, verificacionCorreoService, passwordEncoder,
-				new ModelMapper());
+				new ModelMapper(), notificacionService);
 	}
 
 	@Test

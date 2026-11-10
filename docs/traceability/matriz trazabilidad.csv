@@ -94,9 +94,16 @@ PerfilUsuarioServiceTest#soloDesactivaLaCuentaDelToken_CA053";Probado (JUnit);;f
 CA-054;RF-013;Bloqueo de publicaciones;Bloqueo administrativo de publicación;Dado que un administrador identifica una publicación que incumple las políticas de la plataforma, cuando solicita bloquearla, entonces el sistema debe cambiar su estado a BLOQUEADA, impedir nuevas reservas y excluirla de los resultados de búsqueda.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
 CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#bloquearCambiaABloqueadaYLaOcultaDeLasBusquedas_CA054_CA055_CA111;;38a9302;;;;
 CA-058;RF-014;Restricción de usuarios;Restringir y mostrar restricción;Dado que el administrador consulta un usuario, cuando aplica una restricción, entonces el sistema registra y aplica la restricción y la muestra al consultar el estado de la cuenta.;HU-12;CU-010;"CP-051 Restricción de usuario
-CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
+CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringeYSeVeAlConsultar_CA058
+UsuarioServiceRestriccionTest#restringe_CA058
+UsuarioServiceRestriccionTest#motivoInvalido_CA058
+UsuarioServiceRestriccionTest#consulta_CA058
+AdminControllerUsuariosTest#restringir_CA058
+UsuarioControllerConsultaTest#adminConsultaCualquiera_CA058";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;;"PATCH /admin/usuarios/{id}/restringir (motivo obligatorio, máx. 500; a un ADMIN no) y /liberar. El estado y el motivo se ven en GET /admin/usuarios, /usuarios/obtener/{id} y /usuarios/obtenercorreo; se notifica al usuario y queda en la auditoría."
 CA-059;RF-014;Restricción de usuarios;Bloquear acciones;Dado que el usuario está restringido, cuando intenta realizar una acción que requiere una cuenta habilitada, entonces el sistema impide la acción.;HU-12;CU-010;"CP-051 Restricción de usuario
-CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
+CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringidoNoActua_CA059
+JwtAuthenticationFilter (tokens de cuentas restringidas)
+AuthController#login y #reactivar";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;;Restringida: su token deja de servir (401), no inicia sesión (403) ni se reactiva sola (403). Al liberarla vuelve a entrar.
 CA-062;RF-015;Consulta de eventos de auditoría;Consultar auditoría y detalle del evento;Dado que existen eventos registrados, cuando el administrador consulta la auditoría, entonces el sistema muestra los eventos y la información asociada a cada uno.;HU-13;CU-011;"CP-053 Consulta de auditoría
 CP-054 Consulta de auditoría sin permisos";AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139;;38a9302;;;;
 CA-065;RF-015;Consulta de eventos de auditoría;Restringir auditoría;Dado que el usuario no tiene permisos administrativos, cuando intenta consultar la auditoría, entonces el sistema impide el acceso.;HU-13;CU-011;"CP-053 Consulta de auditoría

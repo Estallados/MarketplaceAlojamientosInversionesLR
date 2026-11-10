@@ -352,6 +352,19 @@ public class PublicacionService {
 	}
 
 	/**
+	 * Alojamientos de un anfitrión en cualquier estado (detalle de usuario del
+	 * administrador, HU-12).
+	 *
+	 * @param idAnfitrion anfitrión
+	 * @param pagina      página y orden
+	 * @return página de alojamientos
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<AlojamientoDTO> listarDeAnfitrion(Long idAnfitrion, Pageable pagina) {
+		return PaginaDTO.de(alojamientoRepo.findByIdAnfitrion(idAnfitrion, pagina), this::convertirDTO);
+	}
+
+	/**
 	 * Catálogo público (HU-23): todos los alojamientos que un visitante puede
 	 * reservar, es decir, las publicaciones ACTIVA con al menos una noche
 	 * ofrecida desde hoy. No tiene filtros; para filtrar se usa
