@@ -98,9 +98,13 @@ CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioReg
 CA-059;RF-014;Restricción de usuarios;Bloquear acciones;Dado que el usuario está restringido, cuando intenta realizar una acción que requiere una cuenta habilitada, entonces el sistema impide la acción.;HU-12;CU-010;"CP-051 Restricción de usuario
 CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
 CA-062;RF-015;Consulta de eventos de auditoría;Consultar auditoría y detalle del evento;Dado que existen eventos registrados, cuando el administrador consulta la auditoría, entonces el sistema muestra los eventos y la información asociada a cada uno.;HU-13;CU-011;"CP-053 Consulta de auditoría
-CP-054 Consulta de auditoría sin permisos";AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139;;38a9302;;;;
+CP-054 Consulta de auditoría sin permisos";"AuditoriaTest#consultaLaAuditoria_CA062
+AdminControllerModeracionTest#consultaLaAuditoria_CA062
+AdminControllerModeracionTest#detalleDelEvento_CA062
+AuditoriaServiceTest#consultaDelAdministrador_CA062
+AuditoriaServiceTest#obtieneElDetalle_CA062";Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;;
 CA-065;RF-015;Consulta de eventos de auditoría;Restringir auditoría;Dado que el usuario no tiene permisos administrativos, cuando intenta consultar la auditoría, entonces el sistema impide el acceso.;HU-13;CU-011;"CP-053 Consulta de auditoría
-CP-054 Consulta de auditoría sin permisos";AdministracionTest#unUsuarioSinPermisosNoPuedeConsultarLaAuditoria_CA065_CA134;;38a9302;;;;
+CP-054 Consulta de auditoría sin permisos";AuditoriaTest#soloElAdministradorConsulta_CA065;Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;;
 CA-066;RF-016;Moderación de reseñas;Ocultar reseña;Dado que existe una reseña que incumple las reglas, cuando el administrador decide ocultarla, entonces el sistema debe ocultarla y dejar de mostrarla a los usuarios que consulten las reseñas.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
 CP-050 Moderación de reseña sin permisos";"AdministracionTest#elAdministradorOcultaUnaResenaQueDejaDeMostrarse_CA066_CA067_CA069
 NotificacionesResenasTest#elAdminListaLasResenasYAlOcultarUnaSeNotificaAlAutor_CA066";;"38a9302

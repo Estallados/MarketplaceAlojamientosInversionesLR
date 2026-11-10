@@ -18,9 +18,12 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.EventoAuditoriaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EventoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AuditoriaRepository;
+import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
 
@@ -150,6 +153,9 @@ public class AuditoriaService {
 	/** Tamaño máximo de una página de consulta. */
 	public static final int MAX_TAMANIO_PAGINA = 100;
 
+	/** Mensaje cuando el evento consultado no existe. */
+	public static final String EVENTO_NO_EXISTE = "El evento de auditoría no existe.";
+
 	/** Log de la clase. */
 	private static final Logger LOG = LoggerFactory.getLogger(AuditoriaService.class);
 
@@ -244,6 +250,54 @@ public class AuditoriaService {
 	 */
 	public Optional<EventoAuditoria> detalle(Long idEvento) {
 		return idEvento == null ? Optional.empty() : auditoriaRepo.findById(idEvento);
+	}
+
+	/**
+	 * Consulta de la auditoría para el administrador (HU-13, CA-062). Cada filtro
+	 * en {@code null} no se aplica.
+	 *
+	 * @param accion  acción exacta, sin distinguir mayúsculas
+	 * @param idActor usuario que hizo la acción
+	 * @param desde   fecha y hora mínima
+	 * @param hasta   fecha y hora máxima
+	 * @param pagina  página y orden
+	 * @return página de eventos
+	 */
+	public PaginaDTO<EventoAuditoriaDTO> consultar(String accion, Long idActor, LocalDateTime desde,
+			LocalDateTime hasta, Pageable pagina) {
+		String filtroAccion = accion == null || accion.isBlank() ? null : accion.trim().toUpperCase();
+		return PaginaDTO.de(auditoriaRepo.buscar(filtroAccion, idActor, desde, hasta, pagina),
+				AuditoriaService::convertirDTO);
+	}
+
+	/**
+	 * Detalle de un evento de auditoría (HU-13, CA-062).
+	 *
+	 * @param idEvento evento a consultar
+	 * @return el evento; o NO_ENCONTRADO si no existe
+	 */
+	public Resultado<EventoAuditoriaDTO> obtener(Long idEvento) {
+		return auditoriaRepo.findById(idEvento).map(e -> Resultado.exito(convertirDTO(e)))
+				.orElseGet(() -> Resultado.error(Resultado.NO_ENCONTRADO, EVENTO_NO_EXISTE));
+	}
+
+	/**
+	 * Convierte un evento a DTO.
+	 *
+	 * @param evento evento guardado
+	 * @return evento para la API
+	 */
+	private static EventoAuditoriaDTO convertirDTO(EventoAuditoria evento) {
+		EventoAuditoriaDTO dto = new EventoAuditoriaDTO();
+		dto.setIdEvento(evento.getIdEvento());
+		dto.setAccion(evento.getAccion());
+		dto.setFecha(evento.getFecha());
+		dto.setDetalle(evento.getDetalle());
+		dto.setIdUsuario(evento.getIdUsuario());
+		dto.setEntidad(evento.getEntidad());
+		dto.setIdEntidad(evento.getIdEntidad());
+		dto.setResultado(evento.getResultado());
+		return dto;
 	}
 
 	/**

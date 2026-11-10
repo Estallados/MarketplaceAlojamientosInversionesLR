@@ -325,6 +325,9 @@ public class UsuarioService {
 
 		usuario.setEstado(EstadoUsuario.INACTIVO);
 		usuarioRepo.save(usuario);
+
+		auditoriaService.registrar(usuario.getIdUsuario(), AuditoriaService.CUENTA_DESACTIVADA,
+				AuditoriaService.ENTIDAD_USUARIO, usuario.getIdUsuario(), ResultadoAuditoria.EXITOSO, null);
 		return 0;
 	}
 

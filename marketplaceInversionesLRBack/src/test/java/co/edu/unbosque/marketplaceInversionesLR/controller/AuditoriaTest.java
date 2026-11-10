@@ -1,9 +1,11 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.lang.reflect.Method;
@@ -28,6 +30,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.junit.jupiter.Testcontainers;
+
+import com.jayway.jsonpath.JsonPath;
 
 import co.edu.unbosque.marketplaceInversionesLR.ContenedorPostgres;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
@@ -57,6 +61,9 @@ class AuditoriaTest {
 
 	/** Ruta de la configuración global de tarifas. */
 	private static final String TARIFAS = "/admin/tarifas";
+
+	/** Ruta de la consulta de la auditoría. */
+	private static final String AUDITORIA = "/admin/auditoria";
 
 	/** Contraseña que cumple todas las reglas. */
 	private static final String CONTRASENIA = "Clave#2026";
@@ -192,6 +199,52 @@ class AuditoriaTest {
 		assertThat(Arrays.stream(AuditoriaRepository.class.getMethods()).map(Method::getName))
 				.noneMatch(nombre -> nombre.startsWith("delete") || nombre.startsWith("update")
 						|| nombre.startsWith("remove"));
+	}
+
+	@Test
+	@DisplayName("CA-062 El administrador consulta los eventos con su información y el detalle de cada uno")
+	void consultaLaAuditoria_CA062() throws Exception {
+		Usuario admin = crear("admin@correo.com", Role.ADMIN);
+		String token = jwtUtil.generateToken(admin);
+		actualizarTarifas(token, "{\"porcentajeLimpieza\": 4, \"porcentajeServicio\": 9}").andExpect(status().isOk());
+
+		String lista = mockMvc.perform(get(AUDITORIA).param("accion", "tarifa_actualizada")
+				.param("idActor", admin.getIdUsuario().toString()).header("Authorization", "Bearer " + token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElementos").value(1))
+				.andExpect(jsonPath("$.contenido[0].accion").value(AuditoriaService.TARIFA_ACTUALIZADA))
+				.andExpect(jsonPath("$.contenido[0].idUsuario").value(admin.getIdUsuario()))
+				.andExpect(jsonPath("$.contenido[0].resultado").value("EXITOSO"))
+				.andExpect(jsonPath("$.contenido[0].entidad").value(AuditoriaService.ENTIDAD_CONFIGURACION))
+				.andExpect(jsonPath("$.contenido[0].detalle").value("Limpieza 4%, servicio 9%"))
+				.andExpect(jsonPath("$.contenido[0].fecha").isNotEmpty())
+				.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+		long idEvento = ((Number) JsonPath.read(lista, "$.contenido[0].idEvento")).longValue();
+
+		mockMvc.perform(get(AUDITORIA + "/" + idEvento).header("Authorization", "Bearer " + token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.accion").value(AuditoriaService.TARIFA_ACTUALIZADA));
+		mockMvc.perform(get(AUDITORIA + "/999999999").header("Authorization", "Bearer " + token))
+				.andExpect(status().isNotFound())
+				.andExpect(jsonPath("$.message").value(AuditoriaService.EVENTO_NO_EXISTE));
+		mockMvc.perform(get(AUDITORIA).param("desde", "2099-01-01T00:00:00").header("Authorization", "Bearer " + token))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElementos").value(0));
+		mockMvc.perform(get(AUDITORIA).param("desde", "ayer").header("Authorization", "Bearer " + token))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("CA-065 Sin permisos administrativos no se consulta la auditoría: 403 con otro rol y 401 sin token")
+	void soloElAdministradorConsulta_CA065() throws Exception {
+		String huesped = jwtUtil.generateToken(crear("huesped@correo.com", Role.HUESPED));
+		String anfitrion = jwtUtil.generateToken(crear("anfitrion@correo.com", Role.ANFITRION));
+
+		mockMvc.perform(get(AUDITORIA).header("Authorization", "Bearer " + huesped)).andExpect(status().isForbidden());
+		mockMvc.perform(get(AUDITORIA).header("Authorization", "Bearer " + anfitrion)).andExpect(status().isForbidden());
+		mockMvc.perform(get(AUDITORIA + "/1").header("Authorization", "Bearer " + huesped))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get(AUDITORIA)).andExpect(status().isUnauthorized());
 	}
 
 	/**

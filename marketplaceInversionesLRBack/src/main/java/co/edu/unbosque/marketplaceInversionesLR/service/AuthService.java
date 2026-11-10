@@ -197,11 +197,16 @@ public class AuthService {
 
 		Optional<Usuario> usuarioOpt = usuarioRepo.findByCorreoHash(UsuarioService.hashCorreo(correo));
 		if (usuarioOpt.isEmpty() || !passwordEncoder.matches(contrasenia, usuarioOpt.get().getContrasenia())) {
+			auditoriaService.registrar(null, AuditoriaService.CUENTA_REACTIVADA, AuditoriaService.ENTIDAD_USUARIO, null,
+					ResultadoAuditoria.RECHAZADO, "Credenciales inválidas");
 			return 1;
 		}
 
 		Usuario usuario = usuarioOpt.get();
 		if (usuario.getEstado() == EstadoUsuario.RESTRINGIDO) {
+			auditoriaService.registrar(usuario.getIdUsuario(), AuditoriaService.CUENTA_REACTIVADA,
+					AuditoriaService.ENTIDAD_USUARIO, usuario.getIdUsuario(), ResultadoAuditoria.RECHAZADO,
+					"Cuenta restringida por un administrador");
 			return 3;
 		}
 		if (usuario.getEstado() == EstadoUsuario.ACTIVO) {
@@ -210,6 +215,9 @@ public class AuthService {
 
 		usuario.setEstado(EstadoUsuario.ACTIVO);
 		usuarioRepo.save(usuario);
+
+		auditoriaService.registrar(usuario.getIdUsuario(), AuditoriaService.CUENTA_REACTIVADA,
+				AuditoriaService.ENTIDAD_USUARIO, usuario.getIdUsuario(), ResultadoAuditoria.EXITOSO, null);
 		return 0;
 	}
 
