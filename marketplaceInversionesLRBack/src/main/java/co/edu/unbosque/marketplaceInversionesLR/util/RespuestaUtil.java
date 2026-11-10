@@ -3,6 +3,9 @@ package co.edu.unbosque.marketplaceInversionesLR.util;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -17,6 +20,9 @@ public final class RespuestaUtil {
 
 	/** Autoridad de Spring del rol ADMIN. */
 	private static final String ROL_ADMIN = "ROLE_ADMIN";
+
+	/** Tamaño máximo de página que acepta la API. */
+	public static final int TAMANIO_MAXIMO = 100;
 
 	private RespuestaUtil() {
 		throw new IllegalStateException("Clase utilitaria");
@@ -110,5 +116,22 @@ public final class RespuestaUtil {
 	public static boolean esAdmin(Authentication authentication) {
 		return authentication != null && authentication.getAuthorities().stream()
 				.anyMatch(a -> ROL_ADMIN.equals(a.getAuthority()));
+	}
+
+	/**
+	 * Arma una página válida a partir de lo que mandó el cliente: la página nunca
+	 * es negativa y el tamaño queda entre 1 y {@link #TAMANIO_MAXIMO}. También
+	 * limita la página para que el desplazamiento (página × tamaño) quepa en un
+	 * {@code int}; si no, la consulta revienta con un 500.
+	 *
+	 * @param pagina  número de página pedido (desde 0)
+	 * @param tamanio cantidad de elementos por página pedida
+	 * @param orden   orden de los resultados
+	 * @return paginación lista para pasarla al repositorio
+	 */
+	public static Pageable pagina(int pagina, int tamanio, Sort orden) {
+		int tamanioValido = Math.min(Math.max(tamanio, 1), TAMANIO_MAXIMO);
+		int paginaValida = Math.min(Math.max(pagina, 0), Integer.MAX_VALUE / tamanioValido - 1);
+		return PageRequest.of(paginaValida, tamanioValido, orden);
 	}
 }

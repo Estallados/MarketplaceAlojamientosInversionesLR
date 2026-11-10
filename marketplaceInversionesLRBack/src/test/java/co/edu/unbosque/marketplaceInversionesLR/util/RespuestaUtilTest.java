@@ -7,6 +7,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -68,5 +70,23 @@ class RespuestaUtilTest {
 		assertThat(RespuestaUtil.idUsuario(new UsernamePasswordAuthenticationToken("anonimo", null, List.of())))
 				.isNull();
 		assertThat(RespuestaUtil.idUsuario(null)).isNull();
+	}
+
+	@Test
+	@DisplayName("La paginación corrige lo que manda el cliente y conserva el orden")
+	void pagina() {
+		Sort orden = Sort.by("fechaAgregado").descending();
+
+		Pageable normal = RespuestaUtil.pagina(2, 10, orden);
+		Pageable negativa = RespuestaUtil.pagina(-1, 0, orden);
+		Pageable grande = RespuestaUtil.pagina(Integer.MAX_VALUE, 5000, orden);
+
+		assertThat(normal.getPageNumber()).isEqualTo(2);
+		assertThat(normal.getPageSize()).isEqualTo(10);
+		assertThat(normal.getSort()).isEqualTo(orden);
+		assertThat(negativa.getPageNumber()).isZero();
+		assertThat(negativa.getPageSize()).isEqualTo(1);
+		assertThat(grande.getPageSize()).isEqualTo(RespuestaUtil.TAMANIO_MAXIMO);
+		assertThat(grande.getOffset()).isLessThanOrEqualTo(Integer.MAX_VALUE);
 	}
 }
