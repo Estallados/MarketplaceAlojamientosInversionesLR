@@ -86,7 +86,15 @@ src/app/
 │   ├── models/
 │   ├── services/                disponibilidad.service (consulta pública, S04)
 │   └── validaciones/            fechas de la estadía (CA-082)
-├── cotizacion/           Porcentajes de tarifas (HU-24)
+├── cotizacion/           Porcentajes de tarifas (HU-24) y cotización de la estancia
+│   ├── tarifas/
+│   ├── models/
+│   └── services/                tarifas.service y cotizacion.service (POST /cotizaciones, S06)
+├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22)
+│   ├── confirmar-reserva/       resumen de la cotización y confirmación inmediata
+│   ├── models/
+│   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07)
+│   └── validaciones/            interpretación de los rechazos del contrato
 └── api/                  Cliente generado desde OpenAPI (no editar a mano)
 ```
 

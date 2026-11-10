@@ -165,10 +165,10 @@ paths:
       description: |
         HU-07, RF-008. Con credenciales válidas devuelve `{token, rol, correo}` (CA-034).
         Es una sola ruta en varios pasos:
-        - Si la cuenta tiene segundo factor y no se envía `codigo`, responde 401 con
-          `requiereSegundoFactor: true`; se repite la petición con el código TOTP (CA-174).
-        - Si no tiene segundo factor (y no es ADMIN), en cada inicio de sesión se envía un código
-          al correo: sin `codigo` responde 401 con `requiereCodigoCorreo: true` (CA-177).
+        - Si la cuenta tiene el segundo factor habilitado (`totpHabilitado: true`) y no se envía
+          `codigo`, se envía un código al correo y responde 401 con `requiereSegundoFactor: true` y
+          `requiereCodigoCorreo: true`; se repite la petición con ese código (CA-174).
+        - Si no lo tiene habilitado (valor por defecto), inicia sesión directamente, sin código (CA-177).
         - Si el correo no está verificado responde 403 con `requiereVerificacion: true`.
       security: []
       requestBody:
@@ -577,7 +577,7 @@ components:
           format: password
         codigo:
           type: string
-          description: Código del segundo factor (TOTP) o el enviado al correo, en el segundo paso
+          description: Código enviado al correo, en el segundo paso (solo si la cuenta tiene el segundo factor habilitado)
     Sesion:
       type: object
       description: Respuesta de sesión iniciada. Sin token si la cuenta tiene segundo factor y debe iniciar sesión con su código.
@@ -676,6 +676,7 @@ components:
           type: string
         totpHabilitado:
           type: boolean
+          description: Segundo factor habilitado; si es true, el inicio de sesión pide el código del correo. Por defecto false.
         correoVerificado:
           type: boolean
         fechaRegistro:

@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplaceInversionesLR.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -11,10 +12,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -97,8 +101,8 @@ class SegundoFactorTest {
 	}
 
 	@Test
-	@DisplayName("CA-174 CA-178 El usuario activa el segundo factor y desde entonces el login pide un código válido "
-			+ "de su app")
+	@DisplayName("CA-174 CA-178 El usuario activa el segundo factor y desde entonces el login pide el código "
+			+ "del correo")
 	void activaYElLoginPideElCodigo_CA174_CA178() throws Exception {
 		String secreto = activarYConfirmar(tokenAna);
 
@@ -108,21 +112,21 @@ class SegundoFactorTest {
 		assertThat(guardado.getSecretoTotp()).isNotEqualTo(secreto);
 		assertThat(AESUtil.decrypt(guardado.getSecretoTotp())).isEqualTo(secreto);
 
-		// CA-174: credenciales válidas no bastan; un código incorrecto se rechaza
+		// CA-174: credenciales válidas no bastan; se envía un código al correo y
+		// uno incorrecto se rechaza
 		login("ana@correo.com", null)
 				.andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.requiereSegundoFactor").value(true))
-				.andExpect(jsonPath("$.requiereCodigoCorreo").doesNotExist())
+				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
 				.andExpect(jsonPath("$.token").doesNotExist());
-		login("ana@correo.com", "000000")
+		String codigo = codigoEnviado();
+		login("ana@correo.com", codigo.equals("000000") ? "111111" : "000000")
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereSegundoFactor").value(true))
+				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
 				.andExpect(jsonPath("$.token").doesNotExist());
-		login("ana@correo.com", TotpUtil.codigo(secreto, Instant.now()))
+		login("ana@correo.com", codigo)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.token").isNotEmpty());
-		// Con app autenticadora no se envía código por correo
-		verify(mailSender, never()).send(any(SimpleMailMessage.class));
 		assertThat(auditoriaService.consultar(AuditoriaService.SEGUNDO_FACTOR, ana.getIdUsuario(), null, null, 0, 10)
 				.getContent()).isNotEmpty();
 	}
@@ -136,11 +140,10 @@ class SegundoFactorTest {
 		Usuario otro = usuarioRepository.findById(luis.getIdUsuario()).orElseThrow();
 		assertThat(otro.getTotpHabilitado()).isFalse();
 		assertThat(otro.getSecretoTotp()).isNull();
-		// Luis sigue con el mecanismo normal: código por correo
+		// Luis sigue sin segundo factor: inicia sesión sin código
 		login("luis@correo.com", null)
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
-				.andExpect(jsonPath("$.metodoSegundoFactor").value("CORREO"));
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty());
 		// Y no puede confirmar ni desactivar el de Ana con su propio token
 		String tokenLuis = jwtUtil.generateToken(luis);
 		enviar(tokenLuis, "/desactivar", "123456")
@@ -152,9 +155,9 @@ class SegundoFactorTest {
 	@DisplayName("CA-177 Sin segundo factor, o después de desactivarlo, el login sigue el mecanismo normal")
 	void sinSegundoFactorLoginNormal_CA177() throws Exception {
 		login("ana@correo.com", null)
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
-				.andExpect(jsonPath("$.metodoSegundoFactor").value("CORREO"));
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty());
+		verify(mailSender, never()).send(any(SimpleMailMessage.class));
 
 		String secreto = activarYConfirmar(tokenAna);
 		enviar(tokenAna, "/desactivar", "000000")
@@ -168,9 +171,8 @@ class SegundoFactorTest {
 		assertThat(guardado.getTotpHabilitado()).isFalse();
 		assertThat(guardado.getSecretoTotp()).isNull();
 		login("ana@correo.com", null)
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
-				.andExpect(jsonPath("$.metodoSegundoFactor").value("CORREO"));
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty());
 	}
 
 	@Test
@@ -250,6 +252,19 @@ class SegundoFactorTest {
 				: "{\"correo\": \"%s\", \"contrasenia\": \"%s\", \"codigo\": \"%s\"}".formatted(correo, CONTRASENIA,
 						codigo);
 		return mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content(cuerpo));
+	}
+
+	/**
+	 * Código de 6 dígitos del último correo enviado.
+	 *
+	 * @return código
+	 */
+	private String codigoEnviado() {
+		ArgumentCaptor<SimpleMailMessage> captor = ArgumentCaptor.forClass(SimpleMailMessage.class);
+		verify(mailSender, atLeastOnce()).send(captor.capture());
+		Matcher matcher = Pattern.compile("\\b(\\d{6})\\b").matcher(captor.getValue().getText());
+		assertThat(matcher.find()).isTrue();
+		return matcher.group(1);
 	}
 
 	/**
