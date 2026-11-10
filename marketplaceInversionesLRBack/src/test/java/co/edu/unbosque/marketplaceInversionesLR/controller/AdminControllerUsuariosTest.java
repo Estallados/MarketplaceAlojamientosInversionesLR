@@ -65,7 +65,7 @@ class AdminControllerUsuariosTest {
 
 	@BeforeEach
 	void preparar() {
-		controlador = new AdminController(tarifaService, publicacionService, usuarioService, reservaService);
+		controlador = new AdminController(tarifaService, publicacionService, usuarioService, reservaService, null);
 		Usuario admin = new Usuario();
 		admin.setIdUsuario(ADMIN);
 		sesion = new UsernamePasswordAuthenticationToken(admin, null, List.of());

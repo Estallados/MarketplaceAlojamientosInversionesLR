@@ -1,8 +1,11 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.MotivoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
@@ -65,6 +69,9 @@ public class AdminController {
 	private static final Sort RESERVAS_RECIENTES = Sort.by(Sort.Order.desc("fechaCreacion"),
 			Sort.Order.desc("idReserva"));
 
+	/** Etiqueta de Swagger de la auditoría. */
+	private static final String TAG_AUDITORIA = "Auditoría";
+
 	/** Elementos por página como máximo. */
 	public static final int TAMANIO_MAXIMO = 100;
 
@@ -86,6 +93,9 @@ public class AdminController {
 	/** Reservas de un usuario, para su detalle (HU-12). */
 	private final ReservaService reservaService;
 
+	/** Consulta de la auditoría. */
+	private final AuditoriaService auditoriaService;
+
 	/**
 	 * Crea el controlador.
 	 *
@@ -93,13 +103,15 @@ public class AdminController {
 	 * @param publicacionService servicio de publicaciones
 	 * @param usuarioService     servicio de usuarios
 	 * @param reservaService     servicio de reservas
+	 * @param auditoriaService   servicio de auditoría
 	 */
 	public AdminController(TarifaService tarifaService, PublicacionService publicacionService,
-			UsuarioService usuarioService, ReservaService reservaService) {
+			UsuarioService usuarioService, ReservaService reservaService, AuditoriaService auditoriaService) {
 		this.tarifaService = tarifaService;
 		this.publicacionService = publicacionService;
 		this.usuarioService = usuarioService;
 		this.reservaService = reservaService;
+		this.auditoriaService = auditoriaService;
 	}
 
 	/**
@@ -258,6 +270,48 @@ public class AdminController {
 	public ResponseEntity<Object> actualizarTarifas(@RequestBody ConfiguracionTarifaDTO datos,
 			Authentication authentication) {
 		return RespuestaUtil.desde(tarifaService.actualizar(datos, RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
+	 * Consulta la auditoría con filtros opcionales por acción, actor y fechas
+	 * (HU-13, CA-062). Ruta: {@code GET /admin/auditoria}.
+	 *
+	 * @param accion  acción exacta; opcional
+	 * @param idActor usuario que hizo la acción; opcional
+	 * @param desde   fecha y hora mínima; opcional
+	 * @param hasta   fecha y hora máxima; opcional
+	 * @param pagina  número de página (desde 0)
+	 * @param tamanio elementos por página
+	 * @return 200 con la página de eventos, del más reciente al más antiguo
+	 */
+	@Tag(name = TAG_AUDITORIA, description = "Consulta de los eventos de auditoría")
+	@Operation(summary = "Consultar la auditoría con filtros por acción, actor y fechas")
+	@ApiResponse(responseCode = "200", description = "Página de eventos, del más reciente al más antiguo")
+	@ApiResponse(responseCode = "400", description = "El valor de desde no es válido.")
+	@GetMapping("/auditoria")
+	public ResponseEntity<Object> auditoria(@RequestParam(required = false) String accion,
+			@RequestParam(required = false) Long idActor,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
+			@RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "50") int tamanio) {
+		return ResponseEntity.ok(auditoriaService.consultar(accion, idActor, desde, hasta, RespuestaUtil.pagina(pagina,
+				tamanio, Sort.by("fecha").descending().and(Sort.by("idEvento").descending()))));
+	}
+
+	/**
+	 * Detalle de un evento de auditoría (HU-13, CA-062). Ruta:
+	 * {@code GET /admin/auditoria/{id}}.
+	 *
+	 * @param id evento
+	 * @return 200 con el evento; 404 si no existe
+	 */
+	@Tag(name = TAG_AUDITORIA)
+	@Operation(summary = "Detalle de un evento de auditoría")
+	@ApiResponse(responseCode = "200", description = "Evento de auditoría")
+	@ApiResponse(responseCode = "404", description = AuditoriaService.EVENTO_NO_EXISTE)
+	@GetMapping("/auditoria/{id}")
+	public ResponseEntity<Object> evento(@PathVariable Long id) {
+		return RespuestaUtil.desde(auditoriaService.obtener(id));
 	}
 
 	/**

@@ -196,6 +196,8 @@ class AuthServiceTest {
 
 		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.ACTIVO);
 		verify(usuarioRepo).save(usuario);
+		verify(auditoriaService).registrar(4L, AuditoriaService.CUENTA_REACTIVADA, AuditoriaService.ENTIDAD_USUARIO, 4L,
+				ResultadoAuditoria.EXITOSO, null);
 	}
 
 	@Test
@@ -207,6 +209,8 @@ class AuthServiceTest {
 
 		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.INACTIVO);
 		verify(usuarioRepo, never()).save(usuario);
+		verify(auditoriaService).registrar(null, AuditoriaService.CUENTA_REACTIVADA, AuditoriaService.ENTIDAD_USUARIO,
+				null, ResultadoAuditoria.RECHAZADO, "Credenciales inválidas");
 	}
 
 	@Test
@@ -226,6 +230,8 @@ class AuthServiceTest {
 
 		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.RESTRINGIDO);
 		verify(usuarioRepo, never()).save(usuario);
+		verify(auditoriaService).registrar(4L, AuditoriaService.CUENTA_REACTIVADA, AuditoriaService.ENTIDAD_USUARIO, 4L,
+				ResultadoAuditoria.RECHAZADO, "Cuenta restringida por un administrador");
 	}
 
 	@Test

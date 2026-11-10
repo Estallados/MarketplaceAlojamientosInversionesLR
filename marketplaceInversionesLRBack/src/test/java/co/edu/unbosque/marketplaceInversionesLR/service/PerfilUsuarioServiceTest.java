@@ -167,6 +167,8 @@ class PerfilUsuarioServiceTest {
 
 		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.INACTIVO);
 		verify(usuarioRepo).save(usuario);
+		verify(auditoriaService).registrar(3L, AuditoriaService.CUENTA_DESACTIVADA, AuditoriaService.ENTIDAD_USUARIO,
+				3L, ResultadoAuditoria.EXITOSO, null);
 	}
 
 	@Test
