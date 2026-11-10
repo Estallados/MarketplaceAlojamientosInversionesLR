@@ -17,11 +17,13 @@ import { finalize, map, switchMap } from 'rxjs';
 import {
   AlojamientoRespuesta,
   DatosAlojamiento,
+  ImagenAlojamiento,
   PoliticaCancelacion,
   ServicioAdicional
 } from '../models/alojamiento';
 
 import { ServiciosAdicionales } from '../servicios-adicionales/servicios-adicionales';
+import { FotografiasPublicacion } from '../fotografias-publicacion/fotografias-publicacion';
 import { GestionEstado } from '../gestion-estado/gestion-estado';
 import { InsigniaEstado } from '../insignia-estado/insignia-estado';
 
@@ -126,6 +128,8 @@ const CAMPOS: CampoEdicion[] = [
 
 const SIN_SERVICIOS: ServicioAdicional[] = [];
 
+const SIN_FOTOGRAFIAS: ImagenAlojamiento[] = [];
+
 /** Mensaje que se muestra cuando no tiene permiso (CA-101, CA-114). */
 export const MENSAJE_SIN_PERMISO =
   'Solo el anfitrión propietario o un administrador ' +
@@ -145,6 +149,7 @@ export const MENSAJE_SIN_PERMISO =
     FormsModule,
     RouterLink,
     ServiciosAdicionales,
+    FotografiasPublicacion,
     GestionEstado,
     InsigniaEstado
   ],
@@ -190,6 +195,11 @@ export class EditarPublicacion implements OnInit {
   /** Servicios adicionales actuales de la publicación (CA-185). */
   readonly serviciosAdicionales = computed(
     () => this.alojamiento()?.serviciosAdicionales ?? SIN_SERVICIOS
+  );
+
+  /** Fotografías actuales de la publicación, la principal primero (HU-16). */
+  readonly fotografias = computed(
+    () => this.alojamiento()?.detalleImagenes ?? SIN_FOTOGRAFIAS
   );
 
   readonly guardando =
@@ -571,7 +581,12 @@ export class EditarPublicacion implements OnInit {
             ...actualizado,
             serviciosAdicionales:
               actualizado.serviciosAdicionales ??
-              anterior?.serviciosAdicionales
+              anterior?.serviciosAdicionales,
+            // Las fotografías también se gestionan aparte (/imagenes).
+            imagenes:
+              actualizado.imagenes ?? anterior?.imagenes,
+            detalleImagenes:
+              actualizado.detalleImagenes ?? anterior?.detalleImagenes
           });
 
           this.mensaje.set(
@@ -661,6 +676,28 @@ export class EditarPublicacion implements OnInit {
 
       amenidades: [...d.amenidades]
     };
+  }
+
+  // ======================================
+  // 4.1 FOTOGRAFÍAS (HU-16)
+  // ======================================
+
+  /**
+   * Mantiene la publicación al día tras subir, eliminar o cambiar la
+   * fotografía principal. Solo cambian las imágenes: no toca lo que se
+   * está editando en el formulario.
+   */
+  fotografiasCambiadas(imagenes: ImagenAlojamiento[]): void {
+
+    this.alojamiento.update(a =>
+      a
+        ? {
+          ...a,
+          detalleImagenes: imagenes,
+          imagenes: imagenes.map(imagen => imagen.url)
+        }
+        : a
+    );
   }
 
   // ======================================
