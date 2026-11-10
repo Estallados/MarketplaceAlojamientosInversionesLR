@@ -198,9 +198,16 @@ CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";"CotizacionServiceTest#calcula_CA086
 ReservaServiceTest#reservaConfirmada_CA070_CA075_CA086
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086";Probado (JUnit);;feat/SCRUM-239-be-crear-reserva-bloqueo-fechas;;;
-CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"CatalogoTest#unVisitanteSinSesionVeSoloLosQueSePuedenReservar_CA087
-DisponibilidadBusquedaTest#debeBuscarPorCiudad_CA087";;"85a995d
-38a9302";;;;
+CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"BusquedaAlojamientosTest#soloActivas_CA087
+BusquedaAlojamientosTest#ciudadYTipo_CA087
+BusquedaAlojamientosTest#capacidad_CA087
+BusquedaAlojamientosTest#rangoDePrecio_CA087
+BusquedaAlojamientosTest#amenidades_CA087
+BusquedaAlojamientosTest#disponibilidadEnElPeriodo_CA087
+BusquedaAlojamientosTest#filtrosCombinados_CA087
+PublicacionServiceBusquedaTest#buscaSinOrden_CA087
+PublicacionServiceBusquedaTest#sinResenas_CA087
+PublicacionServiceBusquedaTest#conFechas_CA087";Probado (JUnit);;feat/SCRUM-241-be-buscar-alojamientos-con-filtros;;;GET /alojamientos (público). Filtros combinables: ciudad y tipo sin distinguir mayúsculas, disponibilidad en el período, capacidad, rango de precio y amenidades (todas). Además GET /alojamientos/disponibles y /alojamientos/tipos. Verificado contra Neon.
 CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle de publicación activa;Dado que existe una publicación ACTIVA, cuando el usuario la selecciona desde los resultados de búsqueda o consulta su detalle, entonces el sistema debe mostrar la información detallada del alojamiento.;HU-18;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#detalleDePublicacionActiva_CA093
@@ -430,7 +437,8 @@ CP-060 Auditoría de la decisión de revisión";"PublicacionServiceModeracionTest#a
 PublicacionServiceModeracionTest#noApruebaSinFechas_CA158
 AdminControllerModeracionTest#aprueba_CA158
 ModeracionPublicacionesTest#apruebaLaPublicacion_CA158_CA196
-ModeracionPublicacionesTest#sinFechasNoSeAprueba_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;"Queda ACTIVA y disponible para reservar; la búsqueda de alojamientos aún no está implementada."
+ModeracionPublicacionesTest#sinFechasNoSeAprueba_CA158
+BusquedaAlojamientosTest#aprobadaApareceEnLaBusqueda_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;Queda ACTIVA, disponible para reservar y visible en la búsqueda (HU-23).
 CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada o bloqueada;Dado que una publicación está PAUSADA o BLOQUEADA, cuando un huésped intenta crear una nueva reserva sobre ella, entonces el sistema debe impedirlo y no mostrarla como disponible para nuevas reservas.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -460,7 +468,7 @@ ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"
 4cf6ba5";;;;
 CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;"DetalleAlojamientoTest#detalleConUbicacion_CA164
 AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
-PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;El back entrega la ubicación; el mapa se valida en el front
+PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;"El back entrega la ubicación; el mapa se valida en el front"
 CA-165;RF-029;Mensajería entre huésped y anfitrión;Envío y respuesta de mensajes;Dado que el huésped o el anfitrión participan en una conversación, cuando envían un mensaje o una respuesta, entonces el sistema debe registrarlo asociado a la misma conversación, identificando al remitente y conservando la fecha de envío.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
