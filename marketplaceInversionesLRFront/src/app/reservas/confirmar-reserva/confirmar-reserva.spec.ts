@@ -281,6 +281,24 @@ describe('ConfirmarReserva (HU-22)', () => {
     );
   });
 
+  it('CA-072 no confunde otro conflicto del backend con fechas ocupadas ni afirma que no se creó la reserva', async () => {
+
+    await abrirConCotizacion();
+    await confirmar();
+
+    rechazar(pedidoReserva(), 409, 'El registro ya existe. Actualiza la página e intenta de nuevo.');
+    await estable();
+
+    expect(elemento().querySelector('[data-error-reserva]')?.getAttribute('data-tipo')).toBe('conflicto');
+    expect(texto('[data-mensaje-error]')).not.toContain('dejaron de estar disponibles');
+    expect(texto('[data-detalle-error]')).toContain('El registro ya existe');
+    expect(texto('[data-error-reserva]')).not.toContain('No se creó ninguna reserva.');
+    expect(existe('[data-sin-certeza]')).toBe(true);
+    expect(existe('[data-reserva]')).toBe(false);
+    expect(existe('[data-confirmar]')).toBe(false);
+    expect(texto('[data-elegir-fechas]')).toBe('Revisar disponibilidad');
+  });
+
   it('CA-072 un doble clic sobre Confirmar envía una sola solicitud de reserva', async () => {
 
     await abrirConCotizacion();
@@ -569,6 +587,7 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(error(404, 'La cotización no existe.').tipo).toBe('no-encontrado');
     expect(error(409, 'El alojamiento no está disponible en esas fechas.').tipo).toBe('fechas-ocupadas');
     expect(error(409, 'La petición con esa clave sigue en proceso.').tipo).toBe('en-proceso');
+    expect(error(409, 'El registro ya existe. Actualiza la página e intenta de nuevo.').tipo).toBe('conflicto');
     expect(error(422).tipo).toBe('clave-reutilizada');
     expect(error(0).tipo).toBe('conexion');
     expect(error(500).tipo).toBe('servidor');

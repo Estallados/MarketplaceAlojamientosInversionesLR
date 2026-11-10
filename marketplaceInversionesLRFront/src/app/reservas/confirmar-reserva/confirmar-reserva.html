@@ -188,7 +188,12 @@
         <p data-detalle-error class="mt-1">{{ e.detalle }}</p>
       }
 
-      @if (e.tipo !== 'conexion' && e.tipo !== 'servidor' && e.tipo !== 'en-proceso') {
+      @if (e.tipo === 'conflicto') {
+        <p data-sin-certeza class="mt-2 text-xs">
+          No podemos asegurar si la reserva se registró. Revisa la disponibilidad
+          de estas fechas antes de volver a intentarlo.
+        </p>
+      } @else if (e.tipo !== 'conexion' && e.tipo !== 'servidor' && e.tipo !== 'en-proceso') {
         <p class="mt-2 text-xs">No se creó ninguna reserva.</p>
       }
 
@@ -226,14 +231,15 @@
         }
 
         @if (rutaFechas(); as ruta) {
-          @if (e.tipo === 'fechas-ocupadas' || e.tipo === 'no-activo' || e.tipo === 'validacion') {
+          @if (e.tipo === 'fechas-ocupadas' || e.tipo === 'no-activo' || e.tipo === 'validacion' || e.tipo === 'conflicto') {
             <a
               data-elegir-fechas
               [routerLink]="ruta"
               [queryParams]="queryFechas()"
               class="rounded-xl border border-current px-4 py-2 text-xs font-bold transition hover:bg-white/60"
             >
-              {{ e.tipo === 'no-activo' ? 'Volver al alojamiento' : 'Elegir otras fechas' }}
+              {{ e.tipo === 'no-activo' ? 'Volver al alojamiento'
+                : e.tipo === 'conflicto' ? 'Revisar disponibilidad' : 'Elegir otras fechas' }}
             </a>
           }
         }

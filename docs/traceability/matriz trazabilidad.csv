@@ -151,6 +151,7 @@ ReservaServiceTest#restriccionDeNeon_CA072
 ReservaTest#reservasSimultaneas_CA072
 ManejadorGlobalExcepcionesTest#cruceDeReservas_CA072
 confirmar-reserva.spec.ts#CA-072 informa que las fechas dejaron de estar disponibles y permite volver a elegir fechas
+confirmar-reserva.spec.ts#CA-072 no confunde otro conflicto del backend con fechas ocupadas ni afirma que no se creó la reserva
 confirmar-reserva.spec.ts#CA-072 un doble clic sobre Confirmar envía una sola solicitud de reserva";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
 feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Bloqueo pesimista de la cotización y del alojamiento; en Neon, además, la restricción ex_reserva_sin_cruces.
 Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."

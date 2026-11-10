@@ -20,6 +20,7 @@ import { HttpErrorResponse } from '@angular/common/http';
  * - validacion, sesion, permiso, no-encontrado: 400, 401, 403 y 404.
  * - conexion: no hubo respuesta; no se sabe si la reserva se creó.
  * - servidor: error 5xx; la respuesta no se guarda y se puede reintentar con la misma clave.
+ * - conflicto: otro 409 que no es ninguno de los anteriores (por ejemplo "El registro ya existe.").
  */
 export type TipoErrorReserva =
   | 'no-activo'
@@ -34,6 +35,7 @@ export type TipoErrorReserva =
   | 'no-encontrado'
   | 'conexion'
   | 'servidor'
+  | 'conflicto'
   | 'desconocido';
 
 export interface ErrorReserva {
@@ -98,7 +100,13 @@ function tipoConflicto(detalle: string): TipoErrorReserva {
 
   // "El período ya no está disponible: otra reserva lo tomó."
   // "El alojamiento no está disponible en esas fechas."
-  return 'fechas-ocupadas';
+  if (texto.includes('otra reserva') || texto.includes('esas fechas')) {
+    return 'fechas-ocupadas';
+  }
+
+  // Cualquier otro 409 (por ejemplo "El registro ya existe." del manejador
+  // global) no indica que las fechas estén ocupadas.
+  return 'conflicto';
 }
 
 const MENSAJES: Record<TipoErrorReserva, string> = {
@@ -127,6 +135,8 @@ const MENSAJES: Record<TipoErrorReserva, string> = {
     'reintenta y no se duplicará.',
   'servidor':
     'El servidor no pudo completar la operación. Inténtalo de nuevo.',
+  'conflicto':
+    'El servidor rechazó la reserva por un conflicto con los datos guardados.',
   'desconocido':
     'Ocurrió un error inesperado. Inténtalo de nuevo.'
 };

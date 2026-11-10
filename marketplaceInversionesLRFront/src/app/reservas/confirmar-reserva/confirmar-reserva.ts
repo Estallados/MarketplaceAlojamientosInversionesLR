@@ -57,7 +57,9 @@ const RECHAZOS_DEFINITIVOS: readonly TipoErrorReserva[] = [
   'cotizacion-vencida',
   'no-encontrado',
   'permiso',
-  'sesion'
+  'sesion',
+  // Sin certeza de si se registró: no se ofrece confirmar de nuevo.
+  'conflicto'
 ];
 
 const ETIQUETAS_ESTADO: Record<EstadoReserva, string> = {
