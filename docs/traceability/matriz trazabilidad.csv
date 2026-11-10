@@ -92,7 +92,10 @@ CP-012 Activación y desactivación de cuenta";"EstadoCuentaTest#noCambiaOtraCue
 EstadoCuentaControllerTest#desactivaLaCuentaDelToken_CA053
 PerfilUsuarioServiceTest#soloDesactivaLaCuentaDelToken_CA053";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;;
 CA-054;RF-013;Bloqueo de publicaciones;Bloqueo administrativo de publicación;Dado que un administrador identifica una publicación que incumple las políticas de la plataforma, cuando solicita bloquearla, entonces el sistema debe cambiar su estado a BLOQUEADA, impedir nuevas reservas y excluirla de los resultados de búsqueda.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
-CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#bloquearCambiaABloqueadaYLaOcultaDeLasBusquedas_CA054_CA055_CA111;;38a9302;;;;
+CP-023 Conservación de reservas al bloquear publicación";"ModeracionPublicacionesTest#bloquea_CA054
+ModeracionPublicacionesTest#bloquearSoloAdministrador_CA054
+AdminControllerModeracionTest#bloquea_CA054
+PublicacionServiceModeracionTest#bloquea_CA054";Probado (JUnit);;feat/SCRUM-168-be-bloquear-publicaciones;;;
 CA-058;RF-014;Restricción de usuarios;Restringir y mostrar restricción;Dado que el administrador consulta un usuario, cuando aplica una restricción, entonces el sistema registra y aplica la restricción y la muestra al consultar el estado de la cuenta.;HU-12;CU-010;"CP-051 Restricción de usuario
 CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringeYSeVeAlConsultar_CA058
 UsuarioServiceRestriccionTest#restringe_CA058
@@ -353,7 +356,8 @@ gestion-estado.spec.ts#CA-108 reanuda una publicación PAUSADA con el endpoint r
 feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;"Probado el cambio a PAUSADA. Falta impedir la confirmación de reservas (HU-31)
 Front-end (SCRUM-112): probado con Vitest (ng test). El front muestra la publicación pausada como no disponible; impedir la reserva le corresponde al backend."
 CA-112;RF-013;Bloqueo de publicaciones;Conservación de reservas existentes;Dado que una publicación tiene reservas futuras, cuando un administrador la bloquea, entonces el sistema debe conservar dichas reservas para auditoría y marcarlas para revisión manual.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
-CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#alBloquearSeConservanLasReservasFuturasYQuedanEnRevision_CA112;;38a9302;;;;
+CP-023 Conservación de reservas al bloquear publicación";"ModeracionPublicacionesTest#conservaReservas_CA112
+PublicacionServiceModeracionTest#conservaReservas_CA112";Probado (JUnit);;feat/SCRUM-168-be-bloquear-publicaciones;;;
 CA-113;RNF-004;Protección de operaciones e información de usuarios;Modificación autorizada;Dado que un usuario es el anfitrión propietario de una publicación o tiene el rol ADMINISTRADOR, cuando solicita modificarla, entonces el sistema debe permitir la operación si cumple las demás reglas aplicables.;HU-16;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso

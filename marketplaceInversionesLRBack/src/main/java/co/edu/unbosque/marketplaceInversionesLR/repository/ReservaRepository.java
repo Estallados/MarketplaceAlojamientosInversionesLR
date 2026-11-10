@@ -65,6 +65,18 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 			@Param("limite") LocalDateTime limite);
 
 	/**
+	 * Reservas futuras de un alojamiento en los estados indicados. Se usa al
+	 * bloquear un alojamiento para pasar sus reservas a revisión (HU-11).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param fecha         fecha a partir de la cual se buscan las llegadas
+	 * @param estados       estados a incluir
+	 * @return lista de reservas
+	 */
+	List<Reserva> findByIdAlojamientoAndFechaEntradaAfterAndEstadoIn(Long idAlojamiento, LocalDate fecha,
+			Collection<EstadoReserva> estados);
+
+	/**
 	 * Reservas de un huésped, en cualquier estado (detalle de usuario del
 	 * administrador, HU-12).
 	 *

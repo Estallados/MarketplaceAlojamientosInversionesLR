@@ -114,6 +114,22 @@ class AdminControllerModeracionTest {
 
 		assertThat(controlador.evento(9L).getBody()).isSameAs(evento);
 		assertThat(controlador.evento(99L).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+=======
+	@DisplayName("CA-054 Bloquear envía el motivo y el administrador del token; un motivo inválido responde 400")
+	void bloquea_CA054() {
+		MotivoDTO datos = new MotivoDTO();
+		datos.setMotivo("Publicidad falsa");
+		AlojamientoDTO bloqueada = new AlojamientoDTO();
+		when(publicacionService.bloquear(20L, ADMIN, "Publicidad falsa")).thenReturn(Resultado.exito(bloqueada));
+		when(publicacionService.bloquear(20L, ADMIN, null))
+				.thenReturn(Resultado.error(Resultado.DATOS_INVALIDOS, PublicacionService.MOTIVO_BLOQUEO));
+
+		ResponseEntity<Object> respuesta = controlador.bloquear(20L, datos, autenticacion);
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(respuesta.getBody()).isSameAs(bloqueada);
+		assertThat(controlador.bloquear(20L, new MotivoDTO(), autenticacion).getStatusCode())
+				.isEqualTo(HttpStatus.BAD_REQUEST);
 	}
 
 	@Test

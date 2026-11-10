@@ -28,6 +28,11 @@ public class NotificacionService {
 	/** El pago de una reserva se rechazó o falló (CA-162). */
 	public static final String PAGO_NO_CONFIRMADO = "PAGO_NO_CONFIRMADO";
 
+	/** Una reserva pasó a revisión porque bloquearon el alojamiento (HU-11). */
+	public static final String RESERVA_EN_REVISION = "RESERVA_EN_REVISION";
+
+	/** El administrador bloqueó una publicación (HU-11). */
+	public static final String ALOJAMIENTO_BLOQUEADO = "ALOJAMIENTO_BLOQUEADO";
 	/** Un administrador restringió la cuenta; el mensaje lleva el motivo (HU-12, CA-058). */
 	public static final String CUENTA_RESTRINGIDA = "CUENTA_RESTRINGIDA";
 

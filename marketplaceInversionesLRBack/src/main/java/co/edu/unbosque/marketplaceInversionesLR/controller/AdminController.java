@@ -28,6 +28,7 @@ import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.TarifaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
+import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -375,6 +376,29 @@ public class AdminController {
 			Authentication authentication) {
 		return RespuestaUtil
 				.desde(publicacionService.rechazar(id, RespuestaUtil.idUsuario(authentication), datos.getMotivo()));
+	}
+
+	/**
+	 * Bloquea una publicación con motivo; sus reservas futuras pasan a
+	 * EN_REVISION (HU-11). Ruta: {@code POST /admin/alojamientos/{id}/bloquear}.
+	 *
+	 * @param id             alojamiento
+	 * @param datos          DTO con el {@code motivo}
+	 * @param authentication administrador autenticado
+	 * @return 200 con el alojamiento; 400 si falta el motivo; 404 si no existe;
+	 *         409 si ya estaba bloqueado
+	 */
+	@Tag(name = TAG_MODERACION)
+	@Operation(summary = "Bloquear con motivo (las reservas futuras pasan a EN_REVISION)")
+	@ApiResponse(responseCode = "200", description = "Alojamiento BLOQUEADA; sus reservas futuras pasan a EN_REVISION")
+	@ApiResponse(responseCode = "400", description = PublicacionService.MOTIVO_BLOQUEO + " | " + LimitesTexto.MOTIVO_LARGO)
+	@ApiResponse(responseCode = "404", description = CalendarioService.NO_EXISTE)
+	@ApiResponse(responseCode = "409", description = "No se puede pasar de BLOQUEADA a BLOQUEADA.")
+	@PostMapping("/alojamientos/{id}/bloquear")
+	public ResponseEntity<Object> bloquear(@PathVariable Long id, @RequestBody MotivoDTO datos,
+			Authentication authentication) {
+		return RespuestaUtil
+				.desde(publicacionService.bloquear(id, RespuestaUtil.idUsuario(authentication), datos.getMotivo()));
 	}
 
 	/**
