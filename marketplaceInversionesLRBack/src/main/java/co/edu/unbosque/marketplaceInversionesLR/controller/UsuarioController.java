@@ -1,15 +1,19 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -87,6 +91,29 @@ public class UsuarioController {
 		case 1 -> RespuestaUtil.mensaje(HttpStatus.NOT_FOUND, USUARIO_NO_ENCONTRADO);
 		default -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST,
 				"Envía un nombre no vacío (máximo 255 caracteres) y/o un teléfono de 7 a 15 dígitos.");
+		};
+	}
+
+	/**
+	 * Desactiva la cuenta propia (HU-10, CA-050); solo actúa sobre la cuenta del
+	 * token (CA-053). Se puede reactivar luego con {@code POST /auth/reactivar}.
+	 * Ruta: {@code PATCH /usuarios/perfil/desactivar}.
+	 *
+	 * @param authentication usuario autenticado
+	 * @return 200 con {message, estado}; 403 si la cuenta no se puede
+	 *         desactivar; 404 si no existe
+	 */
+	@Operation(summary = "Desactivar la cuenta propia", description = "Responde {message, estado}. Se puede reactivar luego con POST /auth/reactivar.")
+	@ApiResponse(responseCode = "200", description = "Cuenta desactivada correctamente: {message, estado}")
+	@ApiResponse(responseCode = "403", description = "Esta cuenta no se puede desactivar.")
+	@ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
+	@PatchMapping("/perfil/desactivar")
+	public ResponseEntity<Object> desactivarCuenta(Authentication authentication) {
+		return switch (usuarioService.desactivarCuenta(authentication.getName())) {
+		case 0 -> ResponseEntity
+				.ok(Map.of("message", "Cuenta desactivada correctamente.", "estado", EstadoUsuario.INACTIVO.name()));
+		case 1 -> RespuestaUtil.mensaje(HttpStatus.NOT_FOUND, USUARIO_NO_ENCONTRADO);
+		default -> RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, "Esta cuenta no se puede desactivar.");
 		};
 	}
 }

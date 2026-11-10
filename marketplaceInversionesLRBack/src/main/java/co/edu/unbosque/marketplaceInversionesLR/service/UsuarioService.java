@@ -301,6 +301,34 @@ public class UsuarioService {
 	}
 
 	/**
+	 * Desactiva la cuenta propia (queda INACTIVO). Se reactiva con
+	 * {@code POST /auth/reactivar}. Un administrador no puede desactivarse.
+	 *
+	 * @param correo correo del usuario autenticado (sale del token)
+	 * @return 0 si se desactivó; 1 si el usuario no existe; 2 si es ADMIN o la
+	 *         cuenta no está ACTIVO
+	 */
+	public int desactivarCuenta(String correo) {
+		if (esVacio(correo)) {
+			return 1;
+		}
+
+		Optional<Usuario> usuarioOpt = usuarioRepo.findByCorreoHash(hashCorreo(correo));
+		if (usuarioOpt.isEmpty()) {
+			return 1;
+		}
+
+		Usuario usuario = usuarioOpt.get();
+		if (usuario.getRol() == Role.ADMIN || usuario.getEstado() != EstadoUsuario.ACTIVO) {
+			return 2;
+		}
+
+		usuario.setEstado(EstadoUsuario.INACTIVO);
+		usuarioRepo.save(usuario);
+		return 0;
+	}
+
+	/**
 	 * Convierte un usuario a DTO: descifra el correo y quita la contraseña, el
 	 * hash del correo y el secreto del segundo factor.
 	 *

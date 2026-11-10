@@ -155,6 +155,66 @@ class PerfilUsuarioServiceTest {
 		verify(usuarioRepo, never()).save(any());
 	}
 
+	@Test
+	@DisplayName("CA-050 Una cuenta activa pasa a INACTIVO al desactivarla")
+	void desactivaLaCuenta_CA050() {
+		cuentaExistente();
+
+		assertThat(servicio.desactivarCuenta(" ANA@correo.com ")).isZero();
+
+		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.INACTIVO);
+		verify(usuarioRepo).save(usuario);
+	}
+
+	@Test
+	@DisplayName("CA-053 Solo se busca y se desactiva la cuenta del correo que viene en el token")
+	void soloDesactivaLaCuentaDelToken_CA053() {
+		cuentaExistente();
+
+		servicio.desactivarCuenta(CORREO);
+
+		verify(usuarioRepo).findByCorreoHash(UsuarioService.hashCorreo(CORREO));
+		verify(usuarioRepo, never()).findById(any());
+		verify(usuarioRepo).save(usuario);
+	}
+
+	@Test
+	@DisplayName("Sin correo o con una cuenta que no existe responde que no se encontró")
+	void desactivarCuentaInexistente() {
+		when(usuarioRepo.findByCorreoHash(any())).thenReturn(Optional.empty());
+
+		assertThat(servicio.desactivarCuenta("nadie@correo.com")).isEqualTo(1);
+		assertThat(servicio.desactivarCuenta(null)).isEqualTo(1);
+		assertThat(servicio.desactivarCuenta(" ")).isEqualTo(1);
+		verify(usuarioRepo, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("Un administrador no puede desactivar su cuenta")
+	void administradorNoSeDesactiva() {
+		cuentaExistente();
+		usuario.setRol(Role.ADMIN);
+
+		assertThat(servicio.desactivarCuenta(CORREO)).isEqualTo(2);
+
+		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.ACTIVO);
+		verify(usuarioRepo, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("Una cuenta inactiva o restringida no se puede desactivar")
+	void soloSeDesactivaUnaCuentaActiva() {
+		cuentaExistente();
+
+		usuario.setEstado(EstadoUsuario.INACTIVO);
+		assertThat(servicio.desactivarCuenta(CORREO)).isEqualTo(2);
+		usuario.setEstado(EstadoUsuario.RESTRINGIDO);
+		assertThat(servicio.desactivarCuenta(CORREO)).isEqualTo(2);
+
+		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.RESTRINGIDO);
+		verify(usuarioRepo, never()).save(any());
+	}
+
 	/** Hace que el repositorio encuentre la cuenta de prueba por su correo. */
 	private void cuentaExistente() {
 		when(usuarioRepo.findByCorreoHash(UsuarioService.hashCorreo(CORREO))).thenReturn(Optional.of(usuario));
