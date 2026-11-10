@@ -33,6 +33,11 @@ public class NotificacionService {
 
 	/** El administrador bloqueó una publicación (HU-11). */
 	public static final String ALOJAMIENTO_BLOQUEADO = "ALOJAMIENTO_BLOQUEADO";
+	/** Un administrador restringió la cuenta; el mensaje lleva el motivo (HU-12, CA-058). */
+	public static final String CUENTA_RESTRINGIDA = "CUENTA_RESTRINGIDA";
+
+	/** Un administrador habilitó de nuevo la cuenta (HU-12). */
+	public static final String CUENTA_LIBERADA = "CUENTA_LIBERADA";
 
 	/** Repositorio de notificaciones. */
 	private final NotificacionRepository notificacionRepo;

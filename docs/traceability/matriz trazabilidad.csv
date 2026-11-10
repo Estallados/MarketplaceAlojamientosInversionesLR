@@ -55,7 +55,7 @@ CA-035;RF-008;Inicio de sesión;Validar credenciales;Dado que el usuario proporc
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
-CP-070 Activación del segundo factor";"InicioSesionTest#loginConCredencialesIncorrectasSeRechaza_CA035";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
+CP-070 Activación del segundo factor";InicioSesionTest#loginConCredencialesIncorrectasSeRechaza_CA035;Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
 CA-037;RF-008;Inicio de sesión;Restringir acceso;Dado que el usuario no ha iniciado sesión, cuando intenta acceder a una función restringida, entonces el sistema impide el acceso.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
@@ -97,9 +97,16 @@ ModeracionPublicacionesTest#bloquearSoloAdministrador_CA054
 AdminControllerModeracionTest#bloquea_CA054
 PublicacionServiceModeracionTest#bloquea_CA054";Probado (JUnit);;feat/SCRUM-168-be-bloquear-publicaciones;;;
 CA-058;RF-014;Restricción de usuarios;Restringir y mostrar restricción;Dado que el administrador consulta un usuario, cuando aplica una restricción, entonces el sistema registra y aplica la restricción y la muestra al consultar el estado de la cuenta.;HU-12;CU-010;"CP-051 Restricción de usuario
-CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
+CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringeYSeVeAlConsultar_CA058
+UsuarioServiceRestriccionTest#restringe_CA058
+UsuarioServiceRestriccionTest#motivoInvalido_CA058
+UsuarioServiceRestriccionTest#consulta_CA058
+AdminControllerUsuariosTest#restringir_CA058
+UsuarioControllerConsultaTest#adminConsultaCualquiera_CA058";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;;"PATCH /admin/usuarios/{id}/restringir (motivo obligatorio, máx. 500; a un ADMIN no) y /liberar. El estado y el motivo se ven en GET /admin/usuarios, /usuarios/obtener/{id} y /usuarios/obtenercorreo; se notifica al usuario y queda en la auditoría."
 CA-059;RF-014;Restricción de usuarios;Bloquear acciones;Dado que el usuario está restringido, cuando intenta realizar una acción que requiere una cuenta habilitada, entonces el sistema impide la acción.;HU-12;CU-010;"CP-051 Restricción de usuario
-CP-052 Acción de usuario restringido";AdministracionTest#restringirUnUsuarioRegistraLaRestriccionYBloqueaSusAcciones_CA058_CA059_CA060;;38a9302;;;;
+CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringidoNoActua_CA059
+JwtAuthenticationFilter (tokens de cuentas restringidas)
+AuthController#login y #reactivar";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;;Restringida: su token deja de servir (401), no inicia sesión (403) ni se reactiva sola (403). Al liberarla vuelve a entrar.
 CA-062;RF-015;Consulta de eventos de auditoría;Consultar auditoría y detalle del evento;Dado que existen eventos registrados, cuando el administrador consulta la auditoría, entonces el sistema muestra los eventos y la información asociada a cada uno.;HU-13;CU-011;"CP-053 Consulta de auditoría
 CP-054 Consulta de auditoría sin permisos";AdministracionTest#elAdministradorConsultaLaAuditoriaYElDetalleDeUnEvento_CA062_CA064_CA137_CA138_CA139;;38a9302;;;;
 CA-065;RF-015;Consulta de eventos de auditoría;Restringir auditoría;Dado que el usuario no tiene permisos administrativos, cuando intenta consultar la auditoría, entonces el sistema impide el acceso.;HU-13;CU-011;"CP-053 Consulta de auditoría
@@ -226,10 +233,6 @@ ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-086 envía solo la referencia de la cotización, sin monto, aunque se altere el precio mostrado
 confirmar-reserva.spec.ts#CA-086 muestra el total que devuelve el backend para la reserva, sin recalcularlo";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
 feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
-CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"CatalogoTest#unVisitanteSinSesionVeSoloLosQueSePuedenReservar_CA087
-DisponibilidadBusquedaTest#debeBuscarPorCiudad_CA087";;"85a995d
-38a9302";;;;
-ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086";Probado (JUnit);;feat/SCRUM-239-be-crear-reserva-bloqueo-fechas;;;
 CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"BusquedaAlojamientosTest#soloActivas_CA087
 BusquedaAlojamientosTest#ciudadYTipo_CA087
 BusquedaAlojamientosTest#capacidad_CA087
@@ -312,7 +315,11 @@ feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): pr
 Front-end (SCRUM-230): un 403 o 401 al cambiar las fotografías bloquea la edición igual que en el formulario."
 CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
-CP-019 Consulta de publicaciones propias";PublicacionesTest#elAnfitrionConsultaSusPublicacionesConSuEstado_CA103;;38a9302;;;;
+CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#misPublicaciones_CA103
+DetalleAlojamientoTest#misPublicacionesSoloAnfitrion_CA103
+AlojamientoControllerDetalleTest#misPublicaciones_CA103
+PublicacionServiceDetalleTest#misPublicaciones_CA103
+PublicacionServiceDetalleTest#sinPublicaciones_CA103";Probado (JUnit);;feat/SCRUM-176-be-consultar-mis-publicaciones-;;;
 CA-104;RF-018;Gestión y actualización de publicación;Estados permitidos;Dado que existe una publicación registrada, cuando se consulta o modifica su estado, entonces el sistema debe utilizar únicamente los estados BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA o BLOQUEADA.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -432,16 +439,10 @@ CA-139;RNF-007;Conservación de información para auditoría;Disponibilidad de r
 AuditoriaTest#eventosDisponiblesParaRevision_CA139";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
 CA-140;RNF-008;Prevención de duplicados y consistencia ante reintentos;Sin duplicados por reenvío;Dado una solicitud que ya fue procesada, cuando la misma solicitud sea enviada nuevamente, entonces el sistema no debe generar una segunda operación equivalente.;;CU-025;CP-078 Solicitud duplicada o reintentada;"CancelacionesTest#cancelarEsIdempotenteYNotificaAlAnfitrion_CA140
 ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
-IdempotenciaServiceTest#debeEjecutarUnaSolaVezYRepetirLaMismaRespuesta_CA140
-confirmar-reserva.spec.ts#RNF-008 tras un error de conexión permite reintentar con la misma Idempotency-Key y no reenvía solo
-confirmar-reserva.spec.ts#RNF-008 usa una clave nueva después de una respuesta definitiva del backend";;38a9302;feat/SCRUM-240-fe-crear-reserva-con-bloqueo;;;"Ninguna HU lo lista en sus criterios de aceptación
-Front-end (SCRUM-240): POST /reservas envía Idempotency-Key, la conserva solo para reintentar tras un error de conexión o 5xx y no reenvía automáticamente; probado con Vitest (ng test)."
+IdempotenciaServiceTest#debeEjecutarUnaSolaVezYRepetirLaMismaRespuesta_CA140";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
 CA-141;RNF-008;Prevención de duplicados y consistencia ante reintentos;Resultado único ante reintentos;Dado una operación procesada previamente, cuando el cliente reintente la misma solicitud, entonces el sistema debe conservar el resultado original sin generar inconsistencias o duplicados.;;CU-025;CP-078 Solicitud duplicada o reintentada;"ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
 IdempotenciaServiceTest#debeRechazarLaMismaClaveConOtraPeticion_CA141
-IdempotenciaServiceTest#debeExigirUnaClaveValida_CA141
-confirmar-reserva.spec.ts#RNF-008 tras un error de conexión permite reintentar con la misma Idempotency-Key y no reenvía solo
-confirmar-reserva.spec.ts#RNF-008 usa una clave nueva después de una respuesta definitiva del backend";;38a9302;feat/SCRUM-240-fe-crear-reserva-con-bloqueo;;;"Ninguna HU lo lista en sus criterios de aceptación
-Front-end (SCRUM-240): POST /reservas envía Idempotency-Key, la conserva solo para reintentar tras un error de conexión o 5xx y no reenvía automáticamente; probado con Vitest (ng test)."
+IdempotenciaServiceTest#debeExigirUnaClaveValida_CA141";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
 CA-142;RNF-009;Tiempo de respuesta de consultas;Tiempo máximo de consulta;Dado que se ejecutan consultas de alojamientos bajo las condiciones de prueba definidas, cuando el usuario solicita visualizar los resultados, entonces al menos el 95 % de las solicitudes deben responder en un tiempo máximo de 6 segundos.;;"CU-022
 CU-023";"CP-079 Tiempo de respuesta de búsqueda
 CP-080 Tiempo de respuesta de disponibilidad";;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación

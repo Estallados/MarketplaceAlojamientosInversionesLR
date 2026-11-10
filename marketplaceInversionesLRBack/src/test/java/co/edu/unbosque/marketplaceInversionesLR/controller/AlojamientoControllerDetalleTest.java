@@ -9,6 +9,8 @@ import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
@@ -40,6 +43,19 @@ class AlojamientoControllerDetalleTest {
 	/** Controlador bajo prueba. */
 	private final AlojamientoController controlador = new AlojamientoController(publicacionService,
 			JsonMapper.builder().build(), mock(AuditoriaService.class));
+
+	@Test
+	@DisplayName("CA-103 Mis publicaciones usa el anfitrión del token y ordena de la más reciente a la más antigua")
+	void misPublicaciones_CA103() {
+		PaginaDTO<AlojamientoDTO> pagina = new PaginaDTO<>();
+		when(publicacionService.mios(21L, PageRequest.of(1, 5, Sort.by(Sort.Order.desc("fechaCreacion"), Sort.Order.desc("idAlojamiento")))))
+				.thenReturn(pagina);
+
+		ResponseEntity<Object> respuesta = controlador.mios(sesion(21L, "ROLE_ANFITRION"), 1, 5);
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(respuesta.getBody()).isSameAs(pagina);
+	}
 
 	@Test
 	@DisplayName("CA-093 Sin sesión responde 200 con el detalle de la publicación")

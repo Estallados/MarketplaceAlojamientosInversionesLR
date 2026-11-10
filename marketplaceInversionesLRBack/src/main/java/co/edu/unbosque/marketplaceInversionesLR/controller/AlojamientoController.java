@@ -280,6 +280,25 @@ public class AlojamientoController {
 	}
 
 	/**
+	 * Mis alojamientos con su estado (HU-19, CA-103, solo anfitriones). Ruta:
+	 * {@code GET /alojamientos/mios}.
+	 *
+	 * @param authentication anfitrión autenticado
+	 * @param pagina         número de página (desde 0)
+	 * @param tamanio        elementos por página
+	 * @return 200 con la página de alojamientos
+	 */
+	@Operation(summary = "Mis alojamientos con su estado (ANFITRION)")
+	@PreAuthorize("hasRole('ANFITRION')")
+	@ApiResponse(responseCode = "200", description = "Página de alojamientos del anfitrión con su estado")
+	@GetMapping("/mios")
+	public ResponseEntity<Object> mios(Authentication authentication, @RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "20") int tamanio) {
+		return ResponseEntity.ok(publicacionService.mios(RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.pagina(pagina, tamanio, RECIENTES)));
+	}
+
+	/**
 	 * Detalle de un alojamiento (HU-18, CA-093), con la latitud y la longitud
 	 * para el mapa (CA-164). Es público si está ACTIVA; en otro estado solo lo
 	 * ven su anfitrión o un administrador. Ruta:
