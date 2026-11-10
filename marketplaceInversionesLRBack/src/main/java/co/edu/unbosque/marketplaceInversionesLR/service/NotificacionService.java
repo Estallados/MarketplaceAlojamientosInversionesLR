@@ -28,6 +28,12 @@ public class NotificacionService {
 	/** El pago de una reserva se rechazó o falló (CA-162). */
 	public static final String PAGO_NO_CONFIRMADO = "PAGO_NO_CONFIRMADO";
 
+	/** Un administrador restringió la cuenta; el mensaje lleva el motivo (HU-12, CA-058). */
+	public static final String CUENTA_RESTRINGIDA = "CUENTA_RESTRINGIDA";
+
+	/** Un administrador habilitó de nuevo la cuenta (HU-12). */
+	public static final String CUENTA_LIBERADA = "CUENTA_LIBERADA";
+
 	/** Repositorio de notificaciones. */
 	private final NotificacionRepository notificacionRepo;
 

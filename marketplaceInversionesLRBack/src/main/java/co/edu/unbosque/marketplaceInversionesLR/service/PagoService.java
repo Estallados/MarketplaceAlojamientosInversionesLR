@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -123,5 +124,15 @@ public class PagoService {
 		pago.setDetalle(LimitesTexto.recortar(prueba.detalle(), LimitesTexto.CORTO));
 		pago.setFecha(LocalDateTime.now());
 		return pagoRepo.save(pago);
+	}
+
+	/**
+	 * Último pago de una reserva.
+	 *
+	 * @param idReserva reserva
+	 * @return el pago más reciente, si lo hay
+	 */
+	public Optional<Pago> ultimo(Long idReserva) {
+		return pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(idReserva);
 	}
 }

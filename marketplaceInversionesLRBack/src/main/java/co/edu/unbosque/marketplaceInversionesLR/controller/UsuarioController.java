@@ -1,15 +1,20 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
@@ -17,6 +22,7 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,17 +30,25 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * Controlador REST de usuarios. Ruta base: {@code /usuarios}. Todas sus rutas
  * exigen token JWT, y la identidad del usuario sale siempre del token, nunca
- * del cuerpo de la petición (CA-049). Contrato:
- * {@code docs/openapi/identidad.yaml}.
+ * del cuerpo de la petición (CA-049). El administrador además consulta
+ * cualquier usuario, con su estado y el motivo de la restricción (HU-12).
+ * Contratos: {@code docs/openapi/identidad.yaml} y
+ * {@code docs/openapi/administracion-reportes.yaml}.
  */
 @RestController
 @RequestMapping("/usuarios")
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "Usuarios", description = "Perfil propio")
+@Tag(name = "Usuarios", description = "Perfil propio y consulta de usuarios")
 public class UsuarioController {
 
 	/** Mensaje cuando el usuario no existe. */
-	private static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado.";
+	private static final String USUARIO_NO_ENCONTRADO = UsuarioService.NO_ENCONTRADO;
+
+	/** Mensaje cuando un usuario consulta a otro sin ser administrador. */
+	public static final String SIN_PERMISO_CONSULTA = "No tienes permisos para consultar este usuario.";
+
+	/** Mensaje cuando falta el correo a buscar. */
+	public static final String FALTA_CORREO = "Falta el parámetro correo.";
 
 	/** Servicio de usuarios. */
 	private final UsuarioService usuarioService;
@@ -115,5 +129,77 @@ public class UsuarioController {
 		case 1 -> RespuestaUtil.mensaje(HttpStatus.NOT_FOUND, USUARIO_NO_ENCONTRADO);
 		default -> RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, "Esta cuenta no se puede desactivar.");
 		};
+	}
+
+	/**
+	 * Todos los usuarios, ordenados por id, sin paginar (HU-12, solo
+	 * administradores). Para listados paginados está
+	 * {@code GET /admin/usuarios}. Ruta: {@code GET /usuarios/listar}.
+	 *
+	 * @return 200 con todos los usuarios
+	 */
+	@Operation(summary = "Todos los usuarios, sin paginar (ADMIN)", description = "Para listados paginados usa GET "
+			+ "/admin/usuarios. Cada usuario trae su estado y, si está RESTRINGIDO, el motivoRestriccion.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Todos los usuarios")
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@GetMapping("/listar")
+	public ResponseEntity<List<UsuarioDTO>> listarTodos() {
+		return ResponseEntity.ok(usuarioService.listarTodos());
+	}
+
+	/**
+	 * Consulta un usuario por id: el propio o, si es administrador, cualquiera,
+	 * con su estado y el motivo de la restricción (HU-12, CA-058). Ruta:
+	 * {@code GET /usuarios/obtener/{id}}.
+	 *
+	 * @param id             usuario a consultar
+	 * @param authentication usuario autenticado
+	 * @return 200 con el usuario; 403 si no puede consultarlo; 404 si no existe
+	 */
+	@Operation(summary = "Consultar un usuario por id (el propio o ADMIN)", description = "Un usuario consulta solo su "
+			+ "propio id; un administrador, cualquiera.")
+	@ApiResponse(responseCode = "200", description = "Usuario con su estado y, si está RESTRINGIDO, el motivo")
+	@ApiResponse(responseCode = "403", description = SIN_PERMISO_CONSULTA)
+	@ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
+	@GetMapping("/obtener/{id}")
+	public ResponseEntity<Object> obtenerUsuarioPorId(@PathVariable Long id, Authentication authentication) {
+		if (!RespuestaUtil.esAdmin(authentication)
+				&& !Objects.equals(RespuestaUtil.idUsuario(authentication), id)) {
+			return RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, SIN_PERMISO_CONSULTA);
+		}
+		UsuarioDTO usuario = usuarioService.obtenerPorId(id);
+		if (usuario == null) {
+			return RespuestaUtil.mensaje(HttpStatus.NOT_FOUND, USUARIO_NO_ENCONTRADO);
+		}
+		return ResponseEntity.ok(usuario);
+	}
+
+	/**
+	 * Consulta un usuario por correo, sin distinguir mayúsculas ni espacios en
+	 * los extremos (HU-12, solo administradores). Ruta:
+	 * {@code GET /usuarios/obtenercorreo?correo=}.
+	 *
+	 * @param correo correo a buscar
+	 * @return 200 con el usuario; 400 si falta el correo; 404 si no existe
+	 */
+	@Operation(summary = "Consultar un usuario por correo (ADMIN)", description = "El correo se compara sin distinguir "
+			+ "mayúsculas ni espacios en los extremos.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@ApiResponse(responseCode = "200", description = "Usuario con su estado y, si está RESTRINGIDO, el motivo")
+	@ApiResponse(responseCode = "400", description = FALTA_CORREO)
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@ApiResponse(responseCode = "404", description = "Usuario no encontrado.")
+	@GetMapping("/obtenercorreo")
+	public ResponseEntity<Object> obtenerUsuarioPorCorreo(
+			@Parameter(description = "Correo a buscar, por ejemplo ana@correo.com") @RequestParam(required = false) String correo) {
+		if (correo == null || correo.isBlank()) {
+			return RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, FALTA_CORREO);
+		}
+		UsuarioDTO usuario = usuarioService.obtenerUsuarioPorCorreo(correo);
+		if (usuario == null) {
+			return RespuestaUtil.mensaje(HttpStatus.NOT_FOUND, USUARIO_NO_ENCONTRADO);
+		}
+		return ResponseEntity.ok(usuario);
 	}
 }

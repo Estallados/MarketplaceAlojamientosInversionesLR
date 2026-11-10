@@ -6,11 +6,14 @@ import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.PagoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.SolicitudReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
@@ -237,15 +240,29 @@ public class ReservaService {
 	}
 
 	/**
+	 * Reservas de un huésped en cualquier estado, con su último pago (detalle
+	 * de usuario del administrador, HU-12).
+	 *
+	 * @param idHuesped huésped
+	 * @param pagina    página y orden
+	 * @return página de reservas; vacía si no tiene
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<ReservaDTO> listarDeHuesped(Long idHuesped, Pageable pagina) {
+		return PaginaDTO.de(reservaRepo.findByIdHuesped(idHuesped, pagina),
+				r -> convertirDTO(r, pagoService.ultimo(r.getIdReserva()).orElse(null)));
+	}
+
+	/**
 	 * Convierte la reserva a DTO con su pago y el título del alojamiento.
 	 *
 	 * @param reserva reserva
-	 * @param pago    pago de la reserva
+	 * @param pago    pago de la reserva; {@code null} si no tiene
 	 * @return reserva para la API
 	 */
 	private ReservaDTO convertirDTO(Reserva reserva, Pago pago) {
 		ReservaDTO dto = modelMapper.map(reserva, ReservaDTO.class);
-		dto.setPago(modelMapper.map(pago, PagoDTO.class));
+		dto.setPago(pago == null ? null : modelMapper.map(pago, PagoDTO.class));
 		alojamientoRepo.findById(reserva.getIdAlojamiento()).ifPresent(a -> dto.setTituloAlojamiento(a.getTitulo()));
 		return dto;
 	}

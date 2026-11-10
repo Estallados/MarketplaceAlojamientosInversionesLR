@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -8,9 +9,13 @@ import org.slf4j.Logger;
 import org.modelmapper.ModelMapper;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
@@ -26,10 +31,16 @@ import co.edu.unbosque.marketplaceInversionesLR.exception.SymbolException;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.AESUtil;
 import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
+import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
 /**
- * Reglas de negocio de los usuarios. Por ahora, el registro (HU-06, RF-001):
- * cada operación queda en la auditoría.
+ * Reglas de negocio de los usuarios: registro (HU-06), perfil propio (HU-09,
+ * HU-10) y la gestión del administrador, que consulta, restringe y libera
+ * cuentas (HU-12). Cada operación queda en la auditoría.
+ * <p>
+ * Una cuenta RESTRINGIDO no puede iniciar sesión, sus tokens dejan de servir
+ * ({@code JwtAuthenticationFilter}) y no puede reactivarse sola (CA-059).
+ * </p>
  */
 @Service
 public class UsuarioService {
@@ -51,6 +62,28 @@ public class UsuarioService {
 
 	/** Falló el guardado. */
 	public static final int ERROR_INTERNO = 5;
+
+	/** Mensaje cuando el usuario no existe. */
+	public static final String NO_ENCONTRADO = "Usuario no encontrado.";
+
+	/** Mensaje cuando falta el motivo de la restricción o es muy largo (CA-058). */
+	public static final String MOTIVO_INVALIDO = "El motivo de la restricción es obligatorio y puede tener máximo "
+			+ LimitesTexto.MOTIVO + " caracteres.";
+
+	/** Mensaje cuando el motivo opcional de la liberación es muy largo. */
+	public static final String MOTIVO_LARGO = "El motivo puede tener máximo " + LimitesTexto.MOTIVO + " caracteres.";
+
+	/** Mensaje cuando se intenta restringir a un administrador. */
+	public static final String NO_RESTRINGIR_ADMIN = "No se puede restringir a un administrador.";
+
+	/** Mensaje cuando se intenta liberar una cuenta que ya está activa. */
+	public static final String YA_ACTIVA = "La cuenta ya está activa.";
+
+	/** Inicio del aviso al usuario restringido; sigue el motivo. */
+	public static final String AVISO_RESTRINGIDA = "Tu cuenta fue restringida por un administrador. Motivo: ";
+
+	/** Aviso al usuario cuando se le habilita la cuenta. */
+	public static final String AVISO_LIBERADA = "Tu cuenta fue habilitada de nuevo por un administrador.";
 
 	/** Log de la clase. */
 	private static final Logger LOG = LoggerFactory.getLogger(UsuarioService.class);
@@ -76,6 +109,9 @@ public class UsuarioService {
 	/** Copia los datos de la entidad al DTO. */
 	private final ModelMapper modelMapper;
 
+	/** Avisa al usuario cuando se restringe o se libera su cuenta (HU-12). */
+	private final NotificacionService notificacionService;
+
 	/**
 	 * Crea el servicio.
 	 *
@@ -84,15 +120,17 @@ public class UsuarioService {
 	 * @param verificacionCorreoService servicio de verificación del correo
 	 * @param passwordEncoder           codificador de contraseñas
 	 * @param modelMapper               copiador de entidades a DTO
+	 * @param notificacionService       avisos al usuario
 	 */
 	public UsuarioService(UsuarioRepository usuarioRepo, AuditoriaService auditoriaService,
 			VerificacionCorreoService verificacionCorreoService, PasswordEncoder passwordEncoder,
-			ModelMapper modelMapper) {
+			ModelMapper modelMapper, NotificacionService notificacionService) {
 		this.usuarioRepo = usuarioRepo;
 		this.auditoriaService = auditoriaService;
 		this.verificacionCorreoService = verificacionCorreoService;
 		this.passwordEncoder = passwordEncoder;
 		this.modelMapper = modelMapper;
+		this.notificacionService = notificacionService;
 	}
 
 	/**
@@ -326,6 +364,135 @@ public class UsuarioService {
 		usuario.setEstado(EstadoUsuario.INACTIVO);
 		usuarioRepo.save(usuario);
 		return 0;
+	}
+
+	/**
+	 * Usuarios paginados, con su estado y el motivo de la restricción si la
+	 * tienen (HU-12, CA-058).
+	 *
+	 * @param pagina página y orden
+	 * @return página de usuarios
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<UsuarioDTO> listarPaginado(Pageable pagina) {
+		return PaginaDTO.de(usuarioRepo.findAll(pagina), this::convertirDTO);
+	}
+
+	/**
+	 * Todos los usuarios, ordenados por id (HU-12).
+	 *
+	 * @return lista de usuarios
+	 */
+	@Transactional(readOnly = true)
+	public List<UsuarioDTO> listarTodos() {
+		return usuarioRepo.findAll(Sort.by("idUsuario")).stream().map(this::convertirDTO).toList();
+	}
+
+	/**
+	 * Busca un usuario por id.
+	 *
+	 * @param idUsuario usuario
+	 * @return el usuario, o {@code null} si no existe
+	 */
+	@Transactional(readOnly = true)
+	public UsuarioDTO obtenerPorId(Long idUsuario) {
+		return idUsuario == null ? null : usuarioRepo.findById(idUsuario).map(this::convertirDTO).orElse(null);
+	}
+
+	/**
+	 * Indica si un usuario existe.
+	 *
+	 * @param idUsuario usuario
+	 * @return {@code true} si existe
+	 */
+	public boolean existe(Long idUsuario) {
+		return idUsuario != null && usuarioRepo.existsById(idUsuario);
+	}
+
+	/**
+	 * Restringe una cuenta con un motivo (administrador, HU-12, CA-058). Queda
+	 * RESTRINGIDO con el motivo, que se ve al consultar el usuario y se le
+	 * notifica. Desde ese momento no puede iniciar sesión, sus tokens dejan de
+	 * servir y no puede reactivarse sola (CA-059). A un administrador no se le
+	 * puede restringir. Si ya estaba restringida, se actualiza el motivo.
+	 *
+	 * @param idUsuario usuario a restringir
+	 * @param motivo    motivo obligatorio, de máximo {@value LimitesTexto#MOTIVO}
+	 *                  caracteres
+	 * @param idAdmin   administrador que restringe
+	 * @return el usuario; DATOS_INVALIDOS si el motivo falta o es muy largo;
+	 *         NO_ENCONTRADO si no existe; SIN_PERMISO si es administrador
+	 */
+	@Transactional
+	public Resultado<UsuarioDTO> restringir(Long idUsuario, String motivo, Long idAdmin) {
+		if (esVacio(motivo) || LimitesTexto.excede(motivo, LimitesTexto.MOTIVO)) {
+			auditoriaService.registrar(idAdmin, AuditoriaService.USUARIO_RESTRINGIDO, AuditoriaService.ENTIDAD_USUARIO,
+					idUsuario, ResultadoAuditoria.RECHAZADO, MOTIVO_INVALIDO);
+			return Resultado.error(Resultado.DATOS_INVALIDOS, MOTIVO_INVALIDO);
+		}
+		Optional<Usuario> encontrado = idUsuario == null ? Optional.empty() : usuarioRepo.findById(idUsuario);
+		if (encontrado.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_ENCONTRADO);
+		}
+		Usuario usuario = encontrado.get();
+		if (usuario.getRol() == Role.ADMIN) {
+			auditoriaService.registrar(idAdmin, AuditoriaService.USUARIO_RESTRINGIDO, AuditoriaService.ENTIDAD_USUARIO,
+					idUsuario, ResultadoAuditoria.RECHAZADO, NO_RESTRINGIR_ADMIN);
+			return Resultado.error(Resultado.SIN_PERMISO, NO_RESTRINGIR_ADMIN);
+		}
+
+		String limpio = motivo.trim();
+		usuario.setEstado(EstadoUsuario.RESTRINGIDO);
+		usuario.setMotivoRestriccion(limpio);
+		Usuario guardado = usuarioRepo.save(usuario);
+
+		notificacionService.enviar(idUsuario, NotificacionService.CUENTA_RESTRINGIDA, AVISO_RESTRINGIDA + limpio);
+		auditoriaService.registrar(idAdmin, AuditoriaService.USUARIO_RESTRINGIDO, AuditoriaService.ENTIDAD_USUARIO,
+				idUsuario, ResultadoAuditoria.EXITOSO, limpio);
+		return Resultado.exito(convertirDTO(guardado));
+	}
+
+	/**
+	 * Habilita una cuenta restringida o inactiva (administrador, HU-12): queda
+	 * ACTIVO y sin motivo de restricción, y se le avisa al usuario.
+	 * <p>
+	 * Igual que el proyecto base, el motivo es opcional: devolver el acceso no
+	 * perjudica a nadie, así que solo queda en la auditoría si se envía.
+	 * </p>
+	 *
+	 * @param idUsuario usuario a habilitar
+	 * @param motivo    motivo opcional, de máximo {@value LimitesTexto#MOTIVO}
+	 *                  caracteres
+	 * @param idAdmin   administrador que la habilita
+	 * @return el usuario; DATOS_INVALIDOS si el motivo es muy largo;
+	 *         NO_ENCONTRADO si no existe; ESTADO_INVALIDO si ya estaba activa
+	 */
+	@Transactional
+	public Resultado<UsuarioDTO> liberar(Long idUsuario, String motivo, Long idAdmin) {
+		if (LimitesTexto.excede(motivo, LimitesTexto.MOTIVO)) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, MOTIVO_LARGO);
+		}
+		Optional<Usuario> encontrado = idUsuario == null ? Optional.empty() : usuarioRepo.findById(idUsuario);
+		if (encontrado.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_ENCONTRADO);
+		}
+		Usuario usuario = encontrado.get();
+		if (usuario.getEstado() == EstadoUsuario.ACTIVO) {
+			auditoriaService.registrar(idAdmin, AuditoriaService.USUARIO_LIBERADO, AuditoriaService.ENTIDAD_USUARIO,
+					idUsuario, ResultadoAuditoria.RECHAZADO, YA_ACTIVA);
+			return Resultado.error(Resultado.ESTADO_INVALIDO, YA_ACTIVA);
+		}
+
+		EstadoUsuario anterior = usuario.getEstado();
+		usuario.setEstado(EstadoUsuario.ACTIVO);
+		usuario.setMotivoRestriccion(null);
+		Usuario guardado = usuarioRepo.save(usuario);
+
+		notificacionService.enviar(idUsuario, NotificacionService.CUENTA_LIBERADA, AVISO_LIBERADA);
+		auditoriaService.registrar(idAdmin, AuditoriaService.USUARIO_LIBERADO, AuditoriaService.ENTIDAD_USUARIO,
+				idUsuario, ResultadoAuditoria.EXITOSO,
+				"Estaba " + anterior + (esVacio(motivo) ? "" : ". Motivo: " + motivo.trim()));
+		return Resultado.exito(convertirDTO(guardado));
 	}
 
 	/**
