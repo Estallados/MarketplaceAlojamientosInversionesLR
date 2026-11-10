@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplaceInversionesLR.controller;
 
 import java.util.List;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -51,6 +52,9 @@ import tools.jackson.databind.ObjectMapper;
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Alojamientos", description = "Publicaciones de alojamiento")
 public class AlojamientoController {
+
+	/** Orden de los listados: los más recientes primero. */
+	private static final Sort RECIENTES = Sort.by("fechaCreacion").descending();
 
 	/** Servicio de publicaciones. */
 	private final PublicacionService publicacionService;
@@ -172,6 +176,25 @@ public class AlojamientoController {
 			auditar(idAnfitrion, null, ResultadoAuditoria.RECHAZADO, resultado.getMensaje());
 		}
 		return RespuestaUtil.desde(resultado, HttpStatus.CREATED);
+	}
+
+	/**
+	 * Mis alojamientos con su estado (HU-19, CA-103, solo anfitriones). Ruta:
+	 * {@code GET /alojamientos/mios}.
+	 *
+	 * @param authentication anfitrión autenticado
+	 * @param pagina         número de página (desde 0)
+	 * @param tamanio        elementos por página
+	 * @return 200 con la página de alojamientos
+	 */
+	@Operation(summary = "Mis alojamientos con su estado (ANFITRION)")
+	@PreAuthorize("hasRole('ANFITRION')")
+	@ApiResponse(responseCode = "200", description = "Página de alojamientos del anfitrión con su estado")
+	@GetMapping("/mios")
+	public ResponseEntity<Object> mios(Authentication authentication, @RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "20") int tamanio) {
+		return ResponseEntity.ok(publicacionService.mios(RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.pagina(pagina, tamanio, RECIENTES)));
 	}
 
 	/**

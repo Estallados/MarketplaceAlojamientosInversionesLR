@@ -290,6 +290,17 @@ public class PublicacionService {
 	}
 
 	/**
+	 * Publicaciones del anfitrión, con el estado de cada una (HU-19, CA-103).
+	 *
+	 * @param idAnfitrion anfitrión
+	 * @param pagina      página y orden
+	 * @return página de alojamientos
+	 */
+	public PaginaDTO<AlojamientoDTO> mios(Long idAnfitrion, Pageable pagina) {
+		return PaginaDTO.de(alojamientoRepo.findByIdAnfitrion(idAnfitrion, pagina), this::convertirDTO);
+	}
+
+	/**
 	 * Alojamientos de un estado, por ejemplo la cola PENDIENTE_REVISION; sin
 	 * estado, todos (vista del administrador, HU-32).
 	 *

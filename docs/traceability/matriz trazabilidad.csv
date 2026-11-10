@@ -251,7 +251,11 @@ editar-publicacion.spec.ts#CA-101 trata el 401 como sesión expirada y ofrece vol
 feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
 CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
-CP-019 Consulta de publicaciones propias";PublicacionesTest#elAnfitrionConsultaSusPublicacionesConSuEstado_CA103;;38a9302;;;;
+CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#misPublicaciones_CA103
+DetalleAlojamientoTest#misPublicacionesSoloAnfitrion_CA103
+AlojamientoControllerDetalleTest#misPublicaciones_CA103
+PublicacionServiceDetalleTest#misPublicaciones_CA103
+PublicacionServiceDetalleTest#sinPublicaciones_CA103";Probado (JUnit);;feat/SCRUM-176-be-consultar-mis-publicaciones-;;;
 CA-104;RF-018;Gestión y actualización de publicación;Estados permitidos;Dado que existe una publicación registrada, cuando se consulta o modifica su estado, entonces el sistema debe utilizar únicamente los estados BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA o BLOQUEADA.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso

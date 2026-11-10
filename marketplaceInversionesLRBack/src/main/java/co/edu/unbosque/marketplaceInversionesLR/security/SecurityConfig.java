@@ -108,6 +108,8 @@ public class SecurityConfig {
 						// una ruta pública se convierte en un 401 engañoso
 						.requestMatchers("/error").permitAll()
 						.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+						// HU-19: va antes de las rutas públicas para que /alojamientos/{id} no la cubra
+						.requestMatchers(HttpMethod.GET, "/alojamientos/mios").hasRole("ANFITRION")
 						// Políticas de cancelación que el anfitrión elige al crear la publicación (HU-15)
 						.requestMatchers(HttpMethod.GET, "/alojamientos/politicas").permitAll()
 						// HU-18: el detalle es público; el de una publicación no ACTIVA lo filtra PublicacionService
