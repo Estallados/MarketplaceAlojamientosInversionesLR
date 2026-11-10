@@ -1,7 +1,12 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +29,7 @@ import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
@@ -42,15 +48,19 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Controlador REST de alojamientos (publicaciones). Ruta base:
- * {@code /alojamientos}. Las políticas y el detalle de una publicación ACTIVA
- * son públicos; lo demás exige token.
- * Contrato: {@code docs/openapi/alojamientos.yaml}.
+ * {@code /alojamientos}. La búsqueda, el catálogo, los tipos, las políticas y
+ * el detalle de una publicación ACTIVA son públicos; lo demás exige token.
+ * Contratos: {@code docs/openapi/alojamientos.yaml} y, para la búsqueda,
+ * {@code docs/openapi/disponibilidad-busqueda.yaml}.
  */
 @RestController
 @RequestMapping("/alojamientos")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Alojamientos", description = "Publicaciones de alojamiento")
 public class AlojamientoController {
+
+	/** Orden por defecto de la búsqueda: los más recientes primero. */
+	private static final Sort RECIENTES = Sort.by(Sort.Order.desc("fechaCreacion"), Sort.Order.desc("idAlojamiento"));
 
 	/** Servicio de publicaciones. */
 	private final PublicacionService publicacionService;
@@ -120,6 +130,101 @@ public class AlojamientoController {
 	@GetMapping("/politicas")
 	public ResponseEntity<Object> politicas() {
 		return ResponseEntity.ok(publicacionService.politicas());
+	}
+
+	/**
+	 * Búsqueda pública de alojamientos ACTIVA (HU-23, CA-087) con filtros
+	 * opcionales que se combinan. Sin orden, los más recientes primero. Ruta:
+	 * {@code GET /alojamientos}.
+	 *
+	 * @param ciudad       ciudad
+	 * @param llegada      día de llegada (AAAA-MM-DD)
+	 * @param salida       día de salida (AAAA-MM-DD)
+	 * @param huespedes    cantidad de huéspedes
+	 * @param tipo         tipo de alojamiento
+	 * @param precioMinimo precio mínimo por noche
+	 * @param precioMaximo precio máximo por noche
+	 * @param amenidades   amenidades que debe tener todas
+	 * @param orden        los mismos valores de {@code /disponibles}
+	 * @param pagina       número de página (desde 0)
+	 * @param tamanio      elementos por página
+	 * @return 200 con la página de resultados; 400 si los filtros o el orden no
+	 *         son válidos
+	 */
+	@Operation(summary = "Buscar alojamientos ACTIVA (público)", description = "Solo publicaciones ACTIVA que cumplan "
+			+ "todos los filtros enviados (CA-087): ciudad y tipo sin distinguir mayúsculas, disponibilidad en el "
+			+ "período (llegada y salida van juntas), capacidad para los huéspedes, precio por noche dentro del rango "
+			+ "y amenidades (con varias, debe tenerlas todas). Los filtros vacíos no filtran. orden opcional como en "
+			+ "/disponibles; sin él, los más recientes primero. Responde {contenido, pagina, tamanio, "
+			+ "totalElementos, totalPaginas}.")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "Página de alojamientos ACTIVA que cumplen los filtros (CA-087)")
+	@ApiResponse(responseCode = "400", description = CalendarioService.FECHAS_FALTANTES + " | "
+			+ CalendarioService.SALIDA_NO_POSTERIOR + " | " + CalendarioService.LLEGADA_EN_EL_PASADO + " | "
+			+ PublicacionService.HUESPEDES_INVALIDOS + " | " + PublicacionService.PRECIO_NEGATIVO + " | "
+			+ PublicacionService.PRECIOS_INVERTIDOS + " | " + PublicacionService.ORDEN_INVALIDO)
+	@GetMapping
+	public ResponseEntity<Object> buscar(
+			@Parameter(description = "Ciudad, sin distinguir mayúsculas; por ejemplo Medellín") @RequestParam(required = false) String ciudad,
+			@Parameter(description = "Día de llegada (AAAA-MM-DD); va junto con la salida") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate llegada,
+			@Parameter(description = "Día de salida (AAAA-MM-DD), posterior a la llegada") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
+			@Parameter(description = "Cantidad de huéspedes, mayor que cero") @RequestParam(required = false) Integer huespedes,
+			@Parameter(description = "Tipo de alojamiento, sin distinguir mayúsculas; por ejemplo Casa") @RequestParam(required = false) String tipo,
+			@Parameter(description = "Precio mínimo por noche") @RequestParam(required = false) BigDecimal precioMinimo,
+			@Parameter(description = "Precio máximo por noche; no puede ser menor que el mínimo") @RequestParam(required = false) BigDecimal precioMaximo,
+			@Parameter(description = "Amenidades que debe tener todas, por ejemplo wifi y parqueadero") @RequestParam(required = false) List<String> amenidades,
+			@Parameter(description = "recomendados, precio_menor, precio_mayor o mejor_calificados", schema = @Schema(allowableValues = {
+					PublicacionService.ORDEN_RECOMENDADOS, PublicacionService.ORDEN_PRECIO_MENOR,
+					PublicacionService.ORDEN_PRECIO_MAYOR, PublicacionService.ORDEN_MEJOR_CALIFICADOS })) @RequestParam(required = false) String orden,
+			@Parameter(description = "Número de página, desde 0") @RequestParam(defaultValue = "0") int pagina,
+			@Parameter(description = "Elementos por página, de 1 a 100") @RequestParam(defaultValue = "12") int tamanio) {
+		PublicacionService.FiltrosBusqueda filtros = new PublicacionService.FiltrosBusqueda(ciudad, llegada, salida,
+				huespedes, tipo, precioMinimo, precioMaximo, amenidades);
+		return RespuestaUtil.desde(publicacionService.buscar(filtros, orden,
+				RespuestaUtil.pagina(pagina, tamanio, RECIENTES)));
+	}
+
+	/**
+	 * Catálogo público: todos los alojamientos que se pueden reservar
+	 * (publicaciones ACTIVA con fechas abiertas desde hoy), para la página
+	 * Explorar o el inicio. Ruta: {@code GET /alojamientos/disponibles}.
+	 *
+	 * @param orden   recomendados (por defecto), precio_menor, precio_mayor o
+	 *                mejor_calificados
+	 * @param pagina  número de página (desde 0)
+	 * @param tamanio elementos por página
+	 * @return 200 con la página de alojamientos; 400 si el orden no existe
+	 */
+	@Operation(summary = "Catálogo: alojamientos disponibles para reservar (público)", description = "Publicaciones "
+			+ "ACTIVA con fechas abiertas desde hoy, para la página Explorar o el inicio. orden: recomendados (por "
+			+ "defecto), precio_menor, precio_mayor o mejor_calificados.")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "Página de alojamientos que se pueden reservar")
+	@ApiResponse(responseCode = "400", description = PublicacionService.ORDEN_INVALIDO)
+	@GetMapping("/disponibles")
+	public ResponseEntity<Object> disponibles(
+			@Parameter(description = "recomendados (por defecto), precio_menor, precio_mayor o mejor_calificados", schema = @Schema(allowableValues = {
+					PublicacionService.ORDEN_RECOMENDADOS, PublicacionService.ORDEN_PRECIO_MENOR,
+					PublicacionService.ORDEN_PRECIO_MAYOR, PublicacionService.ORDEN_MEJOR_CALIFICADOS })) @RequestParam(required = false) String orden,
+			@Parameter(description = "Número de página, desde 0") @RequestParam(defaultValue = "0") int pagina,
+			@Parameter(description = "Elementos por página, de 1 a 100") @RequestParam(defaultValue = "20") int tamanio) {
+		return RespuestaUtil.desde(publicacionService.disponibles(orden,
+				RespuestaUtil.pagina(pagina, tamanio, Sort.unsorted())));
+	}
+
+	/**
+	 * Cantidad de alojamientos por tipo, en cualquier estado, para los filtros
+	 * de la página de inicio. Ruta: {@code GET /alojamientos/tipos}.
+	 *
+	 * @return 200 con {"Apartamento": 5, "Casa": 7, ...}
+	 */
+	@Operation(summary = "Cantidad de alojamientos por tipo (público)", description = "Cuenta los alojamientos en "
+			+ "cualquier estado agrupados por tipo, en orden alfabético: {\"Apartamento\": 5, \"Casa\": 7}.")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "Cantidad de alojamientos de cada tipo")
+	@GetMapping("/tipos")
+	public ResponseEntity<Map<String, Long>> cantidadPorTipo() {
+		return ResponseEntity.ok(publicacionService.cantidadPorTipo());
 	}
 
 	/**
