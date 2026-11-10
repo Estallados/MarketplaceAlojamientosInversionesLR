@@ -672,6 +672,24 @@ public class PublicacionService {
 	}
 
 	/**
+	 * Detalle de un alojamiento. Si está ACTIVA lo ve cualquiera; en otro
+	 * estado solo su anfitrión o un administrador.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idActor       usuario que consulta; {@code null} si no hay sesión
+	 * @param esAdmin       {@code true} si es administrador
+	 * @return el alojamiento; o NO_ENCONTRADO si no existe o el usuario no
+	 *         puede verlo
+	 */
+	public Resultado<AlojamientoDTO> obtener(Long idAlojamiento, Long idActor, boolean esAdmin) {
+		Optional<Alojamiento> alojamiento = alojamientoRepo.findById(idAlojamiento);
+		if (alojamiento.isEmpty() || !esVisible(alojamiento.get(), idActor, esAdmin)) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		return Resultado.exito(convertirDTO(alojamiento.get()));
+	}
+
+	/**
 	 * Convierte la entidad a DTO con las imágenes (la principal primero), los
 	 * servicios adicionales, el nombre de la política y el nombre del
 	 * anfitrión.
@@ -705,6 +723,19 @@ public class PublicacionService {
 		return imagenRepo.findByIdAlojamiento(idAlojamiento).stream()
 				.sorted(Comparator.comparing((Imagen i) -> !Boolean.TRUE.equals(i.getPrincipal())))
 				.map(i -> modelMapper.map(i, ImagenDTO.class)).toList();
+	}
+
+	/**
+	 * Indica si el usuario puede ver el alojamiento: si está ACTIVA, si es
+	 * administrador o si es el dueño.
+	 *
+	 * @param alojamiento alojamiento
+	 * @param idActor     usuario; puede ser {@code null}
+	 * @param esAdmin     {@code true} si es administrador
+	 * @return {@code true} si lo puede ver
+	 */
+	private static boolean esVisible(Alojamiento alojamiento, Long idActor, boolean esAdmin) {
+		return alojamiento.getEstado() == EstadoAlojamiento.ACTIVA || esAdmin || esPropietario(alojamiento, idActor);
 	}
 
 	/**

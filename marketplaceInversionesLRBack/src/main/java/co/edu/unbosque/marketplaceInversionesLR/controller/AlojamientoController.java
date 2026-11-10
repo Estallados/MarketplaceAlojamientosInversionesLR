@@ -42,7 +42,8 @@ import tools.jackson.databind.ObjectMapper;
 
 /**
  * Controlador REST de alojamientos (publicaciones). Ruta base:
- * {@code /alojamientos}. Las políticas son públicas; lo demás exige token.
+ * {@code /alojamientos}. Las políticas y el detalle de una publicación ACTIVA
+ * son públicos; lo demás exige token.
  * Contrato: {@code docs/openapi/alojamientos.yaml}.
  */
 @RestController
@@ -171,6 +172,27 @@ public class AlojamientoController {
 			auditar(idAnfitrion, null, ResultadoAuditoria.RECHAZADO, resultado.getMensaje());
 		}
 		return RespuestaUtil.desde(resultado, HttpStatus.CREATED);
+	}
+
+	/**
+	 * Detalle de un alojamiento (HU-18, CA-093), con la latitud y la longitud
+	 * para el mapa (CA-164). Es público si está ACTIVA; en otro estado solo lo
+	 * ven su anfitrión o un administrador. Ruta:
+	 * {@code GET /alojamientos/{id}}.
+	 *
+	 * @param id             alojamiento
+	 * @param authentication usuario autenticado; puede ser {@code null}
+	 * @return 200 con el alojamiento, sus imágenes, servicios y anfitrión; 404
+	 *         si no existe o no se puede ver
+	 */
+	@Operation(summary = "Detalle de un alojamiento", description = "Público si está ACTIVA; en otro estado solo para su anfitrión o un administrador.")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "Alojamiento con imágenes, servicios y anfitrión")
+	@ApiResponse(responseCode = "404", description = "El alojamiento no existe.")
+	@GetMapping("/{id}")
+	public ResponseEntity<Object> detalle(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.obtener(id, RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.esAdmin(authentication)));
 	}
 
 	/**

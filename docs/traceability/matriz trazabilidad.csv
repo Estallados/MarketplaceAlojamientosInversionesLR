@@ -199,7 +199,9 @@ DisponibilidadBusquedaTest#debeBuscarPorCiudad_CA087";;"85a995d
 38a9302";;;;
 CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle de publicación activa;Dado que existe una publicación ACTIVA, cuando el usuario la selecciona desde los resultados de búsqueda o consulta su detalle, entonces el sistema debe mostrar la información detallada del alojamiento.;HU-18;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
-CP-019 Consulta de publicaciones propias";PublicacionesTest#elDetalleDeUnaPublicacionActivaEsPublicoYElDeUnBorradorNo_CA093_CA102;;38a9302;;;;
+CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#detalleDePublicacionActiva_CA093
+AlojamientoControllerDetalleTest#detalleSinSesion_CA093
+PublicacionServiceDetalleTest#detalleDePublicacionActiva_CA093";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;
 CA-094;RF-017;Crear publicación de alojamiento;Creación de publicación;Dado que el usuario tiene el rol ANFITRION, cuando registra un nuevo alojamiento, entonces el sistema debe permitir crear la publicación ingresando título, descripción, ubicación, tipo, capacidad, precio, servicios, reglas, política de cancelación e imágenes, y guardarla en estado BORRADOR.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
 CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#creaEnBorrador_CA094
@@ -452,7 +454,9 @@ ReservasPagosTest#elRechazoDiceElMotivoYUnMetodoQueNoEsDeStripeNiSeIntenta_CA162
 PagoStripeTest#unRechazoDeLaTarjetaLlegaConSuMotivoEnEspanol_CA162
 ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"38a9302
 4cf6ba5";;;;
-CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;;;;;;;Se valida en el front (mapa)
+CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;"DetalleAlojamientoTest#detalleConUbicacion_CA164
+AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
+PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;El back entrega la ubicación; el mapa se valida en el front
 CA-165;RF-029;Mensajería entre huésped y anfitrión;Envío y respuesta de mensajes;Dado que el huésped o el anfitrión participan en una conversación, cuando envían un mensaje o una respuesta, entonces el sistema debe registrarlo asociado a la misma conversación, identificando al remitente y conservando la fecha de envío.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
