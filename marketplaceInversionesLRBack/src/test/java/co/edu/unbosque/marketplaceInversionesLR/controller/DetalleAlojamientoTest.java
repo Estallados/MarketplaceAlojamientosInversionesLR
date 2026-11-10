@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -170,6 +171,30 @@ class DetalleAlojamientoTest {
 	}
 
 	@Test
+	@DisplayName("CA-103 El anfitrión consulta solo sus publicaciones, con el estado de cada una")
+	void misPublicaciones_CA103() throws Exception {
+		Long activa = crearPublicacion();
+		activar(activa);
+		Long borrador = crearPublicacion();
+		crearPublicacion(jwtUtil.generateToken(crear("otro@correo.com", Role.ANFITRION)));
+
+		misPublicaciones(anfitrion)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElementos").value(2))
+				.andExpect(jsonPath("$.contenido[*].idAlojamiento")
+						.value(containsInAnyOrder(activa.intValue(), borrador.intValue())))
+				.andExpect(jsonPath("$.contenido[*].estado").value(containsInAnyOrder("ACTIVA", "BORRADOR")));
+	}
+
+	@Test
+	@DisplayName("CA-103 Solo el anfitrión consulta sus publicaciones: sin token 401 y con otro rol 403")
+	void misPublicacionesSoloAnfitrion_CA103() throws Exception {
+		misPublicaciones(null).andExpect(status().isUnauthorized());
+		misPublicaciones(jwtUtil.generateToken(crear("huesped@correo.com", Role.HUESPED)))
+				.andExpect(status().isForbidden());
+	}
+
+	@Test
 	@DisplayName("La documentación de Swagger incluye el detalle de un alojamiento")
 	void documentacion() throws Exception {
 		mockMvc.perform(get("/v3/api-docs"))
@@ -191,6 +216,18 @@ class DetalleAlojamientoTest {
 	}
 
 	/**
+	 * Consulta las publicaciones del usuario del token.
+	 *
+	 * @param jwt token del usuario; {@code null} para consultar sin sesión
+	 * @return resultado de la petición
+	 * @throws Exception si falla la petición
+	 */
+	private ResultActions misPublicaciones(String jwt) throws Exception {
+		var peticion = get(ALOJAMIENTOS + "/mios");
+		return mockMvc.perform(jwt == null ? peticion : peticion.header(AUTORIZACION, BEARER + jwt));
+	}
+
+	/**
 	 * Deja una publicación en estado ACTIVA.
 	 *
 	 * @param id publicación
@@ -206,13 +243,19 @@ class DetalleAlojamientoTest {
 	 * @throws Exception si falla la petición
 	 */
 	private Long crearPublicacion() throws Exception {
-		PoliticaCancelacion politica = new PoliticaCancelacion();
-		politica.setNombre("Flexible");
-		politica.setCondiciones("Reembolso total hasta 7 días antes");
-		politica.setDiasReembolsoTotal(7);
-		politica.setDiasReembolsoParcial(2);
-		politica.setPorcentajeParcial(50);
-		Long idPolitica = politicaRepository.save(politica).getIdPolitica();
+		return crearPublicacion(anfitrion);
+	}
+
+	/**
+	 * Crea una publicación en borrador con una imagen para el anfitrión del
+	 * token.
+	 *
+	 * @param jwt token del anfitrión
+	 * @return id de la publicación
+	 * @throws Exception si falla la petición
+	 */
+	private Long crearPublicacion(String jwt) throws Exception {
+		Long idPolitica = politicaRepository.findByNombre("Flexible").orElseGet(this::crearPolitica).getIdPolitica();
 		String datos = """
 				{"titulo":"Casa en el lago","descripcion":"Vista al lago","ubicacion":"Calle 1 # 2-3",
 				 "ciudad":"Guatapé","latitud":6.23,"longitud":-75.15,"tipo":"Casa","capacidad":4,
@@ -223,10 +266,25 @@ class DetalleAlojamientoTest {
 				.file(new MockMultipartFile("datos", "", MediaType.APPLICATION_JSON_VALUE,
 						datos.getBytes(StandardCharsets.UTF_8)))
 				.file(new MockMultipartFile("archivos", "a.jpg", "image/jpeg", JPEG))
-				.header(AUTORIZACION, BEARER + anfitrion))
+				.header(AUTORIZACION, BEARER + jwt))
 				.andExpect(status().isCreated())
 				.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
 		return ((Number) JsonPath.read(respuesta, "$.idAlojamiento")).longValue();
+	}
+
+	/**
+	 * Guarda la política de cancelación de las publicaciones de prueba.
+	 *
+	 * @return política guardada
+	 */
+	private PoliticaCancelacion crearPolitica() {
+		PoliticaCancelacion politica = new PoliticaCancelacion();
+		politica.setNombre("Flexible");
+		politica.setCondiciones("Reembolso total hasta 7 días antes");
+		politica.setDiasReembolsoTotal(7);
+		politica.setDiasReembolsoParcial(2);
+		politica.setPorcentajeParcial(50);
+		return politicaRepository.save(politica);
 	}
 
 	/**
