@@ -12,24 +12,15 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'registro', component: Register },
 
-  // ====================================
-  // RECUPERACIÓN DE CONTRASEÑA
-  // PÚBLICA - SIN INICIAR SESIÓN
-  // ====================================
+
 
   { path: 'recuperar-contrasena', component: Recover },
 
-  // ====================================
-  // RESTABLECER CONTRASEÑA
-  // PÚBLICA - SIN INICIAR SESIÓN
-  // ====================================
+
 
   { path: 'restablecer-contrasena', component: Recover },
 
-  // ====================================
-  // PERFIL DE USUARIO (HU-09)
-  // CUALQUIER USUARIO CON SESIÓN
-  // ====================================
+
 
   {
     path: 'perfil',
@@ -37,10 +28,7 @@ export const routes: Routes = [
     canActivate: [roleGuard]
   },
 
-  // ====================================
-  // CONFIGURAR PORCENTAJES DE TARIFAS (HU-24)
-  // ANFITRIÓN Y ADMINISTRADOR
-  // ====================================
+
 
   {
     path: 'host/tarifas',
@@ -56,10 +44,7 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
-  // ====================================
-  // CREAR ALOJAMIENTO (HU-15)
-  // SOLO ANFITRIÓN
-  // ====================================
+
 
   {
     path: 'host/alojamientos/crear',
@@ -68,11 +53,7 @@ export const routes: Routes = [
     data: { roles: ['Anfitrión'] }
   },
 
-  // ====================================
-  // PERÍODOS DE DISPONIBILIDAD (HU-20)
-  // SOLO ANFITRIÓN
-  // Carga diferida para no aumentar el bundle inicial.
-  // ====================================
+
 
   {
     path: 'host/alojamientos/:id/disponibilidad',
@@ -83,12 +64,7 @@ export const routes: Routes = [
     data: { roles: ['Anfitrión'] }
   },
 
-  // ====================================
-  // EDITAR PUBLICACIÓN Y SERVICIOS ADICIONALES (HU-16)
-  // ANFITRIÓN PROPIETARIO Y ADMINISTRADOR
-  // La propiedad la verifica el componente y el backend (403).
-  // Carga diferida para no aumentar el bundle inicial.
-  // ====================================
+
 
   {
     path: 'host/alojamientos/:id/editar',
@@ -108,12 +84,27 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
-  // ====================================
-  // CONSULTAR DISPONIBILIDAD (HU-21)
-  // PÚBLICA: el backend responde 404 si el alojamiento no está ACTIVA
-  // y quien consulta no es su anfitrión ni un administrador.
-  // Carga diferida para no aumentar el bundle inicial.
-  // ====================================
+
+
+  {
+    path: 'admin/alojamientos',
+    loadComponent: () =>
+      import('./administracion/revisar-publicaciones/revisar-publicaciones')
+        .then(m => m.RevisarPublicaciones),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+  {
+    path: 'admin/alojamientos/:id',
+    loadComponent: () =>
+      import('./administracion/detalle-publicacion/detalle-publicacion')
+        .then(m => m.DetallePublicacion),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+
 
   {
     path: 'alojamientos/:id/consultar-disponibilidad',
