@@ -61,4 +61,16 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	boolean existeCruce(@Param("id") Long idAlojamiento, @Param("llegada") LocalDate llegada,
 			@Param("salida") LocalDate salida, @Param("activos") Collection<EstadoReserva> activos,
 			@Param("limite") LocalDateTime limite);
+
+	/**
+	 * Reservas futuras de un alojamiento en los estados indicados. Se usa al
+	 * bloquear un alojamiento para pasar sus reservas a revisión (HU-11).
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param fecha         fecha a partir de la cual se buscan las llegadas
+	 * @param estados       estados a incluir
+	 * @return lista de reservas
+	 */
+	List<Reserva> findByIdAlojamientoAndFechaEntradaAfterAndEstadoIn(Long idAlojamiento, LocalDate fecha,
+			Collection<EstadoReserva> estados);
 }
