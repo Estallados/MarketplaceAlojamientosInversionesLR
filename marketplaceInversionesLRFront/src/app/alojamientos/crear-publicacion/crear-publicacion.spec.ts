@@ -188,6 +188,20 @@ describe('CrearPublicacion (HU-15)', () => {
   // CA-094 CREACIÓN DE PUBLICACIÓN
   // ======================================
 
+  it('HU-15 el botón Volver lleva al inicio cuando la página se abrió directamente', async () => {
+
+    const router = TestBed.inject(Router);
+    const navegar = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+
+    const boton = elemento.querySelector<HTMLButtonElement>('[data-volver]')!;
+    expect(boton.textContent?.trim()).toBe('← Volver');
+
+    boton.click();
+    await estable();
+
+    expect(navegar).toHaveBeenCalledWith('/');
+  });
+
   it('CA-094 permite al ANFITRION crear la publicación con todos sus datos y queda en BORRADOR', async () => {
 
     // 1. Acceso: solo el rol ANFITRION entra al formulario

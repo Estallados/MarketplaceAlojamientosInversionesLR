@@ -12,6 +12,7 @@ import {
   provideRouter
 } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { Location } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 
 import { EditarPublicacion, MENSAJE_SIN_PERMISO } from './editar-publicacion';
@@ -501,6 +502,24 @@ describe('EditarPublicacion (HU-16)', () => {
 
     expect(fotos()).toBe(2);
     expect(componente.fotografias()[0].idImagen).toBe(2);
+  });
+
+  it('HU-16 el botón Volver regresa a la página anterior', async () => {
+
+    // Página previa dentro de la aplicación (no hace peticiones al abrir).
+    await harness.navigateByUrl('/alojamientos/41/consultar-disponibilidad');
+
+    await abrirComoPropietario();
+
+    const atras = vi.spyOn(TestBed.inject(Location), 'back').mockImplementation(() => undefined);
+
+    const boton = elemento().querySelector<HTMLButtonElement>('[data-volver]')!;
+    expect(boton.textContent?.trim()).toBe('← Volver');
+
+    boton.click();
+    await estable();
+
+    expect(atras).toHaveBeenCalledTimes(1);
   });
 
   // ======================================
