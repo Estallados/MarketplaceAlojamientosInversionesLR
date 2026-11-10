@@ -59,8 +59,6 @@ import tools.jackson.databind.ObjectMapper;
 @Tag(name = "Alojamientos", description = "Publicaciones de alojamiento")
 public class AlojamientoController {
 
-	/** Orden de los listados: los más recientes primero. */
-	private static final Sort RECIENTES = Sort.by("fechaCreacion").descending();
 	/** Orden por defecto de la búsqueda: los más recientes primero. */
 	private static final Sort RECIENTES = Sort.by(Sort.Order.desc("fechaCreacion"), Sort.Order.desc("idAlojamiento"));
 

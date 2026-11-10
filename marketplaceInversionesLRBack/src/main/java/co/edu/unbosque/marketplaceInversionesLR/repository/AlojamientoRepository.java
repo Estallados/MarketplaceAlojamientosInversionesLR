@@ -51,6 +51,8 @@ public interface AlojamientoRepository extends JpaRepository<Alojamiento, Long>,
 	 * @return página de alojamientos
 	 */
 	Page<Alojamiento> findByIdAnfitrion(Long idAnfitrion, Pageable pageable);
+
+	/**
 	 * Cantidad de alojamientos por tipo, en orden alfabético, para los filtros
 	 * de la página de inicio (HU-23).
 	 *

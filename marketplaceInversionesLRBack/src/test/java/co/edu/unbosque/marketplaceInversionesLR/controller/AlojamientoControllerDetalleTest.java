@@ -48,7 +48,7 @@ class AlojamientoControllerDetalleTest {
 	@DisplayName("CA-103 Mis publicaciones usa el anfitrión del token y ordena de la más reciente a la más antigua")
 	void misPublicaciones_CA103() {
 		PaginaDTO<AlojamientoDTO> pagina = new PaginaDTO<>();
-		when(publicacionService.mios(21L, PageRequest.of(1, 5, Sort.by("fechaCreacion").descending())))
+		when(publicacionService.mios(21L, PageRequest.of(1, 5, Sort.by(Sort.Order.desc("fechaCreacion"), Sort.Order.desc("idAlojamiento")))))
 				.thenReturn(pagina);
 
 		ResponseEntity<Object> respuesta = controlador.mios(sesion(21L, "ROLE_ANFITRION"), 1, 5);
