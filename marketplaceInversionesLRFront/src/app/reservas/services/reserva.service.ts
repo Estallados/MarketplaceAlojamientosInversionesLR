@@ -1,9 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 import { API_URL } from '../../core/services/api-url';
 import { Reserva, ReservaEntrada } from '../models/reserva';
+
+/** Resultado de POST /reservas. */
+export interface ReservaCreada {
+
+  reserva: Reserva;
+
+  /** true si el backend devolvió la respuesta guardada de una petición repetida. */
+  repetida: boolean;
+}
 
 // ======================================
 // SERVICIO DE RESERVAS (S07)
@@ -40,11 +49,20 @@ export class ReservaService {
   crear(
     entrada: ReservaEntrada,
     claveIdempotencia: string
-  ): Observable<Reserva> {
+  ): Observable<ReservaCreada> {
 
-    return this.http.post<Reserva>(this.apiUrl, entrada, {
-      headers: { 'Idempotency-Key': claveIdempotencia }
-    });
+    return this.http
+      .post<Reserva>(this.apiUrl, entrada, {
+        headers: { 'Idempotency-Key': claveIdempotencia },
+        observe: 'response'
+      })
+      .pipe(
+        map(respuesta => ({
+          reserva: respuesta.body as Reserva,
+          // Idempotent-Replayed: true si es la respuesta guardada de un reintento (CA-141).
+          repetida: respuesta.headers.get('Idempotent-Replayed') === 'true'
+        }))
+      );
   }
 
   /** Clave nueva para un intento de reserva (1 a 100 caracteres según el contrato). */

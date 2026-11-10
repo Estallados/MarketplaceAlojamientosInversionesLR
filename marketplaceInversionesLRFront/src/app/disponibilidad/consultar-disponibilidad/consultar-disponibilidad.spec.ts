@@ -270,10 +270,19 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
 
     expect(continuar.disabled).toBe(false);
 
+    // El siguiente paso es la reserva (HU-22); aquí solo se verifica a dónde lleva.
+    const navegar = vi
+      .spyOn(TestBed.inject(Router), 'navigate')
+      .mockResolvedValue(true);
+
     continuar.click();
     await estable();
 
     expect(emitidas).toEqual([{ idAlojamiento: 41, llegada, salida }]);
+    expect(navegar).toHaveBeenCalledWith(
+      ['/alojamientos', 41, 'reservar'],
+      { queryParams: { llegada, salida } }
+    );
   });
 
   it('CA-119 invalida el resultado disponible si el huésped cambia las fechas después de consultar', async () => {

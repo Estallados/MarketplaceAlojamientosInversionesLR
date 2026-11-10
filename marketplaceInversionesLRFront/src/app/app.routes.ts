@@ -122,5 +122,21 @@ export const routes: Routes = [
         .then(m => m.ConsultarDisponibilidad)
   },
 
+  // ====================================
+  // CREAR RESERVA CON BLOQUEO AUTOMÁTICO DE FECHAS (HU-22)
+  // SOLO HUÉSPED: POST /reservas exige el rol HUESPED.
+  // Recibe ?llegada=&salida= (y opcional &huespedes=) desde HU-21.
+  // Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'alojamientos/:id/reservar',
+    loadComponent: () =>
+      import('./reservas/confirmar-reserva/confirmar-reserva')
+        .then(m => m.ConfirmarReserva),
+    canActivate: [roleGuard],
+    data: { roles: ['Huésped'] }
+  },
+
   { path: '**', redirectTo: 'login' }
 ];

@@ -22,6 +22,7 @@ import { DisponibilidadService } from '../services/disponibilidad.service';
 import {
   diaSiguiente,
   erroresFechas,
+  fechaLegible,
   hoyLocal,
   noches
 } from '../validaciones/fechas-estadia';
@@ -275,11 +276,19 @@ export class ConsultarDisponibilidad implements OnInit {
       return;
     }
 
-    this.continuar.emit({
+    const fechas: FechasEstadia = {
       idAlojamiento: id,
       llegada: this.llegada(),
       salida: this.salida()
-    });
+    };
+
+    this.continuar.emit(fechas);
+
+    // Siguiente paso: cotizar y confirmar la reserva (HU-22).
+    void this.router.navigate(
+      ['/alojamientos', id, 'reservar'],
+      { queryParams: { llegada: fechas.llegada, salida: fechas.salida } }
+    );
   }
 
   // ======================================
@@ -289,17 +298,7 @@ export class ConsultarDisponibilidad implements OnInit {
   /** Muestra AAAA-MM-DD como fecha legible sin cambiar de día por la zona horaria. */
   fechaLegible(valor: string): string {
 
-    const [anio, mes, dia] = valor.split('-').map(Number);
-
-    if (!anio || !mes || !dia) {
-      return valor;
-    }
-
-    return new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    return fechaLegible(valor);
   }
 
   private cancelarConsulta(): void {
