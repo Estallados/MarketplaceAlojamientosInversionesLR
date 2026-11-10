@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.TokenRecuperacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
@@ -42,6 +43,9 @@ class AuthServiceTest {
 
 	/** Contraseña nueva que cumple las reglas. */
 	private static final String NUEVA = "Nueva#2026";
+
+	/** Contraseña actual de la cuenta que se reactiva. */
+	private static final String CLAVE = "Segura#2026";
 
 	/** Token dentro del cuerpo del correo (línea con sangría). */
 	private static final Pattern TOKEN = Pattern.compile("\\n {4}(\\S+)\\r?\\n");
@@ -181,6 +185,79 @@ class AuthServiceTest {
 		assertThat(servicio.restablecerContrasenia("token", null)).isEqualTo(2);
 		assertThat(servicio.restablecerContrasenia("token", " ")).isEqualTo(2);
 		assertThat(servicio.restablecerContrasenia("token", "debil")).isEqualTo(3);
+	}
+
+	@Test
+	@DisplayName("CA-050 Con credenciales correctas una cuenta inactiva vuelve a ACTIVO")
+	void reactivaLaCuenta_CA050() {
+		cuentaConCredenciales(EstadoUsuario.INACTIVO, true);
+
+		assertThat(servicio.reactivarCuenta(" ANA@correo.com ", CLAVE)).isZero();
+
+		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.ACTIVO);
+		verify(usuarioRepo).save(usuario);
+	}
+
+	@Test
+	@DisplayName("Con la contraseña incorrecta no se reactiva la cuenta")
+	void reactivarConContraseniaIncorrecta() {
+		cuentaConCredenciales(EstadoUsuario.INACTIVO, false);
+
+		assertThat(servicio.reactivarCuenta(CORREO, CLAVE)).isEqualTo(1);
+
+		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.INACTIVO);
+		verify(usuarioRepo, never()).save(usuario);
+	}
+
+	@Test
+	@DisplayName("Un correo no registrado responde como credenciales inválidas")
+	void reactivarCorreoNoRegistrado() {
+		when(usuarioRepo.findByCorreoHash(anyString())).thenReturn(Optional.empty());
+
+		assertThat(servicio.reactivarCuenta("nadie@correo.com", CLAVE)).isEqualTo(1);
+	}
+
+	@Test
+	@DisplayName("Una cuenta restringida por un administrador no puede reactivarse sola")
+	void cuentaRestringidaNoSeReactiva() {
+		cuentaConCredenciales(EstadoUsuario.RESTRINGIDO, true);
+
+		assertThat(servicio.reactivarCuenta(CORREO, CLAVE)).isEqualTo(3);
+
+		assertThat(usuario.getEstado()).isEqualTo(EstadoUsuario.RESTRINGIDO);
+		verify(usuarioRepo, never()).save(usuario);
+	}
+
+	@Test
+	@DisplayName("Una cuenta que ya está activa no se vuelve a reactivar")
+	void cuentaActivaNoSeReactiva() {
+		cuentaConCredenciales(EstadoUsuario.ACTIVO, true);
+
+		assertThat(servicio.reactivarCuenta(CORREO, CLAVE)).isEqualTo(4);
+
+		verify(usuarioRepo, never()).save(usuario);
+	}
+
+	@Test
+	@DisplayName("Sin correo o sin contraseña se informa que faltan datos")
+	void reactivarSinDatos() {
+		assertThat(servicio.reactivarCuenta(null, CLAVE)).isEqualTo(2);
+		assertThat(servicio.reactivarCuenta(" ", CLAVE)).isEqualTo(2);
+		assertThat(servicio.reactivarCuenta(CORREO, null)).isEqualTo(2);
+		assertThat(servicio.reactivarCuenta(CORREO, " ")).isEqualTo(2);
+	}
+
+	/**
+	 * Deja la cuenta de prueba en un estado y simula la comparación de su
+	 * contraseña.
+	 *
+	 * @param estado      estado de la cuenta
+	 * @param coincide    resultado de comparar la contraseña
+	 */
+	private void cuentaConCredenciales(EstadoUsuario estado, boolean coincide) {
+		usuario.setEstado(estado);
+		cuentaExistente();
+		when(passwordEncoder.matches(CLAVE, "hash-anterior")).thenReturn(coincide);
 	}
 
 	/**

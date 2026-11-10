@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.TokenRecuperacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
@@ -22,7 +23,8 @@ import co.edu.unbosque.marketplaceInversionesLR.util.AESUtil;
 import co.edu.unbosque.marketplaceInversionesLR.util.CorreoUtil;
 
 /**
- * Operaciones de cuenta que no requieren sesión: recuperar la contraseña.
+ * Operaciones de cuenta que no requieren sesión: recuperar la contraseña y
+ * reactivar una cuenta que su dueño desactivó.
  * <p>
  * Recuperación: el token se envía por correo al usuario, vence a los 30
  * minutos y sirve una sola vez. Si el correo no se puede enviar (por ejemplo,
@@ -174,6 +176,40 @@ public class AuthService {
 
 		auditoriaService.registrar(usuario.getIdUsuario(), AuditoriaService.CONTRASENIA_RESTABLECIDA,
 				AuditoriaService.ENTIDAD_USUARIO, usuario.getIdUsuario(), ResultadoAuditoria.EXITOSO, null);
+		return 0;
+	}
+
+	/**
+	 * Reactiva una cuenta que su dueño desactivó, validando sus credenciales.
+	 * Una cuenta RESTRINGIDA por un administrador no puede reactivarse sola.
+	 *
+	 * @param correo correo de la cuenta
+	 * @param contrasenia contraseña actual
+	 * @return 0 si se reactivó; 1 si las credenciales no son válidas; 2 si
+	 *         faltan datos; 3 si un administrador la restringió; 4 si ya estaba
+	 *         activa
+	 */
+	@Transactional
+	public int reactivarCuenta(String correo, String contrasenia) {
+		if (correo == null || correo.isBlank() || contrasenia == null || contrasenia.isBlank()) {
+			return 2;
+		}
+
+		Optional<Usuario> usuarioOpt = usuarioRepo.findByCorreoHash(UsuarioService.hashCorreo(correo));
+		if (usuarioOpt.isEmpty() || !passwordEncoder.matches(contrasenia, usuarioOpt.get().getContrasenia())) {
+			return 1;
+		}
+
+		Usuario usuario = usuarioOpt.get();
+		if (usuario.getEstado() == EstadoUsuario.RESTRINGIDO) {
+			return 3;
+		}
+		if (usuario.getEstado() == EstadoUsuario.ACTIVO) {
+			return 4;
+		}
+
+		usuario.setEstado(EstadoUsuario.ACTIVO);
+		usuarioRepo.save(usuario);
 		return 0;
 	}
 

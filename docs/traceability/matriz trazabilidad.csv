@@ -82,9 +82,15 @@ CA-049;RF-011;Actualización de perfil;Proteger perfil;Dado que el usuario está a
 CP-010 Actualización de perfil con datos inválidos
 CP-011 Acceso o modificación de información de otro usuario";PerfilUsuarioTest#noModificaOtraCuenta_CA049;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
 CA-050;RF-012;Activación y desactivación de cuenta;Cambio y visualización del estado de la cuenta;Dado que la cuenta del usuario se encuentra en estado ACTIVA o INACTIVA, cuando el usuario solicita cambiar su estado, entonces el sistema debe actualizarla al estado contrario correspondiente (de ACTIVA a INACTIVA o de INACTIVA a ACTIVA) y mostrar el nuevo estado.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
-CP-012 Activación y desactivación de cuenta";IdentidadPerfilTest#debeDesactivarYReactivarLaCuentaPropiaMostrandoElEstado_CA050_CA052;;38a9302;;;;
+CP-012 Activación y desactivación de cuenta";"EstadoCuentaTest#cambiaAlEstadoContrario_CA050
+EstadoCuentaControllerTest#desactivaYMuestraElEstado_CA050
+EstadoCuentaControllerTest#reactivaYMuestraElEstado_CA050
+PerfilUsuarioServiceTest#desactivaLaCuenta_CA050
+AuthServiceTest#reactivaLaCuenta_CA050";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;;
 CA-053;RF-012;Activación y desactivación de cuenta;Proteger estado;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la operación.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
-CP-012 Activación y desactivación de cuenta";IdentidadPerfilTest#unUsuarioNoPuedeConsultarNiModificarOtraCuenta_CA049_CA053_CA133;;38a9302;;;;
+CP-012 Activación y desactivación de cuenta";"EstadoCuentaTest#noCambiaOtraCuenta_CA053
+EstadoCuentaControllerTest#desactivaLaCuentaDelToken_CA053
+PerfilUsuarioServiceTest#soloDesactivaLaCuentaDelToken_CA053";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;;
 CA-054;RF-013;Bloqueo de publicaciones;Bloqueo administrativo de publicación;Dado que un administrador identifica una publicación que incumple las políticas de la plataforma, cuando solicita bloquearla, entonces el sistema debe cambiar su estado a BLOQUEADA, impedir nuevas reservas y excluirla de los resultados de búsqueda.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
 CP-023 Conservación de reservas al bloquear publicación";AdministracionTest#bloquearCambiaABloqueadaYLaOcultaDeLasBusquedas_CA054_CA055_CA111;;38a9302;;;;
 CA-058;RF-014;Restricción de usuarios;Restringir y mostrar restricción;Dado que el administrador consulta un usuario, cuando aplica una restricción, entonces el sistema registra y aplica la restricción y la muestra al consultar el estado de la cuenta.;HU-12;CU-010;"CP-051 Restricción de usuario

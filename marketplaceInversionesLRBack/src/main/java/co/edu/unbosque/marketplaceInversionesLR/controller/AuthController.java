@@ -24,6 +24,7 @@ import co.edu.unbosque.marketplaceInversionesLR.dto.LoginDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.RestablecerContraseniaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.VerificacionCorreoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
@@ -469,6 +470,55 @@ public class AuthController {
 		case 3 -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, MENSAJE_CONTRASENIA_DEBIL);
 		default -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el token y la contraseña nueva.");
 		};
+	}
+
+	/**
+	 * Reactiva una cuenta desactivada por su dueño e inicia sesión (HU-10,
+	 * CA-050). Ruta: {@code POST /auth/reactivar}.
+	 *
+	 * @param credenciales DTO con {@code correo} y {@code contrasenia}
+	 * @return 200 con {message, token, rol, correo, estado}; 400 si faltan
+	 *         datos; 401 si las credenciales son inválidas; 403 si un
+	 *         administrador restringió la cuenta; 409 si la cuenta ya estaba
+	 *         activa
+	 */
+	@Operation(summary = "Reactivar la cuenta propia", description = "Una cuenta restringida por un administrador no puede reactivarse por esta vía.")
+	@ApiResponse(responseCode = "200", description = "Cuenta reactivada: {message, token, rol, correo, estado}")
+	@ApiResponse(responseCode = "400", description = "Debes enviar el correo y la contraseña.")
+	@ApiResponse(responseCode = "401", description = "Correo o contraseña inválidos.")
+	@ApiResponse(responseCode = "403", description = "La cuenta fue restringida por un administrador y no puede "
+			+ "reactivarse.")
+	@ApiResponse(responseCode = "409", description = "La cuenta ya está activa.")
+	@PostMapping("/reactivar")
+	public ResponseEntity<Object> reactivar(@RequestBody UsuarioDTO credenciales) {
+		return switch (authService.reactivarCuenta(credenciales.getCorreo(), credenciales.getContrasenia())) {
+		case 0 -> respuestaReactivada(
+				userDetailsService.loadUserByUsername(UsuarioService.normalizarCorreo(credenciales.getCorreo())));
+		case 1 -> RespuestaUtil.mensaje(HttpStatus.UNAUTHORIZED, "Correo o contraseña inválidos.");
+		case 3 -> RespuestaUtil.mensaje(HttpStatus.FORBIDDEN,
+				"La cuenta fue restringida por un administrador y no puede reactivarse.");
+		case 4 -> RespuestaUtil.mensaje(HttpStatus.CONFLICT, "La cuenta ya está activa.");
+		default -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, "Debes enviar el correo y la contraseña.");
+		};
+	}
+
+	/**
+	 * Respuesta de una cuenta reactivada, con su nuevo estado. Si la cuenta
+	 * tiene segundo factor no se entrega token aquí: debe iniciar sesión con
+	 * su código.
+	 *
+	 * @param usuario cuenta reactivada
+	 * @return 200 con {message, token, rol, correo, estado}, o sin token si
+	 *         tiene segundo factor
+	 */
+	private ResponseEntity<Object> respuestaReactivada(UserDetails usuario) {
+		if (usuario instanceof Usuario u && SegundoFactorService.estaHabilitado(u)) {
+			return ResponseEntity.ok(Map.of("message", "Cuenta reactivada correctamente. Inicia sesión con tu código.",
+					"estado", EstadoUsuario.ACTIVO.name()));
+		}
+		Map<String, String> respuesta = cuerpoConToken(usuario, "Cuenta reactivada correctamente.");
+		respuesta.put("estado", EstadoUsuario.ACTIVO.name());
+		return ResponseEntity.ok(respuesta);
 	}
 
 	/**
