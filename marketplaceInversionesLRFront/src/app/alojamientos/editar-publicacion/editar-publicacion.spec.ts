@@ -387,6 +387,87 @@ describe('EditarPublicacion (HU-16)', () => {
   });
 
   // ======================================
+  // CA-100 TARIFAS PROPIAS DEL ALOJAMIENTO (RF-023)
+  // ======================================
+
+  /** Propietario con una publicación que ya tiene tarifa de limpieza propia. */
+  async function abrirConTarifas(): Promise<void> {
+    await abrir('/host/alojamientos/41/editar', {
+      ...publicacion,
+      // Sin porcentajeServicio: usa la tarifa general.
+      porcentajeLimpieza: 5
+    });
+    await responderPerfil(7);
+    await responderPoliticas();
+  }
+
+  function tarifaActual(campoTarifa: string): string {
+    return elemento()
+      .querySelector(`[data-tarifa-actual="${campoTarifa}"]`)
+      ?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  }
+
+  it('CA-100 muestra las tarifas actuales del alojamiento y guarda las nuevas con el PUT de la publicación', async () => {
+
+    await abrirConTarifas();
+
+    expect(campo('porcentajeLimpieza').value).toBe('5');
+    expect(campo('porcentajeServicio').value).toBe('');
+    expect(tarifaActual('porcentajeLimpieza')).toBe('Actual: 5%');
+    expect(tarifaActual('porcentajeServicio')).toBe('Actual: Sin definir');
+
+    await escribir('porcentajeLimpieza', '8');
+    await escribir('porcentajeServicio', '12.5');
+
+    await pulsar('[data-guardar]');
+
+    const actualizar = http.expectOne(`${url}/41`);
+    expect(actualizar.request.method).toBe('PUT');
+    expect(actualizar.request.body.porcentajeLimpieza).toBe(8);
+    expect(actualizar.request.body.porcentajeServicio).toBe(12.5);
+
+    actualizar.flush({ ...publicacion, porcentajeLimpieza: 8, porcentajeServicio: 12.5 });
+    await estable();
+
+    expect(confirmacion()).toBe('Los cambios de la publicación se guardaron correctamente.');
+    expect(tarifaActual('porcentajeLimpieza')).toBe('Actual: 8%');
+    expect(tarifaActual('porcentajeServicio')).toBe('Actual: 12.5%');
+  });
+
+  it('CA-100 valida que las tarifas estén entre 0 y 100 y no envía una tarifa vacía', async () => {
+
+    await abrirConTarifas();
+
+    await escribir('porcentajeLimpieza', '150');
+    expect(errorCampo('porcentajeLimpieza')).toBe('La tarifa de limpieza debe ser un porcentaje entre 0 y 100.');
+
+    await escribir('porcentajeServicio', '-1');
+    expect(errorCampo('porcentajeServicio')).toBe('La tarifa de servicio debe ser un porcentaje entre 0 y 100.');
+
+    await pulsar('[data-guardar]');
+    expect(alerta()).toBe('Revisa los datos marcados antes de guardar.');
+    http.expectNone(`${url}/41`);
+
+    // Una tarifa ya registrada no se puede vaciar: el PUT conserva los valores en null.
+    await escribir('porcentajeLimpieza', '');
+    expect(errorCampo('porcentajeLimpieza')).toBe('Este dato ya estaba registrado; indica un valor.');
+
+    // La de servicio no estaba definida: vacía sigue usando la tarifa general.
+    await escribir('porcentajeLimpieza', '0');
+    await escribir('porcentajeServicio', '');
+    expect(errorCampo('porcentajeLimpieza')).toBeNull();
+    expect(errorCampo('porcentajeServicio')).toBeNull();
+
+    await pulsar('[data-guardar]');
+
+    const actualizar = http.expectOne(`${url}/41`);
+    expect(actualizar.request.body.porcentajeLimpieza).toBe(0);
+    expect(actualizar.request.body).not.toHaveProperty('porcentajeServicio');
+    actualizar.flush({ ...publicacion, porcentajeLimpieza: 0 });
+    await estable();
+  });
+
+  // ======================================
   // CA-101 RESTRICCIÓN PARA NO AUTORIZADOS
   // ======================================
 
