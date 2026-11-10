@@ -75,6 +75,8 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 */
 	List<Reserva> findByIdAlojamientoAndFechaEntradaAfterAndEstadoIn(Long idAlojamiento, LocalDate fecha,
 			Collection<EstadoReserva> estados);
+
+	/**
 	 * Reservas de un huésped, en cualquier estado (detalle de usuario del
 	 * administrador, HU-12).
 	 *
