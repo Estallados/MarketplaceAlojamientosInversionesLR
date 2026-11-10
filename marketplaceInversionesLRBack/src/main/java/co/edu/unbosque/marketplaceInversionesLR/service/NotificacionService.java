@@ -22,6 +22,12 @@ public class NotificacionService {
 	/** El administrador rechazó una publicación (HU-32, CA-195). */
 	public static final String ALOJAMIENTO_RECHAZADO = "ALOJAMIENTO_RECHAZADO";
 
+	/** Se confirmó una reserva; la reciben el huésped y el anfitrión (HU-22). */
+	public static final String RESERVA_CONFIRMADA = "RESERVA_CONFIRMADA";
+
+	/** El pago de una reserva se rechazó o falló (CA-162). */
+	public static final String PAGO_NO_CONFIRMADO = "PAGO_NO_CONFIRMADO";
+
 	/** Repositorio de notificaciones. */
 	private final NotificacionRepository notificacionRepo;
 

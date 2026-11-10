@@ -11,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
@@ -59,17 +60,48 @@ class ManejadorGlobalExcepcionesTest {
 		assertError(manejador.tipoContenidoNoSoportado(new HttpMediaTypeNotSupportedException("text/plain")),
 				HttpStatus.UNSUPPORTED_MEDIA_TYPE);
 		assertError(manejador.rutaNoEncontrada(), HttpStatus.NOT_FOUND);
-		assertError(manejador.conflictoDeDatos(new DataIntegrityViolationException("duplicado")), HttpStatus.CONFLICT);
 	}
 
 	@Test
 	@DisplayName("CA-072 Si Neon rechaza dos reservas cruzadas, el 409 dice que otra reserva tomó el período")
 	void cruceDeReservas_CA072() {
 		ResponseEntity<Object> respuesta = manejador.conflictoDeDatos(new DataIntegrityViolationException("error",
-				new IllegalStateException("violates exclusion constraint \"ex_reserva_sin_cruces\"")));
+				new IllegalStateException("violates exclusion constraint \"ex_reserva_sin_cruces\"")), peticion());
 
 		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
 		assertThat(respuesta.getBody()).isEqualTo(Map.of("message", ReservaService.PERIODO_TOMADO));
+	}
+
+	@Test
+	@DisplayName("Un duplicado o un cruce de otra restricción de exclusión responde 409 sin auditarse como error")
+	void duplicadoOCruce() {
+		ResponseEntity<Object> duplicado = manejador.conflictoDeDatos(new DataIntegrityViolationException("error",
+				new SQLException("duplicate key value violates unique constraint", "23505")), peticion());
+		ResponseEntity<Object> cruce = manejador.conflictoDeDatos(new DataIntegrityViolationException("error",
+				new SQLException("conflicting key value violates exclusion constraint", "23P01")), peticion());
+
+		assertThat(duplicado.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(duplicado.getBody()).isEqualTo(Map.of("message", ManejadorGlobalExcepciones.REGISTRO_EXISTE));
+		assertThat(cruce.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		verify(auditoriaService, never()).registrar(any(), anyString(), any(), any(), any(), any());
+	}
+
+	@Test
+	@DisplayName("CA-136 Si un trigger de Neon rechaza la operación, no se esconde como duplicado: 500 y auditoría")
+	void triggerDeNeonNoEsDuplicado_CA136() {
+		ResponseEntity<Object> respuesta = manejador.conflictoDeDatos(new DataIntegrityViolationException("error",
+				new SQLException("Una reserva nueva empieza en PENDIENTE_PAGO (recibido: CONFIRMADA)", "23514")),
+				peticion());
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+		assertThat(respuesta.getBody()).isEqualTo(Map.of("message", ManejadorGlobalExcepciones.ERROR_INESPERADO));
+		verify(auditoriaService).registrar(isNull(), eq(AuditoriaService.ERROR_INTERNO), isNull(), isNull(),
+				eq(ResultadoAuditoria.ERROR), eq("POST /reservas: DataIntegrityViolationException"));
+	}
+
+	/** Petición de ejemplo para los errores de datos. */
+	private static MockHttpServletRequest peticion() {
+		return new MockHttpServletRequest("POST", "/reservas");
 	}
 
 	@Test

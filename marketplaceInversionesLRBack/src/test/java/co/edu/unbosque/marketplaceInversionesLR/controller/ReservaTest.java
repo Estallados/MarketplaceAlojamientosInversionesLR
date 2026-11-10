@@ -52,6 +52,7 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
+import co.edu.unbosque.marketplaceInversionesLR.service.PagoService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 import co.edu.unbosque.marketplaceInversionesLR.util.AESUtil;
@@ -125,13 +126,15 @@ class ReservaTest {
 	}
 
 	/**
-	 * Borra en orden de llaves foráneas: cotizaciones y reservas antes que los
-	 * alojamientos, y estos antes que los usuarios.
+	 * Borra en orden de llaves foráneas: cotizaciones, pagos y reservas antes
+	 * que los alojamientos, y estos antes que los usuarios.
 	 */
 	@AfterEach
 	void limpiar() {
 		cotizacionRepository.deleteAll();
+		jdbc.update("DELETE FROM pago");
 		reservaRepository.deleteAll();
+		jdbc.update("DELETE FROM notificacion");
 		periodoRepository.deleteAll();
 		jdbc.update("DELETE FROM historial_estado_alojamiento");
 		jdbc.update("DELETE FROM alojamiento_amenidad");
@@ -163,8 +166,16 @@ class ReservaTest {
 				.andExpect(jsonPath("$.idCotizacion").value(idCotizacion))
 				.andExpect(jsonPath("$.fechaEntrada").value(BASE.toString()))
 				.andExpect(jsonPath("$.fechaSalida").value(BASE.plusDays(3).toString()))
-				.andExpect(jsonPath("$.tituloAlojamiento").value("Casa en el lago"));
+				.andExpect(jsonPath("$.tituloAlojamiento").value("Casa en el lago"))
+				.andExpect(jsonPath("$.pago.estado").value("APROBADO"))
+				.andExpect(jsonPath("$.pago.proveedor").value(PagoService.PROVEEDOR_SIMULADO))
+				.andExpect(jsonPath("$.pago.valor").value(690000))
+				.andExpect(jsonPath("$.pago.metodo").value(PagoService.METODO_POR_DEFECTO));
 
+		assertThat(jdbc.queryForObject("SELECT estado FROM pago", String.class)).isEqualTo("APROBADO");
+		// Avisos al huésped y al anfitrión
+		assertThat(jdbc.queryForObject("SELECT count(*) FROM notificacion WHERE tipo = 'RESERVA_CONFIRMADA'",
+				Integer.class)).isEqualTo(2);
 		assertThat(reservaRepository.findAll()).singleElement().satisfies(r -> {
 			assertThat(r.getEstado()).isEqualTo(EstadoReserva.CONFIRMADA);
 			assertThat(r.getTotal()).isEqualByComparingTo("690000");
@@ -188,6 +199,42 @@ class ReservaTest {
 		// El día de salida queda libre para la siguiente reserva
 		cotizar(jwtUtil.generateToken(otro), BASE.plusDays(3), BASE.plusDays(5), 1)
 				.andExpect(status().isCreated());
+	}
+
+	@Test
+	@DisplayName("CA-162 Si el pago se rechaza o falla, la reserva queda CANCELADA, las fechas siguen libres y la "
+			+ "cotización sirve con otro método")
+	void pagoNoAprobado_CA162() throws Exception {
+		Long idCotizacion = idCotizacion(cotizar(tokenHuesped, BASE, BASE.plusDays(2), 1)
+				.andReturn().getResponse().getContentAsString());
+
+		reservar(tokenHuesped, idCotizacion, "pm_card_chargeDeclined")
+				.andExpect(status().isPaymentRequired())
+				.andExpect(jsonPath("$.message").value(ReservaService.PAGO_RECHAZADO
+						+ "La tarjeta fue rechazada por el banco." + ReservaService.SIN_PAGAR))
+				.andExpect(jsonPath("$.dato.estado").value("CANCELADA"))
+				.andExpect(jsonPath("$.dato.pago.estado").value("RECHAZADO"));
+		reservar(tokenHuesped, idCotizacion, "pm_card_error")
+				.andExpect(status().isBadGateway())
+				.andExpect(jsonPath("$.dato.estado").value("CANCELADA"))
+				.andExpect(jsonPath("$.dato.pago.estado").value("ERROR"));
+		reservar(tokenHuesped, idCotizacion, "tarjeta 4242")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PagoService.METODO_INVALIDO));
+
+		// Las canceladas no ocupan fechas y la cotización sigue libre
+		mockMvc.perform(get("/alojamientos/" + idAlojamiento + "/disponibilidad/consultar")
+				.param("llegada", BASE.toString()).param("salida", BASE.plusDays(2).toString()))
+				.andExpect(jsonPath("$.disponible").value(true));
+		assertThat(cotizacionRepository.findById(idCotizacion).orElseThrow().getIdReserva()).isNull();
+
+		reservar(tokenHuesped, idCotizacion, "pm_card_mastercard")
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.estado").value("CONFIRMADA"))
+				.andExpect(jsonPath("$.pago.estado").value("APROBADO"));
+		assertThat(reservaRepository.findAll()).extracting(r -> r.getEstado()).containsExactlyInAnyOrder(
+				EstadoReserva.CANCELADA, EstadoReserva.CANCELADA, EstadoReserva.CONFIRMADA);
+		assertThat(jdbc.queryForObject("SELECT count(*) FROM pago", Integer.class)).isEqualTo(3);
 	}
 
 	@Test
@@ -324,6 +371,12 @@ class ReservaTest {
 	private ResultActions reservar(String token, Long idCotizacion) throws Exception {
 		return mockMvc.perform(post("/reservas").header("Authorization", "Bearer " + token)
 				.contentType(MediaType.APPLICATION_JSON).content("{\"idCotizacion\": " + idCotizacion + "}"));
+	}
+
+	private ResultActions reservar(String token, Long idCotizacion, String metodoPago) throws Exception {
+		return mockMvc.perform(post("/reservas").header("Authorization", "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"idCotizacion\": " + idCotizacion + ", \"metodoPago\": \"" + metodoPago + "\"}"));
 	}
 
 	/**

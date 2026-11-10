@@ -56,4 +56,7 @@ public class ReservaDTO {
 
 	/** Momento en que se creó la reserva. */
 	private LocalDateTime fechaCreacion;
+
+	/** Último pago de la reserva. */
+	private PagoDTO pago;
 }

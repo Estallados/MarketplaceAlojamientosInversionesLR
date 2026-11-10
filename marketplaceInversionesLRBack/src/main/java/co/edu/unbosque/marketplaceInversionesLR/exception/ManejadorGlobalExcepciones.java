@@ -1,5 +1,7 @@
 package co.edu.unbosque.marketplaceInversionesLR.exception;
 
+import java.sql.SQLException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -41,6 +43,15 @@ public class ManejadorGlobalExcepciones {
 
 	/** Mensaje del 500. */
 	public static final String ERROR_INESPERADO = "Ocurrió un error inesperado. Intenta de nuevo.";
+
+	/** Mensaje del 409 por un registro duplicado. */
+	public static final String REGISTRO_EXISTE = "El registro ya existe. Actualiza la página e intenta de nuevo.";
+
+	/** SQLState de PostgreSQL para un valor duplicado (unique_violation). */
+	private static final String SQL_DUPLICADO = "23505";
+
+	/** SQLState de PostgreSQL para un cruce en una restricción de exclusión. */
+	private static final String SQL_CRUCE = "23P01";
 
 	/** Log de la clase. */
 	private static final Logger LOG =LoggerFactory.getLogger(ManejadorGlobalExcepciones.class);
@@ -150,20 +161,46 @@ public class ManejadorGlobalExcepciones {
 
 	/**
 	 * Violación de una restricción de la base de datos que no controló el
-	 * servicio. Si es {@value ReservaService#RESTRICCION_CRUCE_RESERVAS} (dos reservas
-	 * confirmadas sobre las mismas fechas, CA-072), lo dice así.
+	 * servicio. Si es {@value ReservaService#RESTRICCION_CRUCE_RESERVAS} (dos
+	 * reservas confirmadas sobre las mismas fechas, CA-072), lo dice así. Un
+	 * duplicado o un cruce (SQLState 23505 o 23P01) responde 409. Cualquier otra,
+	 * por ejemplo un trigger de Neon que rechaza la operación, es un error del
+	 * backend: responde 500, queda en el log con la causa y en la auditoría, en
+	 * lugar de esconderse como un duplicado.
 	 *
-	 * @param e error de la base de datos
-	 * @return 409
+	 * @param e       error de la base de datos
+	 * @param request petición que se estaba atendiendo
+	 * @return 409 si es un duplicado o un cruce; si no, 500
 	 */
 	@ExceptionHandler(DataIntegrityViolationException.class)
-	public ResponseEntity<Object> conflictoDeDatos(DataIntegrityViolationException e) {
+	public ResponseEntity<Object> conflictoDeDatos(DataIntegrityViolationException e, HttpServletRequest request) {
 		String causa = String.valueOf(e.getMostSpecificCause().getMessage());
-		LOG.warn("Conflicto de datos: {}", causa);
 		if (causa.contains(ReservaService.RESTRICCION_CRUCE_RESERVAS)) {
+			LOG.warn("Conflicto de datos: {}", causa);
 			return RespuestaUtil.mensaje(HttpStatus.CONFLICT, ReservaService.PERIODO_TOMADO);
 		}
-		return RespuestaUtil.mensaje(HttpStatus.CONFLICT, "El registro ya existe. Actualiza la página e intenta de nuevo.");
+		if (esDuplicadoOCruce(e)) {
+			LOG.warn("Conflicto de datos: {}", causa);
+			return RespuestaUtil.mensaje(HttpStatus.CONFLICT, REGISTRO_EXISTE);
+		}
+		return errorInesperado(e, request);
+	}
+
+	/**
+	 * Indica si la violación es un duplicado (SQLState 23505) o un cruce de una
+	 * restricción de exclusión (23P01).
+	 *
+	 * @param e excepción a revisar, con toda su cadena de causas
+	 * @return {@code true} si alguna causa trae uno de esos SQLState
+	 */
+	private static boolean esDuplicadoOCruce(Throwable e) {
+		for (Throwable causa = e; causa != null; causa = causa.getCause()) {
+			if (causa instanceof SQLException sql
+					&& (SQL_DUPLICADO.equals(sql.getSQLState()) || SQL_CRUCE.equals(sql.getSQLState()))) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
