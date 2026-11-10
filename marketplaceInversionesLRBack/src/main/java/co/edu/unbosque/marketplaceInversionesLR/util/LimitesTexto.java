@@ -18,6 +18,9 @@ public final class LimitesTexto {
 	/** Motivo de una decisión del administrador, por ejemplo un rechazo. */
 	public static final int MOTIVO = 500;
 
+	/** Mensaje cuando el motivo supera el máximo. */
+	public static final String MOTIVO_LARGO = "El motivo puede tener máximo " + MOTIVO + " caracteres.";
+
 	/** Texto de una notificación o de un motivo guardado con su prefijo. */
 	public static final int MEDIO = 1000;
 

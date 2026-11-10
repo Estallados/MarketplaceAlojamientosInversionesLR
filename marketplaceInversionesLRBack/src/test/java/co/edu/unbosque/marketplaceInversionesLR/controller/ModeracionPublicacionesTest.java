@@ -29,14 +29,18 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import co.edu.unbosque.marketplaceInversionesLR.ContenedorPostgres;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Notificacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.PeriodoDisponibilidad;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.NotificacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
@@ -75,6 +79,9 @@ class ModeracionPublicacionesTest {
 
 	@Autowired
 	private NotificacionRepository notificacionRepository;
+
+	@Autowired
+	private ReservaRepository reservaRepository;
 
 	@Autowired
 	private AuditoriaService auditoriaService;
@@ -119,6 +126,7 @@ class ModeracionPublicacionesTest {
 	 */
 	@AfterEach
 	void limpiar() {
+		reservaRepository.deleteAll();
 		notificacionRepository.deleteAll();
 		periodoRepository.deleteAll();
 		jdbc.update("DELETE FROM historial_estado_alojamiento");
@@ -247,6 +255,72 @@ class ModeracionPublicacionesTest {
 		decidirSobre(999999L, "aprobar", null).andExpect(status().isNotFound());
 		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
 				.isEqualTo(EstadoAlojamiento.PENDIENTE_REVISION);
+	}
+
+	@Test
+	@DisplayName("CA-054 Al bloquear queda BLOQUEADA, sale de la búsqueda y ya no se puede cotizar para reservar")
+	void bloquea_CA054() throws Exception {
+		decidir("aprobar", null).andExpect(status().isOk());
+		mockMvc.perform(get("/alojamientos")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElementos").value(1));
+
+		decidir("bloquear", null).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PublicacionService.MOTIVO_BLOQUEO));
+		decidir("bloquear", "Publicidad falsa").andExpect(status().isOk())
+				.andExpect(jsonPath("$.estado").value("BLOQUEADA"));
+
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.BLOQUEADA);
+		mockMvc.perform(get("/alojamientos")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElementos").value(0));
+		String tokenHuesped = jwtUtil.generateToken(crearUsuario("huesped@correo.com", Role.HUESPED));
+		mockMvc.perform(post("/cotizaciones").header("Authorization", "Bearer " + tokenHuesped)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("{\"idAlojamiento\":" + idAlojamiento + ",\"fechaEntrada\":\"" + BASE
+						+ "\",\"fechaSalida\":\"" + BASE.plusDays(2) + "\",\"huespedes\":1}"))
+				.andExpect(status().isConflict());
+		decidir("bloquear", "Otra vez").andExpect(status().isConflict());
+	}
+
+	@Test
+	@DisplayName("CA-112 Al bloquear se conservan las reservas futuras en revisión y las pasadas no cambian")
+	void conservaReservas_CA112() throws Exception {
+		decidir("aprobar", null).andExpect(status().isOk());
+		Long idHuesped = crearUsuario("huesped@correo.com", Role.HUESPED).getIdUsuario();
+		Long futura = crearReserva(idHuesped, BASE.plusDays(5), 1L);
+		Long pasada = crearReserva(idHuesped, LocalDate.now().minusDays(10), 2L);
+
+		decidir("bloquear", "Revisión").andExpect(status().isOk());
+
+		assertThat(reservaRepository.findById(futura).orElseThrow().getEstado()).isEqualTo(EstadoReserva.EN_REVISION);
+		assertThat(reservaRepository.findById(pasada).orElseThrow().getEstado()).isEqualTo(EstadoReserva.CONFIRMADA);
+		assertThat(notificacionRepository.findAll()).extracting(Notificacion::getTipo)
+				.contains(NotificacionService.RESERVA_EN_REVISION, NotificacionService.ALOJAMIENTO_BLOQUEADO);
+	}
+
+	@Test
+	@DisplayName("CA-054 Solo el administrador bloquea: el anfitrión recibe 403 y sin token 401")
+	void bloquearSoloAdministrador_CA054() throws Exception {
+		mockMvc.perform(post(RUTA + idAlojamiento + "/bloquear").header("Authorization", "Bearer " + tokenAnfitrion)
+				.contentType(MediaType.APPLICATION_JSON).content("{\"motivo\":\"Motivo\"}"))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(post(RUTA + idAlojamiento + "/bloquear").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"motivo\":\"Motivo\"}")).andExpect(status().isUnauthorized());
+	}
+
+	private Long crearReserva(Long idHuesped, LocalDate entrada, Long idCotizacion) {
+		Reserva reserva = new Reserva();
+		reserva.setIdHuesped(idHuesped);
+		reserva.setIdAlojamiento(idAlojamiento);
+		reserva.setFechaEntrada(entrada);
+		reserva.setFechaSalida(entrada.plusDays(2));
+		reserva.setNoches(2);
+		reserva.setHuespedes(1);
+		reserva.setEstado(EstadoReserva.CONFIRMADA);
+		reserva.setTotal(new BigDecimal("400000"));
+		reserva.setIdCotizacion(idCotizacion);
+		reserva.setFechaCreacion(LocalDateTime.now());
+		return reservaRepository.save(reserva).getIdReserva();
 	}
 
 	private ResultActions decidir(String accion, String motivo) throws Exception {

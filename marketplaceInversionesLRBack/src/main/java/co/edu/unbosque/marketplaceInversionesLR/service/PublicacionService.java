@@ -35,8 +35,10 @@ import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoResena;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.HistorialEstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Imagen;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ServicioAdicional;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoEspecificacion;
@@ -46,6 +48,7 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ResenaRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.service.CloudinaryService.ImagenSubida;
@@ -89,6 +92,9 @@ public class PublicacionService {
 
 	/** Prefijo del motivo que queda en el historial al rechazar. */
 	public static final String RECHAZADA = "Rechazada: ";
+
+	/** Mensaje cuando falta el motivo del bloqueo. */
+	public static final String MOTIVO_BLOQUEO = "El motivo del bloqueo es obligatorio.";
 
 	/** Valor absoluto máximo de la latitud. */
 	private static final int LATITUD_MAXIMA = 90;
@@ -157,6 +163,9 @@ public class PublicacionService {
 	/** Reseñas, para la calificación y los órdenes de la búsqueda. */
 	private final ResenaRepository resenaRepo;
 
+	/** Repositorio de reservas; al bloquear, las futuras pasan a revisión. */
+	private final ReservaRepository reservaRepo;
+
 	/** Valida y guarda las imágenes en Cloudinary. */
 	private final AlmacenamientoService almacenamientoService;
 
@@ -183,6 +192,7 @@ public class PublicacionService {
 	 * @param historialRepo         historial de estados
 	 * @param usuarioRepo           repositorio de usuarios
 	 * @param resenaRepo            repositorio de reseñas
+	 * @param reservaRepo           repositorio de reservas
 	 * @param almacenamientoService servicio de almacenamiento de imágenes
 	 * @param auditoriaService      servicio de auditoría
 	 * @param geocodingService      servicio de coordenadas
@@ -192,7 +202,7 @@ public class PublicacionService {
 	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
 			PeriodoDisponibilidadRepository periodoRepo, ServicioAdicionalRepository servicioRepo,
 			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
-			UsuarioRepository usuarioRepo, ResenaRepository resenaRepo,
+			UsuarioRepository usuarioRepo, ResenaRepository resenaRepo, ReservaRepository reservaRepo,
 			AlmacenamientoService almacenamientoService, AuditoriaService auditoriaService,
 			GeocodingService geocodingService, NotificacionService notificacionService, ModelMapper modelMapper) {
 		this.notificacionService = notificacionService;
@@ -204,6 +214,7 @@ public class PublicacionService {
 		this.historialRepo = historialRepo;
 		this.usuarioRepo = usuarioRepo;
 		this.resenaRepo = resenaRepo;
+		this.reservaRepo = reservaRepo;
 		this.almacenamientoService = almacenamientoService;
 		this.auditoriaService = auditoriaService;
 		this.geocodingService = geocodingService;
@@ -590,6 +601,51 @@ public class PublicacionService {
 		notificacionService.enviar(alojamiento.getIdAnfitrion(), NotificacionService.ALOJAMIENTO_RECHAZADO,
 				"Tu alojamiento \"" + alojamiento.getTitulo() + "\" fue rechazado. Motivo: " + limpio
 						+ ". Corrígelo y vuelve a enviarlo a revisión.");
+		return Resultado.exito(dto);
+	}
+
+	/**
+	 * Cualquier estado → BLOQUEADA (administrador, HU-11), con motivo. Las
+	 * reservas futuras se conservan y pasan a EN_REVISION (CA-112); se le avisa
+	 * al anfitrión y a cada huésped afectado. El cambio queda en el historial y
+	 * en la auditoría.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idAdmin       administrador
+	 * @param motivo        motivo del bloqueo
+	 * @return la publicación; NO_ENCONTRADO, DATOS_INVALIDOS o ESTADO_INVALIDO
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> bloquear(Long idAlojamiento, Long idAdmin, String motivo) {
+		if (motivo == null || motivo.isBlank()) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, MOTIVO_BLOQUEO);
+		}
+		if (LimitesTexto.excede(motivo, LimitesTexto.MOTIVO)) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, LimitesTexto.MOTIVO_LARGO);
+		}
+		Optional<Alojamiento> alojamiento = alojamientoRepo.findById(idAlojamiento);
+		if (alojamiento.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		if (alojamiento.get().getEstado() == EstadoAlojamiento.BLOQUEADA) {
+			return rechazarTransicion(alojamiento.get(), EstadoAlojamiento.BLOQUEADA, idAdmin);
+		}
+
+		List<Reserva> futuras = reservaRepo.findByIdAlojamientoAndFechaEntradaAfterAndEstadoIn(idAlojamiento,
+				LocalDate.now().minusDays(1), List.of(EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE_PAGO));
+		for (Reserva reserva : futuras) {
+			reserva.setEstado(EstadoReserva.EN_REVISION);
+			reservaRepo.save(reserva);
+			notificacionService.enviar(reserva.getIdHuesped(), NotificacionService.RESERVA_EN_REVISION,
+					"Tu reserva " + reserva.getIdReserva() + " quedó en revisión porque el alojamiento fue "
+							+ "bloqueado por un administrador.");
+		}
+
+		AlojamientoDTO dto = cambiarEstado(alojamiento.get(), EstadoAlojamiento.BLOQUEADA, idAdmin,
+				"Bloqueada: " + motivo.trim() + " (" + futuras.size() + " reservas futuras en revisión)");
+		notificacionService.enviar(alojamiento.get().getIdAnfitrion(), NotificacionService.ALOJAMIENTO_BLOQUEADO,
+				"Tu alojamiento \"" + alojamiento.get().getTitulo() + "\" fue bloqueado. Motivo: " + motivo.trim()
+						+ ". Reservas futuras en revisión: " + futuras.size() + ".");
 		return Resultado.exito(dto);
 	}
 

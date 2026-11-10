@@ -28,7 +28,9 @@ import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.HistorialEstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
@@ -36,8 +38,10 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ResenaRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
+import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
 /**
@@ -81,6 +85,9 @@ class PublicacionServiceModeracionTest {
 	private ResenaRepository resenaRepo;
 
 	@Mock
+	private ReservaRepository reservaRepo;
+
+	@Mock
 	private AlmacenamientoService almacenamientoService;
 
 	@Mock
@@ -100,7 +107,7 @@ class PublicacionServiceModeracionTest {
 	@BeforeEach
 	void preparar() {
 		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
-				historialRepo, usuarioRepo, resenaRepo, almacenamientoService, auditoriaService, geocodingService,
+				historialRepo, usuarioRepo, resenaRepo, reservaRepo, almacenamientoService, auditoriaService, geocodingService,
 				notificacionService, new ModelMapper());
 		alojamiento = new Alojamiento();
 		alojamiento.setIdAlojamiento(ID);
@@ -212,6 +219,83 @@ class PublicacionServiceModeracionTest {
 	}
 
 	@Test
+	@DisplayName("CA-054 El administrador bloquea con motivo: queda BLOQUEADA, se avisa al anfitrión y queda auditado")
+	void bloquea_CA054() {
+		alojamiento.setEstado(EstadoAlojamiento.ACTIVA);
+
+		Resultado<AlojamientoDTO> resultado = servicio.bloquear(ID, ADMIN, "  Publicidad falsa  ");
+
+		assertThat(resultado.esExito()).isTrue();
+		assertThat(resultado.getDato().getEstado()).isEqualTo(EstadoAlojamiento.BLOQUEADA);
+		HistorialEstadoAlojamiento historial = historial();
+		assertThat(historial.getEstadoAnterior()).isEqualTo(EstadoAlojamiento.ACTIVA);
+		assertThat(historial.getEstadoNuevo()).isEqualTo(EstadoAlojamiento.BLOQUEADA);
+		assertThat(historial.getMotivo()).isEqualTo("Bloqueada: Publicidad falsa (0 reservas futuras en revisión)");
+		verify(notificacionService).enviar(eq(ANFITRION), eq(NotificacionService.ALOJAMIENTO_BLOQUEADO), anyString());
+		verify(auditoriaService).registrar(ADMIN, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, ID, ResultadoAuditoria.EXITOSO,
+				"ACTIVA -> BLOQUEADA. Bloqueada: Publicidad falsa (0 reservas futuras en revisión)");
+	}
+
+	@Test
+	@DisplayName("CA-112 Al bloquear, las reservas futuras se conservan, quedan EN_REVISION y se avisa a cada huésped")
+	void conservaReservas_CA112() {
+		alojamiento.setEstado(EstadoAlojamiento.ACTIVA);
+		Reserva confirmada = reserva(70L, 31L, EstadoReserva.CONFIRMADA);
+		Reserva pendiente = reserva(71L, 32L, EstadoReserva.PENDIENTE_PAGO);
+		when(reservaRepo.findByIdAlojamientoAndFechaEntradaAfterAndEstadoIn(eq(ID), any(),
+				eq(List.of(EstadoReserva.CONFIRMADA, EstadoReserva.PENDIENTE_PAGO))))
+				.thenReturn(List.of(confirmada, pendiente));
+
+		assertThat(servicio.bloquear(ID, ADMIN, "Revisión").esExito()).isTrue();
+
+		assertThat(confirmada.getEstado()).isEqualTo(EstadoReserva.EN_REVISION);
+		assertThat(pendiente.getEstado()).isEqualTo(EstadoReserva.EN_REVISION);
+		verify(reservaRepo).save(confirmada);
+		verify(reservaRepo).save(pendiente);
+		verify(reservaRepo, never()).delete(any());
+		verify(notificacionService).enviar(eq(31L), eq(NotificacionService.RESERVA_EN_REVISION), anyString());
+		verify(notificacionService).enviar(eq(32L), eq(NotificacionService.RESERVA_EN_REVISION), anyString());
+		assertThat(historial().getMotivo()).isEqualTo("Bloqueada: Revisión (2 reservas futuras en revisión)");
+	}
+
+	@Test
+	@DisplayName("CA-054 Sin motivo, o con uno de más de 500 caracteres, no se bloquea")
+	void bloqueoSinMotivo_CA054() {
+		for (String motivo : new String[] { null, "", "   " }) {
+			assertThat(servicio.bloquear(ID, ADMIN, motivo).getMensaje()).isEqualTo(PublicacionService.MOTIVO_BLOQUEO);
+		}
+		Resultado<AlojamientoDTO> largo = servicio.bloquear(ID, ADMIN, "x".repeat(501));
+
+		assertThat(largo.getCodigo()).isEqualTo(Resultado.DATOS_INVALIDOS);
+		assertThat(largo.getMensaje()).isEqualTo(LimitesTexto.MOTIVO_LARGO);
+		verify(alojamientoRepo, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("CA-054 Bloquear una publicación ya bloqueada se rechaza y queda auditado")
+	void yaBloqueada_CA054() {
+		alojamiento.setEstado(EstadoAlojamiento.BLOQUEADA);
+
+		Resultado<AlojamientoDTO> resultado = servicio.bloquear(ID, ADMIN, "Otra vez");
+
+		assertThat(resultado.getCodigo()).isEqualTo(Resultado.ESTADO_INVALIDO);
+		assertThat(resultado.getMensaje()).isEqualTo("No se puede pasar de BLOQUEADA a BLOQUEADA.");
+		verify(alojamientoRepo, never()).save(any());
+		verify(auditoriaService).registrar(ADMIN, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, ID, ResultadoAuditoria.RECHAZADO,
+				"No se puede pasar de BLOQUEADA a BLOQUEADA.");
+	}
+
+	@Test
+	@DisplayName("CA-054 Bloquear un alojamiento que no existe responde no encontrado")
+	void bloqueoNoExiste_CA054() {
+		when(alojamientoRepo.findById(99L)).thenReturn(Optional.empty());
+
+		assertThat(servicio.bloquear(99L, ADMIN, "Motivo").getCodigo()).isEqualTo(Resultado.NO_ENCONTRADO);
+	}
+
+	@Test
 	@DisplayName("El administrador ve la cola de un estado o todos los alojamientos, paginados")
 	void listaPorEstado() {
 		Pageable pagina = PageRequest.of(0, 20);
@@ -229,6 +313,15 @@ class PublicacionServiceModeracionTest {
 		assertThat(cola.getPagina()).isZero();
 		assertThat(cola.getTamanio()).isEqualTo(20);
 		assertThat(todos.getContenido()).isEmpty();
+	}
+
+	private static Reserva reserva(Long id, Long idHuesped, EstadoReserva estado) {
+		Reserva reserva = new Reserva();
+		reserva.setIdReserva(id);
+		reserva.setIdHuesped(idHuesped);
+		reserva.setIdAlojamiento(ID);
+		reserva.setEstado(estado);
+		return reserva;
 	}
 
 	/**
