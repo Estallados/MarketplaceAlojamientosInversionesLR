@@ -233,8 +233,11 @@ CP-057 Estados permitidos de la publicación
 CP-073 Registro y modificación de servicio adicional";"PublicacionServiceActualizacionTest#propietarioActualiza_CA100
 AlojamientoControllerActualizacionTest#editarResponde200_CA100
 ActualizarPublicacionTest#elPropietarioModificaYVeLosCambios_CA100_CA113
-editar-publicacion.spec.ts#CA-100 carga los datos actuales, valida y guarda la publicación mostrando la información actualizada";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+editar-publicacion.spec.ts#CA-100 carga los datos actuales, valida y guarda la publicación mostrando la información actualizada
+editar-publicacion.spec.ts#CA-100 muestra las tarifas actuales del alojamiento y guarda las nuevas con el PUT de la publicación
+editar-publicacion.spec.ts#CA-100 valida que las tarifas estén entre 0 y 100 y no envía una tarifa vacía";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
+feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+Front-end (SCRUM-111): la edición también actualiza las tarifas propias de limpieza y servicio del alojamiento (0 a 100; vacías usan la tarifa general de HU-24); probado con Vitest (ng test)."
 CA-101;RF-018;Gestión y actualización de publicación;Restricción de modificación;Dado que el usuario no es propietario de la publicación ni administrador, cuando intenta modificarla o modificar sus servicios adicionales, entonces el sistema debe rechazar la operación.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
