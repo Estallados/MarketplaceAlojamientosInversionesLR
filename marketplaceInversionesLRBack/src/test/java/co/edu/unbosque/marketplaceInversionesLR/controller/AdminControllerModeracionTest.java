@@ -81,7 +81,8 @@ class AdminControllerModeracionTest {
 	void rechaza_CA195() {
 		MotivoDTO datos = new MotivoDTO();
 		datos.setMotivo("Fotos borrosas");
-		when(publicacionService.rechazar(20L, ADMIN, "Fotos borrosas")).thenReturn(Resultado.exito(new AlojamientoDTO()));
+		when(publicacionService.rechazar(20L, ADMIN, "Fotos borrosas"))
+				.thenReturn(Resultado.exito(new AlojamientoDTO()));
 		when(publicacionService.rechazar(20L, ADMIN, null))
 				.thenReturn(Resultado.error(Resultado.DATOS_INVALIDOS, PublicacionService.MOTIVO_INVALIDO));
 
@@ -114,7 +115,9 @@ class AdminControllerModeracionTest {
 
 		assertThat(controlador.evento(9L).getBody()).isSameAs(evento);
 		assertThat(controlador.evento(99L).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-=======
+
+	}
+
 	@DisplayName("CA-054 Bloquear envía el motivo y el administrador del token; un motivo inválido responde 400")
 	void bloquea_CA054() {
 		MotivoDTO datos = new MotivoDTO();
