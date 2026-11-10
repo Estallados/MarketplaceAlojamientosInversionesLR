@@ -360,6 +360,56 @@
     </section>
 
     <!-- ====================================== -->
+    <!-- TARIFAS DEL ALOJAMIENTO (RF-023) -->
+    <!-- ====================================== -->
+
+    <section data-tarifas class="mt-10 border-t border-slate-100 pt-8">
+
+      <h2 class="text-xl font-bold text-slate-900">
+        Tarifas del alojamiento
+      </h2>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Porcentajes que se suman al precio base en cada cotización. Si dejas
+        un campo vacío, se aplica la tarifa general configurada en la plataforma.
+      </p>
+
+      <div class="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+        @for (t of tarifas; track t.campo) {
+          <label class="block">
+            <span class="mb-2 block text-sm font-bold">
+              {{ t.etiqueta }} (%)
+            </span>
+            <input
+              [id]="t.campo"
+              [name]="t.campo"
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              [(ngModel)]="draft[t.campo]"
+              (input)="revisarNumero(t.campo, $event)"
+              (blur)="marcarTocado(t.campo)"
+              [placeholder]="'Sin definir'"
+              class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            />
+            <span [attr.data-tarifa-actual]="t.campo" class="mt-2 block text-xs text-slate-500">
+              Actual:
+              {{ alojamiento()?.[t.campo] == null ? 'Sin definir' : alojamiento()?.[t.campo] + '%' }}
+            </span>
+            @if (mostrarError(t.campo)) {
+              <span [attr.data-error]="t.campo" class="mt-2 block text-xs text-red-600">
+                {{ errorCampo(t.campo) }}
+              </span>
+            }
+          </label>
+        }
+
+      </div>
+    </section>
+
+    <!-- ====================================== -->
     <!-- HORARIOS Y REGLAS -->
     <!-- ====================================== -->
 

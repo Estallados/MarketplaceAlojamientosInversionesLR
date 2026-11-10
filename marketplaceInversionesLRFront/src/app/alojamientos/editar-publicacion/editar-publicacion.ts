@@ -35,6 +35,7 @@ import {
   errorCapacidad,
   errorLongitud,
   errorNoNegativo,
+  errorPorcentajeTarifa,
   errorPrecioNoche,
   errorTitulo
 } from '../validaciones/validaciones-alojamiento';
@@ -54,6 +55,10 @@ interface FormularioEdicion {
   camas: number | null;
   banos: number | null;
   precioNoche: number | null;
+  /** Tarifa propia de limpieza (%); vacía usa la general (HU-24). */
+  porcentajeLimpieza: number | null;
+  /** Tarifa propia de servicio (%); vacía usa la general (HU-24). */
+  porcentajeServicio: number | null;
   horaEntrada: string;
   horaSalida: string;
   reglas: string;
@@ -73,6 +78,8 @@ export type CampoEdicion =
   | 'camas'
   | 'banos'
   | 'precioNoche'
+  | 'porcentajeLimpieza'
+  | 'porcentajeServicio'
   | 'reglas';
 
 type CampoNumerico =
@@ -80,7 +87,9 @@ type CampoNumerico =
   | 'habitaciones'
   | 'camas'
   | 'banos'
-  | 'precioNoche';
+  | 'precioNoche'
+  | 'porcentajeLimpieza'
+  | 'porcentajeServicio';
 
 /**
  * Resultado de cargar la publicación:
@@ -110,6 +119,8 @@ const CAMPOS: CampoEdicion[] = [
   'camas',
   'banos',
   'precioNoche',
+  'porcentajeLimpieza',
+  'porcentajeServicio',
   'reglas'
 ];
 
@@ -204,6 +215,12 @@ export class EditarPublicacion implements OnInit {
     'Televisor',
     'Jacuzzi',
     'Admite mascotas'
+  ];
+
+  /** Tarifas propias del alojamiento (RF-023), en el orden en que se muestran. */
+  readonly tarifas: { campo: 'porcentajeLimpieza' | 'porcentajeServicio'; etiqueta: string }[] = [
+    { campo: 'porcentajeLimpieza', etiqueta: 'Tarifa de limpieza' },
+    { campo: 'porcentajeServicio', etiqueta: 'Tarifa de servicio' }
   ];
 
   readonly tipos = [
@@ -322,6 +339,8 @@ export class EditarPublicacion implements OnInit {
       camas: a?.camas ?? null,
       banos: a?.banos ?? null,
       precioNoche: a?.precioNoche ?? null,
+      porcentajeLimpieza: a?.porcentajeLimpieza ?? null,
+      porcentajeServicio: a?.porcentajeServicio ?? null,
       // El backend envía LocalTime (HH:mm:ss); el input usa HH:mm.
       horaEntrada: a?.horaEntrada?.slice(0, 5) ?? '',
       horaSalida: a?.horaSalida?.slice(0, 5) ?? '',
@@ -418,6 +437,14 @@ export class EditarPublicacion implements OnInit {
       case 'precioNoche':
         return this.errorVaciado('precioNoche') ||
           errorPrecioNoche(d.precioNoche, this.noNumericos.has('precioNoche'));
+
+      case 'porcentajeLimpieza':
+        return this.errorVaciado('porcentajeLimpieza') ||
+          errorPorcentajeTarifa('limpieza', d.porcentajeLimpieza, this.noNumericos.has('porcentajeLimpieza'));
+
+      case 'porcentajeServicio':
+        return this.errorVaciado('porcentajeServicio') ||
+          errorPorcentajeTarifa('servicio', d.porcentajeServicio, this.noNumericos.has('porcentajeServicio'));
 
       case 'habitaciones':
         return this.errorVaciado('habitaciones') ||
@@ -607,6 +634,15 @@ export class EditarPublicacion implements OnInit {
 
       ...(d.precioNoche !== null
         ? { precioNoche: d.precioNoche }
+        : {}),
+
+      // Tarifas propias (RF-023): si quedan vacías no se envían y se usa la general.
+      ...(d.porcentajeLimpieza !== null
+        ? { porcentajeLimpieza: d.porcentajeLimpieza }
+        : {}),
+
+      ...(d.porcentajeServicio !== null
+        ? { porcentajeServicio: d.porcentajeServicio }
         : {}),
 
       ...(d.idPolitica !== null

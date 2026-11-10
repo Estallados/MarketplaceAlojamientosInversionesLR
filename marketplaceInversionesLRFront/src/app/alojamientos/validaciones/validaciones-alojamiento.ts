@@ -91,6 +91,41 @@ export function errorPrecioNoche(
   return '';
 }
 
+/**
+ * Tarifa propia del alojamiento (RF-023): porcentaje entre 0 y 100, igual que
+ * valida el backend (PublicacionService). Vacía no es error: se aplica la
+ * tarifa general configurada en HU-24.
+ *
+ * @param nombre "limpieza" o "servicio"
+ */
+export function errorPorcentajeTarifa(
+  nombre: string,
+  valor: number | null,
+  noNumerico = false
+): string {
+
+  const mensaje = `La tarifa de ${nombre} debe ser un porcentaje entre 0 y 100.`;
+
+  if (noNumerico) {
+    return mensaje;
+  }
+
+  if (valor === null) {
+    return '';
+  }
+
+  if (
+    typeof valor !== 'number' ||
+    !Number.isFinite(valor) ||
+    valor < 0 ||
+    valor > 100
+  ) {
+    return mensaje;
+  }
+
+  return '';
+}
+
 /** Habitaciones, camas y baños: entero no negativo. */
 export function errorNoNegativo(
   nombre: string,
