@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -9,12 +10,16 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.CotizacionDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.SolicitudReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CotizacionService;
+import co.edu.unbosque.marketplaceInversionesLR.service.PagoService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,8 +29,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * {@code docs/openapi/reservas-pagos.yaml}.
  * <p>
  * El huésped cotiza ({@code POST /cotizaciones}) y con la cotización vigente
- * reserva ({@code POST /reservas}). La reserva bloquea las fechas de
- * inmediato.
+ * reserva y paga en una sola petición ({@code POST /reservas}). Con el pago
+ * aprobado la reserva bloquea las fechas de inmediato.
  * </p>
  */
 @RestController
@@ -83,20 +88,33 @@ public class ReservaController {
 	}
 
 	/**
-	 * Crea una reserva desde una cotización vigente (solo huéspedes). Revalida
-	 * la disponibilidad antes de confirmar y la reserva queda CONFIRMADA con el
-	 * monto cotizado. Ruta: {@code POST /reservas}.
+	 * Crea y paga una reserva desde una cotización vigente (solo huéspedes).
+	 * Revalida la disponibilidad antes de confirmar; con el pago de prueba
+	 * aprobado la reserva queda CONFIRMADA con el monto cotizado. Ruta:
+	 * {@code POST /reservas}.
 	 *
-	 * @param solicitud      cotización a reservar
+	 * @param solicitud      cotización a reservar y método de pago
 	 * @param authentication huésped autenticado
-	 * @return 201 con la reserva CONFIRMADA; 400, 403, 404 o 409 según el caso
+	 * @return 201 con la reserva CONFIRMADA y su pago; 402 o 502 con la reserva
+	 *         CANCELADA si el pago no se aprobó; 400, 403, 404 o 409 según el
+	 *         caso
 	 */
-	@Operation(summary = "Crear una reserva (HUESPED)", description = "Revalida la disponibilidad justo antes de "
-			+ "confirmar. La reserva queda CONFIRMADA con el monto exacto de la cotización y sus fechas dejan de "
-			+ "estar disponibles para otras reservas.")
+	@Operation(summary = "Crear y pagar una reserva (HUESPED)", description = "Revalida la disponibilidad justo "
+			+ "antes de confirmar. La reserva nace en PENDIENTE_PAGO, se hace el pago de prueba (modo SIMULADO) y, si "
+			+ "se aprueba, queda CONFIRMADA con el monto exacto de la cotización y sus fechas dejan de estar "
+			+ "disponibles. Si el pago se rechaza o falla queda CANCELADA y la cotización se puede usar con otro "
+			+ "método. metodoPago es opcional (por defecto pm_card_visa); pm_card_chargeDeclined simula un rechazo "
+			+ "y pm_card_error una falla de la pasarela.")
 	@PreAuthorize("hasRole('HUESPED')")
-	@ApiResponse(responseCode = "201", description = "Reserva CONFIRMADA (CA-070, CA-075)")
-	@ApiResponse(responseCode = "400", description = ReservaService.FALTA_COTIZACION + " | " + FECHAS_INVALIDAS)
+	@ApiResponse(responseCode = "201", description = "Reserva CONFIRMADA y pagada, con su pago (CA-070, CA-075)",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @Schema(implementation = ReservaDTO.class)))
+	@ApiResponse(responseCode = "400", description = ReservaService.FALTA_COTIZACION + " | "
+			+ PagoService.METODO_INVALIDO + " | " + FECHAS_INVALIDAS)
+	@ApiResponse(responseCode = "402", description = "El pago fue rechazado: La tarjeta fue rechazada por el banco. "
+			+ "La reserva no quedó pagada. (con la reserva CANCELADA en \"dato\")")
+	@ApiResponse(responseCode = "502", description = "No se pudo confirmar el pago: "
+			+ PagoService.FALLA_PASARELA + ReservaService.SIN_PAGAR + " (con la reserva CANCELADA en \"dato\")")
 	@ApiResponse(responseCode = "403", description = ReservaService.PROPIO_ALOJAMIENTO
 			+ " | No tienes permisos para esta operación")
 	@ApiResponse(responseCode = "404", description = ReservaService.COTIZACION_NO_EXISTE + " | "

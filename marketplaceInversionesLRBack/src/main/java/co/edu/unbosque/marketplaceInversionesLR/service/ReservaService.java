@@ -10,12 +10,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.PagoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.SolicitudReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Cotizacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoPago;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Pago;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
@@ -25,30 +28,32 @@ import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 import tools.jackson.databind.ObjectMapper;
 
 /**
- * Creación de reservas con bloqueo automático de fechas (HU-22).
+ * Creación de reservas con pago de prueba y bloqueo automático de fechas
+ * (HU-22).
  * <p>
- * La reserva se crea en una transacción. Se bloquean la cotización y el
- * alojamiento, así dos reservas simultáneas sobre las mismas fechas se
- * procesan una después de la otra (CA-072). Con el bloqueo puesto se valida la
- * cotización (vigente, del huésped y sin usar), que el alojamiento esté ACTIVA
- * (CA-071) y no sea del propio huésped, y se vuelve a revisar la
- * disponibilidad justo antes de confirmar (CA-074). La reserva queda
- * CONFIRMADA de inmediato (CA-075) con el monto exacto de la cotización
- * (CA-070, CA-086), y sus fechas dejan de estar disponibles (CA-076).
+ * Todo pasa en una transacción. Se bloquean la cotización y el alojamiento,
+ * así dos reservas simultáneas sobre las mismas fechas se procesan una después
+ * de la otra (CA-072). Con el bloqueo puesto se valida la cotización (vigente,
+ * del huésped y sin usar), que el alojamiento esté ACTIVA (CA-071) y no sea
+ * del propio huésped, y se vuelve a revisar la disponibilidad (CA-074).
+ * </p>
+ * <p>
+ * Luego se sigue el flujo que exige Neon: la reserva nace en PENDIENTE_PAGO con
+ * el monto exacto de la cotización (CA-070, CA-086), se registra el pago de
+ * prueba y, si se aprueba, la reserva pasa a CONFIRMADA (CA-075) y sus fechas
+ * dejan de estar disponibles (CA-076). Si el pago se rechaza o falla, la
+ * reserva queda CANCELADA, la cotización sigue libre para intentar con otro
+ * método y la API responde 402 o 502.
  * </p>
  * <p>
  * En Neon, la restricción {@code ex_reserva_sin_cruces} es la última defensa:
- * si aun así dos reservas confirmadas se cruzan, la base de datos rechaza la
+ * se aplica al pasar a CONFIRMADA y, si dos reservas se cruzan, rechaza la
  * segunda y la API responde 409.
  * </p>
  * <p>
  * La auditoría se registra después de confirmar la transacción. Así no pide
  * una segunda conexión mientras retiene los bloqueos, y un evento EXITOSO
  * solo queda si la reserva de verdad se guardó.
- * </p>
- * <p>
- * El pago (HU-27) y la idempotencia con {@code Idempotency-Key} (CA-140,
- * CA-141) llegan con sus historias.
  * </p>
  */
 @Service
@@ -70,8 +75,26 @@ public class ReservaService {
 	/** Mensaje cuando, al revalidar, las fechas ya no están libres (CA-072, CA-074). */
 	public static final String PERIODO_TOMADO = "El período ya no está disponible: otra reserva lo tomó.";
 
+	/** Inicio del mensaje del 402. */
+	public static final String PAGO_RECHAZADO = "El pago fue rechazado: ";
+
+	/** Inicio del mensaje del 502. */
+	public static final String PAGO_NO_CONFIRMADO = "No se pudo confirmar el pago: ";
+
+	/** Final de los mensajes del 402 y el 502. */
+	public static final String SIN_PAGAR = " La reserva no quedó pagada.";
+
 	/** Restricción de Neon que impide dos reservas confirmadas con fechas cruzadas. */
 	public static final String RESTRICCION_CRUCE_RESERVAS = "ex_reserva_sin_cruces";
+
+	/**
+	 * Reserva y pago que deja la transacción.
+	 *
+	 * @param reserva reserva CONFIRMADA o CANCELADA
+	 * @param pago    pago de prueba con su resultado
+	 */
+	private record Creada(Reserva reserva, Pago pago) {
+	}
 
 	/** Repositorio de alojamientos. */
 	private final AlojamientoRepository alojamientoRepo;
@@ -87,6 +110,12 @@ public class ReservaService {
 
 	/** Convierte la cotización para congelar el desglose. */
 	private final CotizacionService cotizacionService;
+
+	/** Hace el pago de prueba. */
+	private final PagoService pagoService;
+
+	/** Avisa al huésped y al anfitrión el resultado. */
+	private final NotificacionService notificacionService;
 
 	/** Deja en la auditoría cada intento de reserva (HU-26). */
 	private final AuditoriaService auditoriaService;
@@ -111,40 +140,51 @@ public class ReservaService {
 	 * @param reservaRepo        repositorio de reservas
 	 * @param calendarioService  servicio de calendario
 	 * @param cotizacionService  servicio de cotizaciones
-	 * @param auditoriaService   servicio de auditoría
-	 * @param modelMapper        copiador de entidades a DTO
-	 * @param objectMapper       conversor a JSON
-	 * @param transactionManager administrador de transacciones de Spring
+	 * @param pagoService         servicio de pagos de prueba
+	 * @param notificacionService servicio de notificaciones
+	 * @param auditoriaService    servicio de auditoría
+	 * @param modelMapper         copiador de entidades a DTO
+	 * @param objectMapper        conversor a JSON
+	 * @param transactionManager  administrador de transacciones de Spring
 	 */
 	public ReservaService(AlojamientoRepository alojamientoRepo, CotizacionRepository cotizacionRepo,
 			ReservaRepository reservaRepo, CalendarioService calendarioService, CotizacionService cotizacionService,
-			AuditoriaService auditoriaService, ModelMapper modelMapper, ObjectMapper objectMapper,
-			PlatformTransactionManager transactionManager) {
+			PagoService pagoService, NotificacionService notificacionService, AuditoriaService auditoriaService,
+			ModelMapper modelMapper, ObjectMapper objectMapper, PlatformTransactionManager transactionManager) {
 		this.transaccion = new TransactionTemplate(transactionManager);
 		this.alojamientoRepo = alojamientoRepo;
 		this.cotizacionRepo = cotizacionRepo;
 		this.reservaRepo = reservaRepo;
 		this.calendarioService = calendarioService;
 		this.cotizacionService = cotizacionService;
+		this.pagoService = pagoService;
+		this.notificacionService = notificacionService;
 		this.auditoriaService = auditoriaService;
 		this.modelMapper = modelMapper;
 		this.objectMapper = objectMapper;
 	}
 
 	/**
-	 * Crea una reserva desde una cotización vigente.
+	 * Crea una reserva desde una cotización vigente y la paga.
 	 *
-	 * @param solicitud cotización a reservar
+	 * @param solicitud cotización a reservar y método de pago
 	 * @param idHuesped huésped autenticado
-	 * @return la reserva CONFIRMADA; DATOS_INVALIDOS si falta la cotización o
-	 *         sus fechas ya no son válidas; NO_ENCONTRADO si la cotización o el
-	 *         alojamiento no existe, o la cotización es de otro usuario;
-	 *         SIN_PERMISO si es su propio alojamiento; ESTADO_INVALIDO si la
-	 *         cotización venció o ya se usó, o el alojamiento no está ACTIVA;
-	 *         NO_DISPONIBLE si otra reserva tomó las fechas
+	 * @return la reserva CONFIRMADA con su pago; DATOS_INVALIDOS si falta la
+	 *         cotización, el método de pago no es válido o las fechas ya no son
+	 *         válidas; NO_ENCONTRADO si la cotización o el alojamiento no
+	 *         existe, o la cotización es de otro usuario; SIN_PERMISO si es su
+	 *         propio alojamiento; ESTADO_INVALIDO si la cotización venció o ya
+	 *         se usó, o el alojamiento no está ACTIVA; NO_DISPONIBLE si otra
+	 *         reserva tomó las fechas; PAGO_RECHAZADO o PAGO_ERROR si el pago no
+	 *         se aprobó, con la reserva CANCELADA como dato
 	 */
 	public Resultado<ReservaDTO> crear(SolicitudReservaDTO solicitud, Long idHuesped) {
-		Resultado<Reserva> creada;
+		// Igual que el proyecto base: primero falta la cotización, luego el método de pago
+		if (solicitud != null && solicitud.getIdCotizacion() != null
+				&& !PagoService.metodoValido(solicitud.getMetodoPago())) {
+			return rechazar(idHuesped, Resultado.DATOS_INVALIDOS, PagoService.METODO_INVALIDO);
+		}
+		Resultado<Creada> creada;
 		try {
 			creada = transaccion.execute(estado -> reservar(solicitud, idHuesped));
 		} catch (DataIntegrityViolationException e) {
@@ -153,32 +193,73 @@ public class ReservaService {
 			}
 			creada = Resultado.error(Resultado.NO_DISPONIBLE, PERIODO_TOMADO);
 		}
-		if (creada == null || !creada.esExito()) {
-			String mensaje = creada == null ? PERIODO_TOMADO : creada.getMensaje();
-			auditoriaService.registrar(idHuesped, AuditoriaService.RESERVA_CREADA, AuditoriaService.ENTIDAD_RESERVA,
-					null, ResultadoAuditoria.RECHAZADO, mensaje);
-			return Resultado.error(creada == null ? Resultado.NO_DISPONIBLE : creada.getCodigo(), mensaje);
+		if (creada == null) {
+			return rechazar(idHuesped, Resultado.NO_DISPONIBLE, PERIODO_TOMADO);
+		}
+		if (!creada.esExito()) {
+			return rechazar(idHuesped, creada.getCodigo(), creada.getMensaje());
 		}
 
-		Reserva reserva = creada.getDato();
+		Reserva reserva = creada.getDato().reserva();
+		Pago pago = creada.getDato().pago();
+		ReservaDTO dto = convertirDTO(reserva, pago);
+		if (pago.getEstado() == EstadoPago.APROBADO) {
+			auditoriaService.registrar(idHuesped, AuditoriaService.PAGO, AuditoriaService.ENTIDAD_RESERVA,
+					reserva.getIdReserva(), ResultadoAuditoria.EXITOSO, "Referencia " + pago.getReferencia());
+			auditoriaService.registrar(idHuesped, AuditoriaService.RESERVA_CREADA, AuditoriaService.ENTIDAD_RESERVA,
+					reserva.getIdReserva(), ResultadoAuditoria.EXITOSO, "Del " + reserva.getFechaEntrada() + " al "
+							+ reserva.getFechaSalida() + ", total " + reserva.getTotal());
+			return Resultado.exito(dto);
+		}
+
+		boolean rechazado = pago.getEstado() == EstadoPago.RECHAZADO;
+		String mensaje = (rechazado ? PAGO_RECHAZADO : PAGO_NO_CONFIRMADO) + pago.getDetalle() + SIN_PAGAR;
+		auditoriaService.registrar(idHuesped, AuditoriaService.PAGO, AuditoriaService.ENTIDAD_RESERVA,
+				reserva.getIdReserva(), rechazado ? ResultadoAuditoria.RECHAZADO : ResultadoAuditoria.ERROR,
+				pago.getDetalle());
 		auditoriaService.registrar(idHuesped, AuditoriaService.RESERVA_CREADA, AuditoriaService.ENTIDAD_RESERVA,
-				reserva.getIdReserva(), ResultadoAuditoria.EXITOSO, "Del " + reserva.getFechaEntrada() + " al "
-						+ reserva.getFechaSalida() + ", total " + reserva.getTotal());
-		ReservaDTO dto = modelMapper.map(reserva, ReservaDTO.class);
-		alojamientoRepo.findById(reserva.getIdAlojamiento()).ifPresent(a -> dto.setTituloAlojamiento(a.getTitulo()));
-		return Resultado.exito(dto);
+				reserva.getIdReserva(), ResultadoAuditoria.RECHAZADO, mensaje);
+		return Resultado.error(rechazado ? Resultado.PAGO_RECHAZADO : Resultado.PAGO_ERROR, mensaje, dto);
 	}
 
 	/**
-	 * Paso transaccional: valida con los bloqueos puestos, crea la reserva y
-	 * marca la cotización como usada. Al confirmarse la transacción se liberan
-	 * los bloqueos.
+	 * Audita un intento de reserva que no llegó a crearse y devuelve el error.
 	 *
-	 * @param solicitud cotización a reservar
 	 * @param idHuesped huésped autenticado
-	 * @return la reserva guardada, o el error de validación
+	 * @param codigo    código del error
+	 * @param mensaje   causa
+	 * @return el error
 	 */
-	private Resultado<Reserva> reservar(SolicitudReservaDTO solicitud, Long idHuesped) {
+	private Resultado<ReservaDTO> rechazar(Long idHuesped, int codigo, String mensaje) {
+		auditoriaService.registrar(idHuesped, AuditoriaService.RESERVA_CREADA, AuditoriaService.ENTIDAD_RESERVA,
+				null, ResultadoAuditoria.RECHAZADO, mensaje);
+		return Resultado.error(codigo, mensaje);
+	}
+
+	/**
+	 * Convierte la reserva a DTO con su pago y el título del alojamiento.
+	 *
+	 * @param reserva reserva
+	 * @param pago    pago de la reserva
+	 * @return reserva para la API
+	 */
+	private ReservaDTO convertirDTO(Reserva reserva, Pago pago) {
+		ReservaDTO dto = modelMapper.map(reserva, ReservaDTO.class);
+		dto.setPago(modelMapper.map(pago, PagoDTO.class));
+		alojamientoRepo.findById(reserva.getIdAlojamiento()).ifPresent(a -> dto.setTituloAlojamiento(a.getTitulo()));
+		return dto;
+	}
+
+	/**
+	 * Paso transaccional: valida con los bloqueos puestos, crea la reserva en
+	 * PENDIENTE_PAGO, registra el pago y la deja CONFIRMADA o CANCELADA según el
+	 * resultado. Al confirmarse la transacción se liberan los bloqueos.
+	 *
+	 * @param solicitud cotización a reservar y método de pago
+	 * @param idHuesped huésped autenticado
+	 * @return la reserva y su pago, o el error de validación
+	 */
+	private Resultado<Creada> reservar(SolicitudReservaDTO solicitud, Long idHuesped) {
 		Resultado<Cotizacion> validada = validar(solicitud, idHuesped);
 		if (!validada.esExito()) {
 			return Resultado.error(validada.getCodigo(), validada.getMensaje());
@@ -195,14 +276,45 @@ public class ReservaService {
 		reserva.setHuespedes(cotizacion.getHuespedes());
 		reserva.setTotal(cotizacion.getTotal());
 		reserva.setDesglose(objectMapper.writeValueAsString(cotizacionService.convertirDTO(cotizacion)));
-		reserva.setEstado(EstadoReserva.CONFIRMADA);
+		// Neon solo acepta reservas nuevas en PENDIENTE_PAGO (trg_validar_reserva)
+		reserva.setEstado(EstadoReserva.PENDIENTE_PAGO);
 		reserva.setFechaCreacion(LocalDateTime.now());
-		// saveAndFlush: si la restricción de Neon rechaza el cruce, falla aquí y no al confirmar
+		reserva = reservaRepo.saveAndFlush(reserva);
+
+		Pago pago = pagoService.procesar(reserva, solicitud.getMetodoPago());
+		if (pago.getEstado() != EstadoPago.APROBADO) {
+			// La cotización queda libre para intentar de nuevo con otro método de pago
+			reserva.setEstado(EstadoReserva.CANCELADA);
+			reserva = reservaRepo.saveAndFlush(reserva);
+			notificacionService.enviar(idHuesped, NotificacionService.PAGO_NO_CONFIRMADO,
+					"El pago de tu reserva no se confirmó y la reserva no quedó registrada como pagada.");
+			return Resultado.exito(new Creada(reserva, pago));
+		}
+
+		// Con el pago APROBADO Neon deja confirmarla (trg_reserva_transicion). saveAndFlush: si
+		// ex_reserva_sin_cruces rechaza el cruce, falla aquí y se revierte todo, también el pago.
+		reserva.setEstado(EstadoReserva.CONFIRMADA);
 		reserva = reservaRepo.saveAndFlush(reserva);
 
 		cotizacion.setIdReserva(reserva.getIdReserva());
 		cotizacionRepo.save(cotizacion);
-		return Resultado.exito(reserva);
+		avisarConfirmada(reserva);
+		return Resultado.exito(new Creada(reserva, pago));
+	}
+
+	/**
+	 * Avisa al huésped y al anfitrión que la reserva quedó confirmada. Va en la
+	 * misma transacción: si un aviso no se puede guardar, tampoco se confirma.
+	 *
+	 * @param reserva reserva CONFIRMADA
+	 */
+	private void avisarConfirmada(Reserva reserva) {
+		String fechas = "del " + reserva.getFechaEntrada() + " al " + reserva.getFechaSalida();
+		notificacionService.enviar(reserva.getIdHuesped(), NotificacionService.RESERVA_CONFIRMADA,
+				"Tu reserva " + reserva.getIdReserva() + " " + fechas + " está confirmada.");
+		alojamientoRepo.findById(reserva.getIdAlojamiento()).ifPresent(a -> notificacionService.enviar(
+				a.getIdAnfitrion(), NotificacionService.RESERVA_CONFIRMADA,
+				"Tienes una reserva confirmada " + fechas + " en " + a.getTitulo() + "."));
 	}
 
 	/**
