@@ -28,7 +28,6 @@ import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuthService;
 import co.edu.unbosque.marketplaceInversionesLR.service.InicioGoogleService;
-import co.edu.unbosque.marketplaceInversionesLR.service.SegundoFactorService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.VerificacionCorreoService;
 import co.edu.unbosque.marketplaceInversionesLR.util.AESUtil;
@@ -70,8 +69,6 @@ class EstadoCuentaControllerTest {
 	@Mock
 	private AuditoriaService auditoriaService;
 
-	@Mock
-	private SegundoFactorService segundoFactorService;
 
 	@Mock
 	private InicioGoogleService inicioGoogleService;
@@ -93,7 +90,7 @@ class EstadoCuentaControllerTest {
 	void preparar() {
 		usuarioController = new UsuarioController(usuarioService);
 		authController = new AuthController(authenticationManager, usuarioService, verificacionCorreoService, jwtUtil,
-				userDetailsService, auditoriaService, segundoFactorService, inicioGoogleService, authService);
+				userDetailsService, auditoriaService, inicioGoogleService, authService);
 		autenticacion = new UsernamePasswordAuthenticationToken(CORREO, null, List.of());
 		credenciales = new UsuarioDTO();
 		credenciales.setCorreo(" ANA@correo.com ");
