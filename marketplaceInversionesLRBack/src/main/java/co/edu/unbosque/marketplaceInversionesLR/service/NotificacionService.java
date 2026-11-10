@@ -39,6 +39,9 @@ public class NotificacionService {
 	/** Un administrador habilitó de nuevo la cuenta (HU-12). */
 	public static final String CUENTA_LIBERADA = "CUENTA_LIBERADA";
 
+	/** El huésped canceló una reserva; la reciben el huésped y el anfitrión (HU-01). */
+	public static final String RESERVA_CANCELADA = "RESERVA_CANCELADA";
+
 	/** Repositorio de notificaciones. */
 	private final NotificacionRepository notificacionRepo;
 

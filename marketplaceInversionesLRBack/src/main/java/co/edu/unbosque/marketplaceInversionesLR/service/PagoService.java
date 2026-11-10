@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -19,9 +20,9 @@ import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
  * <p>
  * Por ahora funciona en modo SIMULADO: un simulador local responde como Stripe
  * a sus métodos de pago de prueba ({@code pm_card_visa} aprueba,
- * {@code pm_card_chargeDeclined} rechaza, {@code pm_card_error} falla). El
- * modo STRIPE_TEST, la configuración para el frontend y las devoluciones
- * llegan con HU-27.
+ * {@code pm_card_chargeDeclined} rechaza, {@code pm_card_error} falla), y las
+ * devoluciones de las cancelaciones (HU-01) también son simuladas. El modo
+ * STRIPE_TEST y la configuración para el frontend llegan con HU-27.
  * </p>
  * <p>
  * En Neon una reserva solo pasa a CONFIRMADA si tiene un pago APROBADO, y el
@@ -46,6 +47,9 @@ public class PagoService {
 
 	/** Detalle cuando la pasarela no responde. */
 	public static final String FALLA_PASARELA = "No se pudo comunicar con la pasarela de pago.";
+
+	/** Inicio de la referencia de una devolución simulada. */
+	public static final String PREFIJO_DEVOLUCION = "sim_re_";
 
 	/** Forma válida de un PaymentMethod de Stripe ({@code pm_...}). */
 	private static final Pattern PATRON_METODO = Pattern.compile("^pm_\\w{1,200}$");
@@ -134,5 +138,34 @@ public class PagoService {
 	 */
 	public Optional<Pago> ultimo(Long idReserva) {
 		return pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(idReserva);
+	}
+
+	/**
+	 * Devuelve al huésped el valor indicado del último pago aprobado de la
+	 * reserva, en el simulador (HU-01). El pago queda REEMBOLSADO con el valor
+	 * y la referencia de la devolución, como exige Neon. Sin valor a devolver o
+	 * sin pago aprobado no hace nada. Se llama dentro de la transacción de la
+	 * cancelación.
+	 *
+	 * @param idReserva reserva cancelada
+	 * @param valor     valor a devolver; nunca mayor que lo pagado
+	 * @return el pago reembolsado, o vacío si no hubo devolución
+	 */
+	public Optional<Pago> reembolsar(Long idReserva, BigDecimal valor) {
+		if (valor == null || valor.signum() <= 0) {
+			return Optional.empty();
+		}
+		Optional<Pago> aprobado = ultimo(idReserva).filter(p -> p.getEstado() == EstadoPago.APROBADO);
+		if (aprobado.isEmpty()) {
+			return Optional.empty();
+		}
+		Pago pago = aprobado.get();
+		BigDecimal devuelto = valor.min(pago.getValor());
+		pago.setEstado(EstadoPago.REEMBOLSADO);
+		pago.setValorReembolsado(devuelto);
+		pago.setReferenciaReembolso(PREFIJO_DEVOLUCION + UUID.randomUUID());
+		pago.setDetalle(LimitesTexto.recortar("Devolución simulada de " + devuelto.toPlainString() + ".",
+				LimitesTexto.CORTO));
+		return Optional.of(pagoRepo.save(pago));
 	}
 }

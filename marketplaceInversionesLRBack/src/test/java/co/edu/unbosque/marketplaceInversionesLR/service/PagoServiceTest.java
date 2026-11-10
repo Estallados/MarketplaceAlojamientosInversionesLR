@@ -2,9 +2,12 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,6 +42,66 @@ class PagoServiceTest {
 		reserva = new Reserva();
 		reserva.setIdReserva(15L);
 		reserva.setTotal(new BigDecimal("690000.00"));
+	}
+
+	@Test
+	@DisplayName("CA-001 La devolución deja el pago aprobado REEMBOLSADO con valor y referencia")
+	void reembolsa_CA001() {
+		Pago aprobado = pagoAprobado();
+		when(pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(15L)).thenReturn(Optional.of(aprobado));
+		guardar();
+
+		Optional<Pago> resultado = servicio.reembolsar(15L, new BigDecimal("345000.00"));
+
+		assertThat(resultado).containsSame(aprobado);
+		assertThat(aprobado.getEstado()).isEqualTo(EstadoPago.REEMBOLSADO);
+		assertThat(aprobado.getValorReembolsado()).isEqualByComparingTo("345000.00");
+		assertThat(aprobado.getReferenciaReembolso()).startsWith(PagoService.PREFIJO_DEVOLUCION);
+		assertThat(aprobado.getDetalle()).isEqualTo("Devolución simulada de 345000.00.");
+		// Lo que no cambia el reembolso queda igual (Neon lo protege)
+		assertThat(aprobado.getValor()).isEqualByComparingTo("690000.00");
+		assertThat(aprobado.getReferencia()).isEqualTo("sim_pi_1");
+	}
+
+	@Test
+	@DisplayName("CA-009 Sin valor a devolver o sin pago aprobado no se toca el pago")
+	void sinDevolucion_CA009() {
+		Pago rechazado = pagoAprobado();
+		rechazado.setEstado(EstadoPago.RECHAZADO);
+		when(pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(15L)).thenReturn(Optional.of(rechazado));
+
+		assertThat(servicio.reembolsar(15L, BigDecimal.ZERO)).isEmpty();
+		assertThat(servicio.reembolsar(15L, null)).isEmpty();
+		assertThat(servicio.reembolsar(15L, new BigDecimal("100"))).isEmpty();
+		assertThat(rechazado.getEstado()).isEqualTo(EstadoPago.RECHAZADO);
+		verify(pagoRepo, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("Nunca se devuelve más de lo que se pagó")
+	void topeDeLoPagado() {
+		Pago aprobado = pagoAprobado();
+		when(pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(15L)).thenReturn(Optional.of(aprobado));
+		guardar();
+
+		servicio.reembolsar(15L, new BigDecimal("999999.00"));
+
+		assertThat(aprobado.getValorReembolsado()).isEqualByComparingTo("690000.00");
+	}
+
+	/**
+	 * Pago APROBADO de 690.000 de la reserva 15.
+	 *
+	 * @return pago
+	 */
+	private static Pago pagoAprobado() {
+		Pago pago = new Pago();
+		pago.setIdPago(30L);
+		pago.setIdReserva(15L);
+		pago.setEstado(EstadoPago.APROBADO);
+		pago.setValor(new BigDecimal("690000.00"));
+		pago.setReferencia("sim_pi_1");
+		return pago;
 	}
 
 	@Test

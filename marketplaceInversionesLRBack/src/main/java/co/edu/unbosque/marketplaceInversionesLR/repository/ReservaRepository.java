@@ -4,15 +4,18 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
+import jakarta.persistence.LockModeType;
 
 /**
  * Acceso a las reservas. Por ahora la disponibilidad (HU-20) solo consulta qué
@@ -85,4 +88,16 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 * @return página de reservas
 	 */
 	Page<Reserva> findByIdHuesped(Long idHuesped, Pageable pagina);
+
+	/**
+	 * Lee la reserva con bloqueo de escritura para cancelarla (HU-01). Así dos
+	 * cancelaciones que llegan al mismo tiempo se procesan una después de la
+	 * otra, y la segunda ya la ve CANCELADA.
+	 *
+	 * @param id reserva a bloquear
+	 * @return la reserva, si existe
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select r from Reserva r where r.idReserva = :id")
+	Optional<Reserva> buscarParaCancelar(@Param("id") Long id);
 }

@@ -5,19 +5,29 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.CancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.CotizacionDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.MotivoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.SimulacionCancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.SolicitudReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
+import co.edu.unbosque.marketplaceInversionesLR.service.CancelacionService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CotizacionService;
+import co.edu.unbosque.marketplaceInversionesLR.service.IdempotenciaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PagoService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,18 +35,22 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
- * Cotizaciones y reservas (HU-22, servicios S06 y S07). Contrato:
- * {@code docs/openapi/reservas-pagos.yaml}.
+ * Cotizaciones, reservas y cancelaciones (HU-22 y HU-01, servicios S06, S07 y
+ * S09). Contrato: {@code docs/openapi/reservas-pagos.yaml}.
  * <p>
  * El huésped cotiza ({@code POST /cotizaciones}) y con la cotización vigente
  * reserva y paga en una sola petición ({@code POST /reservas}). Con el pago
- * aprobado la reserva bloquea las fechas de inmediato.
+ * aprobado la reserva bloquea las fechas de inmediato. Después puede simular y
+ * cancelar la reserva según la política del alojamiento; cancelar es
+ * idempotente con la cabecera {@code Idempotency-Key}.
  * </p>
  */
 @RestController
 @SecurityRequirement(name = "bearerAuth")
-@Tag(name = "Cotización y reservas", description = "Cotizar una estancia y reservarla")
 public class ReservaController {
+
+	/** Etiqueta de Swagger de la cotización y la reserva. */
+	private static final String TAG_RESERVAS = "Cotización y reservas";
 
 	/** Mensajes del 400 por fechas inválidas. */
 	private static final String FECHAS_INVALIDAS = CalendarioService.FECHAS_FALTANTES + " | "
@@ -45,21 +59,42 @@ public class ReservaController {
 	/** Mensaje del 409 cuando el alojamiento no está ACTIVA. */
 	private static final String NO_ACTIVA = "El alojamiento no está disponible para nuevas reservas (estado PAUSADA).";
 
+	/** Etiqueta de Swagger de las cancelaciones. */
+	private static final String TAG_CANCELACIONES = "Cancelaciones";
+
+	/** Mensajes del 409 cuando la reserva no se puede cancelar. */
+	private static final String NO_CANCELABLE = CancelacionService.ESTADO_NO_CANCELABLE + "CANCELADA. | "
+			+ CancelacionService.SOLO_FUTURAS;
+
+	/** Operación protegida con Idempotency-Key. */
+	public static final String OPERACION_CANCELAR = "CANCELAR_RESERVA";
+
 	/** Servicio de cotizaciones. */
 	private final CotizacionService cotizacionService;
 
 	/** Servicio de reservas. */
 	private final ReservaService reservaService;
 
+	/** Cancelaciones (HU-01). */
+	private final CancelacionService cancelacionService;
+
+	/** Evita cancelar dos veces con la misma Idempotency-Key (RNF-008). */
+	private final IdempotenciaService idempotenciaService;
+
 	/**
 	 * Crea el controlador.
 	 *
-	 * @param cotizacionService servicio de cotizaciones
-	 * @param reservaService    servicio de reservas
+	 * @param cotizacionService   servicio de cotizaciones
+	 * @param reservaService      servicio de reservas
+	 * @param cancelacionService  servicio de cancelaciones
+	 * @param idempotenciaService servicio de idempotencia
 	 */
-	public ReservaController(CotizacionService cotizacionService, ReservaService reservaService) {
+	public ReservaController(CotizacionService cotizacionService, ReservaService reservaService,
+			CancelacionService cancelacionService, IdempotenciaService idempotenciaService) {
 		this.cotizacionService = cotizacionService;
 		this.reservaService = reservaService;
+		this.cancelacionService = cancelacionService;
+		this.idempotenciaService = idempotenciaService;
 	}
 
 	/**
@@ -74,6 +109,7 @@ public class ReservaController {
 	 *         alojamiento no existe; 409 si no está ACTIVA o las fechas no están
 	 *         libres
 	 */
+	@Tag(name = TAG_RESERVAS, description = "Cotizar una estancia y reservarla")
 	@Operation(summary = "Cotizar una estancia", description = "Devuelve noches, precio base, descuento, limpieza, "
 			+ "servicio, adicionales y total con los porcentajes vigentes. La cotización sirve 30 minutos para reservar.")
 	@ApiResponse(responseCode = "201", description = "Cotización con el desglose")
@@ -100,6 +136,7 @@ public class ReservaController {
 	 *         CANCELADA si el pago no se aprobó; 400, 403, 404 o 409 según el
 	 *         caso
 	 */
+	@Tag(name = TAG_RESERVAS)
 	@Operation(summary = "Crear y pagar una reserva (HUESPED)", description = "Revalida la disponibilidad justo "
 			+ "antes de confirmar. La reserva nace en PENDIENTE_PAGO, se hace el pago de prueba (modo SIMULADO) y, si "
 			+ "se aprueba, queda CONFIRMADA con el monto exacto de la cotización y sus fechas dejan de estar "
@@ -126,5 +163,79 @@ public class ReservaController {
 	public ResponseEntity<Object> crear(@RequestBody SolicitudReservaDTO solicitud, Authentication authentication) {
 		return RespuestaUtil.desde(reservaService.crear(solicitud, RespuestaUtil.idUsuario(authentication)),
 				HttpStatus.CREATED);
+	}
+
+	/**
+	 * Simula la cancelación de una reserva propia (solo huéspedes): la política,
+	 * los días de anticipación, el porcentaje y el valor que se devolvería si
+	 * se cancelara hoy (HU-01, CA-001). No cancela nada. Ruta:
+	 * {@code GET /reservas/{id}/simularcancelacion}.
+	 *
+	 * @param id             reserva
+	 * @param authentication huésped autenticado
+	 * @return 200 con la estimación; 404 si no existe o no es suya; 409 si no
+	 *         se puede cancelar
+	 */
+	@Tag(name = TAG_CANCELACIONES, description = "Simular y cancelar reservas según la política")
+	@Operation(summary = "Simular la cancelación de una reserva (HUESPED)", description = "Devuelve la política, los "
+			+ "días de anticipación, el porcentaje y el valor que se devolvería si se cancelara hoy (CA-001). No "
+			+ "cancela nada. Solo aplica a las reservas propias.")
+	@PreAuthorize("hasRole('HUESPED')")
+	@ApiResponse(responseCode = "200", description = "Devolución que recibiría si cancela hoy",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @Schema(implementation = SimulacionCancelacionDTO.class)))
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@ApiResponse(responseCode = "404", description = CancelacionService.NO_EXISTE)
+	@ApiResponse(responseCode = "409", description = NO_CANCELABLE)
+	@GetMapping("/reservas/{id}/simularcancelacion")
+	public ResponseEntity<Object> simularCancelacion(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(cancelacionService.simular(id, RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
+	 * Cancela una reserva futura propia (solo huéspedes) aplicando la política
+	 * del alojamiento (HU-01): la reserva queda CANCELADA, se registra la
+	 * cancelación (CA-004), se devuelve lo que corresponde y las fechas quedan
+	 * libres (CA-007); si la política no da devolución, se respeta (CA-009).
+	 * Exige la cabecera Idempotency-Key: un reintento con la misma clave
+	 * devuelve la misma respuesta sin cancelar dos veces (CA-140, CA-141).
+	 * Ruta: {@code POST /reservas/{id}/cancelar}.
+	 *
+	 * @param id             reserva
+	 * @param datos          DTO con el {@code motivo}
+	 * @param clave          valor de la cabecera Idempotency-Key
+	 * @param authentication huésped autenticado
+	 * @return 200 con la cancelación y la devolución; 400, 404, 409 o 422
+	 *         según el caso
+	 */
+	@Tag(name = TAG_CANCELACIONES)
+	@Operation(summary = "Cancelar una reserva futura (HUESPED)", description = "Aplica la política de cancelación "
+			+ "del alojamiento (CA-001): FLEXIBLE 100 % con 1 o más días; MODERADA 100 % con 5 o más días y 50 % con "
+			+ "1 a 4; ESTRICTA 50 % con 7 o más días y nada después. La reserva queda CANCELADA, sus fechas vuelven a "
+			+ "estar disponibles y se registran usuario, fecha, motivo, devolución y estado final (CA-004). Solo "
+			+ "reservas propias CONFIRMADA o EN_REVISION con la llegada en el futuro. Requiere motivo y la cabecera "
+			+ "Idempotency-Key; con la misma clave y los mismos datos se devuelve la respuesta guardada "
+			+ "(Idempotent-Replayed: true).")
+	@PreAuthorize("hasRole('HUESPED')")
+	@ApiResponse(responseCode = "200", description = "Cancelación con la devolución según la política (CA-004)",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @Schema(implementation = CancelacionDTO.class)))
+	@ApiResponse(responseCode = "400", description = CancelacionService.MOTIVO_INVALIDO + " | "
+			+ IdempotenciaService.CLAVE_INVALIDA)
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@ApiResponse(responseCode = "404", description = CancelacionService.NO_EXISTE)
+	@ApiResponse(responseCode = "409", description = NO_CANCELABLE + " | " + IdempotenciaService.EN_PROCESO)
+	@ApiResponse(responseCode = "422", description = IdempotenciaService.CLAVE_REUTILIZADA)
+	@PostMapping("/reservas/{id}/cancelar")
+	public ResponseEntity<Object> cancelar(@PathVariable Long id, @RequestBody MotivoDTO datos,
+			@Parameter(in = ParameterIn.HEADER, name = IdempotenciaService.CABECERA, required = true,
+					description = "Clave única por intento (1 a 100 caracteres); repítela solo al reintentar la misma "
+							+ "petición", example = "3f2b8c1e-7a44-4d0b-9e21-6c1f0a7d5e10")
+			@RequestHeader(value = IdempotenciaService.CABECERA, required = false) String clave,
+			Authentication authentication) {
+		Long idHuesped = RespuestaUtil.idUsuario(authentication);
+		String motivo = datos.getMotivo();
+		return idempotenciaService.ejecutar(idHuesped, OPERACION_CANCELAR, clave, new Object[] { id, motivo },
+				() -> RespuestaUtil.desde(cancelacionService.cancelar(id, motivo, idHuesped)));
 	}
 }
