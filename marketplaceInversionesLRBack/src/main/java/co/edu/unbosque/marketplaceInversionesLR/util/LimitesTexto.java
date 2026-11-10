@@ -15,6 +15,12 @@ public final class LimitesTexto {
 	/** Correo electrónico. */
 	public static final int CORREO = 150;
 
+	/** Motivo de una decisión del administrador, por ejemplo un rechazo. */
+	public static final int MOTIVO = 500;
+
+	/** Texto de una notificación o de un motivo guardado con su prefijo. */
+	public static final int MEDIO = 1000;
+
 	private LimitesTexto() {
 		throw new IllegalStateException("Clase utilitaria");
 	}
@@ -28,5 +34,16 @@ public final class LimitesTexto {
 	 */
 	public static boolean excede(String texto, int maximo) {
 		return texto != null && texto.trim().length() > maximo;
+	}
+
+	/**
+	 * Corta un texto al máximo, para que siempre quepa en su columna.
+	 *
+	 * @param texto  texto a cortar; puede ser {@code null}
+	 * @param maximo largo máximo
+	 * @return el texto, cortado si hacía falta
+	 */
+	public static String recortar(String texto, int maximo) {
+		return texto == null || texto.length() <= maximo ? texto : texto.substring(0, maximo);
 	}
 }

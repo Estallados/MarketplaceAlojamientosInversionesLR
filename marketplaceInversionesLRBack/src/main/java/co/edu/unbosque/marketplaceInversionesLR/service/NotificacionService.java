@@ -1,0 +1,58 @@
+package co.edu.unbosque.marketplaceInversionesLR.service;
+
+import java.time.LocalDateTime;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import co.edu.unbosque.marketplaceInversionesLR.entity.Notificacion;
+import co.edu.unbosque.marketplaceInversionesLR.repository.NotificacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
+
+/**
+ * Avisos para los usuarios. Por ahora solo registra la notificación; listarla
+ * y marcarla como leída llega con la historia de notificaciones.
+ */
+@Service
+public class NotificacionService {
+
+	/** El administrador aprobó una publicación (HU-32, CA-158). */
+	public static final String ALOJAMIENTO_APROBADO = "ALOJAMIENTO_APROBADO";
+
+	/** El administrador rechazó una publicación (HU-32, CA-195). */
+	public static final String ALOJAMIENTO_RECHAZADO = "ALOJAMIENTO_RECHAZADO";
+
+	/** Repositorio de notificaciones. */
+	private final NotificacionRepository notificacionRepo;
+
+	/**
+	 * Crea el servicio.
+	 *
+	 * @param notificacionRepo repositorio de notificaciones
+	 */
+	public NotificacionService(NotificacionRepository notificacionRepo) {
+		this.notificacionRepo = notificacionRepo;
+	}
+
+	/**
+	 * Registra una notificación sin leer para un usuario.
+	 *
+	 * @param idUsuario destinatario; si es {@code null} no se hace nada
+	 * @param tipo      evento que la origina (una de las constantes de esta clase)
+	 * @param mensaje   texto para el usuario; se corta si supera
+	 *                  {@value LimitesTexto#MEDIO} caracteres
+	 */
+	@Transactional
+	public void enviar(Long idUsuario, String tipo, String mensaje) {
+		if (idUsuario == null) {
+			return;
+		}
+		Notificacion notificacion = new Notificacion();
+		notificacion.setIdUsuario(idUsuario);
+		notificacion.setTipo(tipo);
+		notificacion.setMensaje(LimitesTexto.recortar(mensaje, LimitesTexto.MEDIO));
+		notificacion.setFecha(LocalDateTime.now());
+		notificacion.setLeida(false);
+		notificacionRepo.save(notificacion);
+	}
+}

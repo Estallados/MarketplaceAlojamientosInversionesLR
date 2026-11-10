@@ -414,7 +414,11 @@ CA-158;RF-027;Gestión del estado de revisión del alojamiento;Aprobación de la pu
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
 CP-059 Rechazo de publicación con motivo
-CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeEnviarARevisionYAprobarQuedandoVisibleEnBusquedas_CA157_CA158_CA194;;38a9302;;;;
+CP-060 Auditoría de la decisión de revisión";"PublicacionServiceModeracionTest#aprueba_CA158_CA196
+PublicacionServiceModeracionTest#noApruebaSinFechas_CA158
+AdminControllerModeracionTest#aprueba_CA158
+ModeracionPublicacionesTest#apruebaLaPublicacion_CA158_CA196
+ModeracionPublicacionesTest#sinFechasNoSeAprueba_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;"Queda ACTIVA y disponible para reservar; la búsqueda de alojamientos aún no está implementada."
 CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada o bloqueada;Dado que una publicación está PAUSADA o BLOQUEADA, cuando un huésped intenta crear una nueva reserva sobre ella, entonces el sistema debe impedirlo y no mostrarla como disponible para nuevas reservas.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -521,9 +525,18 @@ CA-195;RF-027;Gestión del estado de revisión del alojamiento;Rechazo con motivo;
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
 CP-059 Rechazo de publicación con motivo
-CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeRechazarConMotivoNotificarAlAnfitrionYAuditar_CA195_CA196;;38a9302;;;;
+CP-060 Auditoría de la decisión de revisión";"PublicacionServiceModeracionTest#rechazaConMotivo_CA195_CA196
+PublicacionServiceModeracionTest#rechazoSinMotivo_CA195
+NotificacionServiceTest#registraLaNotificacion_CA195
+AdminControllerModeracionTest#rechaza_CA195
+ModeracionPublicacionesTest#rechazaConMotivo_CA195_CA196
+ModeracionPublicacionesTest#motivoLargo_CA195";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;"El motivo queda en el historial de estados y en una notificación; consultar las notificaciones llega con su HU."
 CA-196;RF-027;Gestión del estado de revisión del alojamiento;Auditoría de la revisión;Dado que el administrador toma una decisión de revisión, cuando esta se registra, entonces el sistema debe guardar un evento de auditoría con administrador, publicación, fecha y resultado.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
 CP-059 Rechazo de publicación con motivo
-CP-060 Auditoría de la decisión de revisión";PublicacionesTest#debeRechazarConMotivoNotificarAlAnfitrionYAuditar_CA195_CA196;;38a9302;;;;
+CP-060 Auditoría de la decisión de revisión";"PublicacionServiceModeracionTest#aprueba_CA158_CA196
+PublicacionServiceModeracionTest#rechazaConMotivo_CA195_CA196
+PublicacionServiceModeracionTest#soloDesdeRevision_CA196
+ModeracionPublicacionesTest#apruebaLaPublicacion_CA158_CA196
+ModeracionPublicacionesTest#soloDesdeRevision_CA196";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;Evento ALOJAMIENTO_CAMBIO_ESTADO con administrador, publicación, fecha y resultado (EXITOSO o RECHAZADO).

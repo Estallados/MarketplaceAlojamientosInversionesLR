@@ -2,12 +2,15 @@ package co.edu.unbosque.marketplaceInversionesLR.repository;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import jakarta.persistence.LockModeType;
 
 /**
@@ -27,4 +30,13 @@ public interface AlojamientoRepository extends JpaRepository<Alojamiento, Long> 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select a from Alojamiento a where a.idAlojamiento = :id")
 	Optional<Alojamiento> buscarParaReservar(@Param("id") Long id);
+
+	/**
+	 * Alojamientos en un estado, por ejemplo la cola PENDIENTE_REVISION (HU-32).
+	 *
+	 * @param estado estado a filtrar
+	 * @param pagina página y orden
+	 * @return página de alojamientos
+	 */
+	Page<Alojamiento> findByEstado(EstadoAlojamiento estado, Pageable pagina);
 }

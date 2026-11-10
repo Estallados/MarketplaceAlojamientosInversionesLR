@@ -90,6 +90,9 @@ class PublicacionServiceTest {
 	@Mock
 	private GeocodingService geocodingService;
 
+	@Mock
+	private NotificacionService notificacionService;
+
 	private PublicacionService servicio;
 
 	/** Imágenes que quedan "guardadas" en el almacén simulado. */
@@ -99,7 +102,7 @@ class PublicacionServiceTest {
 	void preparar() {
 		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
 				historialRepo, usuarioRepo, almacenamientoService, auditoriaService, geocodingService,
-				new ModelMapper());
+				notificacionService, new ModelMapper());
 	}
 
 	@Test

@@ -1,0 +1,114 @@
+package co.edu.unbosque.marketplaceInversionesLR.controller;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+
+import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.MotivoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
+import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
+import co.edu.unbosque.marketplaceInversionesLR.service.TarifaService;
+import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
+
+/**
+ * Pruebas unitarias de las rutas de moderación de {@link AdminController}
+ * (HU-32), con el servicio simulado. El flujo completo está en
+ * {@link ModeracionPublicacionesTest}.
+ */
+@ExtendWith(MockitoExtension.class)
+class AdminControllerModeracionTest {
+
+	/** Administrador del token. */
+	private static final Long ADMIN = 1L;
+
+	@Mock
+	private TarifaService tarifaService;
+
+	@Mock
+	private PublicacionService publicacionService;
+
+	private AdminController controlador;
+
+	private Authentication autenticacion;
+
+	@BeforeEach
+	void preparar() {
+		controlador = new AdminController(tarifaService, publicacionService);
+		Usuario admin = new Usuario();
+		admin.setIdUsuario(ADMIN);
+		autenticacion = new UsernamePasswordAuthenticationToken(admin, null, List.of());
+	}
+
+	@Test
+	@DisplayName("CA-158 Aprobar usa el administrador del token")
+	void aprueba_CA158() {
+		AlojamientoDTO activa = new AlojamientoDTO();
+		when(publicacionService.aprobar(20L, ADMIN)).thenReturn(Resultado.exito(activa));
+
+		ResponseEntity<Object> respuesta = controlador.aprobar(20L, autenticacion);
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(respuesta.getBody()).isSameAs(activa);
+	}
+
+	@Test
+	@DisplayName("CA-195 Rechazar envía el motivo; un motivo inválido responde 400")
+	void rechaza_CA195() {
+		MotivoDTO datos = new MotivoDTO();
+		datos.setMotivo("Fotos borrosas");
+		when(publicacionService.rechazar(20L, ADMIN, "Fotos borrosas")).thenReturn(Resultado.exito(new AlojamientoDTO()));
+		when(publicacionService.rechazar(20L, ADMIN, null))
+				.thenReturn(Resultado.error(Resultado.DATOS_INVALIDOS, PublicacionService.MOTIVO_INVALIDO));
+
+		assertThat(controlador.rechazar(20L, datos, autenticacion).getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(controlador.rechazar(20L, new MotivoDTO(), autenticacion).getStatusCode())
+				.isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
+	@DisplayName("La cola de revisión se pide con el estado y una página válida")
+	void listaLaCola() {
+		PaginaDTO<AlojamientoDTO> pagina = new PaginaDTO<>();
+		when(publicacionService.listarPorEstado(eq(EstadoAlojamiento.PENDIENTE_REVISION), any(Pageable.class)))
+				.thenReturn(pagina);
+
+		ResponseEntity<Object> respuesta = controlador.alojamientos(EstadoAlojamiento.PENDIENTE_REVISION, 0, 20);
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(respuesta.getBody()).isSameAs(pagina);
+	}
+
+	@Test
+	@DisplayName("La página pedida se ajusta a los límites y ordena lo más reciente primero")
+	void paginaDentroDeLimites() {
+		Pageable normal = AdminController.pagina(2, 20);
+		Pageable fuera = AdminController.pagina(-3, 0);
+		Pageable enorme = AdminController.pagina(Integer.MAX_VALUE, 1000);
+
+		assertThat(normal.getPageNumber()).isEqualTo(2);
+		assertThat(normal.getPageSize()).isEqualTo(20);
+		assertThat(normal.getSort().getOrderFor("fechaCreacion").isDescending()).isTrue();
+		assertThat(fuera.getPageNumber()).isZero();
+		assertThat(fuera.getPageSize()).isEqualTo(1);
+		assertThat(enorme.getPageSize()).isEqualTo(AdminController.TAMANIO_MAXIMO);
+		assertThat(enorme.getOffset()).isLessThan(Integer.MAX_VALUE);
+	}
+}

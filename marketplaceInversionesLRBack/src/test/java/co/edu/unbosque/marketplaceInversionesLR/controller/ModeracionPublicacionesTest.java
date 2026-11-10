@@ -1,0 +1,307 @@
+package co.edu.unbosque.marketplaceInversionesLR.controller;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
+import org.testcontainers.junit.jupiter.Testcontainers;
+
+import co.edu.unbosque.marketplaceInversionesLR.ContenedorPostgres;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
+import co.edu.unbosque.marketplaceInversionesLR.entity.PeriodoDisponibilidad;
+import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
+import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.NotificacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
+import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
+import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
+import co.edu.unbosque.marketplaceInversionesLR.service.NotificacionService;
+import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
+import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
+import co.edu.unbosque.marketplaceInversionesLR.util.AESUtil;
+
+/**
+ * Pruebas de HU-32 Revisar, aprobar o rechazar publicaciones sobre la API
+ * completa y un PostgreSQL temporal en Docker.
+ */
+@SpringBootTest
+@AutoConfigureMockMvc
+@Import(ContenedorPostgres.class)
+@Testcontainers(disabledWithoutDocker = true)
+class ModeracionPublicacionesTest {
+
+	/** Fecha base: dentro de un mes, para no depender del día en que se corre. */
+	private static final LocalDate BASE = LocalDate.now().plusMonths(1);
+
+	/** Ruta base de la moderación. */
+	private static final String RUTA = "/admin/alojamientos/";
+
+	@Autowired
+	private MockMvc mockMvc;
+
+	@Autowired
+	private UsuarioRepository usuarioRepository;
+
+	@Autowired
+	private AlojamientoRepository alojamientoRepository;
+
+	@Autowired
+	private PeriodoDisponibilidadRepository periodoRepository;
+
+	@Autowired
+	private NotificacionRepository notificacionRepository;
+
+	@Autowired
+	private AuditoriaService auditoriaService;
+
+	@Autowired
+	private JdbcTemplate jdbc;
+
+	@Autowired
+	private JwtUtil jwtUtil;
+
+	@MockitoBean
+	private JavaMailSender mailSender;
+
+	/** Administrador que decide. */
+	private Usuario admin;
+
+	/** Token del administrador. */
+	private String tokenAdmin;
+
+	/** Anfitrión dueño de la publicación. */
+	private Usuario anfitrion;
+
+	/** Token del anfitrión. */
+	private String tokenAnfitrion;
+
+	/** Publicación en PENDIENTE_REVISION con un período disponible. */
+	private Long idAlojamiento;
+
+	@BeforeEach
+	void preparar() {
+		limpiar();
+		admin = crearUsuario("admin@correo.com", Role.ADMIN);
+		tokenAdmin = jwtUtil.generateToken(admin);
+		anfitrion = crearUsuario("anfitrion@correo.com", Role.ANFITRION);
+		tokenAnfitrion = jwtUtil.generateToken(anfitrion);
+		idAlojamiento = crearEnRevision(anfitrion.getIdUsuario());
+	}
+
+	/**
+	 * Borra en orden de llaves foráneas: notificaciones, historial y períodos
+	 * antes que los alojamientos, y estos antes que los usuarios.
+	 */
+	@AfterEach
+	void limpiar() {
+		notificacionRepository.deleteAll();
+		periodoRepository.deleteAll();
+		jdbc.update("DELETE FROM historial_estado_alojamiento");
+		jdbc.update("DELETE FROM alojamiento_amenidad");
+		jdbc.update("DELETE FROM alojamiento");
+		usuarioRepository.deleteAll();
+	}
+
+	@Test
+	@DisplayName("CA-158 CA-196 El administrador ve la cola de revisión, aprueba la publicación y queda ACTIVA y "
+			+ "disponible; se avisa al anfitrión y la decisión queda auditada")
+	void apruebaLaPublicacion_CA158_CA196() throws Exception {
+		mockMvc.perform(get("/admin/alojamientos").param("estado", "PENDIENTE_REVISION")
+				.header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.contenido[0].idAlojamiento").value(idAlojamiento))
+				.andExpect(jsonPath("$.contenido[0].estado").value("PENDIENTE_REVISION"))
+				.andExpect(jsonPath("$.totalElementos").value(1))
+				.andExpect(jsonPath("$.pagina").value(0));
+
+		decidir("aprobar", null)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.estado").value("ACTIVA"));
+
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.ACTIVA);
+		// Queda disponible para cualquier huésped, sin sesión
+		mockMvc.perform(get("/alojamientos/" + idAlojamiento + "/disponibilidad/consultar")
+				.param("llegada", BASE.toString()).param("salida", BASE.plusDays(2).toString()))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.disponible").value(true));
+		assertThat(notificacionRepository.findByIdUsuarioOrderByFechaDescIdNotificacionDesc(anfitrion.getIdUsuario()))
+				.singleElement().satisfies(n -> {
+					assertThat(n.getTipo()).isEqualTo(NotificacionService.ALOJAMIENTO_APROBADO);
+					assertThat(n.getLeida()).isFalse();
+				});
+		// CA-196: administrador, publicación, fecha y resultado
+		assertThat(auditoriaService.consultar(AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO, admin.getIdUsuario(), null,
+				null, 0, 10).getContent()).anySatisfy(evento -> {
+					assertThat(evento.getIdEntidad()).isEqualTo(idAlojamiento);
+					assertThat(evento.getResultado()).isEqualTo(ResultadoAuditoria.EXITOSO);
+					assertThat(evento.getFecha()).isNotNull();
+				});
+		// Ya no está en la cola
+		mockMvc.perform(get("/admin/alojamientos").param("estado", "PENDIENTE_REVISION")
+				.header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(jsonPath("$.totalElementos").value(0));
+	}
+
+	@Test
+	@DisplayName("CA-195 CA-196 El administrador rechaza con motivo: vuelve a BORRADOR, el anfitrión ve el motivo y "
+			+ "recibe el aviso, y la decisión queda auditada")
+	void rechazaConMotivo_CA195_CA196() throws Exception {
+		decidir("rechazar", "Las fotos no corresponden al alojamiento")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.estado").value("BORRADOR"));
+
+		mockMvc.perform(get("/alojamientos/" + idAlojamiento + "/historial")
+				.header("Authorization", "Bearer " + tokenAnfitrion))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].estadoNuevo").value("BORRADOR"))
+				.andExpect(jsonPath("$[0].idUsuario").value(admin.getIdUsuario()))
+				.andExpect(jsonPath("$[0].motivo")
+						.value(PublicacionService.RECHAZADA + "Las fotos no corresponden al alojamiento"));
+		assertThat(notificacionRepository.findByIdUsuarioOrderByFechaDescIdNotificacionDesc(anfitrion.getIdUsuario()))
+				.singleElement().satisfies(n -> {
+					assertThat(n.getTipo()).isEqualTo(NotificacionService.ALOJAMIENTO_RECHAZADO);
+					assertThat(n.getMensaje()).contains("Las fotos no corresponden al alojamiento");
+				});
+		assertThat(auditoriaService.consultar(AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO, admin.getIdUsuario(), null,
+				null, 0, 10).getContent()).anySatisfy(evento -> {
+					assertThat(evento.getIdEntidad()).isEqualTo(idAlojamiento);
+					assertThat(evento.getDetalle()).contains("Las fotos no corresponden al alojamiento");
+				});
+
+		// El anfitrión puede corregir y volver a enviar a revisión: el estado lo permite
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.BORRADOR);
+	}
+
+	@Test
+	@DisplayName("CA-195 Un motivo de 500 caracteres se guarda completo; sin motivo o con más, se responde 400")
+	void motivoLargo_CA195() throws Exception {
+		decidir("rechazar", "   ").andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PublicacionService.MOTIVO_INVALIDO));
+		decidir("rechazar", "x".repeat(501)).andExpect(status().isBadRequest());
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.PENDIENTE_REVISION);
+
+		decidir("rechazar", "x".repeat(500)).andExpect(status().isOk());
+	}
+
+	@Test
+	@DisplayName("CA-196 Una decisión sobre algo que no está en revisión responde 409 y queda auditada")
+	void soloDesdeRevision_CA196() throws Exception {
+		decidir("aprobar", null).andExpect(status().isOk());
+
+		decidir("aprobar", null).andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").value("No se puede pasar de ACTIVA a ACTIVA."));
+		decidir("rechazar", "Motivo").andExpect(status().isConflict());
+		assertThat(auditoriaService.consultar(AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO, admin.getIdUsuario(), null,
+				null, 0, 10).getContent())
+				.anySatisfy(evento -> assertThat(evento.getResultado()).isEqualTo(ResultadoAuditoria.RECHAZADO));
+	}
+
+	@Test
+	@DisplayName("CA-158 No se aprueba si el anfitrión borró sus fechas mientras estaba en revisión")
+	void sinFechasNoSeAprueba_CA158() throws Exception {
+		periodoRepository.deleteAll();
+
+		decidir("aprobar", null).andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").value(PublicacionService.SIN_FECHAS));
+	}
+
+	@Test
+	@DisplayName("Solo el administrador modera: el anfitrión recibe 403 y sin token 401")
+	void soloElAdministrador() throws Exception {
+		mockMvc.perform(post(RUTA + idAlojamiento + "/aprobar").header("Authorization", "Bearer " + tokenAnfitrion))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get("/admin/alojamientos").header("Authorization", "Bearer " + tokenAnfitrion))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(post(RUTA + idAlojamiento + "/aprobar")).andExpect(status().isUnauthorized());
+		mockMvc.perform(get("/admin/alojamientos").param("estado", "NO_EXISTE")
+				.header("Authorization", "Bearer " + tokenAdmin)).andExpect(status().isBadRequest());
+		decidirSobre(999999L, "aprobar", null).andExpect(status().isNotFound());
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.PENDIENTE_REVISION);
+	}
+
+	private ResultActions decidir(String accion, String motivo) throws Exception {
+		return decidirSobre(idAlojamiento, accion, motivo);
+	}
+
+	private ResultActions decidirSobre(Long id, String accion, String motivo) throws Exception {
+		String cuerpo = motivo == null ? "{}" : "{\"motivo\": \"" + motivo + "\"}";
+		return mockMvc.perform(post(RUTA + id + "/" + accion).header("Authorization", "Bearer " + tokenAdmin)
+				.contentType(MediaType.APPLICATION_JSON).content(cuerpo));
+	}
+
+	/**
+	 * Guarda una publicación completa en PENDIENTE_REVISION con un período
+	 * disponible de dos meses desde la fecha base.
+	 *
+	 * @param idAnfitrion dueño
+	 * @return id del alojamiento
+	 */
+	private Long crearEnRevision(Long idAnfitrion) {
+		Alojamiento alojamiento = new Alojamiento();
+		alojamiento.setTitulo("Casa en el lago");
+		alojamiento.setIdAnfitrion(idAnfitrion);
+		alojamiento.setEstado(EstadoAlojamiento.PENDIENTE_REVISION);
+		alojamiento.setCapacidad(4);
+		alojamiento.setPrecioNoche(new BigDecimal("200000"));
+		alojamiento.setFechaCreacion(LocalDateTime.now());
+		Long id = alojamientoRepository.save(alojamiento).getIdAlojamiento();
+
+		PeriodoDisponibilidad periodo = new PeriodoDisponibilidad();
+		periodo.setIdAlojamiento(id);
+		periodo.setFechaInicio(BASE);
+		periodo.setFechaFin(BASE.plusMonths(2));
+		periodoRepository.save(periodo);
+		return id;
+	}
+
+	/**
+	 * Guarda un usuario activo y verificado con el rol indicado.
+	 *
+	 * @param correo correo de la cuenta
+	 * @param rol    rol de la cuenta
+	 * @return usuario guardado
+	 */
+	private Usuario crearUsuario(String correo, Role rol) {
+		Usuario usuario = new Usuario();
+		usuario.setNombre("Usuario de prueba");
+		usuario.setCorreo(AESUtil.encrypt(correo));
+		usuario.setCorreoHash(UsuarioService.hashCorreo(correo));
+		usuario.setContrasenia("no-se-usa");
+		usuario.setRol(rol);
+		usuario.setEstado(EstadoUsuario.ACTIVO);
+		usuario.setFechaRegistro(LocalDateTime.now());
+		usuario.setCorreoVerificado(true);
+		usuario.setTotpHabilitado(false);
+		return usuarioRepository.save(usuario);
+	}
+}

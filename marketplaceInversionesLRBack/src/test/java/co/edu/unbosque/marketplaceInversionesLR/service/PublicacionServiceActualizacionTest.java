@@ -106,6 +106,9 @@ class PublicacionServiceActualizacionTest {
 	@Mock
 	private GeocodingService geocodingService;
 
+	@Mock
+	private NotificacionService notificacionService;
+
 	private PublicacionService servicio;
 
 	/** Publicación que devuelve el repositorio simulado. */
@@ -115,7 +118,7 @@ class PublicacionServiceActualizacionTest {
 	void preparar() {
 		servicio = new PublicacionService(alojamientoRepo, imagenRepo, periodoRepo, servicioRepo, politicaRepo,
 				historialRepo, usuarioRepo, almacenamientoService, auditoriaService, geocodingService,
-				new ModelMapper());
+				notificacionService, new ModelMapper());
 		alojamiento = new Alojamiento();
 		alojamiento.setIdAlojamiento(ID);
 		alojamiento.setIdAnfitrion(ANFITRION);
