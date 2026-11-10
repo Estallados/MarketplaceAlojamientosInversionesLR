@@ -44,7 +44,8 @@ public interface AlojamientoRepository extends JpaRepository<Alojamiento, Long>,
 	Page<Alojamiento> findByEstado(EstadoAlojamiento estado, Pageable pagina);
 
 	/**
-	 * Publicaciones de un anfitrión, paginadas (HU-19).
+	 * Publicaciones de un anfitrión en cualquier estado, paginadas: las suyas
+	 * (HU-19) y el detalle de usuario del administrador (HU-12).
 	 *
 	 * @param idAnfitrion anfitrión dueño
 	 * @param pageable    página y orden

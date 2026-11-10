@@ -1,4 +1,3 @@
-
 import {
   Component,
   OnInit,
@@ -15,6 +14,8 @@ import {
   User,
   UsuarioDTO
 } from '../services/user';
+
+import { SessionService } from '../../core/services/session.service';
 
 export interface Profile {
   firstName: string;
@@ -40,6 +41,7 @@ export class ProfileView implements OnInit {
 
   private readonly usuarioService = inject(User);
   private readonly router = inject(Router);
+  private readonly sesion = inject(SessionService);
 
   // ======================================
   // DATOS DE LA SESIÓN
@@ -117,7 +119,7 @@ export class ProfileView implements OnInit {
     const token = sessionStorage.getItem('token');
 
     if (!token) {
-      this.router.navigateByUrl('/login');
+      void this.router.navigateByUrl('/login');
       return;
     }
 
@@ -134,8 +136,6 @@ export class ProfileView implements OnInit {
       .subscribe({
 
         next: (usuario: UsuarioDTO) => {
-
-          console.log('Datos del perfil recibidos:', usuario);
 
           const nombre = usuario.nombre ?? '';
           const apellido = usuario.apellido ?? '';
@@ -179,13 +179,9 @@ export class ProfileView implements OnInit {
               usuario.correo
             );
           }
-
-          console.log('Perfil cargado correctamente');
         },
 
         error: (err: unknown) => {
-
-          console.error('Error cargando perfil:', err);
 
           this.error.set(
             this.obtenerMensajeError(
@@ -393,8 +389,6 @@ export class ProfileView implements OnInit {
 
         next: () => {
 
-          console.log('Perfil actualizado correctamente');
-
           this.editing.set(false);
 
           this.mensaje.set(
@@ -407,8 +401,6 @@ export class ProfileView implements OnInit {
 
         error: (err: unknown) => {
 
-          console.error('Error actualizando perfil:', err);
-
           this.error.set(
             this.obtenerMensajeError(
               err,
@@ -420,7 +412,7 @@ export class ProfileView implements OnInit {
   }
 
   // ======================================
-  // 10. DESACTIVAR CUENTA
+  // 10. DESACTIVAR CUENTA (HU-10)
   // ======================================
 
   toggleAccount(): void {
@@ -465,18 +457,14 @@ export class ProfileView implements OnInit {
 
         next: () => {
 
-          console.log('Cuenta desactivada correctamente');
+          // Cierra la sesión en el servicio (memoria + sessionStorage)
+          // para que el guard no deje volver a las rutas protegidas.
+          this.sesion.cerrarSesion();
 
-          sessionStorage.removeItem('token');
-          sessionStorage.removeItem('rol');
-          sessionStorage.removeItem('correo');
-
-          this.router.navigateByUrl('/login');
+          void this.router.navigateByUrl('/login');
         },
 
         error: (err: unknown) => {
-
-          console.error('Error desactivando cuenta:', err);
 
           this.error.set(
             this.obtenerMensajeError(

@@ -58,7 +58,7 @@ class AdminControllerModeracionTest {
 
 	@BeforeEach
 	void preparar() {
-		controlador = new AdminController(tarifaService, publicacionService, auditoriaService);
+		controlador = new AdminController(tarifaService, publicacionService, null, null, auditoriaService);
 		Usuario admin = new Usuario();
 		admin.setIdUsuario(ADMIN);
 		autenticacion = new UsernamePasswordAuthenticationToken(admin, null, List.of());
