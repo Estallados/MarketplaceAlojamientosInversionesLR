@@ -74,6 +74,7 @@ src/app/
 │   ├── crear-publicacion/       HU-15
 │   ├── editar-publicacion/      HU-16
 │   ├── servicios-adicionales/   HU-16
+│   ├── fotografias-publicacion/ HU-16 (subir, marcar principal y eliminar imágenes)
 │   ├── gestion-estado/          HU-17 (enviar a revisión, pausar y reanudar)
 │   ├── insignia-estado/         HU-17 (insignia del estado de la publicación)
 │   ├── availability/            HU-20
