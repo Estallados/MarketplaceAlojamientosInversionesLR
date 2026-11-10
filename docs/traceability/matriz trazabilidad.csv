@@ -120,8 +120,8 @@ CotizacionServiceTest#cotiza_CA070
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-070 cotiza con el endpoint real y muestra el resumen de la cotización vigente
 confirmar-reserva.spec.ts#CA-070 al confirmar crea la reserva con POST /reservas y muestra la confirmación con el monto cotizado";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Cotización básica: sin servicios adicionales ni descuento (los agrega HU-31). El pago llega con HU-27.
-Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Cotización básica: sin servicios adicionales ni descuento (los agrega HU-31). El pago llega con HU-27.
+Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-071;RF-021;Creación de reserva por el huésped;Rechazo por alojamiento no ACTIVA;Dado un alojamiento no ACTIVA, cuando el huésped intenta reservar, entonces el sistema rechaza la operación e informa el motivo.;HU-22;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas
@@ -135,7 +135,7 @@ CotizacionServiceTest#noActiva_CA071
 ReservaTest#publicacionNoActiva_CA071
 confirmar-reserva.spec.ts#CA-071 informa que el alojamiento no está disponible para reservar y no presenta la reserva como creada
 confirmar-reserva.spec.ts#CA-071 también muestra el motivo cuando el rechazo llega al cotizar y no permite confirmar";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-072;"RF-021
 RNF-019";"Creación de reserva por el huésped
 Prevención de reservas superpuestas con revalidación";Rechazo por solapamiento y confirmación simultánea;Dado un período ya reservado o dos solicitudes simultáneas para el mismo período, cuando se intenta confirmar una reserva superpuesta, entonces el sistema debe rechazar la confirmación de modo que solo una reserva quede confirmada.;HU-22;"CU-024
@@ -153,25 +153,25 @@ ManejadorGlobalExcepcionesTest#cruceDeReservas_CA072
 confirmar-reserva.spec.ts#CA-072 informa que las fechas dejaron de estar disponibles y permite volver a elegir fechas
 confirmar-reserva.spec.ts#CA-072 no confunde otro conflicto del backend con fechas ocupadas ni afirma que no se creó la reserva
 confirmar-reserva.spec.ts#CA-072 un doble clic sobre Confirmar envía una sola solicitud de reserva";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Bloqueo pesimista de la cotización y del alojamiento; en Neon, además, la restricción ex_reserva_sin_cruces.
-Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Bloqueo pesimista de la cotización y del alojamiento; en Neon, además, la restricción ex_reserva_sin_cruces.
+Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-074;RNF-019;Prevención de reservas superpuestas con revalidación;Revalidación de disponibilidad al confirmar;Dado que una consulta previa mostró el alojamiento como disponible, cuando el huésped solicita confirmar la reserva, entonces el sistema debe volver a comprobar la disponibilidad inmediatamente antes de confirmarla y rechazarla si el período ya no está disponible.;HU-22;CU-025;"CP-036 Reservas superpuestas o simultáneas
 CP-039 Validación de disponibilidad al confirmar";"ReservaServiceTest#periodoTomado_CA072_CA074
 ReservaTest#revalidaAntesDeConfirmar_CA074
 confirmar-reserva.spec.ts#CA-074 no da por vigente una consulta previa: confirma con POST /reservas y muestra el rechazo si el período ya no está libre";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-075;RNF-020;Confirmación inmediata de reserva válida;Confirmación inmediata sin aprobación manual;Dado que una reserva cumple las condiciones definidas (alojamiento ACTIVA, período disponible y cotización vigente), cuando el huésped la confirma en el flujo de reserva inmediata, entonces el sistema debe confirmarla sin requerir aprobación manual del anfitrión.;HU-22;CU-025;"CP-034 Creación de reserva inmediata
 CP-037 Reserva inmediata inválida";"ReservaServiceTest#reservaConfirmada_CA070_CA075_CA086
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-075 confirma en un solo paso, sin aprobación del anfitrión, y muestra el estado CONFIRMADA del backend
 confirmar-reserva.spec.ts#CA-075 diferencia una reserva que el backend no dejó CONFIRMADA";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Se confirma de inmediato sin aprobación del anfitrión; el pago de prueba llega con HU-27.
-Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Se confirma de inmediato sin aprobación del anfitrión; el pago de prueba llega con HU-27.
+Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-076;RF-020;Bloquear período reservado;Bloqueo automático del período tras confirmar;Dado que un huésped solicita una reserva válida sobre un alojamiento disponible, cuando la reserva queda confirmada, entonces el sistema debe bloquear automáticamente el período reservado, mostrarlo como no disponible en el calendario y no mostrarlo en las búsquedas de disponibilidad de otros usuarios.;HU-22;CU-025;CP-038 Bloqueo de período después de reservar;"ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-076 después de confirmar vuelve a consultar la disponibilidad real y muestra el período como bloqueado
 confirmar-reserva.spec.ts#CA-076 no simula el bloqueo: si el backend aún muestra las fechas libres, lo indica tal cual";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Verificado en el calendario, la consulta de disponibilidad y la cotización; la búsqueda de alojamientos aún no está implementada.
-Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Verificado en el calendario, la consulta de disponibilidad y la cotización; la búsqueda de alojamientos aún no está implementada.
+Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-078;RF-022;Consulta de estado e historial de reservas;Consulta de historial del huésped;Dado que el huésped tiene reservas registradas, cuando consulta su historial, entonces el sistema muestra todas sus reservas con su estado actual.;HU-25;"CU-026
 CU-020";"CP-040 Consulta de historial de reservas
 CP-041 Consulta de reservas del anfitrión";ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133;;38a9302;;;;
@@ -218,7 +218,7 @@ ReservaServiceTest#reservaConfirmada_CA070_CA075_CA086
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-086 envía solo la referencia de la cotización, sin monto, aunque se altere el precio mostrado
 confirmar-reserva.spec.ts#CA-086 muestra el total que devuelve el backend para la reserva, sin recalcularlo";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-120-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-120): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"CatalogoTest#unVisitanteSinSesionVeSoloLosQueSePuedenReservar_CA087
 DisponibilidadBusquedaTest#debeBuscarPorCiudad_CA087";;"85a995d
 38a9302";;;;
@@ -397,14 +397,14 @@ CA-140;RNF-008;Prevención de duplicados y consistencia ante reintentos;Sin dupli
 ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
 IdempotenciaServiceTest#debeEjecutarUnaSolaVezYRepetirLaMismaRespuesta_CA140
 confirmar-reserva.spec.ts#RNF-008 tras un error de conexión permite reintentar con la misma Idempotency-Key y no reenvía solo
-confirmar-reserva.spec.ts#RNF-008 usa una clave nueva después de una respuesta definitiva del backend";;38a9302;feat/SCRUM-120-fe-crear-reserva-con-bloqueo;;;"Ninguna HU lo lista en sus criterios de aceptación
-Front-end (SCRUM-120): POST /reservas envía Idempotency-Key, la conserva solo para reintentar tras un error de conexión o 5xx y no reenvía automáticamente; probado con Vitest (ng test)."
+confirmar-reserva.spec.ts#RNF-008 usa una clave nueva después de una respuesta definitiva del backend";;38a9302;feat/SCRUM-240-fe-crear-reserva-con-bloqueo;;;"Ninguna HU lo lista en sus criterios de aceptación
+Front-end (SCRUM-240): POST /reservas envía Idempotency-Key, la conserva solo para reintentar tras un error de conexión o 5xx y no reenvía automáticamente; probado con Vitest (ng test)."
 CA-141;RNF-008;Prevención de duplicados y consistencia ante reintentos;Resultado único ante reintentos;Dado una operación procesada previamente, cuando el cliente reintente la misma solicitud, entonces el sistema debe conservar el resultado original sin generar inconsistencias o duplicados.;;CU-025;CP-078 Solicitud duplicada o reintentada;"ReservasPagosTest#reenviarLaMismaSolicitudNoCreaUnaSegundaReserva_CA140_CA141
 IdempotenciaServiceTest#debeRechazarLaMismaClaveConOtraPeticion_CA141
 IdempotenciaServiceTest#debeExigirUnaClaveValida_CA141
 confirmar-reserva.spec.ts#RNF-008 tras un error de conexión permite reintentar con la misma Idempotency-Key y no reenvía solo
-confirmar-reserva.spec.ts#RNF-008 usa una clave nueva después de una respuesta definitiva del backend";;38a9302;feat/SCRUM-120-fe-crear-reserva-con-bloqueo;;;"Ninguna HU lo lista en sus criterios de aceptación
-Front-end (SCRUM-120): POST /reservas envía Idempotency-Key, la conserva solo para reintentar tras un error de conexión o 5xx y no reenvía automáticamente; probado con Vitest (ng test)."
+confirmar-reserva.spec.ts#RNF-008 usa una clave nueva después de una respuesta definitiva del backend";;38a9302;feat/SCRUM-240-fe-crear-reserva-con-bloqueo;;;"Ninguna HU lo lista en sus criterios de aceptación
+Front-end (SCRUM-240): POST /reservas envía Idempotency-Key, la conserva solo para reintentar tras un error de conexión o 5xx y no reenvía automáticamente; probado con Vitest (ng test)."
 CA-142;RNF-009;Tiempo de respuesta de consultas;Tiempo máximo de consulta;Dado que se ejecutan consultas de alojamientos bajo las condiciones de prueba definidas, cuando el usuario solicita visualizar los resultados, entonces al menos el 95 % de las solicitudes deben responder en un tiempo máximo de 6 segundos.;;"CU-022
 CU-023";"CP-079 Tiempo de respuesta de búsqueda
 CP-080 Tiempo de respuesta de disponibilidad";;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
