@@ -468,13 +468,23 @@ CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
 CA-170;RF-007;Gestión de alojamientos favoritos;Consulta de favoritos;Dado que el huésped está autenticado, cuando consulta sus alojamientos favoritos, entonces el sistema debe mostrar solo los asociados a su usuario o indicar que la lista está vacía si no tiene ninguno.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
-CP-069 Eliminación de favorito";OpcionalesTest#agregarFavoritoNoDuplicaYSoloMuestraLosPropios_CA170_CA172_CA173;;38a9302;;;;
+CP-069 Eliminación de favorito";"FavoritosTest#listaVacia_CA170
+FavoritosTest#soloLosPropios_CA170
+FavoritoControllerTest#lista_CA170
+FavoritoServiceTest#listaLosDelUsuario_CA170
+FavoritoServiceTest#listaVacia_CA170";Probado (JUnit);;feat/SCRUM-186-be-alojamientos-favoritos;;;
 CA-171;RF-007;Gestión de alojamientos favoritos;Eliminación de favorito;Dado que el huésped tiene un alojamiento en su lista de favoritos, cuando lo elimina, entonces el alojamiento debe dejar de aparecer en la lista.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
-CP-069 Eliminación de favorito";OpcionalesTest#eliminarUnFavoritoLoQuitaDeLaLista_CA171;;38a9302;;;;
+CP-069 Eliminación de favorito";"FavoritosTest#eliminaDeLaLista_CA171
+FavoritosTest#noEliminaElDeOtro_CA171
+FavoritoControllerTest#elimina_CA171
+FavoritoServiceTest#elimina_CA171";Probado (JUnit);;feat/SCRUM-186-be-alojamientos-favoritos;;;
 CA-173;RF-007;Gestión de alojamientos favoritos;Agregar favorito sin duplicados;Dado que el huésped está autenticado y el alojamiento existe, cuando lo agrega a sus favoritos, entonces el sistema debe registrarlo en su lista y, si ya estaba agregado, conservar un único favorito.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
-CP-069 Eliminación de favorito";OpcionalesTest#agregarFavoritoNoDuplicaYSoloMuestraLosPropios_CA170_CA172_CA173;;38a9302;;;;
+CP-069 Eliminación de favorito";"FavoritosTest#agregaSinDuplicar_CA173
+FavoritoServiceTest#solicitudesSimultaneas_CA173
+FavoritoControllerTest#agregaNuevo_CA173
+FavoritoServiceTest#noDuplica_CA173";Probado (JUnit);;feat/SCRUM-186-be-alojamientos-favoritos;;;
 CA-174;RNF-023;Autenticación multifactor;Validación del segundo factor;Dado que el usuario tiene habilitado el segundo factor, cuando valida sus credenciales principales, entonces el sistema debe solicitar el segundo factor y permitir el acceso solo si es válido, rechazando el inicio de sesión si es incorrecto.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
