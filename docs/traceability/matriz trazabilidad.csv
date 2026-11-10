@@ -27,12 +27,19 @@ CancelacionServiceTest#enRevision_CA009
 PagoServiceTest#sinDevolucion_CA009";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;Si la política no da devolución (0 %), se cancela sin devolver y el pago sigue APROBADO.
 CA-010;RF-003;Registro/Consulta de notificaciones;Registro por evento relevante;Dado que ocurre un evento configurado como relevante para un usuario, cuando el sistema procesa dicho evento, entonces debe registrar una notificación asociada al usuario correspondiente.;HU-02;"CU-025
 CU-027
-CU-028";CP-045 Registro y consulta de notificaciones;NotificacionesResenasTest#unEventoRelevanteRegistraUnaNotificacionParaElUsuario_CA010;;38a9302;;;;
+CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesTest#eventoCreaLaNotificacion_CA010
+NotificacionServiceTest#registraPorEvento_CA010";Probado (JUnit);;feat/SCRUM-253-be-recibir-consultar-notificaciones;;;NotificacionService.enviar la usan los eventos: reserva confirmada o cancelada, pago no confirmado, publicación aprobada, rechazada o bloqueada, reserva en revisión y cuenta restringida o liberada. Las de reseñas llegan con HU-03 y HU-14. Sin correo, SMS ni push.
 CA-013;RF-003;Registro/Consulta de notificaciones;Visualización y consulta de notificaciones;Dado que un usuario autenticado tiene notificaciones registradas asociadas a su cuenta, cuando consulta sus notificaciones, entonces el sistema debe mostrar únicamente las notificaciones asociadas a dicho usuario.;HU-02;"CU-025
 CU-027
-CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesResenasTest#cadaUsuarioVeYMarcaSoloSusNotificaciones_CA013
-NotificacionesResenasTest#elContadorDeNoLeidasYMarcarTodasComoLeidas_CA013";;"38a9302
-e2f0592";;;;
+CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesTest#soloLasPropias_CA013
+NotificacionesTest#contador_CA013
+NotificacionesTest#marcarUna_CA013
+NotificacionesTest#marcarTodas_CA013
+NotificacionServiceTest#listaLasPropias_CA013
+NotificacionServiceTest#contarYMarcarTodas_CA013
+NotificacionServiceTest#marcarUna_CA013
+NotificacionControllerTest#listar_CA013
+NotificacionControllerTest#marcarUna_CA013";Probado (JUnit);;feat/SCRUM-253-be-recibir-consultar-notificaciones;;;"GET /notificaciones (paginado, las más recientes primero), GET /notificaciones/noleidas, PATCH /notificaciones/leidas y PATCH /notificaciones/{id}/leida; la de otro usuario responde 404."
 CA-016;RF-004;Registro/Consulta de reseñas y calificaciones;Reseña según estado de la reserva;Dado que el huésped evalúa un alojamiento, cuando intenta registrar una reseña o calificación, entonces el sistema debe permitirlo solo si la reserva está completada e impedir el registro en caso contrario.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
