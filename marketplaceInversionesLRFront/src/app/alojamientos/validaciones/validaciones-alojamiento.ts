@@ -91,6 +91,87 @@ export function errorPrecioNoche(
   return '';
 }
 
+/**
+ * Tarifa propia del alojamiento (RF-023): porcentaje entre 0 y 100, igual que
+ * valida el backend (PublicacionService). Vacía no es error: se aplica la
+ * tarifa general configurada en HU-24.
+ *
+ * @param nombre "limpieza" o "servicio"
+ */
+export function errorPorcentajeTarifa(
+  nombre: string,
+  valor: number | null,
+  noNumerico = false
+): string {
+
+  const mensaje = `La tarifa de ${nombre} debe ser un porcentaje entre 0 y 100.`;
+
+  if (noNumerico) {
+    return mensaje;
+  }
+
+  if (valor === null) {
+    return '';
+  }
+
+  if (
+    typeof valor !== 'number' ||
+    !Number.isFinite(valor) ||
+    valor < 0 ||
+    valor > 100
+  ) {
+    return mensaje;
+  }
+
+  return '';
+}
+
+// ======================================
+// FOTOGRAFÍAS (HU-15, HU-16)
+// Mismas reglas que el backend (PublicacionService.errorArchivos y
+// AlmacenamientoService): JPG, PNG o WEBP de hasta 5 MB y máximo 15
+// imágenes por alojamiento. El backend sigue siendo la autoridad.
+// ======================================
+
+/** Máximo de imágenes por alojamiento (PublicacionService.MAXIMO_IMAGENES). */
+export const MAXIMO_IMAGENES = 15;
+
+/** Tamaño máximo de cada imagen: 5 MB. */
+export const TAMANIO_MAXIMO_IMAGEN = 5 * 1024 * 1024;
+
+/** Tipos de imagen aceptados. */
+export const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp'];
+
+/**
+ * Error de un lote de fotografías nuevas, o '' si se puede enviar.
+ *
+ * @param nuevas archivos elegidos
+ * @param actuales fotografías que ya tiene (o tendrá) el alojamiento
+ */
+export function errorFotografias(nuevas: File[], actuales: number): string {
+
+  const archivoInvalido = nuevas.find(
+    archivo =>
+      !TIPOS_IMAGEN.includes(archivo.type) ||
+      archivo.size === 0 ||
+      archivo.size > TAMANIO_MAXIMO_IMAGEN
+  );
+
+  if (archivoInvalido) {
+    return (
+      `La fotografía ${archivoInvalido.name} ` +
+      'no es válida. Usa JPG, PNG o WEBP ' +
+      'de máximo 5 MB.'
+    );
+  }
+
+  if (actuales + nuevas.length > MAXIMO_IMAGENES) {
+    return 'Puedes cargar máximo 15 fotografías por alojamiento.';
+  }
+
+  return '';
+}
+
 /** Habitaciones, camas y baños: entero no negativo. */
 export function errorNoNegativo(
   nombre: string,

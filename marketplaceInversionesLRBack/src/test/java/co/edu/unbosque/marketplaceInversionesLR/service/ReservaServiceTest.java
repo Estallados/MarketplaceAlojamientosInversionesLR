@@ -112,7 +112,8 @@ class ReservaServiceTest {
 	@BeforeEach
 	void preparar() {
 		ModelMapper modelMapper = new ModelMapper();
-		CotizacionService cotizacionService = new CotizacionService(null, null, null, null, modelMapper);
+		CotizacionService cotizacionService = new CotizacionService(null, null, null, null, null, modelMapper,
+				JsonMapper.builder().build());
 		servicio = new ReservaService(alojamientoRepo, cotizacionRepo, reservaRepo, calendarioService,
 				cotizacionService, new PagoService(pagoRepo), notificacionService, auditoriaService, modelMapper,
 				JsonMapper.builder().build(), transactionManager);

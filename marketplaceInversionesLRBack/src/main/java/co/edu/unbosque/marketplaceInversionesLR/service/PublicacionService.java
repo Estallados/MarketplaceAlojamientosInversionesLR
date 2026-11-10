@@ -1,19 +1,27 @@
 package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,15 +34,18 @@ import co.edu.unbosque.marketplaceInversionesLR.dto.PoliticaCancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ServicioAdicionalDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoResena;
 import co.edu.unbosque.marketplaceInversionesLR.entity.HistorialEstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Imagen;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ServicioAdicional;
+import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoEspecificacion;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ImagenRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PeriodoDisponibilidadRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ResenaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ServicioAdicionalRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.service.CloudinaryService.ImagenSubida;
@@ -45,8 +56,8 @@ import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 /**
  * Publicaciones de alojamiento: creación en BORRADOR con sus imágenes (HU-15),
  * edición, imágenes y servicios adicionales (HU-16), validación de los datos y
- * de la información mínima para enviar a revisión, y políticas de cancelación
- * disponibles.
+ * de la información mínima para enviar a revisión, políticas de cancelación
+ * disponibles y la búsqueda pública con filtros (HU-23).
  * <p>
  * Cada cambio de estado guarda un {@link HistorialEstadoAlojamiento}.
  * </p>
@@ -91,6 +102,37 @@ public class PublicacionService {
 	/** Máximo de imágenes por alojamiento. */
 	public static final int MAXIMO_IMAGENES = 15;
 
+	/** Orden por cantidad y luego promedio de reseñas (por defecto en el catálogo). */
+	public static final String ORDEN_RECOMENDADOS = "recomendados";
+
+	/** Orden por precio por noche, de menor a mayor. */
+	public static final String ORDEN_PRECIO_MENOR = "precio_menor";
+
+	/** Orden por precio por noche, de mayor a menor. */
+	public static final String ORDEN_PRECIO_MAYOR = "precio_mayor";
+
+	/** Orden por promedio y luego cantidad de reseñas. */
+	public static final String ORDEN_MEJOR_CALIFICADOS = "mejor_calificados";
+
+	/** Mensaje cuando el orden pedido no existe. */
+	public static final String ORDEN_INVALIDO = "El orden debe ser uno de: " + ORDEN_RECOMENDADOS + ", "
+			+ ORDEN_PRECIO_MENOR + ", " + ORDEN_PRECIO_MAYOR + ", " + ORDEN_MEJOR_CALIFICADOS + ".";
+
+	/** Mensaje cuando la cantidad de huéspedes de la búsqueda no es positiva. */
+	public static final String HUESPEDES_INVALIDOS = "La cantidad de huéspedes debe ser mayor que cero.";
+
+	/** Mensaje cuando un precio de la búsqueda es negativo. */
+	public static final String PRECIO_NEGATIVO = "El precio no puede ser negativo.";
+
+	/** Mensaje cuando el rango de precios de la búsqueda está invertido. */
+	public static final String PRECIOS_INVERTIDOS = "El precio mínimo no puede ser mayor que el máximo.";
+
+	/** Atributo del precio por noche, para ordenar. */
+	private static final String PRECIO_NOCHE = "precioNoche";
+
+	/** Atributo del id, para desempatar los órdenes y que la paginación sea estable. */
+	private static final String ID_ALOJAMIENTO = "idAlojamiento";
+
 	/** Repositorio de alojamientos. */
 	private final AlojamientoRepository alojamientoRepo;
 
@@ -111,6 +153,9 @@ public class PublicacionService {
 
 	/** Repositorio de usuarios. */
 	private final UsuarioRepository usuarioRepo;
+
+	/** Reseñas, para la calificación y los órdenes de la búsqueda. */
+	private final ResenaRepository resenaRepo;
 
 	/** Valida y guarda las imágenes en Cloudinary. */
 	private final AlmacenamientoService almacenamientoService;
@@ -137,6 +182,7 @@ public class PublicacionService {
 	 * @param politicaRepo          repositorio de políticas
 	 * @param historialRepo         historial de estados
 	 * @param usuarioRepo           repositorio de usuarios
+	 * @param resenaRepo            repositorio de reseñas
 	 * @param almacenamientoService servicio de almacenamiento de imágenes
 	 * @param auditoriaService      servicio de auditoría
 	 * @param geocodingService      servicio de coordenadas
@@ -146,7 +192,7 @@ public class PublicacionService {
 	public PublicacionService(AlojamientoRepository alojamientoRepo, ImagenRepository imagenRepo,
 			PeriodoDisponibilidadRepository periodoRepo, ServicioAdicionalRepository servicioRepo,
 			PoliticaCancelacionRepository politicaRepo, HistorialEstadoAlojamientoRepository historialRepo,
-			UsuarioRepository usuarioRepo,
+			UsuarioRepository usuarioRepo, ResenaRepository resenaRepo,
 			AlmacenamientoService almacenamientoService, AuditoriaService auditoriaService,
 			GeocodingService geocodingService, NotificacionService notificacionService, ModelMapper modelMapper) {
 		this.notificacionService = notificacionService;
@@ -157,6 +203,7 @@ public class PublicacionService {
 		this.politicaRepo = politicaRepo;
 		this.historialRepo = historialRepo;
 		this.usuarioRepo = usuarioRepo;
+		this.resenaRepo = resenaRepo;
 		this.almacenamientoService = almacenamientoService;
 		this.auditoriaService = auditoriaService;
 		this.geocodingService = geocodingService;
@@ -313,6 +360,159 @@ public class PublicacionService {
 		Page<Alojamiento> encontrados = estado == null ? alojamientoRepo.findAll(pagina)
 				: alojamientoRepo.findByEstado(estado, pagina);
 		return PaginaDTO.de(encontrados, this::convertirDTO);
+	}
+
+	/**
+	 * Catálogo público (HU-23): todos los alojamientos que un visitante puede
+	 * reservar, es decir, las publicaciones ACTIVA con al menos una noche
+	 * ofrecida desde hoy. No tiene filtros; para filtrar se usa
+	 * {@link #buscar}.
+	 *
+	 * @param orden  {@link #ORDEN_RECOMENDADOS} (por defecto),
+	 *               {@link #ORDEN_PRECIO_MENOR}, {@link #ORDEN_PRECIO_MAYOR} o
+	 *               {@link #ORDEN_MEJOR_CALIFICADOS}
+	 * @param pagina página
+	 * @return la página de alojamientos; o DATOS_INVALIDOS si el orden no
+	 *         existe
+	 */
+	@Transactional(readOnly = true)
+	public Resultado<PaginaDTO<AlojamientoDTO>> disponibles(String orden, Pageable pagina) {
+		Specification<Alojamiento> filtro = AlojamientoEspecificacion.conEstado(EstadoAlojamiento.ACTIVA)
+				.and(AlojamientoEspecificacion.conFechasDesde(LocalDate.now()));
+		return listarOrdenado(filtro, orden == null || orden.isBlank() ? ORDEN_RECOMENDADOS : orden, pagina);
+	}
+
+	/**
+	 * Búsqueda pública (HU-23, CA-087): solo publicaciones ACTIVA que cumplan
+	 * todos los filtros enviados; los vacíos no filtran. Con fechas, excluye
+	 * las que no estén libres en ese período. Con varias amenidades, debe
+	 * tenerlas todas. Sin orden, las más recientes primero.
+	 *
+	 * @param filtros ciudad, fechas, huéspedes, tipo, rango de precio y
+	 *                amenidades
+	 * @param orden   los mismos valores de {@link #disponibles}; vacío ordena
+	 *                por los más recientes
+	 * @param pagina  página, con el orden por defecto
+	 * @return la página de resultados; o DATOS_INVALIDOS si los filtros o el
+	 *         orden no son válidos
+	 */
+	@Transactional(readOnly = true)
+	public Resultado<PaginaDTO<AlojamientoDTO>> buscar(FiltrosBusqueda filtros, String orden, Pageable pagina) {
+		String error = validarFiltros(filtros);
+		if (error != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, error);
+		}
+		Specification<Alojamiento> filtro = AlojamientoEspecificacion.conEstado(EstadoAlojamiento.ACTIVA)
+				.and(AlojamientoEspecificacion.enCiudad(filtros.ciudad()))
+				.and(AlojamientoEspecificacion.deTipo(filtros.tipo()))
+				.and(AlojamientoEspecificacion.conCapacidadPara(filtros.huespedes()))
+				.and(AlojamientoEspecificacion.precioDesde(filtros.precioMinimo()))
+				.and(AlojamientoEspecificacion.precioHasta(filtros.precioMaximo()))
+				.and(AlojamientoEspecificacion.conAmenidades(filtros.amenidades()))
+				.and(AlojamientoEspecificacion.libreEntre(filtros.llegada(), filtros.salida(),
+						CalendarioService.ESTADOS_OCUPAN, CalendarioService.limitePendiente()));
+		if (orden != null && !orden.isBlank()) {
+			return listarOrdenado(filtro, orden, pagina);
+		}
+		return Resultado.exito(PaginaDTO.de(alojamientoRepo.findAll(filtro, pagina), this::convertirDTO));
+	}
+
+	/**
+	 * Filtros de la búsqueda pública. Cualquiera puede ser {@code null}.
+	 *
+	 * @param ciudad       ciudad, sin distinguir mayúsculas
+	 * @param llegada      día de llegada; va junto con la salida
+	 * @param salida       día de salida, posterior a la llegada
+	 * @param huespedes    cantidad de huéspedes, mayor que cero
+	 * @param tipo         tipo de alojamiento, sin distinguir mayúsculas
+	 * @param precioMinimo precio mínimo por noche
+	 * @param precioMaximo precio máximo por noche
+	 * @param amenidades   amenidades que debe tener todas
+	 */
+	public record FiltrosBusqueda(String ciudad, LocalDate llegada, LocalDate salida, Integer huespedes, String tipo,
+			BigDecimal precioMinimo, BigDecimal precioMaximo, Collection<String> amenidades) {
+	}
+
+	/**
+	 * Valida los filtros de la búsqueda.
+	 *
+	 * @param filtros filtros recibidos
+	 * @return el mensaje del primer error, o {@code null} si son válidos
+	 */
+	private static String validarFiltros(FiltrosBusqueda filtros) {
+		if (filtros.llegada() != null || filtros.salida() != null) {
+			String errorFechas = CalendarioService.validarFechas(filtros.llegada(), filtros.salida());
+			if (errorFechas != null) {
+				return errorFechas;
+			}
+		}
+		if (filtros.huespedes() != null && filtros.huespedes() <= 0) {
+			return HUESPEDES_INVALIDOS;
+		}
+		if (esNegativo(filtros.precioMinimo()) || esNegativo(filtros.precioMaximo())) {
+			return PRECIO_NEGATIVO;
+		}
+		if (filtros.precioMinimo() != null && filtros.precioMaximo() != null
+				&& filtros.precioMinimo().compareTo(filtros.precioMaximo()) > 0) {
+			return PRECIOS_INVERTIDOS;
+		}
+		return null;
+	}
+
+	/**
+	 * Indica si un precio es negativo.
+	 *
+	 * @param precio precio; {@code null} no lo es
+	 * @return {@code true} si es menor que cero
+	 */
+	private static boolean esNegativo(BigDecimal precio) {
+		return precio != null && precio.signum() < 0;
+	}
+
+	/**
+	 * Aplica uno de los órdenes del catálogo. El precio lo ordena la base de
+	 * datos junto con la página; las reseñas, con las subconsultas de
+	 * {@link AlojamientoEspecificacion#ordenadoPorResenas}, que no se usan al
+	 * contar el total.
+	 *
+	 * @param filtro condiciones de la consulta
+	 * @param orden  orden pedido
+	 * @param pagina página
+	 * @return la página ordenada; o DATOS_INVALIDOS si el orden no existe
+	 */
+	private Resultado<PaginaDTO<AlojamientoDTO>> listarOrdenado(Specification<Alojamiento> filtro, String orden,
+			Pageable pagina) {
+		Pageable sinOrden = PageRequest.of(pagina.getPageNumber(), pagina.getPageSize());
+		Page<Alojamiento> encontrados = switch (orden.trim().toLowerCase(Locale.ROOT)) {
+		case ORDEN_PRECIO_MENOR -> alojamientoRepo.findAll(filtro, PageRequest.of(pagina.getPageNumber(),
+				pagina.getPageSize(), Sort.by(Sort.Order.asc(PRECIO_NOCHE), Sort.Order.asc(ID_ALOJAMIENTO))));
+		case ORDEN_PRECIO_MAYOR -> alojamientoRepo.findAll(filtro, PageRequest.of(pagina.getPageNumber(),
+				pagina.getPageSize(), Sort.by(Sort.Order.desc(PRECIO_NOCHE), Sort.Order.asc(ID_ALOJAMIENTO))));
+		case ORDEN_RECOMENDADOS -> alojamientoRepo
+				.findAll(filtro.and(AlojamientoEspecificacion.ordenadoPorResenas(true)), filtro, sinOrden);
+		case ORDEN_MEJOR_CALIFICADOS -> alojamientoRepo
+				.findAll(filtro.and(AlojamientoEspecificacion.ordenadoPorResenas(false)), filtro, sinOrden);
+		default -> null;
+		};
+		if (encontrados == null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, ORDEN_INVALIDO);
+		}
+		return Resultado.exito(PaginaDTO.de(encontrados, this::convertirDTO));
+	}
+
+	/**
+	 * Cantidad de alojamientos por tipo, en cualquier estado y en orden
+	 * alfabético, para los filtros de la página de inicio (HU-23).
+	 *
+	 * @return mapa tipo → cantidad
+	 */
+	@Transactional(readOnly = true)
+	public Map<String, Long> cantidadPorTipo() {
+		Map<String, Long> cantidades = new LinkedHashMap<>();
+		for (Object[] fila : alojamientoRepo.contarPorTipo()) {
+			cantidades.put((String) fila[0], ((Number) fila[1]).longValue());
+		}
+		return cantidades;
 	}
 
 	/**
@@ -702,23 +902,29 @@ public class PublicacionService {
 
 	/**
 	 * Convierte la entidad a DTO con las imágenes (la principal primero), los
-	 * servicios adicionales, el nombre de la política y el nombre del
-	 * anfitrión.
+	 * servicios adicionales, el nombre de la política, la calificación de las
+	 * reseñas publicadas y el nombre del anfitrión. Así el frontend arma las
+	 * tarjetas de la búsqueda y el detalle con una sola llamada.
 	 *
 	 * @param alojamiento alojamiento
 	 * @return alojamiento para la API
 	 */
 	public AlojamientoDTO convertirDTO(Alojamiento alojamiento) {
+		Long id = alojamiento.getIdAlojamiento();
 		AlojamientoDTO dto = modelMapper.map(alojamiento, AlojamientoDTO.class);
 		dto.setAmenidades(new HashSet<>(alojamiento.getAmenidades()));
-		List<ImagenDTO> imagenes = imagenesDTO(alojamiento.getIdAlojamiento());
+		List<ImagenDTO> imagenes = imagenesDTO(id);
 		dto.setDetalleImagenes(imagenes);
 		dto.setImagenes(imagenes.stream().map(ImagenDTO::getUrl).toList());
-		dto.setServiciosAdicionales(servicioRepo.findByIdAlojamientoOrderByIdServicio(alojamiento.getIdAlojamiento())
+		dto.setServiciosAdicionales(servicioRepo.findByIdAlojamientoOrderByIdServicio(id)
 				.stream().map(s -> modelMapper.map(s, ServicioAdicionalDTO.class)).toList());
 		if (alojamiento.getIdPolitica() != null) {
 			politicaRepo.findById(alojamiento.getIdPolitica()).ifPresent(p -> dto.setNombrePolitica(p.getNombre()));
 		}
+		Double promedio = resenaRepo.promedio(id, EstadoResena.PUBLICADA);
+		dto.setPromedioCalificacion(promedio == null ? null
+				: BigDecimal.valueOf(promedio).setScale(1, RoundingMode.HALF_UP).doubleValue());
+		dto.setCantidadResenas(resenaRepo.countByIdAlojamientoAndEstado(id, EstadoResena.PUBLICADA));
 		usuarioRepo.findById(alojamiento.getIdAnfitrion()).ifPresent(u -> dto.setNombreAnfitrion(u.getNombre()));
 		return dto;
 	}

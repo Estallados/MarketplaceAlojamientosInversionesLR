@@ -158,12 +158,13 @@ CU-020";"CP-040 Consulta de historial de reservas
 CP-041 Consulta de reservas del anfitrión";ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133;;38a9302;;;;
 CA-080;RNF-021;Cálculo consistente de cotización;Componentes y total de la cotización;Dado un alojamiento y fechas válidas, cuando se pide la cotización, entonces el sistema muestra todos los componentes exigidos y el total corresponde a la suma correcta de dichos componentes.;HU-31;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
-CP-033 Aplicación de tarifa configurada o por defecto";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
+CP-033 Aplicación de tarifa configurada o por defecto";CotizacionServiceTest#totalEsLaSuma_CA080;Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-082;RNF-018;Validación cronológica de fechas;Validación de período;Dado que el huésped selecciona una fecha de llegada y una de salida, cuando solicita la cotización, la consulta de disponibilidad o la reserva, entonces el sistema debe procesarla si la salida es posterior a la llegada y, si es igual o anterior, rechazarla e indicar que las fechas son inválidas.;"HU-21
 HU-31";"CU-023
 CU-024";CP-029 Validación de fechas;"CalendarioServiceTest#consultaConFechasInvalidas_CA082
 DisponibilidadTest#consultaConFechasInvalidas_CA082
 CotizacionServiceTest#datosInvalidos
+CotizacionServiceTest#salidaNoPosterior_CA082
 ReservaTest#datosInvalidos
 consultar-disponibilidad.spec.ts#CA-082 exige la fecha de llegada y la de salida y no consulta sin ellas
 consultar-disponibilidad.spec.ts#CA-082 rechaza una salida igual a la llegada indicando que las fechas son inválidas y sin hacer la petición
@@ -172,6 +173,7 @@ consultar-disponibilidad.spec.ts#CA-082 rechaza fechas inexistentes, con formato
 consultar-disponibilidad.spec.ts#CA-082 compara días del calendario sin desplazamientos por zona horaria
 consultar-disponibilidad.spec.ts#CA-082 muestra el rechazo del servidor (400) como fechas inválidas, porque el backend es la autoridad";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
 feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
+feat/SCRUM-188-be-cotizacion-servicios-adicionales
 feat/SCRUM-116-fe-consultar-disponibilidad";;;"Probado en la consulta de disponibilidad (HU-21) y en la cotización y la reserva (HU-22).
 Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-083;"RF-021
@@ -185,18 +187,27 @@ CP-034 Creación de reserva inmediata
 CP-035 Reserva de alojamiento no activo
 CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
-CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeRechazarCotizacionQueExcedeLaCapacidad_CA083;;38a9302;;;;
+CP-039 Validación de disponibilidad al confirmar";CotizacionServiceTest#rechazaCapacidadYFechas_CA083;Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-084;RF-023;Configurabilidad de tarifas porcentuales;Aplicación de porcentajes configurados o por defecto;Dado que el sistema calcula una nueva cotización, cuando existen porcentajes de tarifas configurados (incluido uno recién modificado), entonces debe aplicar el valor vigente o, si no hay configuración, el porcentaje por defecto documentado.;"HU-24
 HU-31";CU-013;CP-033 Aplicación de tarifa configurada o por defecto;"TarifaServiceTest#porDefecto_CA084
-TarifasTest#aplicaElValorVigenteOElPorDefecto_CA084";Probado (JUnit);;feat/SCRUM-181-be-porcentajes-tarifas;;;
+TarifasTest#aplicaElValorVigenteOElPorDefecto_CA084
+CotizacionServiceTest#aplicaPorcentajeVigente_CA084";Probado (JUnit);;"feat/SCRUM-181-be-porcentajes-tarifas
+feat/SCRUM-188-be-cotizacion-servicios-adicionales";;;
 CA-086;RNF-021;Cálculo consistente de cotización;Monto de reserva igual al de la cotización;Dado que se confirma una reserva desde una cotización previa, cuando se crea el registro, entonces el monto coincide exactamente.;HU-22;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";"CotizacionServiceTest#calcula_CA086
 ReservaServiceTest#reservaConfirmada_CA070_CA075_CA086
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086";Probado (JUnit);;feat/SCRUM-239-be-crear-reserva-bloqueo-fechas;;;
-CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"CatalogoTest#unVisitanteSinSesionVeSoloLosQueSePuedenReservar_CA087
-DisponibilidadBusquedaTest#debeBuscarPorCiudad_CA087";;"85a995d
-38a9302";;;;
+CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"BusquedaAlojamientosTest#soloActivas_CA087
+BusquedaAlojamientosTest#ciudadYTipo_CA087
+BusquedaAlojamientosTest#capacidad_CA087
+BusquedaAlojamientosTest#rangoDePrecio_CA087
+BusquedaAlojamientosTest#amenidades_CA087
+BusquedaAlojamientosTest#disponibilidadEnElPeriodo_CA087
+BusquedaAlojamientosTest#filtrosCombinados_CA087
+PublicacionServiceBusquedaTest#buscaSinOrden_CA087
+PublicacionServiceBusquedaTest#sinResenas_CA087
+PublicacionServiceBusquedaTest#conFechas_CA087";Probado (JUnit);;feat/SCRUM-241-be-buscar-alojamientos-con-filtros;;;GET /alojamientos (público). Filtros combinables: ciudad y tipo sin distinguir mayúsculas, disponibilidad en el período, capacidad, rango de precio y amenidades (todas). Además GET /alojamientos/disponibles y /alojamientos/tipos. Verificado contra Neon.
 CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle de publicación activa;Dado que existe una publicación ACTIVA, cuando el usuario la selecciona desde los resultados de búsqueda o consulta su detalle, entonces el sistema debe mostrar la información detallada del alojamiento.;HU-18;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#detalleDePublicacionActiva_CA093
@@ -233,8 +244,23 @@ CP-057 Estados permitidos de la publicación
 CP-073 Registro y modificación de servicio adicional";"PublicacionServiceActualizacionTest#propietarioActualiza_CA100
 AlojamientoControllerActualizacionTest#editarResponde200_CA100
 ActualizarPublicacionTest#elPropietarioModificaYVeLosCambios_CA100_CA113
-editar-publicacion.spec.ts#CA-100 carga los datos actuales, valida y guarda la publicación mostrando la información actualizada";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+editar-publicacion.spec.ts#CA-100 carga los datos actuales, valida y guarda la publicación mostrando la información actualizada
+editar-publicacion.spec.ts#CA-100 muestra las tarifas actuales del alojamiento y guarda las nuevas con el PUT de la publicación
+editar-publicacion.spec.ts#CA-100 valida que las tarifas estén entre 0 y 100 y no envía una tarifa vacía
+fotografias-publicacion.spec.ts#CA-100 muestra las fotografías actuales con la principal marcada, como el original
+fotografias-publicacion.spec.ts#CA-100 cambia la fotografía principal con PATCH y muestra el orden que devuelve el backend
+fotografias-publicacion.spec.ts#CA-100 pide confirmación y elimina la imagen con DELETE
+fotografias-publicacion.spec.ts#CA-100 no ofrece eliminar la única imagen, porque el backend exige conservar al menos una
+fotografias-publicacion.spec.ts#CA-100 muestra el rechazo del backend al eliminar (409)
+fotografias-publicacion.spec.ts#CA-100 sube imágenes válidas con POST multipart en el campo archivos
+fotografias-publicacion.spec.ts#CA-100 rechaza sin llamar al backend archivos de otro formato, de más de 5 MB o que superen 15 imágenes
+fotografias-publicacion.spec.ts#CA-100 con 15 imágenes ya no ofrece agregar más
+fotografias-publicacion.spec.ts#CA-100 informa cuando el backend no puede guardar la imagen (503)
+editar-publicacion.spec.ts#CA-100 muestra las fotografías de la publicación y no las pierde al guardar el formulario";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
+feat/SCRUM-111-fe-actualizar-publicacion-servicios
+feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+Front-end (SCRUM-230): la edición también actualiza las tarifas propias de limpieza y servicio del alojamiento (0 a 100; vacías usan la tarifa general de HU-24); probado con Vitest (ng test).
+Front-end (SCRUM-230): la edición también gestiona las fotografías (FotografiasPublicacion): subir, marcar la principal y eliminar con /alojamientos/{id}/imagenes, con las reglas del backend (JPG, PNG o WEBP de 5 MB, máximo 15, al menos una); probado con Vitest (ng test)."
 CA-101;RF-018;Gestión y actualización de publicación;Restricción de modificación;Dado que el usuario no es propietario de la publicación ni administrador, cuando intenta modificarla o modificar sus servicios adicionales, entonces el sistema debe rechazar la operación.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -247,8 +273,11 @@ ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA1
 editar-publicacion.spec.ts#CA-101 rechaza la modificación de la publicación y de sus servicios a quien no es propietario ni administrador
 editar-publicacion.spec.ts#CA-101 bloquea la edición cuando el servidor responde 403 al guardar la publicación
 editar-publicacion.spec.ts#CA-101 bloquea la edición cuando el servidor responde 403 al modificar un servicio adicional
-editar-publicacion.spec.ts#CA-101 trata el 401 como sesión expirada y ofrece volver a iniciar sesión";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+editar-publicacion.spec.ts#CA-101 trata el 401 como sesión expirada y ofrece volver a iniciar sesión
+fotografias-publicacion.spec.ts#CA-101 avisa al formulario cuando el backend rechaza el cambio de imágenes (403 o 401)";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
+feat/SCRUM-111-fe-actualizar-publicacion-servicios
+feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+Front-end (SCRUM-230): un 403 o 401 al cambiar las fotografías bloquea la edición igual que en el formulario."
 CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#misPublicaciones_CA103
@@ -430,7 +459,8 @@ CP-060 Auditoría de la decisión de revisión";"PublicacionServiceModeracionTest#a
 PublicacionServiceModeracionTest#noApruebaSinFechas_CA158
 AdminControllerModeracionTest#aprueba_CA158
 ModeracionPublicacionesTest#apruebaLaPublicacion_CA158_CA196
-ModeracionPublicacionesTest#sinFechasNoSeAprueba_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;"Queda ACTIVA y disponible para reservar; la búsqueda de alojamientos aún no está implementada."
+ModeracionPublicacionesTest#sinFechasNoSeAprueba_CA158
+BusquedaAlojamientosTest#aprobadaApareceEnLaBusqueda_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;Queda ACTIVA, disponible para reservar y visible en la búsqueda (HU-23).
 CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada o bloqueada;Dado que una publicación está PAUSADA o BLOQUEADA, cuando un huésped intenta crear una nueva reserva sobre ella, entonces el sistema debe impedirlo y no mostrarla como disponible para nuevas reservas.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -460,7 +490,7 @@ ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"
 4cf6ba5";;;;
 CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;"DetalleAlojamientoTest#detalleConUbicacion_CA164
 AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
-PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;El back entrega la ubicación; el mapa se valida en el front
+PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;"El back entrega la ubicación; el mapa se valida en el front"
 CA-165;RF-029;Mensajería entre huésped y anfitrión;Envío y respuesta de mensajes;Dado que el huésped o el anfitrión participan en una conversación, cuando envían un mensaje o una respuesta, entonces el sistema debe registrarlo asociado a la misma conversación, identificando al remitente y conservando la fecha de envío.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
@@ -515,7 +545,7 @@ CP-034 Creación de reserva inmediata
 CP-035 Reserva de alojamiento no activo
 CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
-CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
+CP-039 Validación de disponibilidad al confirmar";CotizacionServiceTest#muestraElDesglose_CA179;Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-183;RF-021;Creación de reserva por el huésped;Inclusión y exclusión de servicios adicionales;Dado que el huésped selecciona o deselecciona servicios adicionales, cuando el sistema recalcula la cotización, entonces el total debe incluir únicamente el costo de los servicios seleccionados.;HU-31;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas
@@ -524,7 +554,8 @@ CP-034 Creación de reserva inmediata
 CP-035 Reserva de alojamiento no activo
 CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
-CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#laCotizacionMuestraIncluyeYExcluyeServiciosAdicionales_CA182_CA183_CA184;;38a9302;;;;
+CP-039 Validación de disponibilidad al confirmar";"CotizacionServiceTest#soloLosSeleccionados_CA183
+CotizacionServiceTest#servicioAjeno_CA183";Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-185;RF-018;Gestión y actualización de publicación;Gestión de servicios adicionales;Dado que el usuario es propietario de la publicación, cuando registra, modifica o elimina un servicio adicional con nombre y costo positivo, entonces el sistema debe asociarlo a su publicación y aplicar el cambio a nuevas cotizaciones sin alterar las reservas ya confirmadas.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
