@@ -244,8 +244,23 @@ CP-057 Estados permitidos de la publicación
 CP-073 Registro y modificación de servicio adicional";"PublicacionServiceActualizacionTest#propietarioActualiza_CA100
 AlojamientoControllerActualizacionTest#editarResponde200_CA100
 ActualizarPublicacionTest#elPropietarioModificaYVeLosCambios_CA100_CA113
-editar-publicacion.spec.ts#CA-100 carga los datos actuales, valida y guarda la publicación mostrando la información actualizada";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+editar-publicacion.spec.ts#CA-100 carga los datos actuales, valida y guarda la publicación mostrando la información actualizada
+editar-publicacion.spec.ts#CA-100 muestra las tarifas actuales del alojamiento y guarda las nuevas con el PUT de la publicación
+editar-publicacion.spec.ts#CA-100 valida que las tarifas estén entre 0 y 100 y no envía una tarifa vacía
+fotografias-publicacion.spec.ts#CA-100 muestra las fotografías actuales con la principal marcada, como el original
+fotografias-publicacion.spec.ts#CA-100 cambia la fotografía principal con PATCH y muestra el orden que devuelve el backend
+fotografias-publicacion.spec.ts#CA-100 pide confirmación y elimina la imagen con DELETE
+fotografias-publicacion.spec.ts#CA-100 no ofrece eliminar la única imagen, porque el backend exige conservar al menos una
+fotografias-publicacion.spec.ts#CA-100 muestra el rechazo del backend al eliminar (409)
+fotografias-publicacion.spec.ts#CA-100 sube imágenes válidas con POST multipart en el campo archivos
+fotografias-publicacion.spec.ts#CA-100 rechaza sin llamar al backend archivos de otro formato, de más de 5 MB o que superen 15 imágenes
+fotografias-publicacion.spec.ts#CA-100 con 15 imágenes ya no ofrece agregar más
+fotografias-publicacion.spec.ts#CA-100 informa cuando el backend no puede guardar la imagen (503)
+editar-publicacion.spec.ts#CA-100 muestra las fotografías de la publicación y no las pierde al guardar el formulario";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
+feat/SCRUM-111-fe-actualizar-publicacion-servicios
+feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+Front-end (SCRUM-230): la edición también actualiza las tarifas propias de limpieza y servicio del alojamiento (0 a 100; vacías usan la tarifa general de HU-24); probado con Vitest (ng test).
+Front-end (SCRUM-230): la edición también gestiona las fotografías (FotografiasPublicacion): subir, marcar la principal y eliminar con /alojamientos/{id}/imagenes, con las reglas del backend (JPG, PNG o WEBP de 5 MB, máximo 15, al menos una); probado con Vitest (ng test)."
 CA-101;RF-018;Gestión y actualización de publicación;Restricción de modificación;Dado que el usuario no es propietario de la publicación ni administrador, cuando intenta modificarla o modificar sus servicios adicionales, entonces el sistema debe rechazar la operación.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -258,8 +273,11 @@ ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA1
 editar-publicacion.spec.ts#CA-101 rechaza la modificación de la publicación y de sus servicios a quien no es propietario ni administrador
 editar-publicacion.spec.ts#CA-101 bloquea la edición cuando el servidor responde 403 al guardar la publicación
 editar-publicacion.spec.ts#CA-101 bloquea la edición cuando el servidor responde 403 al modificar un servicio adicional
-editar-publicacion.spec.ts#CA-101 trata el 401 como sesión expirada y ofrece volver a iniciar sesión";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+editar-publicacion.spec.ts#CA-101 trata el 401 como sesión expirada y ofrece volver a iniciar sesión
+fotografias-publicacion.spec.ts#CA-101 avisa al formulario cuando el backend rechaza el cambio de imágenes (403 o 401)";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
+feat/SCRUM-111-fe-actualizar-publicacion-servicios
+feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+Front-end (SCRUM-230): un 403 o 401 al cambiar las fotografías bloquea la edición igual que en el formulario."
 CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";PublicacionesTest#elAnfitrionConsultaSusPublicacionesConSuEstado_CA103;;38a9302;;;;
