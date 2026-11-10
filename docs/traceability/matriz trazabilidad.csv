@@ -158,12 +158,13 @@ CU-020";"CP-040 Consulta de historial de reservas
 CP-041 Consulta de reservas del anfitrión";ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133;;38a9302;;;;
 CA-080;RNF-021;Cálculo consistente de cotización;Componentes y total de la cotización;Dado un alojamiento y fechas válidas, cuando se pide la cotización, entonces el sistema muestra todos los componentes exigidos y el total corresponde a la suma correcta de dichos componentes.;HU-31;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
-CP-033 Aplicación de tarifa configurada o por defecto";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
+CP-033 Aplicación de tarifa configurada o por defecto";CotizacionServiceTest#totalEsLaSuma_CA080;Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-082;RNF-018;Validación cronológica de fechas;Validación de período;Dado que el huésped selecciona una fecha de llegada y una de salida, cuando solicita la cotización, la consulta de disponibilidad o la reserva, entonces el sistema debe procesarla si la salida es posterior a la llegada y, si es igual o anterior, rechazarla e indicar que las fechas son inválidas.;"HU-21
 HU-31";"CU-023
 CU-024";CP-029 Validación de fechas;"CalendarioServiceTest#consultaConFechasInvalidas_CA082
 DisponibilidadTest#consultaConFechasInvalidas_CA082
 CotizacionServiceTest#datosInvalidos
+CotizacionServiceTest#salidaNoPosterior_CA082
 ReservaTest#datosInvalidos
 consultar-disponibilidad.spec.ts#CA-082 exige la fecha de llegada y la de salida y no consulta sin ellas
 consultar-disponibilidad.spec.ts#CA-082 rechaza una salida igual a la llegada indicando que las fechas son inválidas y sin hacer la petición
@@ -172,6 +173,7 @@ consultar-disponibilidad.spec.ts#CA-082 rechaza fechas inexistentes, con formato
 consultar-disponibilidad.spec.ts#CA-082 compara días del calendario sin desplazamientos por zona horaria
 consultar-disponibilidad.spec.ts#CA-082 muestra el rechazo del servidor (400) como fechas inválidas, porque el backend es la autoridad";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
 feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
+feat/SCRUM-188-be-cotizacion-servicios-adicionales
 feat/SCRUM-116-fe-consultar-disponibilidad";;;"Probado en la consulta de disponibilidad (HU-21) y en la cotización y la reserva (HU-22).
 Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-083;"RF-021
@@ -185,10 +187,12 @@ CP-034 Creación de reserva inmediata
 CP-035 Reserva de alojamiento no activo
 CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
-CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#debeRechazarCotizacionQueExcedeLaCapacidad_CA083;;38a9302;;;;
+CP-039 Validación de disponibilidad al confirmar";CotizacionServiceTest#rechazaCapacidadYFechas_CA083;Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-084;RF-023;Configurabilidad de tarifas porcentuales;Aplicación de porcentajes configurados o por defecto;Dado que el sistema calcula una nueva cotización, cuando existen porcentajes de tarifas configurados (incluido uno recién modificado), entonces debe aplicar el valor vigente o, si no hay configuración, el porcentaje por defecto documentado.;"HU-24
 HU-31";CU-013;CP-033 Aplicación de tarifa configurada o por defecto;"TarifaServiceTest#porDefecto_CA084
-TarifasTest#aplicaElValorVigenteOElPorDefecto_CA084";Probado (JUnit);;feat/SCRUM-181-be-porcentajes-tarifas;;;
+TarifasTest#aplicaElValorVigenteOElPorDefecto_CA084
+CotizacionServiceTest#aplicaPorcentajeVigente_CA084";Probado (JUnit);;"feat/SCRUM-181-be-porcentajes-tarifas
+feat/SCRUM-188-be-cotizacion-servicios-adicionales";;;
 CA-086;RNF-021;Cálculo consistente de cotización;Monto de reserva igual al de la cotización;Dado que se confirma una reserva desde una cotización previa, cuando se crea el registro, entonces el monto coincide exactamente.;HU-22;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";"CotizacionServiceTest#calcula_CA086
@@ -511,7 +515,7 @@ CP-034 Creación de reserva inmediata
 CP-035 Reserva de alojamiento no activo
 CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
-CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#laCotizacionMuestraTodosLosComponentesYElTotalEsSuSuma_CA080_CA081_CA179;;38a9302;;;;
+CP-039 Validación de disponibilidad al confirmar";CotizacionServiceTest#muestraElDesglose_CA179;Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-183;RF-021;Creación de reserva por el huésped;Inclusión y exclusión de servicios adicionales;Dado que el huésped selecciona o deselecciona servicios adicionales, cuando el sistema recalcula la cotización, entonces el total debe incluir únicamente el costo de los servicios seleccionados.;HU-31;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas
@@ -520,7 +524,8 @@ CP-034 Creación de reserva inmediata
 CP-035 Reserva de alojamiento no activo
 CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
-CP-039 Validación de disponibilidad al confirmar";ReservasPagosTest#laCotizacionMuestraIncluyeYExcluyeServiciosAdicionales_CA182_CA183_CA184;;38a9302;;;;
+CP-039 Validación de disponibilidad al confirmar";"CotizacionServiceTest#soloLosSeleccionados_CA183
+CotizacionServiceTest#servicioAjeno_CA183";Probado (JUnit);;feat/SCRUM-188-be-cotizacion-servicios-adicionales;;;
 CA-185;RF-018;Gestión y actualización de publicación;Gestión de servicios adicionales;Dado que el usuario es propietario de la publicación, cuando registra, modifica o elimina un servicio adicional con nombre y costo positivo, entonces el sistema debe asociarlo a su publicación y aplicar el cambio a nuevas cotizaciones sin alterar las reservas ya confirmadas.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso

@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -10,8 +11,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Cotización de una estancia. En la solicitud el huésped solo envía el
- * alojamiento, las fechas y los huéspedes; el resto lo calcula el servidor.
+ * Cotización de una estancia. En la solicitud el huésped envía el alojamiento,
+ * las fechas, los huéspedes y los servicios adicionales que quiere; el resto lo
+ * calcula el servidor.
  */
 @Getter
 @Setter
@@ -73,6 +75,21 @@ public class CotizacionDTO {
 	/** Valor total a pagar. */
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private BigDecimal total;
+
+	/** Ids de los servicios adicionales que eligió el huésped (entrada). */
+	private List<Long> serviciosSeleccionados;
+
+	/** Servicios adicionales incluidos, con su costo (salida). */
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private List<ServicioAdicionalDTO> serviciosAdicionales;
+
+	/** Todos los servicios adicionales que ofrece el alojamiento. */
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private List<ServicioAdicionalDTO> serviciosDisponibles;
+
+	/** Servicios adicionales elegidos en JSON, con nombre y costo congelados. */
+	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
+	private String desglose;
 
 	/** Usuario que pidió la cotización. */
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)

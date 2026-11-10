@@ -63,22 +63,23 @@ public class ReservaController {
 	}
 
 	/**
-	 * Cotiza una estancia: noches, precio base, limpieza, servicio y total. La
-	 * cotización sirve {@value CotizacionService#MINUTOS_VIGENCIA} minutos para
-	 * reservar. Ruta: {@code POST /cotizaciones}.
+	 * Cotiza una estancia: noches, precio base, descuento, limpieza, servicio,
+	 * adicionales y total. La cotización sirve
+	 * {@value CotizacionService#MINUTOS_VIGENCIA} minutos para reservar. Ruta:
+	 * {@code POST /cotizaciones}.
 	 *
-	 * @param solicitud      alojamiento, fechas y huéspedes
+	 * @param solicitud      alojamiento, fechas, huéspedes y servicios elegidos
 	 * @param authentication usuario autenticado
 	 * @return 201 con la cotización; 400 si los datos no son válidos; 404 si el
 	 *         alojamiento no existe; 409 si no está ACTIVA o las fechas no están
 	 *         libres
 	 */
-	@Operation(summary = "Cotizar una estancia", description = "Devuelve noches, precio base, limpieza, servicio y "
-			+ "total con los porcentajes vigentes. La cotización sirve 30 minutos para reservar.")
+	@Operation(summary = "Cotizar una estancia", description = "Devuelve noches, precio base, descuento, limpieza, "
+			+ "servicio, adicionales y total con los porcentajes vigentes. La cotización sirve 30 minutos para reservar.")
 	@ApiResponse(responseCode = "201", description = "Cotización con el desglose")
 	@ApiResponse(responseCode = "400", description = CotizacionService.FALTA_ALOJAMIENTO + " | " + FECHAS_INVALIDAS
 			+ " | " + CotizacionService.HUESPEDES_INVALIDOS + " | La cantidad de huéspedes (9) supera la capacidad "
-			+ "del alojamiento (4).")
+			+ "del alojamiento (4). | El servicio adicional 7 no pertenece a este alojamiento.")
 	@ApiResponse(responseCode = "404", description = CalendarioService.NO_EXISTE)
 	@ApiResponse(responseCode = "409", description = NO_ACTIVA + " | " + CotizacionService.FECHAS_NO_DISPONIBLES)
 	@PostMapping("/cotizaciones")
