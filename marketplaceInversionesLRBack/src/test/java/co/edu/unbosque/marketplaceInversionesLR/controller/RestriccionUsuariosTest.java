@@ -206,12 +206,12 @@ class RestriccionUsuariosTest {
 		assertThat(jdbc.queryForObject("SELECT count(*) FROM notificacion WHERE id_usuario = ? AND tipo = ?",
 				Integer.class, huesped.getIdUsuario(), NotificacionService.CUENTA_LIBERADA)).isEqualTo(1);
 
-		// Ya puede usar su sesión y sus credenciales (el login sigue con el código por correo)
+		// Ya puede usar su sesión y sus credenciales (sin segundo factor inicia sesión directamente, HU-30)
 		mockMvc.perform(get("/usuarios/perfil").header("Authorization", "Bearer " + tokenHuesped))
 				.andExpect(status().isOk());
 		mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content(credenciales()))
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true));
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty());
 	}
 
 	@Test

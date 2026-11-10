@@ -11,7 +11,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,7 +46,6 @@ import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 import co.edu.unbosque.marketplaceInversionesLR.util.AESUtil;
-import co.edu.unbosque.marketplaceInversionesLR.util.TotpUtil;
 
 /**
  * Pruebas de HU-07 Inicio de sesión sobre la API completa y un PostgreSQL
@@ -114,21 +112,16 @@ class InicioSesionTest {
 				.content("{\"correo\": \"ana@correo.com\", \"codigo\": \"%s\"}".formatted(codigoEnviado())))
 				.andExpect(status().isOk());
 
-		// Primer paso: credenciales válidas, se envía un código al correo
+		// Sin segundo factor (valor por defecto) se entrega el token y el rol
+		// sin pedir un código por correo
 		clearInvocations(mailSender);
-		login(" ANA@correo.com ", CONTRASENIA)
-				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
-				.andExpect(jsonPath("$.metodoSegundoFactor").value("CORREO"))
-				.andExpect(jsonPath("$.token").doesNotExist());
-
-		// Segundo paso: con el código del correo se entrega el token y el rol
-		String respuesta = login(" ANA@correo.com ", CONTRASENIA, codigoEnviado())
+		String respuesta = login(" ANA@correo.com ", CONTRASENIA)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.token").isNotEmpty())
 				.andExpect(jsonPath("$.rol").value("ANFITRION"))
 				.andExpect(jsonPath("$.correo").value("ana@correo.com"))
 				.andReturn().getResponse().getContentAsString();
+		verify(mailSender, never()).send(any(SimpleMailMessage.class));
 
 		String token = JsonPath.read(respuesta, "$.token");
 		Usuario ana = buscar("ana@correo.com");
@@ -187,7 +180,7 @@ class InicioSesionTest {
 	@Test
 	@DisplayName("Con un código del correo incorrecto no se entrega el token y al quinto intento se bloquea el código")
 	void codigoDelCorreoIncorrecto() throws Exception {
-		crear("luis@correo.com", Role.HUESPED, EstadoUsuario.ACTIVO, true);
+		habilitarSegundoFactor(crear("luis@correo.com", Role.HUESPED, EstadoUsuario.ACTIVO, true));
 		login("luis@correo.com", CONTRASENIA).andExpect(status().isUnauthorized());
 		String codigo = codigoEnviado();
 		String incorrecto = codigo.equals("000000") ? "111111" : "000000";
@@ -212,25 +205,38 @@ class InicioSesionTest {
 	}
 
 	@Test
-	@DisplayName("Con segundo factor activo se pide el código de la app autenticadora en lugar del correo")
-	void segundoFactorEnElInicioDeSesion() throws Exception {
-		Usuario ana = crear("ana@correo.com", Role.HUESPED, EstadoUsuario.ACTIVO, true);
-		String secreto = TotpUtil.generarSecreto();
-		ana.setSecretoTotp(AESUtil.encrypt(secreto));
-		ana.setTotpHabilitado(true);
-		usuarioRepository.save(ana);
+	@DisplayName("CA-174 Con el segundo factor habilitado se pide el código del correo y solo con él se entrega el token")
+	void segundoFactorEnElInicioDeSesion_CA174() throws Exception {
+		habilitarSegundoFactor(crear("ana@correo.com", Role.HUESPED, EstadoUsuario.ACTIVO, true));
 
 		login("ana@correo.com", CONTRASENIA)
 				.andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.requiereSegundoFactor").value(true))
-				.andExpect(jsonPath("$.requiereCodigoCorreo").doesNotExist());
-		login("ana@correo.com", CONTRASENIA, "abcdef")
+				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
+				.andExpect(jsonPath("$.metodoSegundoFactor").value("CORREO"))
+				.andExpect(jsonPath("$.token").doesNotExist());
+		String codigo = codigoEnviado();
+		String incorrecto = codigo.equals("000000") ? "111111" : "000000";
+
+		login("ana@correo.com", CONTRASENIA, incorrecto)
 				.andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.message").value("El código de verificación no es válido."));
-		login("ana@correo.com", CONTRASENIA, TotpUtil.codigo(secreto, Instant.now()))
+				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true))
+				.andExpect(jsonPath("$.token").doesNotExist());
+		login("ana@correo.com", CONTRASENIA, codigo)
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.token").isNotEmpty())
 				.andExpect(jsonPath("$.rol").value("HUESPED"));
+	}
+
+	@Test
+	@DisplayName("CA-177 Con el segundo factor deshabilitado (por defecto) se inicia sesión sin código por correo")
+	void sinSegundoFactorNoSePideCodigo_CA177() throws Exception {
+		crear("luis@correo.com", Role.HUESPED, EstadoUsuario.ACTIVO, true);
+
+		login("luis@correo.com", CONTRASENIA)
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty())
+				.andExpect(jsonPath("$.requiereCodigoCorreo").doesNotExist());
 		verify(mailSender, never()).send(any(SimpleMailMessage.class));
 	}
 
@@ -329,6 +335,17 @@ class InicioSesionTest {
 		usuario.setCorreoVerificado(verificado);
 		usuario.setTotpHabilitado(false);
 		return usuarioRepository.save(usuario);
+	}
+
+	/**
+	 * Habilita el segundo factor de la cuenta: desde entonces el login pide el
+	 * código del correo.
+	 *
+	 * @param usuario cuenta a modificar
+	 */
+	private void habilitarSegundoFactor(Usuario usuario) {
+		usuario.setTotpHabilitado(true);
+		usuarioRepository.save(usuario);
 	}
 
 	/**

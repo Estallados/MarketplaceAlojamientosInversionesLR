@@ -26,7 +26,6 @@ import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.VerificacionCorreoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
-import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
@@ -77,9 +76,6 @@ public class AuthController {
 	/** Registro de auditoría de los inicios de sesión. */
 	private final AuditoriaService auditoriaService;
 
-	/** Verificación del segundo factor (TOTP). */
-	private final SegundoFactorService segundoFactorService;
-
 	/** Inicio de sesión y registro con una cuenta de Google. */
 	private final InicioGoogleService inicioGoogleService;
 
@@ -95,21 +91,18 @@ public class AuthController {
 	 * @param jwtUtil                   utilidad de tokens JWT
 	 * @param userDetailsService        servicio que carga usuarios por correo
 	 * @param auditoriaService          servicio de auditoría
-	 * @param segundoFactorService      servicio del segundo factor
 	 * @param inicioGoogleService       servicio de inicio de sesión con Google
 	 * @param authService               servicio de recuperación de contraseña
 	 */
 	public AuthController(AuthenticationManager authenticationManager, UsuarioService usuarioService,
 			VerificacionCorreoService verificacionCorreoService, JwtUtil jwtUtil, UserDetailsService userDetailsService,
-			AuditoriaService auditoriaService, SegundoFactorService segundoFactorService,
-			InicioGoogleService inicioGoogleService, AuthService authService) {
+			AuditoriaService auditoriaService, InicioGoogleService inicioGoogleService, AuthService authService) {
 		this.authenticationManager = authenticationManager;
 		this.usuarioService = usuarioService;
 		this.verificacionCorreoService = verificacionCorreoService;
 		this.jwtUtil = jwtUtil;
 		this.userDetailsService = userDetailsService;
 		this.auditoriaService = auditoriaService;
-		this.segundoFactorService = segundoFactorService;
 		this.inicioGoogleService = inicioGoogleService;
 		this.authService = authService;
 	}
@@ -127,15 +120,13 @@ public class AuthController {
 	 *         {@code requiereVerificacion=true})
 	 */
 	@Operation(summary = "Iniciar sesión", description = "Devuelve {token, rol, correo}. Si la cuenta tiene "
-			+ "segundo factor, también hay que enviar codigo; sin él responde 401 con requiereSegundoFactor=true. "
-			+ "Si no, en cada inicio de sesión se envía un código al correo: sin codigo responde 401 con "
-			+ "requiereCodigoCorreo=true y hay que repetir la petición con ese codigo. El administrador no "
-			+ "recibe código por correo. "
+			+ "el segundo factor habilitado (totpHabilitado), se envía un código al correo: sin codigo responde "
+			+ "401 con requiereCodigoCorreo=true y hay que repetir la petición con ese codigo. Sin segundo "
+			+ "factor (valor por defecto) inicia sesión directamente. "
 			+ "Si el correo no está verificado responde 403 con requiereVerificacion=true.")
 	@ApiResponse(responseCode = "200", description = "Sesión iniciada: {token, rol, correo}")
 	@ApiResponse(responseCode = "400", description = "Debes enviar el correo y la contraseña.")
-	@ApiResponse(responseCode = "401", description = "Correo o contraseña inválidos. | Ingresa el código de tu "
-			+ "aplicación autenticadora. | El código de verificación no es válido. | Te enviamos un código de "
+	@ApiResponse(responseCode = "401", description = "Correo o contraseña inválidos. | Te enviamos un código de "
 			+ "verificación a tu correo. | El código del correo no es válido o ya venció.")
 	@ApiResponse(responseCode = "429", description = "Superaste los intentos permitidos para este código del correo.")
 	@ApiResponse(responseCode = "403", description = "Debes verificar tu correo con el código que te enviamos antes de "
@@ -165,22 +156,10 @@ public class AuthController {
 								"requiereVerificacion", true));
 			}
 
-			// Segundo factor: con las credenciales válidas aún no se entrega el
-			// token
+			// Segundo factor (HU-30): solo las cuentas con totp_habilitado reciben
+			// un código por correo, y sin él aún no se entrega el token. Las demás
+			// inician sesión directamente (CA-177); el valor por defecto es false.
 			if (usuario instanceof Usuario u && SegundoFactorService.estaHabilitado(u)) {
-				if (loginRequest.getCodigo() == null || loginRequest.getCodigo().isBlank()) {
-					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message",
-							"Ingresa el código de tu aplicación autenticadora.", "requiereSegundoFactor", true));
-				}
-				if (!segundoFactorService.verificar(u, loginRequest.getCodigo())) {
-					auditoriaService.registrar(idUsuario, AuditoriaService.LOGIN, AuditoriaService.ENTIDAD_USUARIO,
-							idUsuario, ResultadoAuditoria.RECHAZADO, "Código del segundo factor inválido");
-					return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message",
-							"El código de verificación no es válido.", "requiereSegundoFactor", true));
-				}
-			} else if (usuario instanceof Usuario u && u.getRol() != Role.ADMIN) {
-				// Código por correo en cada inicio de sesión: sin él aún no se
-				// entrega el token. El administrador no lo necesita.
 				ResponseEntity<Object> pendiente = codigoInicioPorCorreo(u, correo, loginRequest.getCodigo());
 				if (pendiente != null) {
 					return pendiente;

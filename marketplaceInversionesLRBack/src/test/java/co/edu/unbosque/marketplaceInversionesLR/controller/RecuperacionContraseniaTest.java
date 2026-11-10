@@ -110,11 +110,11 @@ class RecuperacionContraseniaTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.message").value("Contraseña actualizada. Ya puedes iniciar sesión."));
 
-		// La contraseña anterior ya no sirve y la nueva sí (el login pasa al paso del código por correo)
+		// La contraseña anterior ya no sirve y la nueva sí (sin segundo factor entrega el token)
 		login(ANTERIOR).andExpect(status().isUnauthorized())
 				.andExpect(jsonPath("$.message").value("Correo o contraseña inválidos."));
-		login(NUEVA).andExpect(status().isUnauthorized())
-				.andExpect(jsonPath("$.requiereCodigoCorreo").value(true));
+		login(NUEVA).andExpect(status().isOk())
+				.andExpect(jsonPath("$.token").isNotEmpty());
 
 		// El token sirve una sola vez
 		restablecer(token, "Otra#Clave1").andExpect(status().isBadRequest())
@@ -152,7 +152,8 @@ class RecuperacionContraseniaTest {
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value("Debes enviar el correo."));
 
-		login(ANTERIOR).andExpect(jsonPath("$.requiereCodigoCorreo").value(true));
+		// La contraseña sigue siendo la anterior
+		login(ANTERIOR).andExpect(status().isOk());
 	}
 
 	@Test

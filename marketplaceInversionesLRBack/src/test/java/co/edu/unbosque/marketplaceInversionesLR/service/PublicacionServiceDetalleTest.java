@@ -15,8 +15,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Imagen;
@@ -115,6 +119,37 @@ class PublicacionServiceDetalleTest {
 		alojamiento.setLatitud(6.23);
 		alojamiento.setLongitud(-75.15);
 		lenient().when(alojamientoRepo.findById(ID)).thenReturn(Optional.of(alojamiento));
+	}
+
+	@Test
+	@DisplayName("CA-103 El anfitrión recibe sus publicaciones con el estado de cada una")
+	void misPublicaciones_CA103() {
+		Alojamiento borrador = new Alojamiento();
+		borrador.setIdAlojamiento(21L);
+		borrador.setIdAnfitrion(ANFITRION);
+		borrador.setEstado(EstadoAlojamiento.BORRADOR);
+		Pageable pagina = PageRequest.of(0, 20);
+		when(alojamientoRepo.findByIdAnfitrion(ANFITRION, pagina))
+				.thenReturn(new PageImpl<>(List.of(alojamiento, borrador)));
+
+		PaginaDTO<AlojamientoDTO> resultado = servicio.mios(ANFITRION, pagina);
+
+		assertThat(resultado.getTotalElementos()).isEqualTo(2);
+		assertThat(resultado.getContenido()).extracting(AlojamientoDTO::getIdAlojamiento).containsExactly(ID, 21L);
+		assertThat(resultado.getContenido()).extracting(a -> a.getEstado().toString()).containsExactly("ACTIVA",
+				"BORRADOR");
+	}
+
+	@Test
+	@DisplayName("CA-103 Un anfitrión sin publicaciones recibe la página vacía")
+	void sinPublicaciones_CA103() {
+		Pageable pagina = PageRequest.of(0, 20);
+		when(alojamientoRepo.findByIdAnfitrion(OTRO, pagina)).thenReturn(new PageImpl<>(List.of()));
+
+		PaginaDTO<AlojamientoDTO> resultado = servicio.mios(OTRO, pagina);
+
+		assertThat(resultado.getContenido()).isEmpty();
+		assertThat(resultado.getTotalElementos()).isZero();
 	}
 
 	@Test

@@ -105,6 +105,22 @@ export function erroresFechas(
   return errores;
 }
 
+/** Muestra AAAA-MM-DD como fecha legible sin cambiar de día por la zona horaria. */
+export function fechaLegible(valor: string): string {
+
+  const [anio, mes, dia] = valor.split('-').map(Number);
+
+  if (!anio || !mes || !dia) {
+    return valor;
+  }
+
+  return new Date(anio, mes - 1, dia).toLocaleDateString('es-CO', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+}
+
 /** Noches entre llegada y salida; 0 si el rango no es válido. */
 export function noches(llegada: string, salida: string): number {
 

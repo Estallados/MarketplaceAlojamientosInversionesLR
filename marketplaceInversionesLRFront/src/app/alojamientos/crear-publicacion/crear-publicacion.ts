@@ -7,7 +7,8 @@ import {
 } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
@@ -28,6 +29,7 @@ import {
 } from '../models/alojamiento';
 
 import { PublicacionHostService } from '../services/publicacion-host.service';
+import { volverAPaginaAnterior } from '../../core/navegacion/volver';
 
 import {
   DatoRequerido,
@@ -35,6 +37,7 @@ import {
   TEXTO_LARGO,
   datosFaltantesParaRevision,
   errorCapacidad,
+  errorFotografias,
   errorLongitud,
   errorNoNegativo,
   errorPrecioNoche,
@@ -116,7 +119,6 @@ type CampoNumerico =
   | 'banos'
   | 'precioNoche';
 
-const MAXIMO_IMAGENES = 15;
 
 // ======================================
 // COMPONENTE
@@ -133,6 +135,10 @@ export class CrearPublicacion implements OnInit {
   // ======================================
   // SERVICIOS
   // ======================================
+
+  private readonly router = inject(Router);
+
+  private readonly location = inject(Location);
 
   private readonly publicaciones =
     inject(PublicacionHostService);
@@ -495,40 +501,14 @@ export class CrearPublicacion implements OnInit {
       return;
     }
 
-    const tiposPermitidos = [
-      'image/jpeg',
-      'image/png',
-      'image/webp'
-    ];
-
-    const archivoInvalido = nuevas.find(
-      archivo =>
-        !tiposPermitidos.includes(archivo.type) ||
-        archivo.size === 0 ||
-        archivo.size > 5 * 1024 * 1024
+    const problema = errorFotografias(
+      nuevas,
+      this.imagenesGuardadas() + this.imagenesSeleccionadas.length
     );
 
-    if (archivoInvalido) {
+    if (problema) {
 
-      this.error.set(
-        `La fotografía ${archivoInvalido.name} ` +
-        'no es válida. Usa JPG, PNG o WEBP ' +
-        'de máximo 5 MB.'
-      );
-
-      return;
-    }
-
-    const cantidadTotal =
-      this.imagenesGuardadas() +
-      this.imagenesSeleccionadas.length +
-      nuevas.length;
-
-    if (cantidadTotal > MAXIMO_IMAGENES) {
-
-      this.error.set(
-        'Puedes cargar máximo 15 fotografías por alojamiento.'
-      );
+      this.error.set(problema);
 
       return;
     }
@@ -999,5 +979,14 @@ export class CrearPublicacion implements OnInit {
       'No se pudo completar la operación. ' +
       'Revisa la conexión e inténtalo nuevamente.'
     );
+  }
+
+  // ======================================
+  // NAVEGACIÓN
+  // ======================================
+
+  /** Vuelve a la página anterior (como el botón "Volver" del proyecto base). */
+  volver(): void {
+    volverAPaginaAnterior(this.router, this.location);
   }
 }
