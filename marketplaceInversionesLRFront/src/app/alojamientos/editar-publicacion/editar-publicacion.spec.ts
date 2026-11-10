@@ -467,6 +467,42 @@ describe('EditarPublicacion (HU-16)', () => {
     await estable();
   });
 
+  it('CA-100 muestra las fotografías de la publicación y no las pierde al guardar el formulario', async () => {
+
+    const imagenes = [
+      { idImagen: 1, idAlojamiento: 41, url: 'https://res.cloudinary.com/demo/1.jpg', principal: true },
+      { idImagen: 2, idAlojamiento: 41, url: 'https://res.cloudinary.com/demo/2.jpg', principal: false }
+    ];
+
+    await abrir('/host/alojamientos/41/editar', { ...publicacion, detalleImagenes: imagenes });
+    await responderPerfil(7);
+    await responderPoliticas();
+
+    const fotos = () => elemento().querySelectorAll('[data-fotografias] [data-foto]').length;
+    expect(fotos()).toBe(2);
+
+    // Cambiar la principal actualiza la publicación con la lista del backend.
+    elemento().querySelector<HTMLButtonElement>('[data-foto][data-id="2"] [data-principal]')!.click();
+    await estable();
+    http.expectOne(`${url}/41/imagenes/2/principal`).flush([
+      { ...imagenes[1], principal: true },
+      { ...imagenes[0], principal: false }
+    ]);
+    await estable();
+    expect(componente.fotografias()[0].idImagen).toBe(2);
+
+    // El PUT no gestiona imágenes: si su respuesta no las trae, se conservan.
+    await escribir('precioNoche', '260000');
+    await pulsar('[data-guardar]');
+    const actualizar = http.expectOne(`${url}/41`);
+    expect(actualizar.request.body).not.toHaveProperty('imagenes');
+    actualizar.flush({ ...publicacion, precioNoche: 260000 });
+    await estable();
+
+    expect(fotos()).toBe(2);
+    expect(componente.fotografias()[0].idImagen).toBe(2);
+  });
+
   // ======================================
   // CA-101 RESTRICCIÓN PARA NO AUTORIZADOS
   // ======================================
