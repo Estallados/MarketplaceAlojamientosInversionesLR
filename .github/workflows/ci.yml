@@ -4,6 +4,9 @@ on:
   pull_request:
     branches: [main]
     types: [opened, synchronize, reopened]
+  # Tras cada merge: valida main y actualiza su análisis en SonarCloud
+  push:
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -43,8 +46,8 @@ jobs:
         run: npx ng test --watch=false
 
   sonar:
-    # Los PRs desde forks no tienen acceso a los secrets
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # Push a main o PR del mismo repositorio (los PRs desde forks no tienen acceso a los secrets)
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
