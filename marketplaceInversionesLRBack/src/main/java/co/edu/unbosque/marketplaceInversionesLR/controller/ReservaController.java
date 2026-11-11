@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.controller;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.CancelacionDTO;
@@ -35,8 +37,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
- * Cotizaciones, reservas y cancelaciones (HU-22 y HU-01, servicios S06, S07 y
- * S09). Contrato: {@code docs/openapi/reservas-pagos.yaml}.
+ * Cotizaciones, reservas, historial y cancelaciones (HU-22, HU-25 y HU-01,
+ * servicios S06, S07 y S09). Contrato: {@code docs/openapi/reservas-pagos.yaml}.
  * <p>
  * El huésped cotiza ({@code POST /cotizaciones}) y con la cotización vigente
  * reserva y paga en una sola petición ({@code POST /reservas}). Con el pago
@@ -65,6 +67,12 @@ public class ReservaController {
 	/** Mensajes del 409 cuando la reserva no se puede cancelar. */
 	private static final String NO_CANCELABLE = CancelacionService.ESTADO_NO_CANCELABLE + "CANCELADA. | "
 			+ CancelacionService.SOLO_FUTURAS;
+
+	/** Etiqueta de Swagger del historial de reservas (HU-25). */
+	private static final String TAG_HISTORIAL = "Historial de reservas";
+
+	/** Orden de las listas: las reservas más recientes primero. */
+	private static final Sort RECIENTES = Sort.by(Sort.Order.desc("fechaCreacion"), Sort.Order.desc("idReserva"));
 
 	/** Operación protegida con Idempotency-Key. */
 	public static final String OPERACION_CANCELAR = "CANCELAR_RESERVA";
@@ -163,6 +171,78 @@ public class ReservaController {
 	public ResponseEntity<Object> crear(@RequestBody SolicitudReservaDTO solicitud, Authentication authentication) {
 		return RespuestaUtil.desde(reservaService.crear(solicitud, RespuestaUtil.idUsuario(authentication)),
 				HttpStatus.CREATED);
+	}
+
+	/**
+	 * Historial del usuario autenticado: todas sus reservas como huésped, en
+	 * cualquier estado, de la más reciente a la más antigua (HU-25, CA-078).
+	 * Ruta: {@code GET /reservas/mias}.
+	 *
+	 * @param authentication usuario autenticado
+	 * @param pagina         número de página, desde 0
+	 * @param tamanio        elementos por página, de 1 a 100
+	 * @return 200 con la página de reservas; vacía si no tiene
+	 */
+	@Tag(name = TAG_HISTORIAL, description = "Consultar el estado y el historial de las reservas")
+	@Operation(summary = "Mis reservas", description = "Todas las reservas del usuario autenticado como huésped, en "
+			+ "cualquier estado (PENDIENTE_PAGO, CONFIRMADA, EN_REVISION, CANCELADA), las más recientes primero. "
+			+ "Cada una trae el alojamiento, su imagen principal, la política, el último pago, la cancelación si la "
+			+ "hubo, si ya está completada y si ya tiene reseña (CA-078).")
+	@ApiResponse(responseCode = "200", description = "Página de reservas del huésped (CA-078)")
+	@GetMapping("/reservas/mias")
+	public ResponseEntity<Object> mias(Authentication authentication,
+			@Parameter(description = "Número de página, desde 0") @RequestParam(defaultValue = "0") int pagina,
+			@Parameter(description = "Elementos por página, de 1 a 100") @RequestParam(defaultValue = "20") int tamanio) {
+		return ResponseEntity.ok(reservaService.listarMias(RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.pagina(pagina, tamanio, RECIENTES)));
+	}
+
+	/**
+	 * Reservas de los alojamientos del anfitrión autenticado, nunca las de
+	 * alojamientos de otros (HU-25, CA-079). Ruta:
+	 * {@code GET /reservas/anfitrion}.
+	 *
+	 * @param authentication anfitrión autenticado
+	 * @param pagina         número de página, desde 0
+	 * @param tamanio        elementos por página, de 1 a 100
+	 * @return 200 con la página de reservas; 403 si no es anfitrión
+	 */
+	@Tag(name = TAG_HISTORIAL)
+	@Operation(summary = "Reservas de mis alojamientos (ANFITRION)", description = "Todas las reservas de los "
+			+ "alojamientos del anfitrión autenticado, en cualquier estado, las más recientes primero. Nunca incluye "
+			+ "reservas de alojamientos de otros anfitriones (CA-079).")
+	@PreAuthorize("hasRole('ANFITRION')")
+	@ApiResponse(responseCode = "200", description = "Página de reservas de sus alojamientos (CA-079)")
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@GetMapping("/reservas/anfitrion")
+	public ResponseEntity<Object> deAnfitrion(Authentication authentication,
+			@Parameter(description = "Número de página, desde 0") @RequestParam(defaultValue = "0") int pagina,
+			@Parameter(description = "Elementos por página, de 1 a 100") @RequestParam(defaultValue = "20") int tamanio) {
+		return ResponseEntity.ok(reservaService.listarDeAnfitrion(RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.pagina(pagina, tamanio, RECIENTES)));
+	}
+
+	/**
+	 * Detalle de una reserva (HU-25). La ven su huésped, el anfitrión del
+	 * alojamiento y los administradores; para los demás responde 404. Ruta:
+	 * {@code GET /reservas/{id}}.
+	 *
+	 * @param id             reserva
+	 * @param authentication usuario autenticado
+	 * @return 200 con la reserva; 404 si no existe o no la puede ver
+	 */
+	@Tag(name = TAG_HISTORIAL)
+	@Operation(summary = "Detalle de una reserva", description = "Estado actual, fechas, huéspedes, total, desglose, "
+			+ "último pago, alojamiento, huésped, anfitrión, política y cancelación si la hubo. Solo la ven su "
+			+ "huésped, el anfitrión del alojamiento y los administradores; para los demás no existe.")
+	@ApiResponse(responseCode = "200", description = "Detalle de la reserva",
+			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+					schema = @Schema(implementation = ReservaDTO.class)))
+	@ApiResponse(responseCode = "404", description = ReservaService.NO_EXISTE)
+	@GetMapping("/reservas/{id}")
+	public ResponseEntity<Object> obtener(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(reservaService.obtener(id, RespuestaUtil.idUsuario(authentication),
+				RespuestaUtil.esAdmin(authentication)));
 	}
 
 	/**

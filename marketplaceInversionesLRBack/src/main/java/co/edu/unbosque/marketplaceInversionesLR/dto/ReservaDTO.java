@@ -10,8 +10,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Reserva tal como sale por la API. El historial de reservas (HU-25) le
- * agrega los datos que muestran sus pantallas.
+ * Reserva tal como sale por la API, con el desglose congelado, el último pago
+ * y los datos que muestran las pantallas de reservas (HU-25): el alojamiento,
+ * el huésped, el anfitrión, la política, si ya tiene reseña y la cancelación.
  */
 @Getter
 @Setter
@@ -57,6 +58,45 @@ public class ReservaDTO {
 	/** Momento en que se creó la reserva. */
 	private LocalDateTime fechaCreacion;
 
-	/** Último pago de la reserva. */
+	/** Último pago de la reserva; {@code null} si no tiene. */
 	private PagoDTO pago;
+
+	/**
+	 * Está CONFIRMADA y la fecha de salida ya llegó; habilita la reseña
+	 * (CA-016).
+	 */
+	private Boolean completada;
+
+	/** URL de la imagen principal del alojamiento; {@code null} si no tiene. */
+	private String imagenAlojamiento;
+
+	/** Ciudad del alojamiento. */
+	private String ciudad;
+
+	/** Dirección del alojamiento. */
+	private String ubicacion;
+
+	/** Tipo de alojamiento, por ejemplo Apartamento. */
+	private String tipoAlojamiento;
+
+	/** Capacidad del alojamiento. */
+	private Integer capacidadAlojamiento;
+
+	/** Política de cancelación del alojamiento. */
+	private String nombrePolitica;
+
+	/** Nombre del huésped que reservó. */
+	private String nombreHuesped;
+
+	/** Anfitrión del alojamiento. */
+	private Long idAnfitrion;
+
+	/** Nombre del anfitrión. */
+	private String nombreAnfitrion;
+
+	/** Indica si el huésped ya reseñó esta reserva. */
+	private Boolean tieneResena;
+
+	/** Datos de la cancelación; {@code null} si el huésped no la canceló. */
+	private CancelacionDTO cancelacion;
 }

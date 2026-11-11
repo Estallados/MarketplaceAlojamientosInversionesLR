@@ -31,4 +31,12 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 	 * @return la cantidad
 	 */
 	long countByIdAlojamientoAndEstado(Long idAlojamiento, EstadoResena estado);
+
+	/**
+	 * Indica si una reserva ya tiene reseña (hay una por reserva).
+	 *
+	 * @param idReserva reserva
+	 * @return {@code true} si el huésped ya la reseñó
+	 */
+	boolean existsByIdReserva(Long idReserva);
 }
