@@ -16,6 +16,119 @@
     </p>
   </div>
 
+  <!-- PERSONALIZAR LA ESTADÍA (HU-31): huéspedes y servicios adicionales.
+       Cada cambio pide una cotización nueva al backend; el total nunca se calcula aquí. -->
+  @if (personalizable()) {
+    <section
+      data-personalizar
+      aria-labelledby="titulo-personalizar"
+      class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+    >
+      <h2 id="titulo-personalizar" class="text-lg font-bold text-slate-900">
+        Personaliza tu estadía
+      </h2>
+      <p class="mt-1 text-sm text-slate-500">
+        Personaliza tu estancia y consulta el precio de tu reserva.
+      </p>
+
+      <!-- Selector de huéspedes -->
+      <div class="mt-5 overflow-hidden rounded-2xl border border-slate-300">
+        <div class="p-4">
+          <label
+            for="huespedes"
+            class="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-800"
+          >
+            Huéspedes
+          </label>
+          @if (capacidad() !== null) {
+            <select
+              id="huespedes"
+              data-huespedes-select
+              [disabled]="enviando()"
+              (change)="cambiarHuespedes($any($event.target).value)"
+              class="w-full rounded-lg bg-transparent text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-600"
+            >
+              @for (n of opcionesHuespedes(); track n) {
+                <option [value]="n" [selected]="n === huespedesMostrados()">
+                  {{ n }} {{ n === 1 ? 'huésped' : 'huéspedes' }}
+                </option>
+              }
+            </select>
+            <p class="mt-2 text-xs text-slate-500">
+              Capacidad máxima: {{ capacidad() }} huéspedes.
+            </p>
+          } @else {
+            <input
+              id="huespedes"
+              data-huespedes-select
+              type="number"
+              min="1"
+              [value]="huespedesMostrados()"
+              [disabled]="enviando()"
+              (change)="cambiarHuespedes($any($event.target).value)"
+              class="w-full rounded-lg bg-transparent text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-600"
+            />
+          }
+        </div>
+      </div>
+
+      <!-- Servicios adicionales -->
+      <div class="mt-6">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">
+            Servicios adicionales
+          </h3>
+          <p class="mt-1 text-sm text-slate-500">
+            Selecciona los servicios que quieras añadir a tu estancia.
+          </p>
+        </div>
+        @if (serviciosDisponibles().length) {
+          <div class="mt-4 space-y-3">
+            @for (servicio of serviciosDisponibles(); track servicio.idServicio) {
+              <label
+                data-servicio
+                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-emerald-300 hover:bg-emerald-50/50"
+                [class.border-emerald-500]="servicioElegido(servicio.idServicio)"
+                [class.bg-emerald-50]="servicioElegido(servicio.idServicio)"
+              >
+                <input
+                  type="checkbox"
+                  [checked]="servicioElegido(servicio.idServicio)"
+                  [disabled]="enviando()"
+                  (change)="toggleServicio(servicio.idServicio, $any($event.target).checked)"
+                  class="mt-1 size-4 shrink-0 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600"
+                />
+                <div class="min-w-0 flex-1">
+                  <span class="block text-sm font-semibold text-slate-800">
+                    {{ servicio.nombre }}
+                  </span>
+                  <span class="mt-1 block text-xs text-slate-500">
+                    Servicio opcional
+                  </span>
+                </div>
+                <span class="whitespace-nowrap text-sm font-bold text-slate-900">
+                  {{ moneda(servicio.costo) }}
+                </span>
+              </label>
+            }
+          </div>
+        } @else {
+          <div data-sin-servicios class="mt-4 rounded-xl bg-slate-50 p-4">
+            <p class="text-sm text-slate-500">
+              Este alojamiento no tiene servicios adicionales disponibles.
+            </p>
+          </div>
+        }
+      </div>
+
+      @if (recotizando()) {
+        <p data-recotizando role="status" class="mt-4 text-xs text-slate-500">
+          Actualizando la cotización...
+        </p>
+      }
+    </section>
+  }
+
   @switch (estadoCotizacion().tipo) {
 
     <!-- COTIZANDO -->
@@ -141,7 +254,7 @@
                   Cambiar fechas
                 </a>
               }
-              @if (puedeConfirmar() || enviando()) {
+              @if (puedeConfirmar() || enviando() || recotizando()) {
                 <button
                   type="button"
                   data-confirmar

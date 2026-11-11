@@ -71,7 +71,11 @@ export interface Cotizacion {
 
   serviciosSeleccionados?: number[];
 
+  /** Servicios elegidos que entraron en el total (CA-183). */
   serviciosAdicionales?: ServicioCotizado[];
+
+  /** Todos los servicios adicionales que ofrece el alojamiento (HU-31). */
+  serviciosDisponibles?: ServicioCotizado[];
 
   /** Momento en que deja de servir para reservar; llega sin zona horaria. */
   fechaExpiracion: string;

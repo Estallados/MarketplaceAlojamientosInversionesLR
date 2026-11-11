@@ -7,8 +7,9 @@ import {
 } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
+import { vi } from 'vitest';
 
-import { ConfirmarReserva } from './confirmar-reserva';
+import { ConfirmarReserva, ESPERA_RECOTIZAR_MS } from './confirmar-reserva';
 import { Cotizacion } from '../../cotizacion/models/cotizacion';
 import { Reserva } from '../models/reserva';
 import { clasificarErrorReserva } from '../validaciones/errores-reserva';
@@ -31,6 +32,19 @@ describe('ConfirmarReserva (HU-22)', () => {
   const urlReservas = `${baseUrl}/reservas`;
 
   const urlDisponibilidad = `${baseUrl}/alojamientos/7/disponibilidad/consultar`;
+
+  const urlAlojamiento = `${baseUrl}/alojamientos/7`;
+
+  /** Alojamiento que devuelve GET /alojamientos/7 (capacidad y servicios, HU-31). */
+  const alojamiento = {
+    idAlojamiento: 7,
+    titulo: 'Apartamento en Chapinero',
+    capacidad: 4,
+    serviciosAdicionales: [
+      { idServicio: 3, nombre: 'Desayuno', costo: 50000 },
+      { idServicio: 4, nombre: 'Traslado', costo: 80000 }
+    ]
+  };
 
   let http: HttpTestingController;
 
@@ -126,6 +140,10 @@ describe('ConfirmarReserva (HU-22)', () => {
     url = `/alojamientos/7/reservar?llegada=${llegada}&salida=${salida}`
   ): Promise<void> {
     await harness.navigateByUrl(url, ConfirmarReserva);
+    // Capacidad y servicios del alojamiento (HU-31); solo se piden si hay datos para cotizar.
+    http
+      .match(r => r.method === 'GET' && r.url === urlAlojamiento)
+      .forEach(r => r.flush(alojamiento));
     await estable();
   }
 
@@ -593,5 +611,293 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(error(500).tipo).toBe('servidor');
     expect(error(502).tipo).toBe('pago-rechazado');
     expect(clasificarErrorReserva(new Error('x')).tipo).toBe('desconocido');
+  });
+
+  // ======================================
+  // HU-31 VER COTIZACIÓN DE LA ESTADÍA Y AGREGAR SERVICIOS ADICIONALES
+  // ======================================
+
+  /** Cotización del backend con los servicios del alojamiento (serviciosDisponibles). */
+  const cotizacionSinServicios: Cotizacion = {
+    ...cotizacion,
+    valorAdicionales: 0,
+    total: 690000,
+    serviciosAdicionales: [],
+    serviciosDisponibles: alojamiento.serviciosAdicionales
+  };
+
+  /** Marca o desmarca un servicio por su nombre. */
+  function servicio(nombre: string): HTMLInputElement {
+    const etiqueta = Array.from(elemento().querySelectorAll<HTMLLabelElement>('[data-servicio]'))
+      .find(l => l.textContent?.includes(nombre))!;
+    return etiqueta.querySelector('input')!;
+  }
+
+  /** Ejecuta un cambio con temporizadores simulados y deja pasar la espera antes de recotizar. */
+  async function cambiarYEsperar(cambio: () => void): Promise<void> {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      cambio();
+      harness.detectChanges();
+      vi.advanceTimersByTime(ESPERA_RECOTIZAR_MS);
+    } finally {
+      vi.useRealTimers();
+    }
+    await estable();
+  }
+
+  async function abrirSinServicios(url?: string): Promise<void> {
+    await abrir(url);
+    pedidoCotizacion().flush(cotizacionSinServicios);
+    await estable();
+  }
+
+  it('CA-179 muestra noches, precio base, descuento, limpieza, tarifa de servicio, cada servicio con su costo y el total', async () => {
+
+    await abrir();
+    pedidoCotizacion().flush({
+      ...cotizacion,
+      descuento: 60000,
+      valorAdicionales: 130000,
+      total: 760000,
+      serviciosAdicionales: alojamiento.serviciosAdicionales
+    });
+    await estable();
+
+    const desglose = texto('[data-desglose]');
+    expect(desglose).toContain('3 noches');
+    expect(digitos(desglose)).toContain('600000'); // precio base
+    expect(desglose).toContain('Descuento');
+    expect(digitos(desglose)).toContain('60000');
+    expect(desglose).toContain('Limpieza (5 %)');
+    expect(desglose).toContain('Tarifa de servicio (10 %)');
+    expect(desglose).toContain('Desayuno');
+    expect(desglose).toContain('Traslado');
+    expect(digitos(desglose)).toContain('80000');
+    expect(digitos(texto('[data-total]'))).toBe('760000');
+  });
+
+  it('CA-080 el total es el del backend y coincide con la suma de los componentes mostrados', async () => {
+
+    await abrirConCotizacion();
+
+    const componentes = Array.from(elemento().querySelectorAll('[data-desglose] dd'))
+      .map(dd => (dd.textContent ?? '').trim());
+    const suma = componentes.reduce((total, valor) => {
+      const numero = Number(valor.replace(/\D/g, ''));
+      return valor.startsWith('−') ? total - numero : total + numero;
+    }, 0);
+
+    // precio base 600000 + limpieza 30000 + servicio 60000 + desayuno 50000
+    expect(suma).toBe(740000);
+    expect(digitos(texto('[data-total]'))).toBe(String(suma));
+  });
+
+  it('CA-084 muestra los porcentajes de limpieza y servicio que aplicó el backend, sin recalcularlos', async () => {
+
+    await abrir();
+    pedidoCotizacion().flush({
+      ...cotizacionSinServicios,
+      porcentajeLimpieza: 7.5,
+      valorLimpieza: 45000,
+      porcentajeServicio: 12,
+      valorServicio: 72000,
+      total: 717000
+    });
+    await estable();
+
+    const desglose = texto('[data-desglose]');
+    expect(desglose).toContain('Limpieza (7.5 %)');
+    expect(digitos(desglose)).toContain('45000');
+    expect(desglose).toContain('Tarifa de servicio (12 %)');
+    expect(digitos(desglose)).toContain('72000');
+    expect(digitos(texto('[data-total]'))).toBe('717000');
+  });
+
+  it('CA-183 lista los servicios adicionales del alojamiento con su costo para elegirlos', async () => {
+
+    await abrirSinServicios();
+
+    const servicios = elemento().querySelectorAll('[data-servicio]');
+    expect(servicios.length).toBe(2);
+    expect(texto('[data-personalizar]')).toContain('Servicio opcional');
+    expect(digitos(servicios[1].textContent ?? '')).toBe('80000');
+    expect(servicio('Desayuno').checked).toBe(false);
+  });
+
+  it('CA-183 al elegir un servicio recotiza con el backend y el total incluye solo los elegidos', async () => {
+
+    await abrirSinServicios();
+
+    await cambiarYEsperar(() => servicio('Desayuno').click());
+
+    const req = pedidoCotizacion();
+    expect(req.request.body).toEqual({
+      idAlojamiento: 7,
+      fechaEntrada: llegada,
+      fechaSalida: salida,
+      serviciosSeleccionados: [3]
+    });
+    req.flush({ ...cotizacion, idCotizacion: 43, serviciosDisponibles: alojamiento.serviciosAdicionales });
+    await estable();
+
+    expect(texto('[data-desglose]')).toContain('Desayuno');
+    expect(texto('[data-desglose]')).not.toContain('Traslado');
+    expect(digitos(texto('[data-total]'))).toBe('740000');
+    expect(servicio('Desayuno').checked).toBe(true);
+  });
+
+  it('CA-183 al quitar un servicio recotiza sin él y el total deja de incluirlo', async () => {
+
+    await abrirSinServicios();
+    await cambiarYEsperar(() => servicio('Desayuno').click());
+    pedidoCotizacion().flush({ ...cotizacion, serviciosDisponibles: alojamiento.serviciosAdicionales });
+    await estable();
+
+    await cambiarYEsperar(() => servicio('Desayuno').click());
+    const req = pedidoCotizacion();
+    expect(req.request.body.serviciosSeleccionados).toBeUndefined();
+    req.flush(cotizacionSinServicios);
+    await estable();
+
+    expect(texto('[data-desglose]')).not.toContain('Desayuno');
+    expect(digitos(texto('[data-total]'))).toBe('690000');
+  });
+
+  it('CA-183 mientras recotiza no deja confirmar y varios clics seguidos piden una sola cotización', async () => {
+
+    await abrirSinServicios();
+
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      servicio('Desayuno').click();
+      servicio('Traslado').click();
+      harness.detectChanges();
+
+      // Antes de que llegue la cotización nueva no se puede confirmar la anterior.
+      expect(boton('[data-confirmar]').disabled).toBe(true);
+      expect(existe('[data-recotizando]')).toBe(true);
+      http.expectNone(r => r.method === 'POST' && r.url === urlCotizaciones);
+
+      vi.advanceTimersByTime(ESPERA_RECOTIZAR_MS);
+    } finally {
+      vi.useRealTimers();
+    }
+    await estable();
+
+    const req = pedidoCotizacion();
+    expect(req.request.body.serviciosSeleccionados).toEqual([3, 4]);
+    req.flush({
+      ...cotizacion,
+      idCotizacion: 44,
+      valorAdicionales: 130000,
+      total: 820000,
+      serviciosAdicionales: alojamiento.serviciosAdicionales,
+      serviciosDisponibles: alojamiento.serviciosAdicionales
+    });
+    await estable();
+
+    expect(boton('[data-confirmar]').disabled).toBe(false);
+    expect(texto('[data-confirmar]')).toContain('820');
+
+    // Se confirma la cotización nueva, no la anterior.
+    await confirmar();
+    expect(pedidoReserva().request.body).toEqual({ idCotizacion: 44 });
+  });
+
+  it('CA-183 indica cuando el alojamiento no tiene servicios adicionales', async () => {
+
+    await harness.navigateByUrl(`/alojamientos/7/reservar?llegada=${llegada}&salida=${salida}`, ConfirmarReserva);
+    http.expectOne(r => r.method === 'GET' && r.url === urlAlojamiento).flush({ ...alojamiento, serviciosAdicionales: [] });
+    pedidoCotizacion().flush({ ...cotizacionSinServicios, serviciosDisponibles: [] });
+    await estable();
+
+    expect(existe('[data-servicio]')).toBe(false);
+    expect(texto('[data-sin-servicios]')).toContain('no tiene servicios adicionales');
+  });
+
+  it('CA-083 rechaza por capacidad con el motivo del backend y permite elegir menos huéspedes', async () => {
+
+    await abrir(`/alojamientos/7/reservar?llegada=${llegada}&salida=${salida}&huespedes=6`);
+    rechazar(pedidoCotizacion(), 400, 'La cantidad de huéspedes (6) supera la capacidad del alojamiento (4).');
+    await estable();
+
+    expect(existe('[data-resumen]')).toBe(false);
+    expect(texto('[data-error-reserva]')).toContain('supera la capacidad del alojamiento (4)');
+    expect(existe('[data-confirmar]')).toBe(false);
+    expect(texto('[data-personalizar]')).toContain('Capacidad máxima: 4 huéspedes');
+
+    const selector = elemento().querySelector<HTMLSelectElement>('[data-huespedes-select]')!;
+    expect(selector.value).toBe('6');
+
+    await cambiarYEsperar(() => {
+      selector.value = '2';
+      selector.dispatchEvent(new Event('change'));
+    });
+
+    const req = pedidoCotizacion();
+    expect(req.request.body.huespedes).toBe(2);
+    req.flush(cotizacionSinServicios);
+    await estable();
+
+    expect(existe('[data-error-reserva]')).toBe(false);
+    expect(texto('[data-huespedes]')).toBe('2');
+    expect(boton('[data-confirmar]').disabled).toBe(false);
+  });
+
+  it('CA-083 rechaza la cotización si las fechas no están disponibles e informa el motivo', async () => {
+
+    await abrir();
+    rechazar(pedidoCotizacion(), 409, 'El alojamiento no está disponible en esas fechas.');
+    await estable();
+
+    expect(existe('[data-resumen]')).toBe(false);
+    expect(elemento().querySelector('[data-error-reserva]')?.getAttribute('data-tipo')).toBe('fechas-ocupadas');
+    expect(existe('[data-elegir-fechas]')).toBe(true);
+  });
+
+  it('CA-082 con la salida igual o anterior a la llegada no cotiza e indica que las fechas no son válidas', async () => {
+
+    await abrir(`/alojamientos/7/reservar?llegada=${salida}&salida=${salida}`);
+    http.expectNone(r => r.url === urlCotizaciones);
+    expect(texto('[data-sin-datos]')).toContain('no son válidas');
+    expect(existe('[data-personalizar]')).toBe(false);
+
+    TestBed.inject(HttpTestingController).verify();
+    await abrir(`/alojamientos/7/reservar?llegada=${salida}&salida=${llegada}`);
+    http.expectNone(r => r.url === urlCotizaciones);
+    expect(texto('[data-sin-datos]')).toContain('no son válidas');
+  });
+
+  it('el selector de huéspedes va de 1 a la capacidad y envía la cantidad elegida', async () => {
+
+    await abrirSinServicios();
+
+    const opciones = Array.from(elemento().querySelectorAll<HTMLOptionElement>('[data-huespedes-select] option'))
+      .map(o => o.value);
+    expect(opciones).toEqual(['1', '2', '3', '4']);
+
+    const selector = elemento().querySelector<HTMLSelectElement>('[data-huespedes-select]')!;
+    await cambiarYEsperar(() => {
+      selector.value = '4';
+      selector.dispatchEvent(new Event('change'));
+    });
+    const req = pedidoCotizacion();
+    expect(req.request.body.huespedes).toBe(4);
+    req.flush({ ...cotizacionSinServicios, huespedes: 4 });
+    await estable();
+    expect(texto('[data-huespedes]')).toBe('4');
+  });
+
+  it('después de crear la reserva ya no se pueden cambiar huéspedes ni servicios', async () => {
+
+    await abrirConCotizacion();
+    await confirmar();
+    pedidoReserva().flush(reserva);
+    await estable();
+    pedidoDisponibilidad().flush({ disponible: false });
+    await estable();
+
+    expect(existe('[data-personalizar]')).toBe(false);
   });
 });
