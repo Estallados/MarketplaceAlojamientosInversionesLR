@@ -370,7 +370,13 @@ CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#misPublicacion
 DetalleAlojamientoTest#misPublicacionesSoloAnfitrion_CA103
 AlojamientoControllerDetalleTest#misPublicaciones_CA103
 PublicacionServiceDetalleTest#misPublicaciones_CA103
-PublicacionServiceDetalleTest#sinPublicaciones_CA103";Probado (JUnit);;feat/SCRUM-176-be-consultar-mis-publicaciones-;;;
+PublicacionServiceDetalleTest#sinPublicaciones_CA103
+mis-alojamientos.spec.ts#CA-103 muestra las publicaciones del anfitrión con el estado de cada una
+mis-alojamientos.spec.ts#CA-103 recorre todas las páginas de GET /alojamientos/mios
+mis-alojamientos.spec.ts#CA-103 cuenta las publicaciones por estado y permite filtrarlas
+mis-alojamientos.spec.ts#CA-103 sin publicaciones indica que aún no tiene alojamientos y ofrece crear uno
+mis-alojamientos.spec.ts#CA-103 si la consulta falla muestra el motivo, no la lista vacía, y permite actualizar";Probado (JUnit);;"feat/SCRUM-176-be-consultar-mis-publicaciones-
+feat/SCRUM-274-fe-consultar-mis-publicaciones";;;"Front-end (SCRUM-274): pantalla Mis alojamientos (/host/alojamientos, solo Anfitrión) con GET /alojamientos/mios; cada publicación muestra su estado con la insignia de HU-17, con contadores y filtro por estado. Probado con Vitest (ng test); GET /alojamientos/mios verificado con el backend local (curl, sin sesión: 401); el flujo completo con un anfitrión queda pendiente de verificar."
 CA-104;RF-018;Gestión y actualización de publicación;Estados permitidos;Dado que existe una publicación registrada, cuando se consulta o modifica su estado, entonces el sistema debe utilizar únicamente los estados BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA o BLOQUEADA.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
