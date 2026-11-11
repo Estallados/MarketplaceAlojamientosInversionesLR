@@ -91,8 +91,8 @@ src/app/
 │   ├── tarifas/
 │   ├── models/
 │   └── services/                tarifas.service y cotizacion.service (POST /cotizaciones, S06)
-├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22)
-│   ├── confirmar-reserva/       resumen de la cotización y confirmación inmediata
+├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22) y cotización con servicios (HU-31)
+│   ├── confirmar-reserva/       huéspedes y servicios adicionales, desglose de la cotización y confirmación inmediata
 │   ├── models/
 │   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07)
 │   └── validaciones/            interpretación de los rechazos del contrato
