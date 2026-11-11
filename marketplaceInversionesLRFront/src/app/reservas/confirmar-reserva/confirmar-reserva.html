@@ -258,7 +258,7 @@
                 <button
                   type="button"
                   data-confirmar
-                  (click)="confirmar()"
+                  (click)="iniciarConfirmacion()"
                   [disabled]="enviando() || !puedeConfirmar()"
                   [attr.aria-busy]="enviando()"
                   class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
@@ -401,6 +401,25 @@
         </div>
       </dl>
 
+      <!-- PAGO REGISTRADO (HU-27, CA-160, CA-161) -->
+      @if (r.pago; as pago) {
+        <dl data-pago-registrado [attr.data-resultado-pago]="pago.estado" class="mt-4 grid grid-cols-1 gap-3 border-t border-emerald-200/70 pt-4 text-sm sm:grid-cols-2">
+          <div>
+            <dt class="text-slate-600">Pago</dt>
+            <dd data-estado-pago class="font-semibold text-slate-900">{{ etiquetaPago(pago.estado) }} · {{ moneda(pago.valor) }}</dd>
+          </div>
+          @if (pago.referencia) {
+            <div>
+              <dt class="text-slate-600">Referencia del pago</dt>
+              <dd data-referencia-pago class="break-all font-semibold text-slate-900">{{ pago.referencia }}</dd>
+            </div>
+          }
+        </dl>
+        <p data-ambiente-prueba class="mt-2 text-xs text-slate-600">
+          {{ proveedorPago(pago.proveedor) }}: ambiente de prueba, no se hizo ningún cobro real.
+        </p>
+      }
+
       @if (reservaRepetida()) {
         <p data-repetida class="mt-3 text-xs text-slate-600">
           Esta reserva ya se había registrado con tu solicitud anterior; no se creó otra.
@@ -443,6 +462,17 @@
         </a>
       }
     </section>
+  }
+
+  <!-- MODAL "CONFIRMA Y PAGA" (HU-27) -->
+  @if (pagoAbierto() && cotizacion(); as c) {
+    <app-pago-reserva
+      [cotizacion]="c"
+      [pagando]="enviando()"
+      [error]="errorPago()"
+      (pagar)="confirmar($event)"
+      (cerrado)="cerrarPago()"
+    />
   }
 
 </main>
