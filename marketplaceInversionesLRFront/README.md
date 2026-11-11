@@ -79,6 +79,7 @@ src/app/
 │   ├── gestion-estado/          HU-17 (enviar a revisión, pausar y reanudar)
 │   ├── insignia-estado/         HU-17 (insignia del estado de la publicación)
 │   ├── availability/            HU-20
+│   ├── mis-alojamientos/        HU-19 (publicaciones del anfitrión con su estado)
 │   ├── models/
 │   ├── services/                publicacion-host.service (único servicio HTTP de alojamientos)
 │   └── validaciones/
