@@ -283,7 +283,10 @@ CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle de publica
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#detalleDePublicacionActiva_CA093
 AlojamientoControllerDetalleTest#detalleSinSesion_CA093
-PublicacionServiceDetalleTest#detalleDePublicacionActiva_CA093";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;
+PublicacionServiceDetalleTest#detalleDePublicacionActiva_CA093
+detalle-alojamiento.spec.ts#CA-093: la galería muestra solo las fotos del alojamiento, sin fotos de relleno
+detalle-alojamiento.spec.ts#CA-093: sin fotos no inventa imágenes y lo indica";Probado (JUnit);;"feat/SCRUM-175-be-detalle-alojamiento-mapa
+feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): la galería del detalle muestra solo las imágenes del alojamiento (sin fotos de relleno); sin imágenes indica que no tiene fotografías. Probado con Vitest (ng test)."
 CA-094;RF-017;Crear publicación de alojamiento;Creación de publicación;Dado que el usuario tiene el rol ANFITRION, cuando registra un nuevo alojamiento, entonces el sistema debe permitir crear la publicación ingresando título, descripción, ubicación, tipo, capacidad, precio, servicios, reglas, política de cancelación e imágenes, y guardarla en estado BORRADOR.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
 CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#creaEnBorrador_CA094
