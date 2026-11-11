@@ -11,7 +11,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription } from 'rxjs';
 
-import { Cotizacion } from '../../cotizacion/models/cotizacion';
+import { DetalleAlojamiento } from '../../alojamientos/models/detalle-alojamiento';
+import { DetalleAlojamientoService } from '../../alojamientos/services/detalle-alojamiento.service';
+import { Cotizacion, ServicioCotizado } from '../../cotizacion/models/cotizacion';
 import { CotizacionService } from '../../cotizacion/services/cotizacion.service';
 import { ConsultaDisponibilidad } from '../../disponibilidad/models/consulta-disponibilidad';
 import { DisponibilidadService } from '../../disponibilidad/services/disponibilidad.service';
@@ -69,6 +71,9 @@ const ETIQUETAS_ESTADO: Record<EstadoReserva, string> = {
   CANCELADA: 'Cancelada'
 };
 
+/** Espera tras el último cambio de huéspedes o servicios antes de recotizar. */
+export const ESPERA_RECOTIZAR_MS = 400;
+
 const FORMATO_COP = new Intl.NumberFormat('es-CO', {
   style: 'currency',
   currency: 'COP',
@@ -79,6 +84,9 @@ const FORMATO_COP = new Intl.NumberFormat('es-CO', {
 // ======================================
 // CREAR RESERVA CON BLOQUEO AUTOMÁTICO DE FECHAS
 // HU-22: CA-070, CA-071, CA-072, CA-074, CA-075, CA-076, CA-086.
+// HU-31: el huésped elige huéspedes y servicios adicionales y la cotización
+// se pide de nuevo al backend con cada cambio (CA-080, CA-083, CA-084,
+// CA-179, CA-183). El front no calcula ningún valor.
 // El front cotiza (POST /cotizaciones), muestra el resumen y confirma con
 // POST /reservas enviando solo la cotización. La revalidación de la
 // disponibilidad, la exclusión de reservas simultáneas, el monto y el
@@ -99,6 +107,8 @@ export class ConfirmarReserva implements OnInit {
 
   private readonly disponibilidad = inject(DisponibilidadService);
 
+  private readonly alojamientos = inject(DetalleAlojamientoService);
+
   private readonly route = inject(ActivatedRoute);
 
   private readonly destroyRef = inject(DestroyRef);
@@ -113,8 +123,22 @@ export class ConfirmarReserva implements OnInit {
 
   readonly salida = signal('');
 
-  /** Huéspedes pedidos en la URL; null para que el backend use su valor por defecto. */
-  private huespedes: number | null = null;
+  /** Huéspedes elegidos (o pedidos en la URL); null para que el backend use su valor por defecto. */
+  readonly huespedes = signal<number | null>(null);
+
+  /** Servicios adicionales elegidos (HU-31). */
+  readonly serviciosElegidos = signal<number[]>([]);
+
+  /** Alojamiento (GET /alojamientos/{id}): capacidad y servicios para elegir. */
+  readonly alojamiento = signal<DetalleAlojamiento | null>(null);
+
+  /** Servicios que devolvió la última cotización (serviciosDisponibles). */
+  private readonly serviciosCotizados = signal<ServicioCotizado[] | null>(null);
+
+  /** true desde que se cambian huéspedes o servicios hasta que llega la cotización nueva. */
+  readonly recotizando = signal(false);
+
+  private temporizadorRecotizar: ReturnType<typeof setTimeout> | null = null;
 
   readonly estadoCotizacion = signal<EstadoCotizacion>({ tipo: 'cargando' });
 
@@ -165,7 +189,8 @@ export class ConfirmarReserva implements OnInit {
 
   readonly puedeConfirmar = computed(() => {
     const confirmacion = this.confirmacion();
-    if (this.cotizacion() === null) {
+    // No se confirma una cotización que ya no corresponde a lo elegido.
+    if (this.cotizacion() === null || this.recotizando()) {
       return false;
     }
     if (confirmacion.tipo === 'inicial') {
@@ -184,6 +209,37 @@ export class ConfirmarReserva implements OnInit {
       TIPOS_REINTENTABLES.includes(confirmacion.error.tipo)
     );
   });
+
+  /** Servicios que se pueden elegir: los de la última cotización o, si aún no hay, los del alojamiento. */
+  readonly serviciosDisponibles = computed<ServicioCotizado[]>(() =>
+    (this.serviciosCotizados() ?? this.alojamiento()?.serviciosAdicionales ?? [])
+      .filter((s): s is ServicioCotizado => typeof s.idServicio === 'number')
+  );
+
+  /** Se puede personalizar la estadía mientras la reserva no se haya creado. */
+  readonly personalizable = computed(() =>
+    this.idAlojamiento() !== null &&
+    this.estadoCotizacion().tipo !== 'sin-datos' &&
+    this.reserva() === null
+  );
+
+  /** Capacidad del alojamiento; null si no se pudo consultar. */
+  readonly capacidad = computed(() => {
+    const capacidad = this.alojamiento()?.capacidad;
+    return typeof capacidad === 'number' && capacidad > 0 ? Math.floor(capacidad) : null;
+  });
+
+  /**
+   * Opciones del selector de huéspedes: de 1 a la capacidad. Si en la URL llegó un número mayor, también
+   * se incluye para que se vea lo pedido junto con el rechazo del backend (CA-083).
+   */
+  readonly opcionesHuespedes = computed(() => {
+    const maximo = Math.max(this.capacidad() ?? 0, this.huespedes() ?? 1);
+    return Array.from({ length: maximo }, (_, i) => i + 1);
+  });
+
+  /** Huéspedes que muestra el selector: los elegidos, los cotizados o 1 (valor por defecto del backend). */
+  readonly huespedesMostrados = computed(() => this.huespedes() ?? this.cotizacion()?.huespedes ?? 1);
 
   /** Ruta para volver a elegir fechas (HU-21). */
   readonly rutaFechas = computed(() => {
@@ -216,10 +272,13 @@ export class ConfirmarReserva implements OnInit {
     this.salida.set(query.get('salida') ?? '');
 
     const huespedes = Number(query.get('huespedes'));
-    this.huespedes =
+    this.huespedes.set(
       query.has('huespedes') && Number.isSafeInteger(huespedes) && huespedes > 0
         ? huespedes
-        : null;
+        : null
+    );
+
+    this.destroyRef.onDestroy(() => this.cancelarRecotizacion());
 
     if (!Number.isSafeInteger(id) || id <= 0) {
       this.estadoCotizacion.set({
@@ -243,6 +302,7 @@ export class ConfirmarReserva implements OnInit {
       return;
     }
 
+    this.cargarAlojamiento(id);
     this.cotizar();
   }
 
@@ -250,7 +310,7 @@ export class ConfirmarReserva implements OnInit {
    * Pide una cotización nueva (POST /cotizaciones). También se usa cuando la anterior venció.
    * Cada cotización nueva empieza un intento de reserva nuevo, con su propia clave.
    */
-  cotizar(): void {
+  cotizar(conservarResumen = false): void {
 
     const id = this.idAlojamiento();
 
@@ -258,9 +318,14 @@ export class ConfirmarReserva implements OnInit {
       return;
     }
 
+    this.cancelarRecotizacion();
     this.peticionCotizacion?.unsubscribe();
 
-    this.estadoCotizacion.set({ tipo: 'cargando' });
+    // Al recotizar se deja el resumen anterior (atenuado) hasta que llegue el nuevo.
+    if (!(conservarResumen && this.cotizacion() !== null)) {
+      this.estadoCotizacion.set({ tipo: 'cargando' });
+    }
+    this.recotizando.set(conservarResumen);
     this.confirmacion.set({ tipo: 'inicial' });
     this.bloqueo.set({ tipo: 'sin-consultar' });
     this.claveIdempotencia = null;
@@ -270,22 +335,99 @@ export class ConfirmarReserva implements OnInit {
         idAlojamiento: id,
         fechaEntrada: this.llegada(),
         fechaSalida: this.salida(),
-        ...(this.huespedes !== null ? { huespedes: this.huespedes } : {})
+        ...(this.huespedes() !== null ? { huespedes: this.huespedes()! } : {}),
+        // Solo los elegidos: el backend suma únicamente estos (CA-183). Sin elegidos se omite.
+        ...(this.serviciosElegidos().length > 0
+          ? { serviciosSeleccionados: this.serviciosElegidos() }
+          : {})
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: cotizacion => {
           this.peticionCotizacion = null;
+          this.recotizando.set(false);
+          if (cotizacion.serviciosDisponibles) {
+            this.serviciosCotizados.set(cotizacion.serviciosDisponibles);
+          }
           this.estadoCotizacion.set({ tipo: 'lista', cotizacion });
           this.claveIdempotencia = this.reservas.nuevaClaveIdempotencia();
         },
         error: err => {
           this.peticionCotizacion = null;
+          this.recotizando.set(false);
           this.estadoCotizacion.set({
             tipo: 'error',
             error: clasificarErrorReserva(err)
           });
         }
+      });
+  }
+
+  // ======================================
+  // 1.1 PERSONALIZAR LA ESTADÍA (HU-31)
+  // Cada cambio pide una cotización nueva al backend tras una pausa corta.
+  // ======================================
+
+  cambiarHuespedes(valor: number | string): void {
+
+    const huespedes = Number(valor);
+
+    if (!Number.isSafeInteger(huespedes) || huespedes <= 0 || huespedes === this.huespedes()) {
+      return;
+    }
+
+    this.huespedes.set(huespedes);
+    this.programarRecotizacion();
+  }
+
+  servicioElegido(idServicio: number): boolean {
+    return this.serviciosElegidos().includes(idServicio);
+  }
+
+  toggleServicio(idServicio: number, elegido: boolean): void {
+
+    if (elegido === this.servicioElegido(idServicio)) {
+      return;
+    }
+
+    this.serviciosElegidos.update(actuales =>
+      elegido ? [...actuales, idServicio] : actuales.filter(id => id !== idServicio)
+    );
+    this.programarRecotizacion();
+  }
+
+  private programarRecotizacion(): void {
+
+    if (this.enviando() || this.reserva() !== null) {
+      return;
+    }
+
+    this.cancelarRecotizacion();
+    this.recotizando.set(true);
+
+    this.temporizadorRecotizar = setTimeout(() => {
+      this.temporizadorRecotizar = null;
+      this.cotizar(true);
+    }, ESPERA_RECOTIZAR_MS);
+  }
+
+  private cancelarRecotizacion(): void {
+
+    if (this.temporizadorRecotizar !== null) {
+      clearTimeout(this.temporizadorRecotizar);
+      this.temporizadorRecotizar = null;
+    }
+  }
+
+  /** Capacidad y servicios del alojamiento. Si falla, se usan los servicios que devuelva la cotización. */
+  private cargarAlojamiento(id: number): void {
+
+    this.alojamientos
+      .obtener(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: alojamiento => this.alojamiento.set(alojamiento),
+        error: () => this.alojamiento.set(null)
       });
   }
 
