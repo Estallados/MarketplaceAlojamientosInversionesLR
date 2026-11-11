@@ -118,6 +118,24 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+{
+    path: 'admin/usuarios',
+    loadComponent: () =>
+      import('./administracion/usuarios/usuarios')
+        .then(m => m.Usuarios),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+  {
+    path: 'admin/usuarios/:id',
+    loadComponent: () =>
+      import('./administracion/detalle-usuario/detalle-usuario')
+        .then(m => m.DetalleUsuario),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
   // ====================================
   // RESERVAS EN REVISIÓN POR BLOQUEO (HU-11)
   // SOLO ADMINISTRADOR. Carga diferida para no aumentar el bundle inicial.
