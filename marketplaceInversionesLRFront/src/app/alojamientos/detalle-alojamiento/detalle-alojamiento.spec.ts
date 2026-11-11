@@ -73,13 +73,59 @@ describe('DetalleAlojamientoPage (HU-18)', () => {
     expect(servicio.obtener).toHaveBeenCalledWith(8);
     expect(c.stay()?.titulo).toBe('Casa en el campo');
     expect(c.fotoPrincipal()).toBe('https://ejemplo.com/1.jpg');
-    expect(c.fotosSecundarias().length).toBe(4);
+    expect(c.fotosSecundarias()).toEqual([]); // solo tiene una foto: no se rellena con otras
     expect(c.amenities()).toEqual(['Wifi', 'Cocina']);
     expect(c.servicios()[0].nombre).toBe('Desayuno');
     expect(c.reglas().map((r) => r.text)).toContain('A partir de las 15:00');
     expect(c.reglas().map((r) => r.text)).toContain('Flexible');
     expect(c.reviews().length).toBe(1);
     expect(c.promedioResenas()).toBe(5);
+  });
+
+  it('CA-093: la galería muestra solo las fotos del alojamiento, sin fotos de relleno', () => {
+    servicio.obtener.mockReturnValue(
+      of({ ...casa, imagenes: ['https://ejemplo.com/1.jpg', 'https://ejemplo.com/2.jpg', '', 'https://ejemplo.com/3.jpg'] }),
+    );
+    TestBed.configureTestingModule({
+      imports: [DetalleAlojamientoPage],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: DetalleAlojamientoService, useValue: servicio },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '8' }) } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(DetalleAlojamientoPage);
+    fixture.detectChanges();
+
+    const fuentes = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="galeria"] img') as NodeListOf<HTMLImageElement>,
+    ).map((img) => img.getAttribute('src'));
+    expect(fuentes).toEqual(['https://ejemplo.com/1.jpg', 'https://ejemplo.com/2.jpg', 'https://ejemplo.com/3.jpg']);
+    expect(fixture.nativeElement.innerHTML).not.toContain('unsplash');
+  });
+
+  it('CA-093: sin fotos no inventa imágenes y lo indica', () => {
+    servicio.obtener.mockReturnValue(of({ ...casa, imagenes: [] }));
+    TestBed.configureTestingModule({
+      imports: [DetalleAlojamientoPage],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: DetalleAlojamientoService, useValue: servicio },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '8' }) } } },
+      ],
+    });
+    const fixture = TestBed.createComponent(DetalleAlojamientoPage);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.fotoPrincipal()).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="galeria"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="galeria-vacia"]')?.textContent).toContain(
+      'todavía no tiene fotografías',
+    );
   });
 
   it('CA-164: arma el mapa con la ubicación aproximada (no la exacta)', () => {
