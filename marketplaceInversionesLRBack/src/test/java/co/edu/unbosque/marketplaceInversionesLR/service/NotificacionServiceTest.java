@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,11 +44,14 @@ class NotificacionServiceTest {
 	@Mock
 	private NotificacionRepository notificacionRepo;
 
+	@Mock
+	private TiempoRealService tiempoReal;
+
 	private NotificacionService servicio;
 
 	@BeforeEach
 	void preparar() {
-		servicio = new NotificacionService(notificacionRepo);
+		servicio = new NotificacionService(notificacionRepo, tiempoReal);
 	}
 
 	@Test
@@ -95,6 +99,18 @@ class NotificacionServiceTest {
 		verify(notificacionRepo).save(guardada.capture());
 		assertThat(guardada.getValue().getIdUsuario()).isEqualTo(9L);
 		assertThat(guardada.getValue().getTipo()).isEqualTo(NotificacionService.RESERVA_CONFIRMADA);
+	}
+
+	@Test
+	@DisplayName("CA-165 La notificación también se envía en tiempo real por WebSocket al destinatario")
+	void enviaPorWebSocket_CA165() {
+		servicio.enviar(9L, NotificacionService.MENSAJE_RECIBIDO, "Tienes un mensaje nuevo en la conversación 3.");
+
+		ArgumentCaptor<Object> carga = ArgumentCaptor.forClass(Object.class);
+		verify(tiempoReal).enviarAUsuario(eq(9L), eq(TiempoRealService.NOTIFICACIONES), carga.capture());
+		NotificacionDTO dto = (NotificacionDTO) carga.getValue();
+		assertThat(dto.getTipo()).isEqualTo(NotificacionService.MENSAJE_RECIBIDO);
+		assertThat(dto.getLeida()).isFalse();
 	}
 
 	@Test
