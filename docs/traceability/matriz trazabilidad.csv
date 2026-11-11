@@ -62,7 +62,14 @@ CP-048 Consulta de reseñas de alojamiento";"ResenasTest#consultaPorAlojamiento_
 ResenaServiceTest#resumenDelAlojamiento_CA019
 ResenaServiceTest#resumenVacioYNoExiste_CA019
 ResenaControllerTest#deAlojamiento_CA019";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;GET /alojamientos/{id}/resenas (pública): solo las PUBLICADA de ese alojamiento con promedio y cantidad. Además GET /resenas/mias (HUESPED, incluye ocultas) y GET /resenas/anfitrion (ANFITRION).
-CA-022;RF-005;Consulta de dashboard;Indicadores del dashboard;Dado que existen usuarios, publicaciones, reservas y operaciones registradas, cuando se consulta el dashboard, entonces debe mostrarse el indicador de usuarios, la cantidad de publicaciones activas, las reservas agrupadas por estado, los ingresos estimados y las ciudades con mayor demanda.;HU-04;CU-014;CP-055 Consulta de dashboard;DashboardReportesTest#elDashboardMuestraTodosLosIndicadores_CA022_CA023_CA024_CA025_CA026;;38a9302;;;;
+CA-022;RF-005;Consulta de dashboard;Indicadores del dashboard;Dado que existen usuarios, publicaciones, reservas y operaciones registradas, cuando se consulta el dashboard, entonces debe mostrarse el indicador de usuarios, la cantidad de publicaciones activas, las reservas agrupadas por estado, los ingresos estimados y las ciudades con mayor demanda.;HU-04;CU-014;CP-055 Consulta de dashboard;"DashboardTest#indicadores_CA022
+DashboardTest#limitaCiudades_CA022
+DashboardTest#soloAdministrador_CA022
+ReporteServiceTest#indicadores_CA022
+ReporteServiceTest#estadosEnCero_CA022
+ReporteServiceTest#limiteDeCiudades_CA022
+ReporteControllerTest#dashboard_CA022
+ReporteControllerTest#soloAdministrador_CA022";Probado (JUnit);;feat/SCRUM-161-be-dashboard-indicadores;;;
 CA-027;RF-006;Exportación de reportes;Exportación y trazabilidad del reporte;Dado que un usuario solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel con datos que correspondan a la información disponible en el sistema y registrar solicitante y fecha.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"DashboardReportesTest#exportaEnPdfYRegistraSolicitanteYFecha_CA027_CA029
 DashboardReportesTest#elExcelCorrespondeConLaInformacionDelSistema_CA027_CA028";;38a9302;;;;
 CA-030;RF-001;Registro de usuarios;Crear cuenta con rol;Dado que el usuario no está registrado, cuando proporciona todos los datos obligatorios y un rol válido, entonces el sistema crea la cuenta, le asigna el rol seleccionado y muestra una confirmación.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol

@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.DemandaCiudadDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import jakarta.persistence.LockModeType;
@@ -114,4 +115,35 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	@Query("select r from Reserva r where r.idReserva = :id")
 	Optional<Reserva> buscarParaCancelar(@Param("id") Long id);
+
+	/**
+	 * Cantidad de reservas por estado, para el dashboard (HU-04).
+	 *
+	 * @return filas con la forma [estado, cantidad]
+	 */
+	@Query("select r.estado, count(r) from Reserva r group by r.estado")
+	List<Object[]> contarPorEstado();
+
+	/**
+	 * Ciudades con más reservas, contando todos los estados: de mayor a menor
+	 * y, si hay empate, por nombre (HU-04). El {@code Pageable} limita cuántas
+	 * se devuelven.
+	 *
+	 * @param limite cantidad máxima de ciudades
+	 * @return ciudades con su cantidad de reservas
+	 */
+	@Query("select new co.edu.unbosque.marketplaceInversionesLR.dto.DemandaCiudadDTO("
+			+ "coalesce(a.ciudad, 'Sin ciudad'), count(r)) "
+			+ "from Reserva r join r.alojamiento a group by a.ciudad order by count(r) desc, a.ciudad asc")
+	List<DemandaCiudadDTO> contarCiudadesTop(Pageable limite);
+
+	/**
+	 * Cantidad de reservas en un estado con salida anterior a una fecha (por
+	 * ejemplo, las confirmadas que ya terminaron).
+	 *
+	 * @param estado estado a contar
+	 * @param fecha  fecha de referencia
+	 * @return cantidad
+	 */
+	long countByEstadoAndFechaSalidaBefore(EstadoReserva estado, LocalDate fecha);
 }
