@@ -95,9 +95,9 @@ src/app/
 ├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22), cotización con servicios (HU-31) y pago de prueba (HU-27)
 │   ├── confirmar-reserva/       huéspedes y servicios adicionales, desglose de la cotización y confirmación inmediata
 │   ├── models/
-│   ├── pago-reserva/            modal "Confirma y paga" con métodos de pago de prueba (HU-27)
+│   ├── pago-reserva/            modal "Confirma y paga" con tarjetas de prueba (HU-27)
 │   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07) y pago.service (GET /pagos/configuracion)
-│   └── validaciones/            interpretación de los rechazos del contrato
+│   └── validaciones/            interpretación de los rechazos del contrato y tarjetas de prueba (HU-27)
 ├── favoritos/            Gestionar alojamientos favoritos (HU-29)
 │   ├── mis-favoritos/           lista del huésped y quitar con el corazón
 │   ├── models/
