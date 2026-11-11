@@ -1,0 +1,316 @@
+<header class="border-b border-slate-200/80 bg-white/95 backdrop-blur">
+  <div
+    class="mx-auto flex h-20 max-w-[1440px] items-center gap-3 px-3 sm:gap-8 sm:px-8"
+  >
+    <!-- ===================================== -->
+    <!-- LOGO -->
+    <!-- ===================================== -->
+    <a [routerLink]="homePath()" class="block shrink-0">
+      <div class="flex items-center gap-3">
+        <div
+          class="grid size-10 place-items-center rounded-xl bg-emerald-700 text-white shadow-sm"
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m3 11 9-8 9 8" />
+            <path d="M5 10v11h14V10M9 21v-7h6v7" />
+          </svg>
+        </div>
+        <div class="hidden text-left sm:block">
+          <div
+            class="font-display text-lg font-bold leading-none text-slate-900"
+          >
+            INVERSIONES
+          </div>
+          <div
+            class="mt-1 text-[10px] font-bold tracking-[0.35em] text-emerald-700"
+          >
+            LR
+          </div>
+        </div>
+      </div>
+    </a>
+    <!-- ===================================== -->
+    <!-- NAVBAR EXCLUSIVO DEL LOGIN -->
+    <!-- ===================================== -->
+    @if (isLoginPage()) {
+      <nav
+        aria-label="Navegación de inicio de sesión"
+        class="ml-auto flex items-center gap-1 sm:gap-4"
+      >
+        @if (rutaDisponible('/home')) {
+          <a
+            routerLink="/home"
+            class="whitespace-nowrap rounded-lg px-2 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-emerald-700 sm:px-3 sm:text-sm"
+          >
+            Inicio
+          </a>
+        }
+        @if (rutaDisponible('/explorar')) {
+          <a
+            routerLink="/explorar"
+            class="whitespace-nowrap rounded-lg px-2 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-emerald-700 sm:px-3 sm:text-sm"
+          >
+            Explorar
+          </a>
+        }
+        @if (!estaAutenticado()) {
+          <a
+            routerLink="/registro"
+            class="whitespace-nowrap rounded-lg px-2 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 sm:px-3 sm:text-sm"
+          >
+            Crear cuenta
+          </a>
+        }
+      </nav>
+    } @else {
+      <!-- ===================================== -->
+        <!-- NAVEGACIÓN SEGÚN ROL REAL -->
+        <!-- ===================================== -->
+      <nav
+        aria-label="Navegación principal"
+        class="hidden h-full shrink-0 items-center gap-1 lg:flex"
+      >
+        @for (item of items(); track item[1]) {
+          <a
+            [routerLink]="item[1]"
+            routerLinkActive
+            #rla="routerLinkActive"
+            class="relative flex h-full items-center whitespace-nowrap px-4 text-sm font-semibold transition"
+            [class]="rla.isActive ? activeClass : inactiveClass"
+          >
+            {{ item[0] }}
+          </a>
+        }
+      </nav>
+      <!-- ===================================== -->
+        <!-- OPCIONES DERECHAS -->
+        <!-- ===================================== -->
+      <div class="ml-auto flex items-center gap-2">
+        <!-- ===================================== -->
+        <!-- USUARIO SIN INICIAR SESIÓN -->
+        <!-- ===================================== -->
+        @if (!estaAutenticado()) {
+          <a
+            routerLink="/login"
+            class="whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Iniciar sesión
+          </a>
+          <a
+            routerLink="/registro"
+            class="whitespace-nowrap rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-800"
+          >
+            Crear cuenta
+          </a>
+        } @else {
+          <!-- ===================================== -->
+            <!-- USUARIO AUTENTICADO -->
+            <!-- ===================================== -->
+            <!-- PUBLICAR ALOJAMIENTO -->
+            <!-- SOLO ANFITRIÓN -->
+          @if (role() === 'Anfitrión' && rutaDisponible('/host/alojamientos')) {
+            <a
+              routerLink="/host/alojamientos"
+              class="hidden items-center justify-center gap-2 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 lg:flex"
+            >
+              Mis alojamientos
+            </a>
+          }
+          <!-- TODO(notificaciones): agregar aquí la campana con el contador de no leídas del proyecto base
+               cuando exista en el front el servicio de notificaciones (GET /notificaciones). -->
+          <!-- ===================================== -->
+            <!-- PERFIL DEL USUARIO -->
+            <!-- ===================================== -->
+          <div class="relative">
+            <button
+              type="button"
+              (click)="roleMenu = !roleMenu"
+              [attr.aria-expanded]="roleMenu"
+              aria-label="Abrir menú de usuario"
+              class="flex items-center gap-3 rounded-full border border-slate-200 py-1.5 pl-1.5 pr-3 transition hover:shadow-md"
+            >
+              <!-- INICIALES REALES -->
+              <span
+                class="grid size-9 place-items-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800"
+              >
+                {{ user().initials }}
+              </span>
+              <!-- DATOS DEL USUARIO -->
+              <span class="hidden text-left md:block">
+                <span
+                  class="block max-w-36 truncate text-xs font-bold text-slate-800"
+                >
+                  {{ user().name }}
+                </span>
+                <span class="block text-[10px] text-slate-500">
+                  {{ role() }}
+                </span>
+              </span>
+              <!-- ICONO DEL MENÚ -->
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </button>
+            <!-- ===================================== -->
+            <!-- MENÚ DESPLEGABLE -->
+            <!-- ===================================== -->
+            @if (roleMenu) {
+              <div
+                class="absolute right-0 top-14 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
+              >
+                <!-- INFORMACIÓN REAL -->
+                <div
+                  class="border-b border-slate-100 px-3 pb-4 pt-2"
+                >
+                  <div class="flex items-center gap-3">
+                    <span
+                      class="grid size-11 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800"
+                    >
+                      {{ user().initials }}
+                    </span>
+                    <div class="min-w-0">
+                      <p
+                        class="truncate text-sm font-bold text-slate-900"
+                      >
+                        {{ user().name }}
+                      </p>
+                      <p
+                        class="truncate text-xs text-slate-500"
+                      >
+                        {{ user().email }}
+                      </p>
+                    </div>
+                  </div>
+                  <!-- ROL ASIGNADO -->
+                  <div class="mt-4">
+                    <span
+                      class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
+                    >
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"
+                        />
+                        <path d="m9 12 2 2 4-4" />
+                      </svg>
+                      {{ role() }}
+                    </span>
+                  </div>
+                </div>
+                <!-- ===================================== -->
+                <!-- OPCIONES DE CUENTA -->
+                <!-- ===================================== -->
+                <div class="mt-2">
+                  <!-- MI PERFIL -->
+                  <a
+                    routerLink="/perfil"
+                    (click)="closeMenu()"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="8" r="4" />
+                      <path
+                        d="M4 21v-2a8 8 0 0 1 16 0v2"
+                      />
+                    </svg>
+                    Mi perfil
+                  </a>
+                  <!-- IR A INICIO -->
+                  <a
+                    [routerLink]="homePath()"
+                    (click)="closeMenu()"
+                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  >
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.8"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="m3 11 9-8 9 8" />
+                      <path d="M5 10v11h14V10M9 21v-7h6v7" />
+                    </svg>
+                    Ir a mi inicio
+                  </a>
+                </div>
+                <div class="my-2 border-t border-slate-100"></div>
+                <!-- ===================================== -->
+                <!-- CERRAR SESIÓN -->
+                <!-- ===================================== -->
+                <button
+                  type="button"
+                  (click)="cerrarSesion()"
+                  class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M10 17l5-5-5-5M15 12H3"
+                    />
+                    <path
+                      d="M12 3h6a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3h-6"
+                    />
+                  </svg>
+                  Cerrar sesión
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</header>

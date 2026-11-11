@@ -285,7 +285,10 @@ CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle de publica
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#detalleDePublicacionActiva_CA093
 AlojamientoControllerDetalleTest#detalleSinSesion_CA093
-PublicacionServiceDetalleTest#detalleDePublicacionActiva_CA093";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;
+PublicacionServiceDetalleTest#detalleDePublicacionActiva_CA093
+detalle-alojamiento.spec.ts#CA-093: la galería muestra solo las fotos del alojamiento, sin fotos de relleno
+detalle-alojamiento.spec.ts#CA-093: sin fotos no inventa imágenes y lo indica";Probado (JUnit);;"feat/SCRUM-175-be-detalle-alojamiento-mapa
+feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): la galería del detalle muestra solo las imágenes del alojamiento (sin fotos de relleno); sin imágenes indica que no tiene fotografías. Probado con Vitest (ng test)."
 CA-094;RF-017;Crear publicación de alojamiento;Creación de publicación;Dado que el usuario tiene el rol ANFITRION, cuando registra un nuevo alojamiento, entonces el sistema debe permitir crear la publicación ingresando título, descripción, ubicación, tipo, capacidad, precio, servicios, reglas, política de cancelación e imágenes, y guardarla en estado BORRADOR.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
 CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#creaEnBorrador_CA094
@@ -599,19 +602,43 @@ CP-069 Eliminación de favorito";"FavoritosTest#listaVacia_CA170
 FavoritosTest#soloLosPropios_CA170
 FavoritoControllerTest#lista_CA170
 FavoritoServiceTest#listaLosDelUsuario_CA170
-FavoritoServiceTest#listaVacia_CA170";Probado (JUnit);;feat/SCRUM-186-be-alojamientos-favoritos;;;
+FavoritoServiceTest#listaVacia_CA170
+mis-favoritos.spec.ts#CA-170 muestra los alojamientos favoritos del usuario con su tarjeta y enlace al detalle
+mis-favoritos.spec.ts#CA-170 indica que la lista está vacía si el usuario no tiene favoritos
+mis-favoritos.spec.ts#CA-170 muestra un error con reintento si no se pueden cargar
+mis-favoritos.spec.ts#CA-170 trae las páginas siguientes con ""Ver más favoritos""
+mis-favoritos.spec.ts#CA-170 sin sesión de huésped no consulta y pide iniciar sesión
+favorito.service.spec.ts#CA-170 consulta GET /favoritos paginado para el usuario de la sesión
+favorito.service.spec.ts#CA-170 lee todas las páginas para saber qué alojamientos son favoritos y no mezcla usuarios
+favorito.service.spec.ts#CA-170 sin sesión de huésped no consulta favoritos";Probado (JUnit);;"feat/SCRUM-186-be-alojamientos-favoritos
+feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): pantalla Mis favoritos (/favoritos, solo Huésped) con FavoritoService; lista vacía, error con reintento y paginación. Probado con Vitest (ng test). Rutas GET/POST/DELETE /favoritos verificadas con el backend local (curl, sin sesión: 401); el flujo completo con un huésped queda pendiente de verificar."
 CA-171;RF-007;Gestión de alojamientos favoritos;Eliminación de favorito;Dado que el huésped tiene un alojamiento en su lista de favoritos, cuando lo elimina, entonces el alojamiento debe dejar de aparecer en la lista.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
 CP-069 Eliminación de favorito";"FavoritosTest#eliminaDeLaLista_CA171
 FavoritosTest#noEliminaElDeOtro_CA171
 FavoritoControllerTest#elimina_CA171
-FavoritoServiceTest#elimina_CA171";Probado (JUnit);;feat/SCRUM-186-be-alojamientos-favoritos;;;
+FavoritoServiceTest#elimina_CA171
+mis-favoritos.spec.ts#CA-171 al quitar un favorito deja de aparecer en la lista cuando el backend lo confirma
+mis-favoritos.spec.ts#CA-171 si el backend no puede quitarlo, lo conserva y muestra el error
+favorito.service.spec.ts#CA-171 elimina con DELETE /favoritos/{id} y deja de ser favorito
+favorito.service.spec.ts#CA-171 si ya no estaba en favoritos (404) también lo quita; si falla otra cosa lo conserva
+detalle-alojamiento.spec.ts#CA-171 desde el detalle el huésped quita el favorito con DELETE /favoritos/{id}";Probado (JUnit);;"feat/SCRUM-186-be-alojamientos-favoritos
+feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): quitar con el corazón en Mis favoritos o con Guardado en el detalle; el alojamiento desaparece cuando el backend confirma el DELETE. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-173;RF-007;Gestión de alojamientos favoritos;Agregar favorito sin duplicados;Dado que el huésped está autenticado y el alojamiento existe, cuando lo agrega a sus favoritos, entonces el sistema debe registrarlo en su lista y, si ya estaba agregado, conservar un único favorito.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
 CP-069 Eliminación de favorito";"FavoritosTest#agregaSinDuplicar_CA173
 FavoritoServiceTest#solicitudesSimultaneas_CA173
 FavoritoControllerTest#agregaNuevo_CA173
-FavoritoServiceTest#noDuplica_CA173";Probado (JUnit);;feat/SCRUM-186-be-alojamientos-favoritos;;;
+FavoritoServiceTest#noDuplica_CA173
+detalle-alojamiento.spec.ts#CA-173 el huésped guarda el alojamiento con POST /favoritos/{id} y el botón pasa a ""Guardado""
+detalle-alojamiento.spec.ts#CA-173 si ya estaba guardado lo muestra como ""Guardado"" sin volver a agregarlo
+detalle-alojamiento.spec.ts#CA-173 muestra el error del backend y no lo marca como guardado
+detalle-alojamiento.spec.ts#CA-173 solo el huésped ve el botón Guardar
+favorito.service.spec.ts#CA-173 agrega con POST /favoritos/{id} y lo marca como favorito al confirmarlo el backend
+favorito.service.spec.ts#CA-173 si ya estaba (200) conserva un único favorito y no envía peticiones duplicadas
+favorito.service.spec.ts#CA-173 informa el error y no lo marca si el alojamiento no existe (404) o el servidor falla
+favorito.service.spec.ts#CA-173 sin sesión de huésped no llama al backend y pide iniciar sesión";Probado (JUnit);;"feat/SCRUM-186-be-alojamientos-favoritos
+feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): botón Guardar del detalle (solo Huésped); se marca como Guardado cuando el backend confirma el POST y un doble clic no repite la petición. El corazón en Inicio y Explorar queda pendiente de HU-23 (SCRUM-242). Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-174;RNF-023;Autenticación multifactor;Validación del segundo factor;Dado que el usuario tiene habilitado el segundo factor, cuando valida sus credenciales principales, entonces el sistema debe solicitar el segundo factor y permitir el acceso solo si es válido, rechazando el inicio de sesión si es incorrecto.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
