@@ -30,17 +30,38 @@
             {{ stay.ciudad }} · <strong class="text-slate-800">★ {{ promedioResenas() | number: '1.1-1' }}</strong> · {{ cantidadResenas() }} reseñas
           </p>
         </div>
-        <a
-          [routerLink]="['/alojamientos', stay.idAlojamiento, 'consultar-disponibilidad']"
-          class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:border-emerald-300 hover:bg-emerald-50"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <rect x="3" y="4" width="18" height="18" rx="2" />
-            <path d="M16 2v4M8 2v4M3 10h18" />
-          </svg>
-          Consultar disponibilidad
-        </a>
+        <div class="flex flex-wrap items-center justify-end gap-3">
+          @if (session.tieneRol('Huésped')) {
+            <button
+              type="button"
+              (click)="toggleFavorite()"
+              [disabled]="favoritoEnCurso()"
+              [attr.aria-pressed]="favorite()"
+              class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" [attr.fill]="favorite() ? 'currentColor' : 'none'" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+              </svg>
+              {{ favorite() ? 'Guardado' : 'Guardar' }}
+            </button>
+          }
+          <a
+            [routerLink]="['/alojamientos', stay.idAlojamiento, 'consultar-disponibilidad']"
+            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:border-emerald-300 hover:bg-emerald-50"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            Consultar disponibilidad
+          </a>
+        </div>
       </div>
+      @if (session.tieneRol('Huésped') && favoritoService.mensaje(); as mensaje) {
+        <p class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+          {{ mensaje }}
+        </p>
+      }
 
       <!-- Galería -->
       <div class="mt-8 grid h-[520px] grid-cols-2 gap-3 overflow-hidden rounded-[26px]">

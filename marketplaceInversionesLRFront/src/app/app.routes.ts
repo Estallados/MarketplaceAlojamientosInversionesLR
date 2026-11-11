@@ -141,5 +141,19 @@ export const routes: Routes = [
     data: { roles: ['Huésped'] }
   },
 
+  // ====================================
+  // ALOJAMIENTOS FAVORITOS (HU-29)
+  // SOLO HUÉSPED. Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'favoritos',
+    loadComponent: () =>
+      import('./favoritos/mis-favoritos/mis-favoritos')
+        .then(m => m.MisFavoritos),
+    canActivate: [roleGuard],
+    data: { roles: ['Huésped'] }
+  },
+
   { path: '**', redirectTo: 'login' }
 ];

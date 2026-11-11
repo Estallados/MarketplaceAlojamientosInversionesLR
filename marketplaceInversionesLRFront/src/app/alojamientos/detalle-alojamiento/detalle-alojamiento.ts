@@ -5,6 +5,8 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { DetalleAlojamiento, ResenaDetalle } from '../models/detalle-alojamiento';
 import { DetalleAlojamientoService } from '../services/detalle-alojamiento.service';
+import { SessionService } from '../../core/services/session.service';
+import { FavoritoService } from '../../favoritos/services/favorito.service';
 
 /** Fotos de ejemplo para completar la galería cuando el alojamiento tiene pocas imágenes. */
 const FOTOS_RELLENO = [
@@ -23,7 +25,8 @@ const MARGEN_MAPA = 0.01;
 
 /**
  * Detalle de un alojamiento (HU-18): galería, información, servicios, reglas, reseñas y,
- * como último bloque, el mapa con la ubicación aproximada (CA-164).
+ * como último bloque, el mapa con la ubicación aproximada (CA-164). El huésped puede guardarlo
+ * en sus favoritos (HU-29, CA-173).
  */
 @Component({
   selector: 'app-detalle-alojamiento',
@@ -35,6 +38,8 @@ export class DetalleAlojamientoPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly servicio = inject(DetalleAlojamientoService);
   private readonly sanitizer = inject(DomSanitizer);
+  protected readonly session = inject(SessionService);
+  protected readonly favoritoService = inject(FavoritoService);
 
   // ==================== Alojamiento ====================
   readonly stay = signal<DetalleAlojamiento | null>(null);
@@ -138,8 +143,19 @@ export class DetalleAlojamientoPage implements OnInit {
   readonly horizontalLines = [18, 38, 58, 78];
   readonly verticalLines = [15, 35, 55, 75];
 
+  // ==================== Favoritos (HU-29) ====================
+  /** true si el alojamiento está en los favoritos del huésped, según el backend. */
+  readonly favorite = computed(() => this.favoritoService.esFavorito(this.stay()?.idAlojamiento));
+  readonly favoritoEnCurso = computed(() => this.favoritoService.enCurso(this.stay()?.idAlojamiento));
+
+  toggleFavorite(): void {
+    this.favoritoService.toggle(this.stay()?.idAlojamiento);
+  }
+
   // ==================== Inicialización ====================
   ngOnInit(): void {
+    this.favoritoService.mensaje.set(null);
+    this.favoritoService.cargarSiCorresponde();
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!Number.isInteger(id) || id <= 0) {
       this.errorCarga.set(true);
