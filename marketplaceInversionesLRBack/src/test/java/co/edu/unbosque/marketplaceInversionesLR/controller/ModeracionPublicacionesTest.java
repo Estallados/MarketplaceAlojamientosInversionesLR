@@ -308,6 +308,90 @@ class ModeracionPublicacionesTest {
 				.content("{\"motivo\":\"Motivo\"}")).andExpect(status().isUnauthorized());
 	}
 
+	@Test
+	@DisplayName("Desbloquear pasa de BLOQUEADA a PAUSADA, queda en el historial y la auditoría; solo el administrador "
+			+ "y solo desde BLOQUEADA")
+	void desbloquea() throws Exception {
+		decidir("aprobar", null).andExpect(status().isOk());
+		decidir("desbloquear", null).andExpect(status().isConflict())
+				.andExpect(jsonPath("$.message").value("No se puede pasar de ACTIVA a PAUSADA."));
+		decidir("bloquear", "Publicidad falsa").andExpect(status().isOk());
+
+		mockMvc.perform(post(RUTA + idAlojamiento + "/desbloquear").header("Authorization", "Bearer " + tokenAnfitrion))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(post(RUTA + idAlojamiento + "/desbloquear")).andExpect(status().isUnauthorized());
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.BLOQUEADA);
+
+		// Sin cuerpo, como lo envía el frontend
+		mockMvc.perform(post(RUTA + idAlojamiento + "/desbloquear").header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.idAlojamiento").value(idAlojamiento))
+				.andExpect(jsonPath("$.estado").value("PAUSADA"));
+
+		assertThat(alojamientoRepository.findById(idAlojamiento).orElseThrow().getEstado())
+				.isEqualTo(EstadoAlojamiento.PAUSADA);
+		mockMvc.perform(get("/alojamientos/" + idAlojamiento + "/historial")
+				.header("Authorization", "Bearer " + tokenAnfitrion))
+				// Del más antiguo al más reciente: aprobada, bloqueada y desbloqueada
+				.andExpect(jsonPath("$.length()").value(3))
+				.andExpect(jsonPath("$[2].estadoAnterior").value("BLOQUEADA"))
+				.andExpect(jsonPath("$[2].estadoNuevo").value("PAUSADA"))
+				.andExpect(jsonPath("$[2].idUsuario").value(admin.getIdUsuario()))
+				.andExpect(jsonPath("$[2].motivo").value(PublicacionService.DESBLOQUEADA));
+		assertThat(auditoriaService.consultar(AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO, admin.getIdUsuario(), null,
+				null, 0, 20).getContent()).anySatisfy(evento -> {
+					assertThat(evento.getIdEntidad()).isEqualTo(idAlojamiento);
+					assertThat(evento.getDetalle()).startsWith("BLOQUEADA -> PAUSADA");
+				});
+		decidir("desbloquear", null).andExpect(status().isConflict());
+		decidirSobre(999999L, "desbloquear", null).andExpect(status().isNotFound());
+	}
+
+	@Test
+	@DisplayName("CA-112 El administrador ve en GET /admin/reservas las reservas que el bloqueo dejó EN_REVISION; al "
+			+ "desbloquear siguen ahí")
+	void reservasEnRevision_CA112() throws Exception {
+		decidir("aprobar", null).andExpect(status().isOk());
+		Long idHuesped = crearUsuario("huesped@correo.com", Role.HUESPED).getIdUsuario();
+		Long futura = crearReserva(idHuesped, BASE.plusDays(5), 1L);
+		Long pasada = crearReserva(idHuesped, LocalDate.now().minusDays(10), 2L);
+		decidir("bloquear", "Revisión").andExpect(status().isOk());
+
+		mockMvc.perform(get("/admin/reservas").param("estado", "EN_REVISION")
+				.header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.totalElementos").value(1))
+				.andExpect(jsonPath("$.contenido[0].idReserva").value(futura))
+				.andExpect(jsonPath("$.contenido[0].estado").value("EN_REVISION"))
+				.andExpect(jsonPath("$.contenido[0].nombreHuesped").value("Usuario de prueba"))
+				.andExpect(jsonPath("$.contenido[0].tituloAlojamiento").value("Casa en el lago"))
+				.andExpect(jsonPath("$.contenido[0].nombreAnfitrion").value("Usuario de prueba"))
+				.andExpect(jsonPath("$.contenido[0].fechaEntrada").value(BASE.plusDays(5).toString()))
+				.andExpect(jsonPath("$.contenido[0].noches").value(2))
+				.andExpect(jsonPath("$.contenido[0].total").value(400000))
+				.andExpect(jsonPath("$.contenido[0].completada").value(false));
+		// Sin filtro trae todas; la pasada sigue CONFIRMADA y ya está completada
+		mockMvc.perform(get("/admin/reservas").header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(jsonPath("$.totalElementos").value(2));
+		mockMvc.perform(get("/admin/reservas").param("estado", "CONFIRMADA")
+				.header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(jsonPath("$.contenido[0].idReserva").value(pasada))
+				.andExpect(jsonPath("$.contenido[0].completada").value(true));
+
+		// Desbloquear no cambia las reservas en revisión
+		decidir("desbloquear", null).andExpect(status().isOk());
+		mockMvc.perform(get("/admin/reservas").param("estado", "EN_REVISION")
+				.header("Authorization", "Bearer " + tokenAdmin))
+				.andExpect(jsonPath("$.totalElementos").value(1));
+
+		mockMvc.perform(get("/admin/reservas").param("estado", "NO_EXISTE")
+				.header("Authorization", "Bearer " + tokenAdmin)).andExpect(status().isBadRequest());
+		mockMvc.perform(get("/admin/reservas").header("Authorization", "Bearer " + tokenAnfitrion))
+				.andExpect(status().isForbidden());
+		mockMvc.perform(get("/admin/reservas")).andExpect(status().isUnauthorized());
+	}
+
 	private Long crearReserva(Long idHuesped, LocalDate entrada, Long idCotizacion) {
 		Reserva reserva = new Reserva();
 		reserva.setIdHuesped(idHuesped);

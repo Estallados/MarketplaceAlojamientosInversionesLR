@@ -118,6 +118,7 @@ class AdminControllerModeracionTest {
 
 	}
 
+	@Test
 	@DisplayName("CA-054 Bloquear envía el motivo y el administrador del token; un motivo inválido responde 400")
 	void bloquea_CA054() {
 		MotivoDTO datos = new MotivoDTO();
@@ -133,6 +134,24 @@ class AdminControllerModeracionTest {
 		assertThat(respuesta.getBody()).isSameAs(bloqueada);
 		assertThat(controlador.bloquear(20L, new MotivoDTO(), autenticacion).getStatusCode())
 				.isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
+	@DisplayName("Desbloquear usa el administrador del token; si no está bloqueado responde 409 y si no existe 404")
+	void desbloquea() {
+		AlojamientoDTO pausada = new AlojamientoDTO();
+		when(publicacionService.desbloquear(20L, ADMIN)).thenReturn(Resultado.exito(pausada));
+		when(publicacionService.desbloquear(21L, ADMIN))
+				.thenReturn(Resultado.error(Resultado.ESTADO_INVALIDO, "No se puede pasar de ACTIVA a PAUSADA."));
+		when(publicacionService.desbloquear(99L, ADMIN))
+				.thenReturn(Resultado.error(Resultado.NO_ENCONTRADO, "El alojamiento no existe."));
+
+		ResponseEntity<Object> respuesta = controlador.desbloquear(20L, autenticacion);
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(respuesta.getBody()).isSameAs(pausada);
+		assertThat(controlador.desbloquear(21L, autenticacion).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(controlador.desbloquear(99L, autenticacion).getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
 	}
 
 	@Test
