@@ -118,6 +118,29 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+  // ====================================
+  // RESTRINGIR CUENTAS DE USUARIOS (HU-12)
+  // SOLO ADMINISTRADOR. Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'admin/usuarios',
+    loadComponent: () =>
+      import('./administracion/usuarios/usuarios')
+        .then(m => m.Usuarios),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+  {
+    path: 'admin/usuarios/:id',
+    loadComponent: () =>
+      import('./administracion/detalle-usuario/detalle-usuario')
+        .then(m => m.DetalleUsuario),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
 
 
   // ====================================

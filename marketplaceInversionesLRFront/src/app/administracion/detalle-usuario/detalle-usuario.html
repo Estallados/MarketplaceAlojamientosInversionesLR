@@ -1,0 +1,180 @@
+<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+  @if (loading()) {
+    <div class="flex min-h-screen items-center justify-center">
+      <!-- From Uiverse.io by SmookyDev -->
+      <div
+        class="relative z-40 flex aspect-square w-32 items-center justify-center animate-[spin_3s_linear_infinite] rounded-full bg-[conic-gradient(white_0deg,white_300deg,transparent_270deg,transparent_360deg)] before:absolute before:z-[80] before:aspect-square before:w-[60%] before:animate-[spin_2s_linear_infinite] before:rounded-full before:bg-[conic-gradient(white_0deg,white_270deg,transparent_180deg,transparent_360deg)] after:absolute after:z-[60] after:aspect-square after:w-3/4 after:animate-[spin_3s_linear_infinite] after:rounded-full after:bg-[conic-gradient(#065f46_0deg,#065f46_180deg,transparent_180deg,transparent_360deg)]"
+      >
+      <span
+        class="absolute z-[60] aspect-square w-[85%] animate-[spin_5s_linear_infinite] rounded-full bg-[conic-gradient(#34d399_0deg,#34d399_180deg,transparent_180deg,transparent_360deg)]"
+      ></span>
+      </div>
+    </div>
+  } @else if (errorCarga()) {
+    <div class="flex min-h-[60vh] flex-col items-center justify-center gap-5">
+      <p class="text-lg text-red-600">{{ mensajeError() || 'No se pudo cargar el usuario.' }}</p>
+      <div class="flex gap-3">
+        <button type="button" (click)="volver()" class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50">
+          Volver a usuarios
+        </button>
+        <button type="button" (click)="reintentar()" class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-800">
+          Reintentar
+        </button>
+      </div>
+    </div>
+  } @else {
+    @if (usuario(); as usuario) {
+      <button type="button" (click)="volver()" class="mb-7 flex items-center gap-2 text-sm font-bold text-emerald-700">
+    <span class="rotate-180">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </span>
+        Volver a usuarios
+      </button>
+
+      <div class="flex items-end justify-between">
+        <div>
+          <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Detalle de usuario</p>
+          <h1 class="font-display mt-2 text-3xl font-bold">{{ usuario.nombre }}</h1>
+          <div class="mt-3 flex gap-2">
+            <span class="inline-flex rounded-full bg-sky-50 px-3 py-1 text-xs font-bold text-sky-700">{{ etiquetaRol() }}</span>
+            <span [class]="claseEstado()">{{ etiquetaEstado() }}</span>
+          </div>
+        </div>
+        @if (rol() !== 'ADMIN') {
+          <button
+            type="button"
+            (click)="pedirAccion()"
+            [class]="activo() ? 'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-all bg-red-50 text-red-700 hover:bg-red-100' : 'inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-all bg-emerald-700 text-white shadow-sm hover:bg-emerald-800'"
+          >
+            {{ activo() ? 'Restringir usuario' : 'Activar usuario' }}
+          </button>
+        }
+      </div>
+
+      @if (mensaje()) {
+        <div role="status" class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+          {{ mensaje() }}
+        </div>
+      }
+
+      @if (restringido()) {
+        <div role="alert" class="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <strong class="block">Cuenta restringida por un administrador</strong>
+          <span class="mt-1 block">Motivo: {{ usuario.motivoRestriccion || 'Sin motivo registrado.' }}</span>
+          <span class="mt-1 block text-xs text-red-700">El usuario no puede iniciar sesión ni realizar acciones hasta que se active la cuenta.</span>
+        </div>
+      }
+
+      <div class="mt-8 grid grid-cols-[1.1fr_.9fr] gap-6">
+        <section class="rounded-2xl border border-slate-200 bg-white p-7">
+          <h2 class="font-display text-xl font-bold">Información básica</h2>
+          <div class="mt-6 grid grid-cols-2 gap-6 text-sm">
+            @for (i of informacion(); track i.label) {
+              <div>
+                <span class="block text-xs text-slate-500">{{ i.label }}</span>
+                <strong class="mt-1 block">{{ i.value }}</strong>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-7">
+          <h2 class="font-display text-xl font-bold">{{ tituloSeccion() }}</h2>
+
+          @switch (rol()) {
+            @case ('ANFITRION') {
+              <div class="mt-5 space-y-3">
+                @for (a of alojamientos(); track $index) {
+                  <div class="flex justify-between rounded-xl bg-slate-50 p-4 text-sm">
+                    <strong>{{ a.titulo }}</strong>
+                    <span class="inline-flex rounded-full px-3 py-1 text-xs font-bold" [class]="claseAlojamiento(a.estado)">
+                  {{ a.estado }}
+                </span>
+                  </div>
+                } @empty {
+                  <p class="text-sm text-slate-500">Sin alojamientos publicados.</p>
+                }
+              </div>
+            }
+            @case ('HUESPED') {
+              <div class="mt-5 grid grid-cols-2 gap-3">
+                <div class="rounded-xl bg-slate-50 p-4">
+                  <strong class="text-2xl">{{ totalReservas() }}</strong>
+                  <p class="text-xs text-slate-500">Reservas totales</p>
+                </div>
+                <div class="rounded-xl bg-slate-50 p-4">
+                  <strong class="text-2xl">{{ estanciasFinalizadas() }}</strong>
+                  <p class="text-xs text-slate-500">Estancias finalizadas</p>
+                </div>
+              </div>
+            }
+            @default {
+              <p class="mt-5 text-sm leading-6 text-slate-500">
+                Cuenta preconfigurada para la administración del prototipo. No se muestran
+                credenciales ni información sensible.
+              </p>
+            }
+          }
+        </section>
+      </div>
+    }
+  }
+
+  <!-- ================= MODAL DE CONFIRMACIÓN ================= -->
+  @if (modal(); as m) {
+    <div class="fixed inset-0 z-[70] grid place-items-center bg-slate-950/55 p-6 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div class="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl">
+        <div class="flex justify-between">
+          <div>
+            <h2 class="font-display text-3xl font-bold">{{ m.titulo }}</h2>
+            <p class="mt-2 text-sm font-semibold text-slate-700">{{ usuario()?.nombre }}</p>
+            <p class="mt-3 text-sm leading-6 text-slate-500">{{ m.texto }}</p>
+          </div>
+          <button type="button" (click)="cerrarAccion()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full bg-slate-100">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        @if (m.necesitaMotivo) {
+          <label class="mt-6 block">
+            <span class="mb-2 block text-sm font-bold">{{ m.etiqueta }} <span class="text-red-500">*</span></span>
+            <textarea
+              [value]="motivo()"
+              (input)="onMotivoChange($event)"
+              rows="3"
+              [attr.maxlength]="maxMotivo"
+              placeholder="Describe brevemente el motivo..."
+              class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            ></textarea>
+            <span class="mt-1 block text-right text-xs text-slate-400">{{ motivo().length }} / {{ maxMotivo }}</span>
+          </label>
+          @if (!motivo().trim()) {
+            <p class="text-xs font-semibold text-red-600">El motivo de la restricción es obligatorio.</p>
+          }
+        }
+
+        @if (errorAccion()) {
+          <p class="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorAccion() }}</p>
+        }
+
+        <div class="mt-7 flex gap-3">
+          <button type="button" (click)="cerrarAccion()" class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:border-emerald-300 hover:bg-emerald-50">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            (click)="confirmarAccion()"
+            [disabled]="!puedeConfirmar()"
+            [class]="m.necesitaMotivo ? 'inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-45 bg-red-50 text-red-700 hover:bg-red-100' : 'inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-45 bg-emerald-700 text-white shadow-sm hover:bg-emerald-800'"
+          >
+            {{ guardando() ? 'Guardando...' : m.confirmar }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</main>
