@@ -1,0 +1,140 @@
+@if (loading()) {
+  <div class="flex min-h-screen items-center justify-center">
+    <!-- From Uiverse.io by SmookyDev -->
+    <div
+      class="relative z-40 flex aspect-square w-32 items-center justify-center animate-[spin_3s_linear_infinite] rounded-full bg-[conic-gradient(white_0deg,white_300deg,transparent_270deg,transparent_360deg)] before:absolute before:z-[80] before:aspect-square before:w-[60%] before:animate-[spin_2s_linear_infinite] before:rounded-full before:bg-[conic-gradient(white_0deg,white_270deg,transparent_180deg,transparent_360deg)] after:absolute after:z-[60] after:aspect-square after:w-3/4 after:animate-[spin_3s_linear_infinite] after:rounded-full after:bg-[conic-gradient(#065f46_0deg,#065f46_180deg,transparent_180deg,transparent_360deg)]"
+    >
+      <span
+        class="absolute z-[60] aspect-square w-[85%] animate-[spin_5s_linear_infinite] rounded-full bg-[conic-gradient(#34d399_0deg,#34d399_180deg,transparent_180deg,transparent_360deg)]"
+      ></span>
+    </div>
+  </div>
+} @else if (errorCarga()) {
+  <div class="flex min-h-[60vh] flex-col items-center justify-center gap-5">
+    <p data-error-carga class="text-lg text-red-600" role="alert">{{ mensajeError() || 'No se pudo cargar la reserva.' }}</p>
+    <div class="flex gap-3">
+      <button type="button" (click)="volver()" class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50">
+        Volver a mis reservas
+      </button>
+      <button type="button" (click)="reintentar()" class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-emerald-800">
+        Reintentar
+      </button>
+    </div>
+  </div>
+} @else if (reserva(); as reserva) {
+  <main class="mx-auto max-w-[1100px] px-8 py-12">
+    <button type="button" (click)="volver()" class="mb-7 flex items-center gap-2 text-sm font-bold text-emerald-700">
+      <span class="rotate-180">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m9 18 6-6-6-6" />
+        </svg>
+      </span>
+      Volver a mis reservas
+    </button>
+
+    <div class="flex items-end justify-between">
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Detalle de reserva</p>
+        <h1 class="font-display mt-2 text-4xl font-bold">{{ reserva.tituloAlojamiento }}</h1>
+        <p class="mt-2 text-slate-500">{{ reserva.ciudad }} · Reserva #{{ reserva.idReserva }}</p>
+      </div>
+      <span data-etiqueta [class]="claseEtiqueta()">{{ etiqueta() }}</span>
+    </div>
+
+    <div class="mt-8 grid grid-cols-[1.1fr_.9fr] gap-6">
+      <div class="space-y-6">
+        <section data-informacion class="rounded-2xl border border-slate-200 bg-white p-7">
+          <h2 class="font-display text-xl font-bold">Información de la reserva</h2>
+          <div class="mt-6 grid grid-cols-3 gap-6 text-sm">
+            @for (i of informacion(); track i.label) {
+              <div>
+                <span class="block text-xs text-slate-500">{{ i.label }}</span>
+                <strong class="mt-1 block">{{ i.value }}</strong>
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          @if (reserva.imagenAlojamiento) {
+            <img [src]="reserva.imagenAlojamiento" [alt]="reserva.tituloAlojamiento" class="h-64 w-full object-cover" />
+          }
+          <div class="p-7">
+            <h2 class="font-display text-xl font-bold">Información del alojamiento</h2>
+            <div class="mt-5 grid grid-cols-2 gap-5 text-sm">
+              <div>
+                <span class="text-slate-500">Tipo</span>
+                <strong class="block">{{ reserva.tipoAlojamiento }}</strong>
+              </div>
+              <div>
+                <span class="text-slate-500">Capacidad</span>
+                <strong class="block">{{ reserva.capacidadAlojamiento }} huéspedes</strong>
+              </div>
+              <div class="col-span-2">
+                <span class="text-slate-500">Ubicación</span>
+                <strong class="block">{{ reserva.ubicacion || 'La dirección exacta se comparte con la reserva confirmada.' }}</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="space-y-6">
+        <section class="rounded-2xl border border-slate-200 bg-white p-7">
+          <h2 class="font-display text-xl font-bold">Resumen de la cotización</h2>
+          <div data-desglose class="mt-6 space-y-4 text-sm">
+            <div class="flex justify-between"><span>Noches</span><strong>{{ reserva.noches }}</strong></div>
+            @for (l of lineasDesglose(); track $index) {
+              <div class="flex justify-between gap-4">
+                <span>{{ l.label }}</span>
+                @if (l.value) {
+                  <strong>{{ l.value }}</strong>
+                }
+              </div>
+            }
+            <div class="flex justify-between border-t border-slate-200 pt-4 text-lg">
+              <strong>Total</strong>
+              <strong data-total>{{ moneda(reserva.total) }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-2xl border border-slate-200 bg-white p-7">
+          <h2 class="font-display text-xl font-bold">Información adicional</h2>
+          <div class="mt-5 space-y-3 text-sm">
+            <p class="flex justify-between">
+              <span class="text-slate-500">Política de cancelación</span>
+              <strong>{{ reserva.nombrePolitica || '—' }}</strong>
+            </p>
+            <p class="flex justify-between">
+              <span class="text-slate-500">Anfitrión</span>
+              <strong>{{ reserva.nombreAnfitrion || '—' }}</strong>
+            </p>
+          </div>
+
+          <!-- TODO(HU-28): botón "Contactar al anfitrión" del proyecto base (inicia la conversación de mensajería). -->
+
+          @if (reserva.estado === 'CANCELADA') {
+            <div data-cancelada class="mt-5 rounded-xl bg-red-50 p-4 text-sm font-semibold text-red-700">
+              Reserva cancelada
+              @if (reserva.cancelacion; as c) {
+                @if (c.fecha) {
+                  <span> el {{ fechaCancelacion() }}</span>
+                }
+                @if (c.valorReembolso != null) {
+                  <span> · Devolución {{ moneda(c.valorReembolso) }}</span>
+                }
+                @if (c.motivo) {
+                  <p class="mt-2 font-normal">Motivo: {{ c.motivo }}</p>
+                }
+              }
+            </div>
+          }
+
+          <!-- TODO(HU-01, SCRUM-252): botón "Cancelar reserva" del proyecto base, solo para reservas CONFIRMADA que aún no empiezan. -->
+          <!-- TODO(HU-03): botón "Calificar estancia" / "Ver reseña" del proyecto base para reservas finalizadas. -->
+        </section>
+      </div>
+    </div>
+  </main>
+}

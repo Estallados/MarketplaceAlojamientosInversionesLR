@@ -1,0 +1,404 @@
+
+<section class="mx-auto max-w-[1600px] px-5 py-8 sm:px-8 lg:px-12">
+
+  <!-- ======================================
+       ENCABEZADO
+       ====================================== -->
+
+  <div class="flex flex-wrap items-end justify-between gap-4">
+
+    <div>
+
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
+        Inversiones LR
+      </p>
+
+      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">
+        Reservas
+      </h1>
+
+      <p class="mt-2 text-sm text-slate-500">
+        Consulta las reservas realizadas en tus propiedades.
+      </p>
+
+    </div>
+
+    <!-- BOTÓN ACTUALIZAR -->
+
+    <button
+      type="button"
+      (click)="actualizar()"
+      [disabled]="cargando()"
+      class="rounded-xl border border-emerald-700 px-5 py-3 text-sm font-bold text-emerald-700 transition-all duration-300 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {{ cargando() ? 'Actualizando...' : 'Actualizar reservas' }}
+    </button>
+
+  </div>
+
+  <!-- ======================================
+       TARJETAS DE RESUMEN
+       ====================================== -->
+
+  <div class="mt-6 grid gap-4 sm:grid-cols-2">
+
+    <!-- TOTAL DE RESERVAS -->
+
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+
+      <p class="text-sm text-slate-500">
+        Total de reservas
+      </p>
+
+      <p class="mt-2 text-3xl font-bold text-slate-900">
+        {{ totalElementos() }}
+      </p>
+
+    </div>
+
+    <!-- PÁGINA ACTUAL -->
+
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+
+      <p class="text-sm text-slate-500">
+        Página actual
+      </p>
+
+      <p class="mt-2 text-3xl font-bold text-slate-900">
+        {{ pagina() + 1 }} / {{ totalPaginas() || 1 }}
+      </p>
+
+    </div>
+
+  </div>
+
+  <!-- ======================================
+       MENSAJES DE ERROR
+       ====================================== -->
+
+  @if (error()) {
+
+    <div
+      role="alert"
+      class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700"
+    >
+
+      <p>
+        {{ error() }}
+      </p>
+
+      <button
+        type="button"
+        (click)="actualizar()"
+        class="mt-3 font-bold underline"
+      >
+        Reintentar
+      </button>
+
+    </div>
+
+  }
+
+  <!-- ======================================
+       TABLA DE RESERVAS
+       ====================================== -->
+
+  <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+
+    <div class="overflow-x-auto">
+
+      <table class="w-full min-w-[950px] text-left text-sm">
+
+        <!-- ENCABEZADOS -->
+
+        <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+
+        <tr>
+
+          @for (h of headers; track h) {
+
+            <th
+              scope="col"
+              class="px-5 py-4 font-bold"
+            >
+              {{ h }}
+            </th>
+
+          }
+
+        </tr>
+
+        </thead>
+
+        <!-- ======================================
+             CONTENIDO DE LA TABLA
+             ====================================== -->
+
+        <tbody>
+
+        <!-- CARGANDO RESERVAS -->
+
+          @if (cargando()) {
+
+            <tr>
+
+              <td
+                colspan="7"
+                class="px-5 py-12 text-center text-slate-500"
+              >
+                Cargando reservas...
+              </td>
+
+            </tr>
+
+          }
+
+        <!-- ERROR AL CONSULTAR -->
+
+          @if (!cargando() && error()) {
+
+            <tr>
+
+              <td
+                colspan="7"
+                class="px-5 py-12 text-center text-red-700"
+              >
+                No fue posible cargar las reservas.
+              </td>
+
+            </tr>
+
+          }
+
+        <!-- NO EXISTEN RESERVAS -->
+
+          @if (
+            !cargando() &&
+            !error() &&
+            reservations().length === 0
+            ) {
+
+            <tr>
+
+              <td
+                colspan="7"
+                class="px-5 py-12 text-center text-slate-500"
+              >
+                Todavía no hay reservas registradas
+                para tus alojamientos.
+              </td>
+
+            </tr>
+
+          }
+
+        <!-- ======================================
+             RESERVAS REALES DEL BACKEND
+             ====================================== -->
+
+          @if (
+            !cargando() &&
+            !error() &&
+            reservations().length > 0
+            ) {
+
+            @for (r of reservations(); track r.idReserva) {
+
+              <tr data-reserva-fila class="border-t border-slate-100 transition-colors duration-200 hover:bg-slate-50">
+
+                <!-- CÓDIGO DE RESERVA -->
+
+                <td class="px-5 py-5">
+
+                  <button
+                    type="button"
+                    (click)="open(r.idReserva)"
+                    [attr.aria-label]="'Ver reserva ' + r.idReserva"
+                    class="font-bold text-emerald-700 transition-colors hover:text-emerald-900 hover:underline"
+                  >
+                    #{{ r.idReserva }}
+                  </button>
+
+                </td>
+
+                <!-- HUÉSPED -->
+
+                <td class="px-5 py-5 text-slate-700">
+
+                  {{ r.nombreHuesped || 'Sin nombre' }}
+
+                </td>
+
+                <!-- ALOJAMIENTO -->
+
+                <td class="px-5 py-5 text-slate-700">
+
+                  {{ r.tituloAlojamiento || 'Sin título' }}
+
+                </td>
+
+                <!-- FECHA DE ENTRADA -->
+
+                <td class="whitespace-nowrap px-5 py-5 text-slate-700">
+
+                  {{ fecha(r.fechaEntrada) }}
+
+                </td>
+
+                <!-- FECHA DE SALIDA -->
+
+                <td class="whitespace-nowrap px-5 py-5 text-slate-700">
+
+                  {{ fecha(r.fechaSalida) }}
+
+                </td>
+
+                <!-- PRECIO TOTAL -->
+
+                <td class="whitespace-nowrap px-5 py-5 font-semibold text-slate-900">
+
+                  {{ moneda(r.total) }}
+
+                </td>
+
+                <!-- ======================================
+                     ESTADO DE LA RESERVA
+                     ====================================== -->
+
+                <td class="px-5 py-5">
+
+                  <!-- ======================================
+                       CONFIRMADA - NUEVO DISEÑO TURQUESA
+                       ====================================== -->
+
+                  @if (r.estado === 'CONFIRMADA' && !r.completada) {
+
+                    <div class="inline-flex items-center gap-3">
+
+                      <!-- INDICADOR EXTERIOR -->
+
+                      <span
+                        class="relative inline-block h-12 w-12 shrink-0 rounded-xl bg-teal-100 shadow-inner transition-all duration-300 hover:scale-105"
+                        aria-hidden="true"
+                      >
+
+                        <!-- CUADRO INTERIOR CON RELIEVE -->
+
+                        <span
+                          class="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-lg bg-teal-200 shadow-[inset_-1px_1px_3px_#e0ffff,inset_1px_-1px_3px_#00bdb0] transition-all duration-300"
+                        >
+                        </span>
+
+                        <!-- ICONO CHECK -->
+
+                        <svg
+                          fill="#00756d"
+                          viewBox="-3.2 -3.2 38.40 38.40"
+                          xmlns="http://www.w3.org/2000/svg"
+                          class="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 transition-opacity duration-300"
+                        >
+
+                          <path
+                            d="M5 16.577l2.194-2.195 5.486 5.484L24.804 7.743 27 9.937l-14.32 14.32z"
+                          >
+                          </path>
+
+                        </svg>
+
+                      </span>
+
+                      <!-- TEXTO CONFIRMADA -->
+
+                      <span
+                        class="whitespace-nowrap text-sm font-bold text-[#00756d]"
+                      >
+                        Confirmada
+                      </span>
+
+                    </div>
+
+                  }
+
+                  <!-- ======================================
+                       OTROS ESTADOS DEL BACKEND
+                       ====================================== -->
+
+                  @if (
+                    r.estado !== 'CONFIRMADA' ||
+                    r.completada
+                    ) {
+
+                    <span [class]="badgeClass(r)">
+                      {{ etiquetaEstado(r) }}
+                    </span>
+
+                  }
+
+                </td>
+
+              </tr>
+
+            }
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+    <!-- ======================================
+         PAGINACIÓN
+         ====================================== -->
+
+    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
+
+      <!-- CANTIDAD DE RESERVAS -->
+
+      <span>
+
+        Mostrando {{ inicioPagina() }}-{{ finPagina() }}
+        de {{ totalElementos() }} reservas
+
+      </span>
+
+      <!-- BOTONES DE PAGINACIÓN -->
+
+      <div class="flex items-center gap-2">
+
+        <!-- ANTERIOR -->
+
+        <button
+          type="button"
+          (click)="cambiarPagina(pagina() - 1)"
+          [disabled]="pagina() === 0 || cargando()"
+          class="rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Anterior
+        </button>
+
+        <!-- NÚMERO DE PÁGINA -->
+
+        <span class="rounded-lg bg-emerald-700 px-3 py-2 font-bold text-white">
+          {{ pagina() + 1 }}
+        </span>
+
+        <!-- SIGUIENTE -->
+
+        <button
+          type="button"
+          (click)="cambiarPagina(pagina() + 1)"
+          [disabled]="pagina() + 1 >= totalPaginas() || cargando()"
+          class="rounded-lg border border-slate-200 px-3 py-2 text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          Siguiente
+        </button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>

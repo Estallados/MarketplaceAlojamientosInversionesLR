@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 
 import { API_URL } from '../../core/services/api-url';
-import { Reserva, ReservaEntrada } from '../models/reserva';
+import { PaginaReservas, Reserva, ReservaEntrada } from '../models/reserva';
 
 /** Resultado de POST /reservas. */
 export interface ReservaCreada {
@@ -79,5 +79,36 @@ export class ReservaService {
       c.getRandomValues(new Uint8Array(16)),
       b => b.toString(16).padStart(2, '0')
     ).join('');
+  }
+
+  // ====================================
+  // HISTORIAL DE RESERVAS (HU-25)
+  // GET /reservas/mias        reservas del huésped de la sesión (CA-078)
+  // GET /reservas/anfitrion   reservas de los alojamientos del anfitrión (CA-079; 403 a los demás)
+  // GET /reservas/{id}        detalle para su huésped, el anfitrión del alojamiento o ADMIN (404 a los demás)
+  // ====================================
+
+  misReservas(pagina = 0, tamanio = 20): Observable<PaginaReservas> {
+
+    return this.http.get<PaginaReservas>(`${this.apiUrl}/mias`, { params: { pagina, tamanio } });
+  }
+
+  /** Todas las reservas del huésped, recorriendo todas las páginas. */
+  todasMisReservas(tamanio = 100): Observable<Reserva[]> {
+
+    return this.misReservas(0, tamanio).pipe(
+      expand(p => p.pagina + 1 < p.totalPaginas ? this.misReservas(p.pagina + 1, tamanio) : EMPTY),
+      reduce((todas, p) => [...todas, ...(p.contenido ?? [])], [] as Reserva[])
+    );
+  }
+
+  reservasAnfitrion(pagina = 0, tamanio = 10): Observable<PaginaReservas> {
+
+    return this.http.get<PaginaReservas>(`${this.apiUrl}/anfitrion`, { params: { pagina, tamanio } });
+  }
+
+  obtener(id: number): Observable<Reserva> {
+
+    return this.http.get<Reserva>(`${this.apiUrl}/${id}`);
   }
 }

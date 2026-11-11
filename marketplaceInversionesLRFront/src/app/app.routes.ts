@@ -169,5 +169,47 @@ export const routes: Routes = [
     data: { roles: ['Huésped'] }
   },
 
+  // ====================================
+  // ESTADO E HISTORIAL DE RESERVAS (HU-25)
+  // /reservas y /reservas/:id: solo huésped (GET /reservas/mias, GET /reservas/{id}).
+  // /host/reservas y /host/reservas/:id: solo anfitrión (GET /reservas/anfitrion, GET /reservas/{id}).
+  // ====================================
+
+  {
+    path: 'reservas',
+    loadComponent: () =>
+      import('./reservas/mis-reservas/mis-reservas')
+        .then(m => m.MisReservas),
+    canActivate: [roleGuard],
+    data: { roles: ['Huésped'] }
+  },
+
+  {
+    path: 'reservas/:id',
+    loadComponent: () =>
+      import('./reservas/detalle-reserva/detalle-reserva')
+        .then(m => m.DetalleReserva),
+    canActivate: [roleGuard],
+    data: { roles: ['Huésped'] }
+  },
+
+  {
+    path: 'host/reservas',
+    loadComponent: () =>
+      import('./reservas/reservas-anfitrion/reservas-anfitrion')
+        .then(m => m.ReservasAnfitrion),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  {
+    path: 'host/reservas/:id',
+    loadComponent: () =>
+      import('./reservas/detalle-reserva-anfitrion/detalle-reserva-anfitrion')
+        .then(m => m.DetalleReservaAnfitrion),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
   { path: '**', redirectTo: 'login' }
 ];
