@@ -296,6 +296,54 @@ class PublicacionServiceModeracionTest {
 	}
 
 	@Test
+	@DisplayName("Desbloquear pasa de BLOQUEADA a PAUSADA, queda en el historial y en la auditoría y no toca las "
+			+ "reservas en revisión")
+	void desbloquea() {
+		alojamiento.setEstado(EstadoAlojamiento.BLOQUEADA);
+
+		Resultado<AlojamientoDTO> resultado = servicio.desbloquear(ID, ADMIN);
+
+		assertThat(resultado.esExito()).isTrue();
+		assertThat(resultado.getDato().getEstado()).isEqualTo(EstadoAlojamiento.PAUSADA);
+		HistorialEstadoAlojamiento historial = historial();
+		assertThat(historial.getEstadoAnterior()).isEqualTo(EstadoAlojamiento.BLOQUEADA);
+		assertThat(historial.getEstadoNuevo()).isEqualTo(EstadoAlojamiento.PAUSADA);
+		assertThat(historial.getIdUsuario()).isEqualTo(ADMIN);
+		assertThat(historial.getMotivo()).isEqualTo(PublicacionService.DESBLOQUEADA);
+		verify(auditoriaService).registrar(ADMIN, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, ID, ResultadoAuditoria.EXITOSO,
+				"BLOQUEADA -> PAUSADA. " + PublicacionService.DESBLOQUEADA);
+		verify(reservaRepo, never()).save(any());
+	}
+
+	@Test
+	@DisplayName("Solo se desbloquea una publicación BLOQUEADA; lo demás responde 409 y queda auditado")
+	void desbloquearSoloBloqueada() {
+		for (EstadoAlojamiento estado : List.of(EstadoAlojamiento.ACTIVA, EstadoAlojamiento.PAUSADA,
+				EstadoAlojamiento.PENDIENTE_REVISION, EstadoAlojamiento.BORRADOR)) {
+			alojamiento.setEstado(estado);
+
+			Resultado<AlojamientoDTO> resultado = servicio.desbloquear(ID, ADMIN);
+
+			assertThat(resultado.getCodigo()).isEqualTo(Resultado.ESTADO_INVALIDO);
+			assertThat(resultado.getMensaje()).isEqualTo("No se puede pasar de " + estado + " a PAUSADA.");
+		}
+		verify(alojamientoRepo, never()).save(any());
+		verify(auditoriaService).registrar(ADMIN, AuditoriaService.ALOJAMIENTO_CAMBIO_ESTADO,
+				AuditoriaService.ENTIDAD_ALOJAMIENTO, ID, ResultadoAuditoria.RECHAZADO,
+				"No se puede pasar de ACTIVA a PAUSADA.");
+	}
+
+	@Test
+	@DisplayName("Desbloquear un alojamiento que no existe responde no encontrado")
+	void desbloqueoNoExiste() {
+		when(alojamientoRepo.findById(99L)).thenReturn(Optional.empty());
+
+		assertThat(servicio.desbloquear(99L, ADMIN).getCodigo()).isEqualTo(Resultado.NO_ENCONTRADO);
+		assertThat(servicio.desbloquear(null, ADMIN).getCodigo()).isEqualTo(Resultado.NO_ENCONTRADO);
+	}
+
+	@Test
 	@DisplayName("El administrador ve la cola de un estado o todos los alojamientos, paginados")
 	void listaPorEstado() {
 		Pageable pagina = PageRequest.of(0, 20);

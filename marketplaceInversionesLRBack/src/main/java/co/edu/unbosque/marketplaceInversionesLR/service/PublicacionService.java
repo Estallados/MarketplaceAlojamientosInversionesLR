@@ -96,6 +96,9 @@ public class PublicacionService {
 	/** Mensaje cuando falta el motivo del bloqueo. */
 	public static final String MOTIVO_BLOQUEO = "El motivo del bloqueo es obligatorio.";
 
+	/** Motivo que queda en el historial al desbloquear (HU-11). */
+	public static final String DESBLOQUEADA = "Desbloqueada";
+
 	/** Valor absoluto máximo de la latitud. */
 	private static final int LATITUD_MAXIMA = 90;
 
@@ -647,6 +650,31 @@ public class PublicacionService {
 				"Tu alojamiento \"" + alojamiento.get().getTitulo() + "\" fue bloqueado. Motivo: " + motivo.trim()
 						+ ". Reservas futuras en revisión: " + futuras.size() + ".");
 		return Resultado.exito(dto);
+	}
+
+	/**
+	 * BLOQUEADA → PAUSADA (administrador, HU-11). Queda pausada para que el
+	 * anfitrión decida cuándo reanudarla. Las reservas que el bloqueo pasó a
+	 * EN_REVISION no cambian: el administrador las revisa en
+	 * {@code GET /admin/reservas?estado=EN_REVISION} (CA-112). El cambio queda en
+	 * el historial y en la auditoría.
+	 *
+	 * @param idAlojamiento alojamiento
+	 * @param idAdmin       administrador
+	 * @return la publicación PAUSADA; NO_ENCONTRADO; ESTADO_INVALIDO si no está
+	 *         BLOQUEADA
+	 */
+	@Transactional
+	public Resultado<AlojamientoDTO> desbloquear(Long idAlojamiento, Long idAdmin) {
+		Optional<Alojamiento> alojamiento = idAlojamiento == null ? Optional.empty()
+				: alojamientoRepo.findById(idAlojamiento);
+		if (alojamiento.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		if (alojamiento.get().getEstado() != EstadoAlojamiento.BLOQUEADA) {
+			return rechazarTransicion(alojamiento.get(), EstadoAlojamiento.PAUSADA, idAdmin);
+		}
+		return Resultado.exito(cambiarEstado(alojamiento.get(), EstadoAlojamiento.PAUSADA, idAdmin, DESBLOQUEADA));
 	}
 
 	/**

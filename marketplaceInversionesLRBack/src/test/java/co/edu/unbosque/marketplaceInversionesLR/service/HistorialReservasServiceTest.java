@@ -24,6 +24,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.ImagenDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaAdminDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Cancelacion;
@@ -258,6 +259,30 @@ class HistorialReservasServiceTest {
 
 		assertThat(dto.getCompletada()).isTrue();
 		assertThat(dto.getTieneResena()).isTrue();
+	}
+
+	@Test
+	@DisplayName("CA-112 El administrador lista solo las reservas EN_REVISION, con la fecha de hoy para 'completada'")
+	void listadoAdminEnRevision_CA112() {
+		ReservaAdminDTO fila = new ReservaAdminDTO(ID_RESERVA, "Ana", "Casa", "Villa de Leyva", "Beto",
+				LocalDate.now().plusDays(10), LocalDate.now().plusDays(13), 3, new BigDecimal("600000.00"),
+				EstadoReserva.EN_REVISION, false);
+		when(reservaRepo.listarResumenAdmin(List.of(EstadoReserva.EN_REVISION), LocalDate.now(), PAGINA))
+				.thenReturn(new PageImpl<>(List.of(fila), PAGINA, 1));
+
+		PaginaDTO<ReservaAdminDTO> pagina = servicio.listarTodas(EstadoReserva.EN_REVISION, PAGINA);
+
+		assertThat(pagina.getTotalElementos()).isEqualTo(1);
+		assertThat(pagina.getContenido()).containsExactly(fila);
+	}
+
+	@Test
+	@DisplayName("Sin estado, el administrador lista las reservas en todos los estados")
+	void listadoAdminTodas() {
+		when(reservaRepo.listarResumenAdmin(List.of(EstadoReserva.values()), LocalDate.now(), PAGINA))
+				.thenReturn(new PageImpl<>(List.of(), PAGINA, 0));
+
+		assertThat(servicio.listarTodas(null, PAGINA).getContenido()).isEmpty();
 	}
 
 	@Test

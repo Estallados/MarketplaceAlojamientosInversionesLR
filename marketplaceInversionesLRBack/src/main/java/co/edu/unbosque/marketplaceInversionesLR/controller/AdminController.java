@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,8 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.MotivoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaReservasAdminDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoResena;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
@@ -34,6 +37,8 @@ import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
 import co.edu.unbosque.marketplaceInversionesLR.util.RespuestaUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,6 +59,9 @@ public class AdminController {
 
 	/** Etiqueta de Swagger de la moderación de publicaciones. */
 	private static final String TAG_MODERACION = "Moderación de publicaciones";
+
+	/** Etiqueta de Swagger de las reservas de la plataforma (HU-11). */
+	private static final String TAG_RESERVAS = "Reservas de la plataforma";
 
 	/** Etiqueta de Swagger de la gestión de usuarios. */
 	private static final String TAG_USUARIOS = "Gestión de usuarios";
@@ -486,6 +494,60 @@ public class AdminController {
 			Authentication authentication) {
 		return RespuestaUtil
 				.desde(publicacionService.bloquear(id, RespuestaUtil.idUsuario(authentication), datos.getMotivo()));
+	}
+
+	/**
+	 * Desbloquea una publicación: BLOQUEADA → PAUSADA, para que el anfitrión
+	 * decida cuándo reanudarla (HU-11). No lleva cuerpo. Ruta:
+	 * {@code POST /admin/alojamientos/{id}/desbloquear}.
+	 *
+	 * @param id             alojamiento
+	 * @param authentication administrador autenticado
+	 * @return 200 con el alojamiento PAUSADA; 404 si no existe; 409 si no está
+	 *         bloqueado
+	 */
+	@Tag(name = TAG_MODERACION)
+	@Operation(summary = "Desbloquear: BLOQUEADA → PAUSADA (ADMIN)", description = "Queda PAUSADA para que el "
+			+ "anfitrión decida cuándo reanudarla. Las reservas que el bloqueo pasó a EN_REVISION no cambian: se "
+			+ "revisan en GET /admin/reservas?estado=EN_REVISION. Queda en el historial y en la auditoría. Sin cuerpo.")
+	@ApiResponse(responseCode = "200", description = "Alojamiento en PAUSADA")
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@ApiResponse(responseCode = "404", description = CalendarioService.NO_EXISTE)
+	@ApiResponse(responseCode = "409", description = "No se puede pasar de ACTIVA a PAUSADA.")
+	@PostMapping("/alojamientos/{id}/desbloquear")
+	public ResponseEntity<Object> desbloquear(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(publicacionService.desbloquear(id, RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
+	 * Todas las reservas de la plataforma, opcionalmente por estado, las más
+	 * recientes primero (HU-11). Con {@code estado=EN_REVISION} muestra las que
+	 * quedaron en revisión al bloquear un alojamiento (CA-112). Ruta:
+	 * {@code GET /admin/reservas}.
+	 *
+	 * @param estado  estado a filtrar; opcional
+	 * @param pagina  número de página, desde 0
+	 * @param tamanio elementos por página, de 1 a {@value #TAMANIO_MAXIMO}
+	 * @return 200 con la página de reservas resumidas; 400 si el estado no es
+	 *         válido
+	 */
+	@Tag(name = TAG_RESERVAS, description = "Reservas de toda la plataforma")
+	@Operation(summary = "Todas las reservas, opcionalmente por estado (ADMIN)", description = "Resumen por reserva "
+			+ "(huésped, alojamiento, ciudad, anfitrión, fechas, noches, total, estado y si está completada), las más "
+			+ "recientes primero. Con estado=EN_REVISION muestra las marcadas para revisión manual al bloquear un "
+			+ "alojamiento (CA-112).")
+	@ApiResponse(responseCode = "200", description = "Página de reservas resumidas", content = @Content(
+			mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = PaginaReservasAdminDTO.class)))
+	@ApiResponse(responseCode = "400", description = "El valor de estado no es válido.")
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación")
+	@GetMapping("/reservas")
+	public ResponseEntity<Object> reservas(
+			@Parameter(description = "Estado a filtrar; sin él, todas") @RequestParam(required = false)
+			EstadoReserva estado,
+			@Parameter(description = PAGINA) @RequestParam(defaultValue = "0") int pagina,
+			@Parameter(description = TAMANIO) @RequestParam(defaultValue = "20") int tamanio) {
+		return ResponseEntity
+				.ok(reservaService.listarTodas(estado, RespuestaUtil.pagina(pagina, tamanio, RESERVAS_RECIENTES)));
 	}
 
 	/**

@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.DemandaCiudadDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaAdminDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import jakarta.persistence.LockModeType;
@@ -157,4 +158,26 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 * @return cantidad
 	 */
 	long countByEstadoAndFechaSalidaBefore(EstadoReserva estado, LocalDate fecha);
+
+	/**
+	 * Listado resumido de reservas para el administrador, en los estados
+	 * indicados (HU-11, CA-112). Arma cada fila en una sola consulta por página,
+	 * con los nombres del huésped y del anfitrión y el título del alojamiento.
+	 * "Completada" usa la misma regla que el historial (HU-25): CONFIRMADA con la
+	 * salida en {@code hoy} o antes.
+	 *
+	 * @param estados estados a incluir
+	 * @param hoy     día de hoy según el servidor
+	 * @param pagina  página y orden
+	 * @return página de filas resumidas
+	 */
+	@Query(value = "select new co.edu.unbosque.marketplaceInversionesLR.dto.ReservaAdminDTO(r.idReserva, h.nombre, "
+			+ "a.titulo, a.ciudad, an.nombre, r.fechaEntrada, r.fechaSalida, r.noches, r.total, r.estado, "
+			+ "case when r.estado = co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva.CONFIRMADA "
+			+ "and r.fechaSalida <= :hoy then true else false end) "
+			+ "from Reserva r left join r.huesped h left join r.alojamiento a left join a.anfitrion an "
+			+ "where r.estado in :estados",
+			countQuery = "select count(r) from Reserva r where r.estado in :estados")
+	Page<ReservaAdminDTO> listarResumenAdmin(@Param("estados") Collection<EstadoReserva> estados,
+			@Param("hoy") LocalDate hoy, Pageable pagina);
 }

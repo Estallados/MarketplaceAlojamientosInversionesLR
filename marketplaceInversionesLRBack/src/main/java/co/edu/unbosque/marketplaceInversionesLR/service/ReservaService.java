@@ -2,8 +2,10 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,6 +18,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import co.edu.unbosque.marketplaceInversionesLR.dto.CancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PagoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaAdminDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.SolicitudReservaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
@@ -314,6 +317,21 @@ public class ReservaService {
 	@Transactional(readOnly = true)
 	public PaginaDTO<ReservaDTO> listarDeAnfitrion(Long idAnfitrion, Pageable pagina) {
 		return PaginaDTO.de(reservaRepo.buscarDeAnfitrion(idAnfitrion, pagina), this::convertirDTO);
+	}
+
+	/**
+	 * Todas las reservas de la plataforma, o solo las de un estado, en forma
+	 * resumida para el administrador (HU-11). Con EN_REVISION muestra las que
+	 * quedaron en revisión al bloquear un alojamiento (CA-112).
+	 *
+	 * @param estado estado a filtrar; {@code null} para todas
+	 * @param pagina página y orden
+	 * @return página de reservas resumidas; vacía si no hay
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<ReservaAdminDTO> listarTodas(EstadoReserva estado, Pageable pagina) {
+		List<EstadoReserva> estados = estado == null ? List.of(EstadoReserva.values()) : List.of(estado);
+		return PaginaDTO.de(reservaRepo.listarResumenAdmin(estados, LocalDate.now(), pagina), Function.identity());
 	}
 
 	/**
