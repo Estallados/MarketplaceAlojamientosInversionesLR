@@ -1,0 +1,512 @@
+<main class="mx-auto max-w-[1440px] px-8 py-8">
+  <!-- ================= BARRA DE BÚSQUEDA ================= -->
+  <div class="grid grid-cols-[1.2fr_1fr_1fr_.8fr_auto] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
+    <label class="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50">
+          <span class="text-emerald-700">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2" /></svg>
+          </span>
+      <span class="block min-w-0 flex-1">
+            <span class="block text-xs font-bold text-slate-800">¿A dónde?</span>
+            <input type="text" placeholder="Ciudad o destino" autocomplete="off" [value]="ciudad()" (input)="ciudad.set($any($event.target).value)" (keydown.enter)="buscar()" class="mt-1 w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400" />
+          </span>
+    </label>
+    <label class="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50 border-l border-slate-100">
+          <span class="text-emerald-700">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>
+          </span>
+      <span class="block min-w-0 flex-1">
+            <span class="block text-xs font-bold text-slate-800">Entrada</span>
+            <input type="date" [min]="hoy" [value]="entrada()" (input)="entrada.set($any($event.target).value)" (keydown.enter)="buscar()" class="mt-1 w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400" />
+          </span>
+    </label>
+    <label class="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50 border-l border-slate-100">
+          <span class="text-emerald-700">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>
+          </span>
+      <span class="block min-w-0 flex-1">
+            <span class="block text-xs font-bold text-slate-800">Salida</span>
+            <input type="date" [min]="entrada() || hoy" [value]="salida()" (input)="salida.set($any($event.target).value)" (keydown.enter)="buscar()" class="mt-1 w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400" />
+          </span>
+    </label>
+    <label class="flex items-center gap-3 px-5 py-3 transition hover:bg-slate-50 border-l border-slate-100">
+          <span class="text-emerald-700">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+          </span>
+      <span class="block min-w-0 flex-1">
+            <span class="block text-xs font-bold text-slate-800">Huéspedes</span>
+            <input type="number" min="1" placeholder="Cuántos" [value]="huespedes()" (input)="huespedes.set($any($event.target).value)" (keydown.enter)="buscar()" class="mt-1 w-full bg-transparent text-xs text-slate-700 outline-none placeholder:text-slate-400" />
+          </span>
+    </label>
+    <button
+      type="button"
+      (click)="buscar()"
+      class="m-2 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-4 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-800"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+      <span class="hidden xl:inline">Buscar</span>
+    </button>
+  </div>
+  @if (errorBusqueda()) {
+    <p class="mt-3 text-sm font-semibold text-red-700" role="alert">{{ errorBusqueda() }}</p>
+  }
+  @if (busquedaAplicada()) {
+    <button type="button" (click)="limpiarBusqueda()" class="mt-3 text-sm font-bold text-emerald-700">Quitar búsqueda y ver todos</button>
+  }
+
+  <div
+    class="mt-10 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div>
+      <p class="text-sm text-emerald-700">
+        Inicio / Explorar alojamientos
+      </p>
+      <h1 class="font-display mt-3 text-4xl font-semibold text-slate-900">
+        Alojamientos disponibles
+      </h1>
+      <p class="mt-2 text-slate-500">
+        @if (loading()) {
+          Cargando alojamientos...
+        } @else if (errorCarga()) {
+          No se pudo obtener la lista
+        } @else {
+          {{ visible().length }}
+          {{
+            visible().length === 1
+              ? 'alojamiento disponible'
+              : 'alojamientos disponibles'
+          }}
+          en Colombia
+        }
+      </p>
+    </div>
+    <!-- Ordenamiento -->
+    <label class="block">
+      <span class="mb-2 block text-xs font-semibold text-slate-500">
+        Ordenar por
+      </span>
+      <select
+        id="sort-stays"
+        (change)="onSortChange($event)"
+        class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold outline-none transition focus:border-emerald-500 sm:w-auto"
+      >
+        @for (option of sortOptions; track option) {
+          <option [value]="option" [selected]="sortBy() === option">
+            {{ option }}
+          </option>
+        }
+      </select>
+    </label>
+  </div>
+  <!-- ================= FILTROS Y RESULTADOS ================= -->
+  <div class="mt-10 grid grid-cols-1 items-start gap-8 lg:grid-cols-[260px_minmax(0,1fr)] xl:grid-cols-[280px_minmax(0,1fr)]">
+    <!-- ================= PANEL DE FILTROS ================= -->
+    <aside
+      class="h-fit rounded-2xl border border-slate-200 bg-white p-6"
+    >
+      <div class="flex items-center justify-between">
+        <h2 class="font-display text-xl font-bold text-slate-900">
+          Filtros
+        </h2>
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 5h16M7 12h10M10 19h4" />
+        </svg>
+      </div>
+      <!-- Tipo de alojamiento dinámico -->
+      <div class="mt-6 border-t border-slate-100 pt-5">
+        <h3 class="mb-3 text-sm font-bold text-slate-900">
+          Tipo de alojamiento
+        </h3>
+        @for (type of types(); track type) {
+          <label
+            class="flex cursor-pointer items-center gap-3 rounded-lg py-2 text-sm text-slate-600 transition hover:text-emerald-700"
+          >
+            <input
+              type="radio"
+              name="type"
+              [value]="type"
+              [checked]="filterType() === type"
+              (change)="elegirTipo(type)"
+              class="size-4 accent-emerald-700"
+            />
+            <span>{{ type }}</span>
+          </label>
+        }
+      </div>
+      <!-- Rango de precio por noche -->
+      <div class="mt-6 border-t border-slate-100 pt-5">
+        <h3 class="mb-3 text-sm font-bold">Rango de precio por noche</h3>
+        @if (loading()) {
+          <div class="animate-pulse space-y-3">
+            <div class="h-4 w-3/4 rounded bg-neutral-200"></div>
+            <div class="h-2 rounded bg-neutral-200"></div>
+            <div class="flex justify-between">
+              <div class="h-9 w-24 rounded bg-neutral-200"></div>
+              <div class="h-9 w-24 rounded bg-neutral-200"></div>
+            </div>
+          </div>
+        } @else if (stays().length > 0) {
+          <div class="space-y-4">
+            <!-- Slider doble -->
+            <div class="relative h-6">
+              <!-- Riel -->
+              <div class="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-slate-200"></div>
+              <!-- Tramo seleccionado -->
+              <div
+                class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-emerald-700"
+                [style.left.%]="porcentajeMin()"
+                [style.right.%]="100 - porcentajeMax()"
+              ></div>
+              <input
+                type="range"
+                aria-label="Precio mínimo por noche"
+                [min]="precioMinimoDisponible()"
+                [max]="precioMaximoDisponible()"
+                [step]="paso()"
+                [value]="precioMin()"
+                [disabled]="sinRangoDePrecios()"
+                (input)="actualizarPrecioMin($event)"
+                [class.z-20]="precioMin() >= precioMaximoDisponible() - paso()"
+                class="pointer-events-none absolute inset-0 z-10 h-6 w-full appearance-none bg-transparent
+                       [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:size-5 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-emerald-700 [&::-webkit-slider-thumb]:shadow
+                       [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:size-5 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-emerald-700"
+              />
+              <input
+                type="range"
+                aria-label="Precio máximo por noche"
+                [min]="precioMinimoDisponible()"
+                [max]="precioMaximoDisponible()"
+                [step]="paso()"
+                [value]="precioMax()"
+                [disabled]="sinRangoDePrecios()"
+                (input)="actualizarPrecioMax($event)"
+                class="pointer-events-none absolute inset-0 z-10 h-6 w-full appearance-none bg-transparent
+                       [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:size-5 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-emerald-700 [&::-webkit-slider-thumb]:shadow
+                       [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:size-5 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-white [&::-moz-range-thumb]:bg-emerald-700"
+              />
+            </div>
+            <!-- Campos editables -->
+            <div class="grid grid-cols-2 gap-2">
+              <label class="min-w-0 rounded-lg border border-slate-200 p-2 focus-within:border-emerald-500">
+                <span class="block text-[10px] text-slate-500">Desde (COP)</span>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  [min]="precioMinimoDisponible()"
+                  [max]="precioMax()"
+                  [step]="paso()"
+                  [value]="precioMin()"
+                  [disabled]="sinRangoDePrecios()"
+                  (change)="actualizarPrecioMin($event)"
+                  class="w-full bg-transparent text-xs font-semibold text-slate-800 outline-none"
+                />
+              </label>
+              <label class="min-w-0 rounded-lg border border-slate-200 p-2 focus-within:border-emerald-500">
+                <span class="block text-[10px] text-slate-500">Hasta (COP)</span>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  [min]="precioMin()"
+                  [max]="precioMaximoDisponible()"
+                  [step]="paso()"
+                  [value]="precioMax()"
+                  [disabled]="sinRangoDePrecios()"
+                  (change)="actualizarPrecioMax($event)"
+                  class="w-full bg-transparent text-xs font-semibold text-slate-800 outline-none"
+                />
+              </label>
+            </div>
+            <p class="text-[11px] text-slate-400">
+              Disponible: {{ precioMinimoDisponible() | currency:'COP':'symbol-narrow':'1.0-0' }}
+              – {{ precioMaximoDisponible() | currency:'COP':'symbol-narrow':'1.0-0' }}
+            </p>
+          </div>
+        } @else {
+          <p class="text-sm text-slate-500">
+            No hay precios disponibles.
+          </p>
+        }
+      </div>
+      <!-- Servicios -->
+      <div class="mt-6 border-t border-slate-100 pt-5">
+        <h3 class="mb-3 text-sm font-bold">Servicios</h3>
+        @if (loading()) {
+          <div class="animate-pulse space-y-3">
+            @for (item of [1, 2, 3, 4]; track item) {
+              <div class="flex items-center gap-3">
+                <div class="size-4 rounded bg-neutral-200"></div>
+                <div class="h-3 w-2/3 rounded bg-neutral-200"></div>
+              </div>
+            }
+          </div>
+        } @else if (services().length > 0) {
+          @for (servicio of services(); track servicio) {
+            <label class="flex cursor-pointer items-center gap-3 py-2 text-sm text-slate-700">
+              <input
+                #chk
+                type="checkbox"
+                [checked]="servicioSeleccionado(servicio)"
+                (change)="toggleServicio(servicio, chk.checked)"
+                class="accent-emerald-700"
+              />
+              <span>{{ servicio }}</span>
+            </label>
+          }
+        } @else {
+          <p class="text-sm text-slate-500">
+            No hay servicios registrados en los alojamientos.
+          </p>
+        }
+      </div>
+
+      <button
+        type="button"
+        (click)="limpiarFiltros()"
+        class="mt-6 w-full rounded-xl border border-emerald-700 px-4 py-3 text-sm font-bold text-emerald-700 transition hover:bg-emerald-50"
+      >
+        Limpiar filtros
+      </button>
+    </aside>
+
+    <section class="min-w-0">
+      <!-- CARGANDO -->
+      @if (loading()) {
+        <div
+          class="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3"
+          aria-label="Cargando alojamientos"
+          aria-busy="true"
+        >
+          @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+            <div class="flex animate-pulse flex-col">
+              <!-- Imagen -->
+              <div
+                class="aspect-[4/3] w-full rounded-2xl bg-neutral-200"
+              ></div>
+              <!-- Título -->
+              <div class="mt-4 flex items-start justify-between gap-3">
+                <div class="flex flex-1 flex-col gap-2">
+                  <div
+                    class="h-4 w-3/4 rounded-md bg-neutral-200"
+                  ></div>
+                  <div
+                    class="h-3 w-1/2 rounded-md bg-neutral-200"
+                  ></div>
+                </div>
+                <div
+                  class="h-4 w-10 rounded-md bg-neutral-200"
+                ></div>
+              </div>
+              <!-- Detalles -->
+              <div class="mt-3 flex flex-col gap-2">
+                <div
+                  class="h-3 w-full rounded-md bg-neutral-200"
+                ></div>
+                <div
+                  class="h-3 w-2/3 rounded-md bg-neutral-200"
+                ></div>
+              </div>
+              <!-- Precio -->
+              <div
+                class="mt-3 h-4 w-1/2 rounded-md bg-neutral-200"
+              ></div>
+            </div>
+          }
+        </div>
+      } @else if (errorCarga()) {
+        <div
+          class="rounded-2xl border border-red-200 bg-red-50 px-6 py-16 text-center"
+        >
+          <div
+            class="mx-auto grid size-14 place-items-center rounded-full bg-red-100 text-red-600"
+          >
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+          </div>
+          <h2
+            class="font-display mt-5 text-2xl font-bold text-slate-900"
+          >
+            No pudimos cargar los alojamientos
+          </h2>
+          <p class="mt-2 text-sm text-slate-500">
+            Comprueba tu conexión e inténtalo de nuevo.
+          </p>
+          <button
+            type="button"
+            (click)="reintentar()"
+            class="mt-6 rounded-xl bg-emerald-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-800"
+          >
+            Reintentar
+          </button>
+        </div>
+      } @else {
+        <div
+          class="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 xl:grid-cols-3"
+        >
+          @for (s of paginados(); track s.idAlojamiento) {
+            <article class="group min-w-0">
+              <a
+                class="block min-w-0 cursor-pointer"
+                role="link"
+                tabindex="0"
+                (click)="openStay(s.idAlojamiento)"
+                (keydown.enter)="openStay(s.idAlojamiento)"
+              >
+
+                <!-- Imagen -->
+                <div
+                  class="relative aspect-[4/3] overflow-hidden rounded-2xl bg-slate-100"
+                >
+                  <img
+                    [src]="s.imagenes?.at(0) || fotoRelleno"
+                    [alt]="s.titulo"
+                    loading="lazy"
+                    class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                  <!-- Tipo -->
+                  <span
+                    class="absolute left-3 top-3 max-w-[75%] truncate rounded-full bg-white/95 px-3 py-1.5 text-[11px] font-bold text-slate-800 shadow-sm"
+                  >
+                  {{ s.tipo }}
+                </span>
+                </div>
+                <!-- Nombre y calificación -->
+                <div class="mt-4 flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <h2
+                      class="truncate font-bold text-slate-900"
+                      [title]="s.titulo"
+                    >
+                      {{ s.titulo }}
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-500">
+                      {{ s.ciudad }} · {{ s.tipo }}
+                    </p>
+                  </div>
+                  <div
+                    class="flex shrink-0 items-center gap-1 text-sm font-bold text-slate-900"
+                  >
+                    <span class="text-amber-500">★</span>
+                    @if (s.promedioCalificacion != null) {
+                      {{ s.promedioCalificacion | number: '1.1-1' }}
+                    } @else {
+                      <span class="text-slate-400">—</span>
+                    }
+                  </div>
+                </div>
+                <!-- Capacidad y amenidades -->
+                <p class="mt-2 text-sm text-slate-500">
+                  Hasta {{ s.capacidad }}
+                  {{ s.capacidad === 1 ? 'huésped' : 'huéspedes' }}
+                  · {{ busquedaService.amenidadesResumen(s) }}
+                </p>
+                <!-- Precio -->
+                <p class="mt-2 text-sm text-slate-700">
+                  <strong>
+                    {{ s.precioNoche | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+                  </strong>
+                  <span class="text-slate-500">
+                  / noche
+                </span>
+                </p>
+              </a>
+            </article>
+          } @empty {
+            <!-- SIN RESULTADOS -->
+            <div
+              class="col-span-full rounded-2xl border border-dashed border-slate-300 px-6 py-16 text-center"
+            >
+              <div
+                class="mx-auto grid size-14 place-items-center rounded-full bg-emerald-50 text-emerald-700"
+              >
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-4-4" />
+                </svg>
+              </div>
+              <h2
+                class="font-display mt-5 text-2xl font-bold text-slate-900"
+              >
+                No encontramos resultados
+              </h2>
+              <p class="mt-2 text-slate-500">
+                Prueba con otro tipo de alojamiento o cambia los servicios seleccionados.
+              </p>
+              <button
+                type="button"
+                (click)="limpiarFiltros()"
+                class="mt-6 rounded-xl bg-emerald-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-800"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          }
+        </div>
+
+
+        @if (visible().length > 0) {
+          <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-6 text-sm text-slate-500 sm:flex-row">
+            <span>
+              Mostrando {{ paginados().length }} de {{ visible().length }}
+              {{ visible().length === 1 ? 'alojamiento' : 'alojamientos' }}
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="irAPagina(paginaActual() - 1)"
+                [disabled]="paginaActual() === 0"
+                class="rounded-xl border border-slate-200 bg-white px-4 py-2 font-bold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-slate-200 disabled:hover:bg-white"
+              >
+                Anterior
+              </button>
+              <span class="px-2 font-semibold text-slate-700">
+                Página {{ paginaActual() + 1 }} de {{ totalPaginas() }}
+              </span>
+              <button
+                type="button"
+                (click)="irAPagina(paginaActual() + 1)"
+                [disabled]="paginaActual() >= totalPaginas() - 1"
+                class="rounded-xl border border-slate-200 bg-white px-4 py-2 font-bold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50 disabled:cursor-not-allowed disabled:text-slate-300 disabled:hover:border-slate-200 disabled:hover:bg-white"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        }
+      }
+    </section>
+  </div>
+</main>

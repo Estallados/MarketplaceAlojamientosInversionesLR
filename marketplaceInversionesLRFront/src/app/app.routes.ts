@@ -121,6 +121,18 @@ export const routes: Routes = [
 
 
   // ====================================
+  // BUSCAR ALOJAMIENTOS CON FILTROS (HU-23)
+  // PÚBLICA. Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'explorar',
+    loadComponent: () =>
+      import('./busqueda/buscar-alojamientos/buscar-alojamientos')
+        .then(m => m.BuscarAlojamientos)
+  },
+
+  // ====================================
   // DETALLE DEL ALOJAMIENTO CON MAPA (HU-18)
   // PÚBLICA. Carga diferida para no aumentar el bundle inicial.
   // ====================================
