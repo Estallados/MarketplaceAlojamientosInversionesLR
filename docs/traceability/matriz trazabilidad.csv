@@ -145,11 +145,13 @@ AuditoriaServiceTest#obtieneElDetalle_CA062";Probado (JUnit);;feat/SCRUM-170-be-
 CA-065;RF-015;Consulta de eventos de auditoría;Restringir auditoría;Dado que el usuario no tiene permisos administrativos, cuando intenta consultar la auditoría, entonces el sistema impide el acceso.;HU-13;CU-011;"CP-053 Consulta de auditoría
 CP-054 Consulta de auditoría sin permisos";AuditoriaTest#soloElAdministradorConsulta_CA065;Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;;
 CA-066;RF-016;Moderación de reseñas;Ocultar reseña;Dado que existe una reseña que incumple las reglas, cuando el administrador decide ocultarla, entonces el sistema debe ocultarla y dejar de mostrarla a los usuarios que consulten las reseñas.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
-CP-050 Moderación de reseña sin permisos";"AdministracionTest#elAdministradorOcultaUnaResenaQueDejaDeMostrarse_CA066_CA067_CA069
-NotificacionesResenasTest#elAdminListaLasResenasYAlOcultarUnaSeNotificaAlAutor_CA066";;"38a9302
-e2f0592";;;;
+CP-050 Moderación de reseña sin permisos";"ModeracionResenasTest#ocultarYMostrar_CA066
+ModeracionResenasTest#validaciones_CA066
+ModeracionResenasServiceTest#ocultar_CA066
+ModeracionResenasServiceTest#motivoObligatorio_CA066
+AdminControllerResenasTest#ocultar_CA066";Probado (JUnit);;feat/SCRUM-271-be-ocultar-resenas;;;"PATCH /admin/resenas/{id}/ocultar con motivo (obligatorio, máximo 500): solo cambia el estado a OCULTA (no se borra; en Neon trg_resena_proteger solo permite cambiar el estado), deja de mostrarse y de contar en el promedio, avisa al autor (RESENA_OCULTA) y audita RESENA_MODERADA. PATCH .../mostrar la vuelve a PUBLICADA y GET /admin/resenas lista por estado."
 CA-069;RF-016;Moderación de reseñas;Restringir moderación;Dado que el usuario no tiene permisos administrativos, cuando intenta ocultar una reseña, entonces el sistema impide la acción.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
-CP-050 Moderación de reseña sin permisos";AdministracionTest#elAdministradorOcultaUnaResenaQueDejaDeMostrarse_CA066_CA067_CA069;;38a9302;;;;
+CP-050 Moderación de reseña sin permisos";ModeracionResenasTest#sinPermisos_CA069;Probado (JUnit);;feat/SCRUM-271-be-ocultar-resenas;;;"/admin/** exige ADMIN: HUESPED y ANFITRION reciben 403 y sin sesión 401; la reseña no cambia y no se notifica a nadie."
 CA-070;RF-021;Creación de reserva por el huésped;Creación exitosa con cotización vigente;Dado una cotización vigente y un alojamiento ACTIVA, cuando el huésped confirma, entonces el sistema crea la reserva con el monto cotizado.;HU-22;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas

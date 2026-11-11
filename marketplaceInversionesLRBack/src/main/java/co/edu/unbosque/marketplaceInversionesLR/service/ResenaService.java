@@ -30,7 +30,8 @@ import co.edu.unbosque.marketplaceInversionesLR.util.LimitesTexto;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 
 /**
- * Reseñas y calificaciones de los alojamientos (HU-03, RF-004).
+ * Reseñas y calificaciones de los alojamientos (HU-03, RF-004) y su moderación
+ * por el administrador (HU-14, RF-016).
  * <p>
  * Solo el huésped de una reserva completada (CONFIRMADA y con la salida ya
  * alcanzada) puede reseñarla, una vez, con una calificación de 1 a 5 (CA-016).
@@ -69,6 +70,15 @@ public class ResenaService {
 
 	/** Mensaje cuando la reserva ya tiene reseña. */
 	public static final String YA_RESENADA = "Ya registraste una reseña para esta reserva.";
+
+	/** Mensaje cuando la reseña no existe (HU-14). */
+	public static final String NO_EXISTE = "La reseña no existe.";
+
+	/** Mensaje cuando falta el motivo para ocultar (HU-14, CA-066). */
+	public static final String MOTIVO_OBLIGATORIO = "El motivo para ocultar la reseña es obligatorio.";
+
+	/** Inicio del aviso al autor de una reseña ocultada; siguen la reserva y el motivo. */
+	public static final String AVISO_OCULTA = "Un administrador ocultó tu reseña de la reserva ";
 
 	/** Repositorio de reseñas. */
 	private final ResenaRepository resenaRepo;
@@ -225,6 +235,68 @@ public class ResenaService {
 				resenaRepo.promedioDeAnfitrion(idAnfitrion, EstadoResena.PUBLICADA),
 				resenaRepo.contarDeAnfitrion(idAnfitrion, EstadoResena.PUBLICADA),
 				resenaRepo.buscarDeAnfitrion(idAnfitrion, EstadoResena.PUBLICADA, pagina)));
+	}
+
+	/**
+	 * Todas las reseñas, o solo las de un estado, para moderarlas (HU-14).
+	 *
+	 * @param estado estado a filtrar; {@code null} para todas
+	 * @param pagina página y orden
+	 * @return página de reseñas
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<ResenaDTO> listarTodas(EstadoResena estado, Pageable pagina) {
+		Page<Resena> resenas = estado == null ? resenaRepo.findAll(pagina) : resenaRepo.findByEstado(estado, pagina);
+		return PaginaDTO.de(resenas, this::convertirDTO);
+	}
+
+	/**
+	 * Oculta una reseña con un motivo o la vuelve a mostrar (administrador,
+	 * HU-14). No la borra: solo cambia su estado, así deja de mostrarse en las
+	 * consultas públicas y en el promedio (CA-066). Al ocultarla se avisa al
+	 * autor con el motivo. Cada cambio queda en la auditoría para la
+	 * trazabilidad; si la reseña ya estaba en ese estado no se repiten el aviso
+	 * ni la auditoría.
+	 *
+	 * @param idResena reseña
+	 * @param ocultar  {@code true} para ocultar, {@code false} para mostrar
+	 * @param motivo   motivo, obligatorio al ocultar
+	 * @param idAdmin  administrador que modera
+	 * @return la reseña con su estado nuevo; DATOS_INVALIDOS si al ocultar
+	 *         falta el motivo o es muy largo; NO_ENCONTRADO si no existe
+	 */
+	@Transactional
+	public Resultado<ResenaDTO> moderar(Long idResena, boolean ocultar, String motivo, Long idAdmin) {
+		if (ocultar && (motivo == null || motivo.isBlank())) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, MOTIVO_OBLIGATORIO);
+		}
+		if (ocultar && LimitesTexto.excede(motivo, LimitesTexto.MOTIVO)) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, LimitesTexto.MOTIVO_LARGO);
+		}
+		Optional<Resena> encontrada = idResena == null ? Optional.empty() : resenaRepo.findById(idResena);
+		if (encontrada.isEmpty()) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		Resena resena = encontrada.get();
+		EstadoResena nuevo = ocultar ? EstadoResena.OCULTA : EstadoResena.PUBLICADA;
+		if (resena.getEstado() == nuevo) {
+			return Resultado.exito(convertirDTO(resena));
+		}
+
+		resenaRepo.cambiarEstado(resena.getIdResena(), nuevo);
+		resena.setEstado(nuevo);
+		String detalle;
+		if (ocultar) {
+			String limpio = motivo.trim();
+			notificacionService.enviar(resena.getIdUsuario(), NotificacionService.RESENA_OCULTA,
+					AVISO_OCULTA + resena.getIdReserva() + ". Motivo: " + limpio);
+			detalle = "Ocultada: " + limpio;
+		} else {
+			detalle = "Visible de nuevo";
+		}
+		auditoriaService.registrar(idAdmin, AuditoriaService.RESENA_MODERADA, AuditoriaService.ENTIDAD_RESENA,
+				resena.getIdResena(), ResultadoAuditoria.EXITOSO, detalle);
+		return Resultado.exito(convertirDTO(resena));
 	}
 
 	/**

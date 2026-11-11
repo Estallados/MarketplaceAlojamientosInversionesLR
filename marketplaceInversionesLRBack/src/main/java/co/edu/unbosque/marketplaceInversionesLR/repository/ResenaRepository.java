@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplaceInversionesLR.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -66,6 +67,28 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 	 * @return página de reseñas
 	 */
 	Page<Resena> findByIdUsuario(Long idUsuario, Pageable pagina);
+
+	/**
+	 * Reseñas en un estado, para la moderación del administrador (HU-14).
+	 *
+	 * @param estado estado a filtrar
+	 * @param pagina página y orden
+	 * @return página de reseñas
+	 */
+	Page<Resena> findByEstado(EstadoResena estado, Pageable pagina);
+
+	/**
+	 * Cambia solo el estado de una reseña (moderación, HU-14). En Neon,
+	 * {@code trg_resena_proteger} impide cambiar cualquier otra columna, por eso
+	 * no se vuelve a guardar la reseña completa.
+	 *
+	 * @param idResena reseña
+	 * @param estado   estado nuevo
+	 * @return filas actualizadas
+	 */
+	@Modifying(flushAutomatically = true, clearAutomatically = true)
+	@Query("update Resena r set r.estado = :estado where r.idResena = :id")
+	int cambiarEstado(@Param("id") Long idResena, @Param("estado") EstadoResena estado);
 
 	/**
 	 * Reseñas en un estado de todos los alojamientos de un anfitrión (HU-03).
