@@ -146,6 +146,19 @@ export interface AlojamientoRespuesta
 }
 
 // ======================================
+// 5.1 PÁGINA DE MIS ALOJAMIENTOS (HU-19)
+// GET /alojamientos/mios devuelve un PaginaDTO
+// ======================================
+
+export interface PaginaAlojamientos {
+  contenido: AlojamientoRespuesta[];
+  pagina: number;
+  tamanio: number;
+  totalElementos: number;
+  totalPaginas: number;
+}
+
+// ======================================
 // 6. POLÍTICAS DE CANCELACIÓN
 // Esquema PoliticaCancelacion
 // ======================================

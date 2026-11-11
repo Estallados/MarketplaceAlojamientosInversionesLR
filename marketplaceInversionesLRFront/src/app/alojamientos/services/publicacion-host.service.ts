@@ -8,6 +8,7 @@ import {
   DatosAlojamiento,
   ImagenAlojamiento,
   MensajeServidor,
+  PaginaAlojamientos,
   PoliticaCancelacion,
   ServicioAdicional,
   ServicioAdicionalEntrada
@@ -375,6 +376,29 @@ export class PublicacionHostService {
 
     return this.http.delete<MensajeServidor>(
       `${this.apiUrl}/${idAlojamiento}/disponibilidad/${idPeriodo}`
+    );
+  }
+
+  // ====================================
+  // 12. MIS ALOJAMIENTOS (HU-19, CA-103)
+  // GET /alojamientos/mios?pagina=&tamanio=
+  // Solo ANFITRION (403 para los demás). Los más recientes primero.
+  // ====================================
+
+  /**
+   * Publicaciones del anfitrión de la sesión, con el estado de cada una.
+   *
+   * @param pagina número de página (desde 0)
+   * @param tamanio elementos por página
+   */
+  obtenerMisAlojamientos(
+    pagina = 0,
+    tamanio = 20
+  ): Observable<PaginaAlojamientos> {
+
+    return this.http.get<PaginaAlojamientos>(
+      `${this.apiUrl}/mios`,
+      { params: { pagina, tamanio } }
     );
   }
 }

@@ -46,6 +46,20 @@ export const routes: Routes = [
 
 
 
+  // ====================================
+  // MIS ALOJAMIENTOS (HU-19)
+  // SOLO ANFITRIÓN: GET /alojamientos/mios exige el rol ANFITRION.
+  // ====================================
+
+  {
+    path: 'host/alojamientos',
+    loadComponent: () =>
+      import('./alojamientos/mis-alojamientos/mis-alojamientos')
+        .then(m => m.MisAlojamientos),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
   {
     path: 'host/alojamientos/crear',
     component: CrearPublicacion,
