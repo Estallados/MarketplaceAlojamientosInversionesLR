@@ -123,11 +123,26 @@ export interface CancelacionReserva {
   politica?: string | null;
   porcentajeReembolso?: number | null;
   valorReembolso?: number | null;
-  estado?: 'SOLICITADA' | 'APROBADA' | 'RECHAZADA' | string;
+  estado?: 'SOLICITADA' | 'APROBADA' | 'RECHAZADA' | 'COMPLETADA' | string;
   estadoFinalReserva?: EstadoReserva;
   fecha?: string | null;
   idUsuario?: number;
   idReserva?: number;
+}
+
+/**
+ * Lo que se devolvería si la reserva se cancelara hoy (SimulacionCancelacionDTO,
+ * GET /reservas/{id}/simularcancelacion, HU-01 CA-001). El backend aplica la política del
+ * alojamiento; el front solo lo muestra.
+ */
+export interface SimulacionCancelacion {
+  idReserva: number;
+  /** Nombre de la política: FLEXIBLE, MODERADA o ESTRICTA. */
+  politica: string;
+  diasAnticipacion: number;
+  porcentajeReembolso: number;
+  valorReembolso: number;
+  totalPagado: number;
 }
 
 /** Página de reservas (PaginaDTO), las más recientes primero. */

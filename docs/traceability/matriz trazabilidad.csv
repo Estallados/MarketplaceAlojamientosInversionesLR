@@ -10,21 +10,35 @@ CancelacionServiceTest#porcentajeSegunPolitica_CA001
 CancelacionServiceTest#devolucionRedondeada_CA001
 CancelacionServiceTest#cancela_CA001_CA004_CA007
 CancelacionServiceTest#simula_CA001
-PagoServiceTest#reembolsa_CA001";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;"POST /reservas/{id}/cancelar y GET /reservas/{id}/simularcancelacion. FLEXIBLE 100 % con 1 o más días; MODERADA 100 % con 5 o más y 50 % con 1 a 4; ESTRICTA 50 % con 7 o más y nada después. Devolución simulada; Neon valida que sea ROUND(total × % / 100, 2)."
+PagoServiceTest#reembolsa_CA001
+detalle-reserva.spec.ts#CA-001 antes de confirmar muestra la política y la devolución que calcula el backend
+detalle-reserva.spec.ts#CA-001 si la reserva no se puede cancelar muestra el motivo del backend y no deja confirmar
+mis-reservas.spec.ts#CA-001 ""Cancelar reserva"" aparece solo en las cancelables y abre el detalle con ?accion=cancelar";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
+feat/SCRUM-252-fe-cancelar-reserva-politica";;;"POST /reservas/{id}/cancelar y GET /reservas/{id}/simularcancelacion. FLEXIBLE 100 % con 1 o más días; MODERADA 100 % con 5 o más y 50 % con 1 a 4; ESTRICTA 50 % con 7 o más y nada después. Devolución simulada; Neon valida que sea ROUND(total × % / 100, 2).
+Front-end (SCRUM-252): en Detalle de la reserva (/reservas/:id) el botón ""Cancelar reserva"" (también en Mis reservas, que abre el detalle con ?accion=cancelar) abre el modal del proyecto base; antes de confirmar muestra la política, los días de anticipación, el total pagado y la devolución de GET /reservas/{id}/simularcancelacion, y no deja confirmar si el backend la rechaza (409). Se ofrece en reservas CONFIRMADA o EN_REVISION que aún no empiezan. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-004;RF-002;Registro de cancelación;Registro de la cancelación;Dado que se procesa la cancelación de una reserva, cuando finaliza la operación, entonces el sistema debe registrar usuario, fecha, motivo, devolución aplicable y estado final de la reserva.;HU-01;CU-027;"CP-042 Cancelación con política y registro
 CP-043 Liberación de período después de cancelar
 CP-044 Conservación de período después de cancelar";"CancelacionReservaTest#cancelaYLiberaLasFechas_CA001_CA004_CA007
-CancelacionServiceTest#cancela_CA001_CA004_CA007";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;Tabla cancelacion: usuario, fecha, motivo, política, porcentaje, devolución, estado COMPLETADA y estado final CANCELADA. Se avisa al huésped y al anfitrión y queda en la auditoría.
+CancelacionServiceTest#cancela_CA001_CA004_CA007
+detalle-reserva.spec.ts#CA-004 envía el motivo con Idempotency-Key y muestra el estado final registrado";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
+feat/SCRUM-252-fe-cancelar-reserva-politica";;;"Tabla cancelacion: usuario, fecha, motivo, política, porcentaje, devolución, estado COMPLETADA y estado final CANCELADA. Se avisa al huésped y al anfitrión y queda en la auditoría.
+Front-end (SCRUM-252): POST /reservas/{id}/cancelar con el motivo (obligatorio, máximo 500 caracteres) y la cabecera Idempotency-Key, que solo se reutiliza al reintentar tras un error de red; al terminar recarga la reserva y muestra el estado final, la fecha, el motivo y la devolución registrados. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-007;RF-002;Registro de cancelación;Liberación y actualización del período;Dado que una reserva fue cancelada y corresponde liberar el período, cuando se procesa la cancelación, entonces el sistema debe actualizar su disponibilidad y mostrarlo nuevamente como disponible en las consultas.;HU-01;CU-027;"CP-042 Cancelación con política y registro
 CP-043 Liberación de período después de cancelar
 CP-044 Conservación de período después de cancelar";"CancelacionReservaTest#cancelaYLiberaLasFechas_CA001_CA004_CA007
-CancelacionServiceTest#cancela_CA001_CA004_CA007";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;La reserva CANCELADA deja de ocupar fechas: la consulta de disponibilidad vuelve a mostrarlas libres.
+CancelacionServiceTest#cancela_CA001_CA004_CA007
+detalle-reserva.spec.ts#CA-007 una vez cancelada la reserva deja de ofrecerse para cancelar";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
+feat/SCRUM-252-fe-cancelar-reserva-politica";;;"La reserva CANCELADA deja de ocupar fechas: la consulta de disponibilidad vuelve a mostrarlas libres.
+Front-end (SCRUM-252): tras cancelar recarga la reserva desde el backend, que queda Cancelada y deja de ofrecerse para cancelar; la liberación de las fechas la hace el backend y la consulta de disponibilidad la lee de él. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-009;RF-002;Registro de cancelación;Conservación cuando no aplica;Dado que no corresponde liberar el período, cuando se procesa la cancelación, entonces el sistema debe respetar la política aplicada.;HU-01;CU-027;"CP-042 Cancelación con política y registro
 CP-043 Liberación de período después de cancelar
 CP-044 Conservación de período después de cancelar";"CancelacionReservaTest#respetaLaPolitica_CA009
 CancelacionServiceTest#sinDevolucion_CA009
 CancelacionServiceTest#enRevision_CA009
-PagoServiceTest#sinDevolucion_CA009";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;Si la política no da devolución (0 %), se cancela sin devolver y el pago sigue APROBADO.
+PagoServiceTest#sinDevolucion_CA009
+detalle-reserva.spec.ts#CA-009 si la política no da devolución lo indica y permite cancelar igual";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
+feat/SCRUM-252-fe-cancelar-reserva-politica";;;"Si la política no da devolución (0 %), se cancela sin devolver y el pago sigue APROBADO.
+Front-end (SCRUM-252): muestra la devolución que calcula el backend según la política; si es 0 % lo indica (""esta cancelación no tiene devolución"") y permite cancelar igual, sin cálculos en el front. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-010;RF-003;Registro/Consulta de notificaciones;Registro por evento relevante;Dado que ocurre un evento configurado como relevante para un usuario, cuando el sistema procesa dicho evento, entonces debe registrar una notificación asociada al usuario correspondiente.;HU-02;"CU-025
 CU-027
 CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesTest#eventoCreaLaNotificacion_CA010

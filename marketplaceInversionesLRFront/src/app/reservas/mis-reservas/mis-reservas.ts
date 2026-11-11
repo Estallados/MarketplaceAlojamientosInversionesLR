@@ -8,7 +8,8 @@ import {
   claseEtiquetaReserva,
   etiquetaReserva,
   fechaDdMmAaaa,
-  monedaCop
+  monedaCop,
+  puedeCancelarReserva
 } from '../models/estado-reserva';
 import { Reserva } from '../models/reserva';
 import { ReservaService } from '../services/reserva.service';
@@ -103,9 +104,19 @@ export class MisReservas implements OnInit {
     return monedaCop(valor);
   }
 
+  /** CONFIRMADA o EN_REVISION que aún no empieza (HU-01). */
+  puedeCancelar(r: Reserva): boolean {
+    return puedeCancelarReserva(r);
+  }
+
   // ==================== NAVEGACIÓN ====================
 
-  abrir(id: number): void {
+  /** La cancelación se hace en el detalle; `accion` abre su modal al cargar (como en el proyecto base). */
+  abrir(id: number, accion?: 'cancelar'): void {
+    if (accion) {
+      void this.router.navigate(['/reservas', id], { queryParams: { accion } });
+      return;
+    }
     void this.router.navigate(['/reservas', id]);
   }
 }

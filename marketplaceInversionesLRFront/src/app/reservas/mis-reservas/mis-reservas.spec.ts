@@ -129,8 +129,33 @@ describe('MisReservas (HU-25)', () => {
 
     (items(fixture)[0].querySelector('[data-ver-detalle]') as HTMLButtonElement).click();
     expect(navegar).toHaveBeenCalledWith(['/reservas', 1]);
-    expect(fixture.nativeElement.textContent).not.toContain('Cancelar reserva');
     expect(fixture.nativeElement.textContent).not.toContain('Calificar estancia');
+  });
+
+  it('CA-001 "Cancelar reserva" aparece solo en las cancelables y abre el detalle con ?accion=cancelar', () => {
+    const fixture = crear();
+    pedido().flush(pagina([
+      ...todas,
+      reservaDePrueba(6, { estado: 'EN_REVISION', tituloAlojamiento: 'Casa en revisión' })
+    ]));
+    fixture.detectChanges();
+    const navegar = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const conCancelar = () => items(fixture)
+      .filter(i => i.querySelector('[data-cancelar]'))
+      .map(i => Number(i.getAttribute('data-id')));
+
+    // Próximas: 1 (CONFIRMADA futura), 5 (PENDIENTE_PAGO) y 6 (EN_REVISION).
+    expect(conCancelar()).toEqual([1, 6]);
+
+    (items(fixture)[0].querySelector('[data-cancelar]') as HTMLButtonElement).click();
+    expect(navegar).toHaveBeenCalledWith(['/reservas', 1], { queryParams: { accion: 'cancelar' } });
+
+    // Activas (ya empezó), Finalizadas y Canceladas: sin botón.
+    for (const tab of [1, 2, 3]) {
+      (fixture.nativeElement.querySelectorAll('[data-pestana]')[tab] as HTMLButtonElement).click();
+      fixture.detectChanges();
+      expect(conCancelar()).toEqual([]);
+    }
   });
 
   it('las rutas de reservas exigen el rol correspondiente', () => {

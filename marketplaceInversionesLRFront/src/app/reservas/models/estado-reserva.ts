@@ -17,6 +17,15 @@ export function yaInicio(r: Reserva, hoy = hoyLocal()): boolean {
   return r.fechaEntrada <= hoy;
 }
 
+/**
+ * El huésped puede cancelar una reserva CONFIRMADA o EN_REVISION cuya llegada aún no llega (HU-01).
+ * Es la misma regla del backend (CancelacionService); el proyecto base solo ofrecía CONFIRMADA, pero el
+ * backend también acepta EN_REVISION (reservas de un alojamiento bloqueado). El backend vuelve a validar.
+ */
+export function puedeCancelarReserva(r: Reserva, hoy = hoyLocal()): boolean {
+  return (r.estado === 'CONFIRMADA' || r.estado === 'EN_REVISION') && !r.completada && !yaInicio(r, hoy);
+}
+
 export function categoriaReserva(r: Reserva, hoy = hoyLocal()): PestanaReserva {
   if (r.estado === 'CANCELADA') {
     return 'Canceladas';
