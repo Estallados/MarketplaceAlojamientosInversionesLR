@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import co.edu.unbosque.marketplaceInversionesLR.dto.CancelacionDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PagoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ReservaDTO;
@@ -22,11 +24,17 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoPago;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Pago;
+import co.edu.unbosque.marketplaceInversionesLR.entity.PoliticaCancelacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.CancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.CotizacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ResenaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 import tools.jackson.databind.ObjectMapper;
 
@@ -90,6 +98,9 @@ public class ReservaService {
 	/** Restricción de Neon que impide dos reservas confirmadas con fechas cruzadas. */
 	public static final String RESTRICCION_CRUCE_RESERVAS = "ex_reserva_sin_cruces";
 
+	/** Mensaje cuando la reserva no existe o el usuario no puede verla. */
+	public static final String NO_EXISTE = "La reserva no existe.";
+
 	/**
 	 * Reserva y pago que deja la transacción.
 	 *
@@ -129,6 +140,21 @@ public class ReservaService {
 	/** Guarda el desglose en JSON. */
 	private final ObjectMapper objectMapper;
 
+	/** Nombres del huésped y del anfitrión (HU-25). */
+	private final UsuarioRepository usuarioRepo;
+
+	/** Nombre de la política del alojamiento (HU-25). */
+	private final PoliticaCancelacionRepository politicaRepo;
+
+	/** Si la reserva ya tiene reseña (HU-25). */
+	private final ResenaRepository resenaRepo;
+
+	/** Cancelación de la reserva, si la hubo (HU-25). */
+	private final CancelacionRepository cancelacionRepo;
+
+	/** Imagen principal del alojamiento (HU-25). */
+	private final PublicacionService publicacionService;
+
 	/**
 	 * Transacción de la reserva. Se maneja aparte para auditar después de
 	 * confirmar, cuando ya se liberaron los bloqueos.
@@ -149,12 +175,24 @@ public class ReservaService {
 	 * @param modelMapper         copiador de entidades a DTO
 	 * @param objectMapper        conversor a JSON
 	 * @param transactionManager  administrador de transacciones de Spring
+	 * @param usuarioRepo         nombres del huésped y del anfitrión
+	 * @param politicaRepo        políticas de cancelación
+	 * @param resenaRepo          reseñas
+	 * @param cancelacionRepo     cancelaciones
+	 * @param publicacionService  imágenes del alojamiento
 	 */
 	public ReservaService(AlojamientoRepository alojamientoRepo, CotizacionRepository cotizacionRepo,
 			ReservaRepository reservaRepo, CalendarioService calendarioService, CotizacionService cotizacionService,
 			PagoService pagoService, NotificacionService notificacionService, AuditoriaService auditoriaService,
-			ModelMapper modelMapper, ObjectMapper objectMapper, PlatformTransactionManager transactionManager) {
+			ModelMapper modelMapper, ObjectMapper objectMapper, PlatformTransactionManager transactionManager,
+			UsuarioRepository usuarioRepo, PoliticaCancelacionRepository politicaRepo, ResenaRepository resenaRepo,
+			CancelacionRepository cancelacionRepo, PublicacionService publicacionService) {
 		this.transaccion = new TransactionTemplate(transactionManager);
+		this.usuarioRepo = usuarioRepo;
+		this.politicaRepo = politicaRepo;
+		this.resenaRepo = resenaRepo;
+		this.cancelacionRepo = cancelacionRepo;
+		this.publicacionService = publicacionService;
 		this.alojamientoRepo = alojamientoRepo;
 		this.cotizacionRepo = cotizacionRepo;
 		this.reservaRepo = reservaRepo;
@@ -249,12 +287,100 @@ public class ReservaService {
 	 */
 	@Transactional(readOnly = true)
 	public PaginaDTO<ReservaDTO> listarDeHuesped(Long idHuesped, Pageable pagina) {
-		return PaginaDTO.de(reservaRepo.findByIdHuesped(idHuesped, pagina),
-				r -> convertirDTO(r, pagoService.ultimo(r.getIdReserva()).orElse(null)));
+		return PaginaDTO.de(reservaRepo.findByIdHuesped(idHuesped, pagina), this::convertirDTO);
 	}
 
 	/**
-	 * Convierte la reserva a DTO con su pago y el título del alojamiento.
+	 * Historial del huésped autenticado: todas sus reservas con su estado
+	 * actual (HU-25, CA-078). Un usuario sin reservas recibe una página vacía.
+	 *
+	 * @param idHuesped usuario autenticado
+	 * @param pagina    página y orden
+	 * @return página de reservas
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<ReservaDTO> listarMias(Long idHuesped, Pageable pagina) {
+		return listarDeHuesped(idHuesped, pagina);
+	}
+
+	/**
+	 * Reservas de los alojamientos del anfitrión autenticado, nunca las de
+	 * alojamientos de otros (HU-25, CA-079).
+	 *
+	 * @param idAnfitrion anfitrión autenticado
+	 * @param pagina      página y orden
+	 * @return página de reservas
+	 */
+	@Transactional(readOnly = true)
+	public PaginaDTO<ReservaDTO> listarDeAnfitrion(Long idAnfitrion, Pageable pagina) {
+		return PaginaDTO.de(reservaRepo.buscarDeAnfitrion(idAnfitrion, pagina), this::convertirDTO);
+	}
+
+	/**
+	 * Detalle de una reserva con el pago, el alojamiento y la cancelación
+	 * (HU-25). La ven su huésped, el anfitrión del alojamiento y los
+	 * administradores; para los demás es como si no existiera.
+	 *
+	 * @param idReserva reserva
+	 * @param idActor   usuario autenticado
+	 * @param esAdmin   {@code true} si es administrador
+	 * @return la reserva; o NO_ENCONTRADO si no existe o el usuario no puede
+	 *         verla
+	 */
+	@Transactional(readOnly = true)
+	public Resultado<ReservaDTO> obtener(Long idReserva, Long idActor, boolean esAdmin) {
+		Optional<Reserva> reserva = idReserva == null ? Optional.empty() : reservaRepo.findById(idReserva);
+		if (reserva.isEmpty() || !puedeVer(reserva.get(), idActor, esAdmin)) {
+			return Resultado.error(Resultado.NO_ENCONTRADO, NO_EXISTE);
+		}
+		return Resultado.exito(convertirDTO(reserva.get()));
+	}
+
+	/**
+	 * Indica si el usuario puede ver la reserva: es administrador, es su
+	 * huésped o es el anfitrión del alojamiento.
+	 *
+	 * @param reserva reserva
+	 * @param idActor usuario autenticado
+	 * @param esAdmin {@code true} si es administrador
+	 * @return {@code true} si la puede ver
+	 */
+	private boolean puedeVer(Reserva reserva, Long idActor, boolean esAdmin) {
+		if (esAdmin || Objects.equals(reserva.getIdHuesped(), idActor)) {
+			return true;
+		}
+		return idActor != null && alojamientoRepo.findById(reserva.getIdAlojamiento())
+				.map(a -> idActor.equals(a.getIdAnfitrion())).orElse(false);
+	}
+
+	/**
+	 * Indica si la reserva ya se completó: está CONFIRMADA y la fecha de salida
+	 * ya llegó. Habilita la reseña (CA-016).
+	 *
+	 * @param reserva reserva
+	 * @return {@code true} si está completada
+	 */
+	public static boolean esCompletada(Reserva reserva) {
+		return reserva.getEstado() == EstadoReserva.CONFIRMADA && reserva.getFechaSalida() != null
+				&& !reserva.getFechaSalida().isAfter(LocalDate.now());
+	}
+
+	/**
+	 * Convierte la reserva a DTO con su último pago.
+	 *
+	 * @param reserva reserva
+	 * @return reserva para la API
+	 */
+	private ReservaDTO convertirDTO(Reserva reserva) {
+		return convertirDTO(reserva, pagoService.ultimo(reserva.getIdReserva()).orElse(null));
+	}
+
+	/**
+	 * Convierte la reserva a DTO con el pago, los datos del alojamiento (aunque
+	 * esté pausado o bloqueado), su imagen principal y su política, los
+	 * nombres del huésped y del anfitrión, si ya tiene reseña y su
+	 * cancelación, si la hubo. Así el frontend arma la lista y el detalle con
+	 * una sola llamada.
 	 *
 	 * @param reserva reserva
 	 * @param pago    pago de la reserva; {@code null} si no tiene
@@ -263,8 +389,38 @@ public class ReservaService {
 	private ReservaDTO convertirDTO(Reserva reserva, Pago pago) {
 		ReservaDTO dto = modelMapper.map(reserva, ReservaDTO.class);
 		dto.setPago(pago == null ? null : modelMapper.map(pago, PagoDTO.class));
-		alojamientoRepo.findById(reserva.getIdAlojamiento()).ifPresent(a -> dto.setTituloAlojamiento(a.getTitulo()));
+		dto.setCompletada(esCompletada(reserva));
+		alojamientoRepo.findById(reserva.getIdAlojamiento()).ifPresent(a -> {
+			dto.setTituloAlojamiento(a.getTitulo());
+			dto.setCiudad(a.getCiudad());
+			dto.setUbicacion(a.getUbicacion());
+			dto.setTipoAlojamiento(a.getTipo());
+			dto.setCapacidadAlojamiento(a.getCapacidad());
+			dto.setIdAnfitrion(a.getIdAnfitrion());
+			dto.setNombreAnfitrion(nombreUsuario(a.getIdAnfitrion()));
+			publicacionService.imagenesDTO(a.getIdAlojamiento()).stream().findFirst()
+					.ifPresent(i -> dto.setImagenAlojamiento(i.getUrl()));
+			String politica = a.getIdPolitica() == null ? null
+					: politicaRepo.findById(a.getIdPolitica()).map(PoliticaCancelacion::getNombre).orElse(null);
+			dto.setNombrePolitica(politica == null ? CancelacionService.POLITICA_POR_DEFECTO : politica);
+		});
+		dto.setNombreHuesped(nombreUsuario(reserva.getIdHuesped()));
+		dto.setTieneResena(reserva.getIdReserva() != null && resenaRepo.existsByIdReserva(reserva.getIdReserva()));
+		if (reserva.getIdReserva() != null) {
+			cancelacionRepo.findByIdReserva(reserva.getIdReserva())
+					.ifPresent(c -> dto.setCancelacion(modelMapper.map(c, CancelacionDTO.class)));
+		}
 		return dto;
+	}
+
+	/**
+	 * Nombre de un usuario.
+	 *
+	 * @param idUsuario usuario; puede ser {@code null}
+	 * @return el nombre, o {@code null} si no existe
+	 */
+	private String nombreUsuario(Long idUsuario) {
+		return idUsuario == null ? null : usuarioRepo.findById(idUsuario).map(Usuario::getNombre).orElse(null);
 	}
 
 	/**

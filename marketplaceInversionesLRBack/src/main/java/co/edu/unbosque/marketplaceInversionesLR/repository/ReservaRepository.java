@@ -80,14 +80,28 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 			Collection<EstadoReserva> estados);
 
 	/**
-	 * Reservas de un huésped, en cualquier estado (detalle de usuario del
-	 * administrador, HU-12).
+	 * Reservas de un huésped, en cualquier estado: su historial (HU-25,
+	 * CA-078) y el detalle de usuario del administrador (HU-12).
 	 *
 	 * @param idHuesped huésped
 	 * @param pagina    página y orden
 	 * @return página de reservas
 	 */
 	Page<Reserva> findByIdHuesped(Long idHuesped, Pageable pagina);
+
+	/**
+	 * Reservas de los alojamientos de un anfitrión, en cualquier estado
+	 * (HU-25, CA-079). Nunca incluye las de alojamientos de otros.
+	 *
+	 * @param idAnfitrion anfitrión
+	 * @param pagina      página y orden
+	 * @return página de reservas
+	 */
+	@Query(value = "select r from Reserva r where r.idAlojamiento in "
+			+ "(select a.idAlojamiento from Alojamiento a where a.idAnfitrion = :idAnfitrion)",
+			countQuery = "select count(r) from Reserva r where r.idAlojamiento in "
+					+ "(select a.idAlojamiento from Alojamiento a where a.idAnfitrion = :idAnfitrion)")
+	Page<Reserva> buscarDeAnfitrion(@Param("idAnfitrion") Long idAnfitrion, Pageable pagina);
 
 	/**
 	 * Lee la reserva con bloqueo de escritura para cancelarla (HU-01). Así dos

@@ -41,9 +41,13 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.Pago;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.CancelacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.CotizacionRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.PagoRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.PoliticaCancelacionRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.ResenaRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.ReservaRepository;
+import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -94,6 +98,21 @@ class ReservaServiceTest {
 	@Mock
 	private NotificacionService notificacionService;
 
+	@Mock
+	private UsuarioRepository usuarioRepo;
+
+	@Mock
+	private PoliticaCancelacionRepository politicaRepo;
+
+	@Mock
+	private ResenaRepository resenaRepo;
+
+	@Mock
+	private CancelacionRepository cancelacionRepo;
+
+	@Mock
+	private PublicacionService publicacionService;
+
 	/** Transacciones simuladas: la plantilla ejecuta el paso sin base de datos. */
 	@Mock
 	private PlatformTransactionManager transactionManager;
@@ -116,7 +135,8 @@ class ReservaServiceTest {
 				JsonMapper.builder().build());
 		servicio = new ReservaService(alojamientoRepo, cotizacionRepo, reservaRepo, calendarioService,
 				cotizacionService, new PagoService(pagoRepo), notificacionService, auditoriaService, modelMapper,
-				JsonMapper.builder().build(), transactionManager);
+				JsonMapper.builder().build(), transactionManager, usuarioRepo, politicaRepo, resenaRepo, cancelacionRepo,
+				publicacionService);
 
 		cotizacion = new Cotizacion();
 		cotizacion.setIdCotizacion(ID_COTIZACION);
