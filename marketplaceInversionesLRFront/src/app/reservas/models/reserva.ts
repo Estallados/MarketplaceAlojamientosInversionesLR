@@ -44,7 +44,8 @@ export interface PagoReserva {
 
   referencia?: string;
 
-  proveedor?: 'STRIPE_TEST' | 'SIMULADO';
+  /** STRIPE_TEST o SIMULADO: el pago nunca es un cobro real (CA-160). */
+  proveedor?: 'STRIPE_TEST' | 'SIMULADO' | string;
 
   detalle?: string | null;
 

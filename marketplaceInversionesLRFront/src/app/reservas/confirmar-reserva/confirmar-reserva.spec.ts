@@ -35,6 +35,22 @@ describe('ConfirmarReserva (HU-22)', () => {
 
   const urlAlojamiento = `${baseUrl}/alojamientos/7`;
 
+  const urlConfiguracionPago = `${baseUrl}/pagos/configuracion`;
+
+  /** GET /pagos/configuracion del backend local (modo SIMULADO, HU-27). */
+  const configuracionPago = {
+    modo: 'SIMULADO',
+    clavePublica: null,
+    moneda: 'cop',
+    metodosPrueba: [
+      { metodo: 'pm_card_visa', descripcion: 'Visa aprobada', resultado: 'APROBADO' },
+      { metodo: 'pm_card_mastercard', descripcion: 'Mastercard aprobada', resultado: 'APROBADO' },
+      { metodo: 'pm_card_chargeDeclined', descripcion: 'Rechazo genérico', resultado: 'RECHAZADO' },
+      { metodo: 'pm_card_chargeDeclinedInsufficientFunds', descripcion: 'Fondos insuficientes', resultado: 'RECHAZADO' },
+      { metodo: 'pm_card_error', descripcion: 'Falla de la pasarela (solo simulador)', resultado: 'ERROR' }
+    ]
+  };
+
   /** Alojamiento que devuelve GET /alojamientos/7 (capacidad y servicios, HU-31). */
   const alojamiento = {
     idAlojamiento: 7,
@@ -176,8 +192,37 @@ describe('ConfirmarReserva (HU-22)', () => {
     return elemento().querySelector<HTMLButtonElement>(selector)!;
   }
 
-  async function confirmar(): Promise<void> {
+  /** Escribe en un campo del modal como lo haría el usuario. */
+  function escribir(selector: string, valor: string): void {
+    const campo = elemento().querySelector<HTMLInputElement>(selector)!;
+    campo.value = valor;
+    campo.dispatchEvent(new Event('input'));
+  }
+
+  /** Escribe los datos de una tarjeta de prueba en el modal de pago (HU-27). */
+  async function escribirTarjeta(numero: string, vencimiento = '12/40', cvc = '123'): Promise<void> {
+    escribir('[data-numero]', numero);
+    escribir('[data-vencimiento]', vencimiento);
+    escribir('[data-cvc]', cvc);
+    await estable();
+  }
+
+  /**
+   * Pulsa "Confirmar reserva". Si se abre el modal de pago (HU-27), responde su configuración,
+   * escribe la tarjeta de prueba indicada (por defecto la Visa aprobada) y pulsa "Pagar".
+   */
+  async function confirmar(numero = '4242 4242 4242 4242'): Promise<void> {
     boton('[data-confirmar]').click();
+    await estable();
+    if (!existe('[data-pago]')) {
+      return; // reintento directo tras un error de conexión
+    }
+    http
+      .match(r => r.method === 'GET' && r.url === urlConfiguracionPago)
+      .forEach(r => r.flush(configuracionPago));
+    await estable();
+    await escribirTarjeta(numero);
+    boton('[data-pagar]').click();
     await estable();
   }
 
@@ -317,19 +362,26 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(texto('[data-elegir-fechas]')).toBe('Revisar disponibilidad');
   });
 
-  it('CA-072 un doble clic sobre Confirmar envía una sola solicitud de reserva', async () => {
+  it('CA-072 un doble clic sobre Pagar envía una sola solicitud de reserva', async () => {
 
     await abrirConCotizacion();
 
-    const confirmarBtn = boton('[data-confirmar]');
-    confirmarBtn.click();
-    confirmarBtn.click();
+    // "Confirmar reserva" abre el modal de pago (HU-27).
+    boton('[data-confirmar]').click();
+    await estable();
+    http.expectOne(r => r.method === 'GET' && r.url === urlConfiguracionPago).flush(configuracionPago);
+    await estable();
+    await escribirTarjeta('4242 4242 4242 4242');
+
+    const pagar = boton('[data-pagar]');
+    pagar.click();
+    pagar.click();
     await estable();
 
     // Mientras la petición está pendiente el botón queda deshabilitado.
-    expect(boton('[data-confirmar]').disabled).toBe(true);
-    expect(texto('[data-confirmar]')).toBe('Confirmando reserva...');
-    boton('[data-confirmar]').click();
+    expect(boton('[data-pagar]').disabled).toBe(true);
+    expect(texto('[data-pagar]')).toBe('Procesando pago...');
+    boton('[data-pagar]').click();
     await estable();
 
     // expectOne falla si hubo más de una petición.
@@ -339,6 +391,7 @@ describe('ConfirmarReserva (HU-22)', () => {
     await estable();
 
     expect(existe('[data-reserva]')).toBe(true);
+    expect(existe('[data-pago]')).toBe(false);
   });
 
   // ======================================
@@ -459,7 +512,7 @@ describe('ConfirmarReserva (HU-22)', () => {
     await confirmar();
 
     const req = pedidoReserva();
-    expect(req.request.body).toEqual({ idCotizacion: 42 });
+    expect(req.request.body).toEqual({ idCotizacion: 42, metodoPago: 'pm_card_visa' });
     expect(req.request.body).not.toHaveProperty('total');
     expect(req.request.headers.get('Idempotency-Key')).toBeTruthy();
 
@@ -567,7 +620,7 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(existe('[data-error-reserva]')).toBe(false);
     await confirmar();
     const req = pedidoReserva();
-    expect(req.request.body).toEqual({ idCotizacion: 43 });
+    expect(req.request.body).toEqual({ idCotizacion: 43, metodoPago: 'pm_card_visa' });
     rechazar(req, 409, 'El período ya no está disponible: otra reserva lo tomó.');
     await estable();
   });
@@ -802,7 +855,7 @@ describe('ConfirmarReserva (HU-22)', () => {
 
     // Se confirma la cotización nueva, no la anterior.
     await confirmar();
-    expect(pedidoReserva().request.body).toEqual({ idCotizacion: 44 });
+    expect(pedidoReserva().request.body).toEqual({ idCotizacion: 44, metodoPago: 'pm_card_visa' });
   });
 
   it('CA-183 indica cuando el alojamiento no tiene servicios adicionales', async () => {
@@ -899,5 +952,246 @@ describe('ConfirmarReserva (HU-22)', () => {
     await estable();
 
     expect(existe('[data-personalizar]')).toBe(false);
+  });
+
+  // ======================================
+  // HU-27 PAGO DE LA RESERVA EN AMBIENTE DE PRUEBA
+  // ======================================
+
+  /** Abre el modal "Confirma y paga" con la configuración indicada. */
+  async function abrirPago(config: object = configuracionPago): Promise<void> {
+    await abrirConCotizacion();
+    boton('[data-confirmar]').click();
+    await estable();
+    http.expectOne(r => r.method === 'GET' && r.url === urlConfiguracionPago).flush(config);
+    await estable();
+  }
+
+  const pagoAprobado = {
+    idPago: 9,
+    valor: 740000,
+    estado: 'APROBADO',
+    idReserva: 15,
+    referencia: 'sim_pi_123',
+    proveedor: 'SIMULADO',
+    metodo: 'pm_card_visa'
+  };
+
+  it('CA-160 se paga escribiendo una tarjeta de prueba: solo viaja el método de prueba, nunca los datos de la tarjeta', async () => {
+
+    await abrirPago();
+
+    expect(texto('[data-pago]')).toContain('Confirma y paga');
+    expect(texto('[data-desglose-pago]')).toContain('Desayuno');
+    expect(texto('[data-ambiente-prueba]')).toContain('no se realizan cobros reales');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+    expect(texto('[data-completar]')).toContain('Completa los datos de la tarjeta');
+
+    escribir('[data-titular]', 'Ana Pérez');
+    await escribirTarjeta('4000000000009995');
+
+    // Se formatea y se reconoce la marca mientras se escribe.
+    expect(elemento().querySelector<HTMLInputElement>('[data-numero]')!.value).toBe('4000 0000 0000 9995');
+    expect(texto('[data-marca]')).toBe('Visa');
+    expect(boton('[data-pagar]').disabled).toBe(false);
+    expect(texto('[data-pagar]')).toContain('740');
+
+    boton('[data-pagar]').click();
+    await estable();
+
+    const req = pedidoReserva();
+    expect(req.request.body).toEqual({ idCotizacion: 42, metodoPago: 'pm_card_chargeDeclinedInsufficientFunds' });
+    const cuerpo = JSON.stringify(req.request.body);
+    expect(cuerpo).not.toContain('4000');
+    expect(cuerpo).not.toContain('12/40');
+    expect(cuerpo).not.toContain('Ana');
+    rechazar(req, 402, 'El pago fue rechazado: fondos insuficientes. La reserva no quedó pagada.');
+    await estable();
+  });
+
+  it('CA-160 una tarjeta que no es de prueba se rechaza sin llamar al backend', async () => {
+
+    await abrirPago();
+    // Número válido (Luhn) que no es una tarjeta de prueba.
+    await escribirTarjeta('4111 1111 1111 1111');
+
+    expect(texto('[data-error-numero]')).toBe('Usa una tarjeta de prueba: en este ambiente no se aceptan tarjetas reales.');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+    boton('[data-pagar]').click();
+    await estable();
+    http.expectNone(r => r.method === 'POST' && r.url === urlReservas);
+  });
+
+  it('CA-160 valida el número, el vencimiento y el CVC antes de habilitar el pago', async () => {
+
+    await abrirPago();
+
+    await escribirTarjeta('4242 4242 4242 4241');
+    expect(texto('[data-error-numero]')).toBe('El número de tarjeta no es válido.');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    await escribirTarjeta('4242 4242 4242 4242', '01/20');
+    expect(texto('[data-error-vencimiento]')).toContain('vencida');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    await escribirTarjeta('4242 4242 4242 4242', '12/40', '12');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    await escribirTarjeta('4242 4242 4242 4242', '12/40', '123');
+    expect(existe('[data-error-numero]')).toBe(false);
+    expect(existe('[data-error-vencimiento]')).toBe(false);
+    expect(boton('[data-pagar]').disabled).toBe(false);
+  });
+
+  it('CA-160 muestra solo las tarjetas de prueba que ofrece el backend y permite usarlas', async () => {
+
+    await abrirPago();
+
+    const ayuda = Array.from(elemento().querySelectorAll<HTMLButtonElement>('[data-usar-tarjeta]'))
+      .map(b => (b.textContent ?? '').trim());
+    expect(ayuda).toEqual([
+      '4242 4242 4242 4242',
+      '5555 5555 5555 4444',
+      '4000 0000 0000 0002',
+      '4000 0000 0000 9995',
+      '9999 9999 9999 9995'
+    ]);
+    expect(texto('[data-ayuda-tarjetas]')).toContain('Fondos insuficientes');
+
+    elemento().querySelectorAll<HTMLButtonElement>('[data-usar-tarjeta]')[1].click();
+    await estable();
+    expect(elemento().querySelector<HTMLInputElement>('[data-numero]')!.value).toBe('5555 5555 5555 4444');
+    expect(texto('[data-marca]')).toBe('Mastercard');
+  });
+
+  it('CA-160 con Stripe en modo de prueba usa las mismas tarjetas de prueba y lo indica', async () => {
+
+    await abrirPago({ ...configuracionPago, modo: 'STRIPE_TEST', clavePublica: 'pk_test_123' });
+
+    expect(texto('[data-ambiente-prueba]')).toContain('Modo de prueba de Stripe: no se realizan cobros reales');
+    await escribirTarjeta('4242 4242 4242 4242');
+    boton('[data-pagar]').click();
+    await estable();
+    const req = pedidoReserva();
+    expect(req.request.body.metodoPago).toBe('pm_card_visa');
+    rechazar(req, 402, 'El pago fue rechazado: prueba.');
+    await estable();
+  });
+
+  it('CA-161 con el pago aprobado muestra la reserva pagada con el pago registrado y su referencia', async () => {
+
+    await abrirPago();
+    await escribirTarjeta('4242 4242 4242 4242');
+    boton('[data-pagar]').click();
+    await estable();
+
+    expect(texto('[data-pagar]')).toBe('Procesando pago...');
+    const req = pedidoReserva();
+    expect(req.request.body.metodoPago).toBe('pm_card_visa');
+    req.flush({ ...reserva, pago: pagoAprobado }, { status: 201, statusText: 'Created' });
+    await estable();
+    pedidoDisponibilidad().flush({ idAlojamiento: 7, fechaEntrada: llegada, fechaSalida: salida, disponible: false });
+    await estable();
+
+    expect(existe('[data-pago]')).toBe(false);
+    expect(elemento().querySelector('[data-reserva]')?.getAttribute('data-estado')).toBe('CONFIRMADA');
+    expect(elemento().querySelector('[data-pago-registrado]')?.getAttribute('data-resultado-pago')).toBe('APROBADO');
+    expect(texto('[data-estado-pago]')).toContain('Aprobado');
+    expect(digitos(texto('[data-estado-pago]'))).toBe('740000');
+    expect(texto('[data-referencia-pago]')).toBe('sim_pi_123');
+    expect(texto('[data-reserva] [data-ambiente-prueba]')).toContain('Pago simulado: ambiente de prueba, no se hizo ningún cobro real');
+  });
+
+  it('CA-162 con la tarjeta rechazada la reserva no queda pagada, se informa el motivo y se puede pagar con otra tarjeta', async () => {
+
+    await abrirPago();
+    await escribirTarjeta('4000 0000 0000 0002');
+    boton('[data-pagar]').click();
+    await estable();
+
+    const primero = pedidoReserva();
+    expect(primero.request.body.metodoPago).toBe('pm_card_chargeDeclined');
+    const claveRechazada = primero.request.headers.get('Idempotency-Key');
+    primero.flush(
+      { message: 'El pago fue rechazado: tarjeta rechazada. La reserva no quedó pagada.', dato: { ...reserva, estado: 'CANCELADA' } },
+      { status: 402, statusText: 'Payment Required' }
+    );
+    await estable();
+
+    // El modal sigue abierto con el motivo; no se muestra ninguna reserva.
+    expect(existe('[data-pago]')).toBe(true);
+    expect(texto('[data-error-pago]')).toBe('El pago fue rechazado: tarjeta rechazada. La reserva no quedó pagada.');
+    expect(existe('[data-reserva]')).toBe(false);
+    expect(texto('[data-mensaje-error]')).toBe('El pago no se confirmó y la reserva no quedó pagada.');
+
+    // Con otra tarjeta es otra petición, con otra clave.
+    await escribirTarjeta('4242 4242 4242 4242');
+    boton('[data-pagar]').click();
+    await estable();
+
+    const segundo = pedidoReserva();
+    expect(segundo.request.body.metodoPago).toBe('pm_card_visa');
+    expect(segundo.request.headers.get('Idempotency-Key')).not.toBe(claveRechazada);
+    segundo.flush({ ...reserva, pago: pagoAprobado }, { status: 201, statusText: 'Created' });
+    await estable();
+    pedidoDisponibilidad().flush({ idAlojamiento: 7, fechaEntrada: llegada, fechaSalida: salida, disponible: false });
+    await estable();
+
+    expect(existe('[data-error-pago]')).toBe(false);
+    expect(texto('[data-estado-pago]')).toContain('Aprobado');
+  });
+
+  it('CA-162 con la tarjeta reservada para la falla de la pasarela informa que el pago no se confirmó', async () => {
+
+    await abrirPago();
+    await escribirTarjeta('9999 9999 9999 9995');
+    boton('[data-pagar]').click();
+    await estable();
+
+    const fallido = pedidoReserva();
+    expect(fallido.request.body.metodoPago).toBe('pm_card_error');
+    rechazar(fallido, 502, 'No se pudo confirmar el pago: falla de la pasarela. La reserva no quedó pagada.');
+    await estable();
+
+    expect(texto('[data-error-pago]')).toContain('No se pudo confirmar el pago');
+    expect(texto('[data-error-pago]')).toContain('La reserva no quedó pagada.');
+    expect(existe('[data-reserva]')).toBe(false);
+    expect(existe('[data-pago-registrado]')).toBe(false);
+  });
+
+  it('si no carga la configuración de pagos no deja pagar y permite reintentar', async () => {
+
+    await abrirConCotizacion();
+    boton('[data-confirmar]').click();
+    await estable();
+    http.expectOne(r => r.url === urlConfiguracionPago).flush(null, { status: 500, statusText: 'Error' });
+    await estable();
+
+    expect(texto('[data-pago]')).toContain('No se pudo cargar la configuración de pagos');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    boton('[data-recargar-config]').click();
+    http.expectOne(r => r.url === urlConfiguracionPago).flush(configuracionPago);
+    await estable();
+    await escribirTarjeta('4242 4242 4242 4242');
+    expect(boton('[data-pagar]').disabled).toBe(false);
+  });
+
+  it('"Cancelar" cierra el modal sin crear la reserva y descarta los datos de la tarjeta', async () => {
+
+    await abrirPago();
+    await escribirTarjeta('4242 4242 4242 4242');
+    boton('[data-cancelar-pago]').click();
+    await estable();
+
+    expect(existe('[data-pago]')).toBe(false);
+    http.expectNone(r => r.method === 'POST' && r.url === urlReservas);
+
+    // Al volver a abrirlo, los campos están vacíos.
+    boton('[data-confirmar]').click();
+    await estable();
+    http.expectOne(r => r.url === urlConfiguracionPago).flush(configuracionPago);
+    await estable();
+    expect(elemento().querySelector<HTMLInputElement>('[data-numero]')!.value).toBe('');
   });
 });

@@ -1,0 +1,235 @@
+@let c = cotizacion();
+<div
+  data-pago
+  class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-slate-900/50 p-4"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="pago-titulo"
+>
+  <div class="w-full max-w-lg rounded-3xl bg-white p-7 shadow-2xl">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <h2 id="pago-titulo" class="font-display text-2xl font-bold text-slate-900">Confirma y paga</h2>
+        @if (titulo()) {
+          <p class="mt-1 text-sm text-slate-500">{{ titulo() }}</p>
+        }
+      </div>
+      <button
+        type="button"
+        (click)="cerrar()"
+        [disabled]="pagando()"
+        aria-label="Cerrar"
+        class="grid size-8 place-items-center rounded-full text-slate-500 transition hover:bg-slate-100 disabled:opacity-40"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </svg>
+      </button>
+    </div>
+    <p class="mt-4 text-sm text-slate-600">
+      {{ c.fechaEntrada | date: 'dd/MM/yyyy' }} → {{ c.fechaSalida | date: 'dd/MM/yyyy' }}
+      · {{ c.noches }} {{ c.noches === 1 ? 'noche' : 'noches' }}
+      · {{ c.huespedes }} {{ c.huespedes === 1 ? 'huésped' : 'huéspedes' }}
+    </p>
+    <!-- Desglose -->
+    <dl data-desglose-pago class="mt-4 space-y-2 border-y border-slate-200 py-4 text-sm text-slate-600">
+      <div class="flex justify-between">
+        <dt>{{ c.precioNoche | currency: moneda() : 'symbol-narrow' : '1.0-0' }} × {{ c.noches }} noches</dt>
+        <dd>{{ c.precioBase | currency: moneda() : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+      @if (c.descuento > 0) {
+        <div class="flex justify-between text-emerald-700">
+          <dt>Descuento</dt>
+          <dd>−{{ c.descuento | currency: moneda() : 'symbol-narrow' : '1.0-0' }}</dd>
+        </div>
+      }
+      <div class="flex justify-between">
+        <dt>Limpieza ({{ c.porcentajeLimpieza }}%)</dt>
+        <dd>{{ c.valorLimpieza | currency: moneda() : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt>Servicio ({{ c.porcentajeServicio }}%)</dt>
+        <dd>{{ c.valorServicio | currency: moneda() : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+      @if (c.valorAdicionales > 0) {
+        <div class="flex justify-between">
+          <dt>
+            Servicios adicionales
+            @for (s of c.serviciosAdicionales ?? []; track s.idServicio) {
+              <span class="block text-xs text-slate-400">{{ s.nombre }}</span>
+            }
+          </dt>
+          <dd>{{ c.valorAdicionales | currency: moneda() : 'symbol-narrow' : '1.0-0' }}</dd>
+        </div>
+      }
+      <div class="flex justify-between pt-2 text-base font-bold text-slate-900">
+        <dt>Total</dt>
+        <dd>{{ c.total | currency: moneda() : 'symbol-narrow' : '1.0-0' }}</dd>
+      </div>
+    </dl>
+    <p class="mt-2 text-xs text-slate-400">
+      Cotización válida hasta las {{ c.fechaExpiracion | date: 'HH:mm' }}.
+    </p>
+    <!-- Método de pago de prueba (CA-160): no se piden datos de tarjeta ni se hacen cobros reales -->
+    <div class="mt-5">
+      @if (cargandoConfig()) {
+        <p class="text-sm text-slate-500">Cargando métodos de pago...</p>
+      } @else if (errorConfig(); as e) {
+        <div class="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+          {{ e }}
+          <button
+            type="button"
+            data-recargar-config
+            (click)="cargarConfiguracion()"
+            class="mt-2 block rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+          >
+            Reintentar
+          </button>
+        </div>
+      } @else if (config()) {
+        <!-- Datos de una tarjeta de prueba: solo se validan aquí, nunca se envían ni se guardan -->
+        <div class="space-y-3">
+          <div>
+            <label for="titular-sim" class="block text-xs font-bold text-slate-700">Nombre en la tarjeta (opcional)</label>
+            <input
+              id="titular-sim"
+              data-titular
+              type="text"
+              autocomplete="off"
+              placeholder="Como aparece en la tarjeta"
+              [disabled]="pagando()"
+              class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+              [value]="titular()"
+              (input)="titular.set($any($event.target).value)"
+            />
+          </div>
+          <div>
+            <label for="numero-sim" class="flex items-center justify-between text-xs font-bold text-slate-700">
+              Número de tarjeta
+              @if (marca()) {
+                <span data-marca class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{{ etiquetaMarca() }}</span>
+              }
+            </label>
+            <input
+              id="numero-sim"
+              data-numero
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="1234 5678 9012 3456"
+              maxlength="23"
+              [disabled]="pagando()"
+              class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+              [value]="numero()"
+              (input)="onNumero($any($event.target))"
+            />
+            @if (errorNumero(); as e) {
+              <p data-error-numero class="mt-1 text-xs text-red-600">{{ e }}</p>
+            }
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="vencimiento-sim" class="block text-xs font-bold text-slate-700">Vencimiento (MM/AA)</label>
+              <input
+                id="vencimiento-sim"
+                data-vencimiento
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="MM/AA"
+                maxlength="5"
+                [disabled]="pagando()"
+                class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                [value]="vencimiento()"
+                (input)="onVencimiento($any($event.target))"
+              />
+              @if (errorVencimiento(); as e) {
+                <p data-error-vencimiento class="mt-1 text-xs text-red-600">{{ e }}</p>
+              }
+            </div>
+            <div>
+              <label for="cvc-sim" class="block text-xs font-bold text-slate-700">CVC</label>
+              <input
+                id="cvc-sim"
+                data-cvc
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                [placeholder]="marca() === 'amex' ? '4 dígitos' : '3 dígitos'"
+                maxlength="4"
+                [disabled]="pagando()"
+                class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                [value]="cvc()"
+                (input)="onCvc($any($event.target))"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjetas de prueba disponibles -->
+        <details data-ayuda-tarjetas class="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+          <summary class="cursor-pointer font-bold text-slate-700">Ver tarjetas de prueba</summary>
+          <ul class="mt-2 space-y-1">
+            @for (t of ayuda(); track t.numero) {
+              <li class="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  data-usar-tarjeta
+                  (click)="usarTarjeta(t.numero)"
+                  class="font-mono text-slate-800 underline-offset-2 hover:text-emerald-700 hover:underline"
+                >
+                  {{ t.formateado }}
+                </button>
+                <span [class]="t.aprobada ? 'text-emerald-700' : 'text-red-600'">{{ t.descripcion }}</span>
+              </li>
+            }
+          </ul>
+          <p class="mt-2">Usa cualquier fecha futura y cualquier CVC.</p>
+        </details>
+
+        <p data-ambiente-prueba class="mt-3 text-xs text-slate-400">
+          @if (modoStripe()) {
+            Modo de prueba de Stripe: no se realizan cobros reales.
+          } @else {
+            Pago simulado: no se realizan cobros reales.
+          }
+          Los datos de la tarjeta solo se validan en tu navegador (no se envían ni se guardan) y el resultado
+          depende de la tarjeta de prueba. No escribas tarjetas reales.
+        </p>
+      }
+    </div>
+    @if (error(); as e) {
+      <div data-error-pago class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
+        {{ e }}
+      </div>
+    }
+    @if (config() && !puedePagar() && !pagando()) {
+      <p data-completar class="mt-4 text-center text-xs text-slate-500">Completa los datos de la tarjeta para habilitar el pago.</p>
+    }
+    <div class="mt-6 flex gap-3">
+      <button
+        type="button"
+        data-cancelar-pago
+        (click)="cerrar()"
+        [disabled]="pagando()"
+        class="flex-1 rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-40"
+      >
+        Cancelar
+      </button>
+      <button
+        type="button"
+        data-pagar
+        (click)="confirmarPago()"
+        [disabled]="!puedePagar()"
+        [attr.aria-busy]="pagando()"
+        class="flex-[2] rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        @if (pagando()) {
+          Procesando pago...
+        } @else {
+          Pagar {{ c.total | currency: moneda() : 'symbol-narrow' : '1.0-0' }}
+        }
+      </button>
+    </div>
+  </div>
+</div>

@@ -22,6 +22,7 @@ import {
   fechaLegible
 } from '../../disponibilidad/validaciones/fechas-estadia';
 import { EstadoReserva, Reserva } from '../models/reserva';
+import { PagoReserva } from '../pago-reserva/pago-reserva';
 import { ReservaService } from '../services/reserva.service';
 import {
   ErrorReserva,
@@ -74,6 +75,14 @@ const ETIQUETAS_ESTADO: Record<EstadoReserva, string> = {
 /** Espera tras el último cambio de huéspedes o servicios antes de recotizar. */
 export const ESPERA_RECOTIZAR_MS = 400;
 
+const ETIQUETAS_PAGO: Record<string, string> = {
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Rechazado',
+  ERROR: 'No confirmado',
+  PENDIENTE: 'Pendiente',
+  REEMBOLSADO: 'Reembolsado'
+};
+
 const FORMATO_COP = new Intl.NumberFormat('es-CO', {
   style: 'currency',
   currency: 'COP',
@@ -87,6 +96,10 @@ const FORMATO_COP = new Intl.NumberFormat('es-CO', {
 // HU-31: el huésped elige huéspedes y servicios adicionales y la cotización
 // se pide de nuevo al backend con cada cambio (CA-080, CA-083, CA-084,
 // CA-179, CA-183). El front no calcula ningún valor.
+// HU-27: "Confirmar reserva" abre el modal "Confirma y paga" para elegir un
+// método de pago de prueba; POST /reservas lo cobra en ambiente de prueba
+// (CA-160) y la pantalla muestra el pago registrado (CA-161) o el rechazo,
+// que permite intentar con otro método (CA-162).
 // El front cotiza (POST /cotizaciones), muestra el resumen y confirma con
 // POST /reservas enviando solo la cotización. La revalidación de la
 // disponibilidad, la exclusión de reservas simultáneas, el monto y el
@@ -96,7 +109,7 @@ const FORMATO_COP = new Intl.NumberFormat('es-CO', {
 @Component({
   selector: 'app-confirmar-reserva',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, PagoReserva],
   templateUrl: './confirmar-reserva.html'
 })
 export class ConfirmarReserva implements OnInit {
@@ -152,6 +165,12 @@ export class ConfirmarReserva implements OnInit {
    * definitiva o hay una cotización nueva.
    */
   private claveIdempotencia: string | null = null;
+
+  /** Método de pago enviado con la clave actual: la clave solo se repite con el mismo método. */
+  private metodoIntento: string | null = null;
+
+  /** Modal "Confirma y paga" abierto (HU-27). */
+  readonly pagoAbierto = signal(false);
 
   private peticionCotizacion: Subscription | null = null;
 
@@ -432,11 +451,44 @@ export class ConfirmarReserva implements OnInit {
   }
 
   // ======================================
-  // 2. CONFIRMAR (CA-070, CA-074, CA-075, CA-086)
-  // POST /reservas con { idCotizacion } y la cabecera Idempotency-Key
+  // 2. CONFIRMAR Y PAGAR (CA-070, CA-074, CA-075, CA-086, HU-27)
+  // POST /reservas con { idCotizacion, metodoPago } y la cabecera Idempotency-Key
   // ======================================
 
-  confirmar(): void {
+  /** Botón de la página: abre el modal de pago o, tras un error de conexión, repite la misma petición. */
+  iniciarConfirmacion(): void {
+
+    if (!this.puedeConfirmar()) {
+      return;
+    }
+
+    if (this.esReintento() && this.metodoIntento !== null) {
+      this.confirmar(this.metodoIntento);
+      return;
+    }
+
+    this.pagoAbierto.set(true);
+  }
+
+  cerrarPago(): void {
+    if (!this.enviando()) {
+      this.pagoAbierto.set(false);
+    }
+  }
+
+  /** Motivo del rechazo del pago que se muestra dentro del modal (CA-162). */
+  readonly errorPago = computed(() => {
+    const confirmacion = this.confirmacion();
+    if (confirmacion.tipo !== 'rechazada' || confirmacion.error.tipo !== 'pago-rechazado') {
+      return null;
+    }
+    return confirmacion.error.detalle || confirmacion.error.mensaje;
+  });
+
+  /**
+   * @param metodoPago método de pago de prueba elegido en el modal (HU-27)
+   */
+  confirmar(metodoPago: string): void {
 
     const cotizacion = this.cotizacion();
 
@@ -445,19 +497,26 @@ export class ConfirmarReserva implements OnInit {
       return;
     }
 
+    // Con otro método es otra petición: no se reutiliza la clave del intento anterior.
+    if (this.metodoIntento !== metodoPago) {
+      this.claveIdempotencia = null;
+    }
+
     const clave =
       this.claveIdempotencia ?? this.reservas.nuevaClaveIdempotencia();
 
     this.claveIdempotencia = clave;
+    this.metodoIntento = metodoPago;
 
     this.confirmacion.set({ tipo: 'enviando' });
 
     this.reservas
-      // Solo la cotización: el backend toma el monto de ella (CA-086).
-      .crear({ idCotizacion: cotizacion.idCotizacion }, clave)
+      // Solo la cotización y el método: el backend toma el monto de ella (CA-086).
+      .crear({ idCotizacion: cotizacion.idCotizacion, metodoPago }, clave)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ({ reserva, repetida }) => {
+          this.pagoAbierto.set(false);
           this.confirmacion.set({ tipo: 'confirmada', reserva, repetida });
           this.actualizarDisponibilidad(reserva);
         },
@@ -467,6 +526,13 @@ export class ConfirmarReserva implements OnInit {
           // Con una respuesta definitiva, el siguiente intento es otra petición.
           if (!TIPOS_REINTENTABLES.includes(error.tipo)) {
             this.claveIdempotencia = null;
+            this.metodoIntento = null;
+          }
+
+          // Un pago rechazado se informa en el modal para elegir otro método (CA-162);
+          // los demás errores se muestran en la página.
+          if (error.tipo !== 'pago-rechazado') {
+            this.pagoAbierto.set(false);
           }
 
           this.confirmacion.set({ tipo: 'rechazada', error });
@@ -508,6 +574,18 @@ export class ConfirmarReserva implements OnInit {
 
   moneda(valor: number | null | undefined): string {
     return typeof valor === 'number' ? FORMATO_COP.format(valor) : '';
+  }
+
+  /** Texto del proveedor del pago: siempre un ambiente de prueba (CA-160). */
+  proveedorPago(proveedor: string | undefined): string {
+    if (proveedor === 'STRIPE_TEST') {
+      return 'Stripe (modo de prueba)';
+    }
+    return proveedor === 'SIMULADO' ? 'Pago simulado' : (proveedor ?? '');
+  }
+
+  etiquetaPago(estado: string | undefined): string {
+    return ETIQUETAS_PAGO[estado ?? ''] ?? (estado ?? '');
   }
 
   etiquetaEstado(estado: EstadoReserva): string {
