@@ -5,8 +5,8 @@ import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { API_URL } from '../../core/services/api-url';
 import { HistorialPublicacion, Pagina, PublicacionAdmin } from '../models/publicacion-admin';
 
-/** Acciones de revisión que el administrador aplica a una publicación (HU-32). */
-export type AccionRevision = 'aprobar' | 'rechazar';
+/** Acciones que el administrador aplica a una publicación: revisión (HU-32) y bloqueo (HU-11). */
+export type AccionRevision = 'aprobar' | 'rechazar' | 'bloquear';
 
 /** Textos y comportamiento del cuadro de confirmación de cada acción. */
 export interface ConfigAccion {
@@ -19,6 +19,8 @@ export interface ConfigAccion {
   peligro: boolean;
   /** Estado en el que queda la publicación si la acción se aplica. */
   resultado: string;
+  /** Mensaje de confirmación; {titulo} se reemplaza por el título de la publicación. */
+  exito: string;
 }
 
 /** Largo máximo del motivo de rechazo (igual que en el backend). */
@@ -44,6 +46,7 @@ export const ACCIONES_REVISION: Record<AccionRevision, ConfigAccion> = {
     requiereMotivo: false,
     peligro: false,
     resultado: 'ACTIVA',
+    exito: '"{titulo}" fue aprobada y ya está publicada.',
   },
   rechazar: {
     titulo: 'Rechazar publicación',
@@ -54,12 +57,37 @@ export const ACCIONES_REVISION: Record<AccionRevision, ConfigAccion> = {
     requiereMotivo: true,
     peligro: true,
     resultado: 'BORRADOR',
+    exito: '"{titulo}" fue rechazada y volvió a borrador.',
+  },
+  bloquear: {
+    titulo: 'Bloquear publicación',
+    texto: 'Dejará de aparecer en las búsquedas y sus reservas futuras pasarán a EN_REVISION para revisión manual. Se notificará al anfitrión y a los huéspedes afectados.',
+    etiquetaMotivo: 'Motivo del bloqueo',
+    confirmar: 'Confirmar bloqueo',
+    boton: 'Bloquear',
+    requiereMotivo: true,
+    peligro: true,
+    resultado: 'BLOQUEADA',
+    exito: '"{titulo}" fue bloqueada. Sus reservas futuras quedaron en revisión.',
   },
 };
 
-/** Solo las publicaciones pendientes de revisión se pueden aprobar o rechazar. */
+/** Acciones que el administrador puede aplicar según el estado actual. */
 export function accionesDe(estado: string): AccionRevision[] {
-  return estado === 'PENDIENTE_REVISION' ? ['aprobar', 'rechazar'] : [];
+  switch (estado) {
+    case 'PENDIENTE_REVISION':
+      return ['aprobar', 'rechazar'];
+    case 'ACTIVA':
+    case 'PAUSADA':
+      return ['bloquear'];
+    default:
+      return []; // BORRADOR depende del anfitrión; BLOQUEADA ya está bloqueada
+  }
+}
+
+/** Mensaje de confirmación de una acción para una publicación. */
+export function mensajeExito(accion: AccionRevision, titulo: string): string {
+  return ACCIONES_REVISION[accion].exito.replace('{titulo}', titulo);
 }
 
 /** Primer valor no vacío entre varias claves posibles (los DTO pueden nombrarlas distinto). */
@@ -101,8 +129,8 @@ export function claseBadge(estado: string): string {
 }
 
 /**
- * Revisión de publicaciones del administrador (HU-32).
- * GET /admin/alojamientos, POST /admin/alojamientos/{id}/aprobar y /rechazar.
+ * Revisión y moderación de publicaciones del administrador (HU-32 y HU-11).
+ * GET /admin/alojamientos, POST /admin/alojamientos/{id}/aprobar, /rechazar y /bloquear.
  * El token lo agrega el interceptor.
  */
 @Injectable({ providedIn: 'root' })
@@ -175,9 +203,21 @@ export class AdminPublicacionesService {
     return this.http.post<PublicacionAdmin>(`${this.base}/${id}/rechazar`, { motivo });
   }
 
+  /** Cualquier estado → BLOQUEADA, con motivo obligatorio; sus reservas futuras pasan a EN_REVISION (HU-11). */
+  bloquear(id: number, motivo: string): Observable<PublicacionAdmin> {
+    return this.http.post<PublicacionAdmin>(`${this.base}/${id}/bloquear`, { motivo });
+  }
+
   /** Aplica la acción elegida. */
   ejecutar(accion: AccionRevision, id: number, motivo = ''): Observable<PublicacionAdmin> {
-    return accion === 'aprobar' ? this.aprobar(id) : this.rechazar(id, motivo);
+    switch (accion) {
+      case 'aprobar':
+        return this.aprobar(id);
+      case 'rechazar':
+        return this.rechazar(id, motivo);
+      default:
+        return this.bloquear(id, motivo);
+    }
   }
 
   /** Mensaje legible a partir de un error HTTP del backend. */

@@ -118,6 +118,20 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+  // ====================================
+  // RESERVAS EN REVISIÓN POR BLOQUEO (HU-11)
+  // SOLO ADMINISTRADOR. Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'admin/reservas',
+    loadComponent: () =>
+      import('./administracion/reservas/reservas')
+        .then(m => m.ReservasAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
 
 
   // ====================================

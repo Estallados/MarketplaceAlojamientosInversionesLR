@@ -13,6 +13,7 @@ import {
   claseBadge,
   estadoDe,
   etiquetaEstado,
+  mensajeExito,
 } from '../services/admin-publicaciones.service';
 
 /**
@@ -62,6 +63,7 @@ export class RevisarPublicaciones implements OnInit {
   readonly pendientes = computed(() => this.contar('PENDIENTE_REVISION'));
   readonly activas = computed(() => this.contar('ACTIVA'));
   readonly enBorrador = computed(() => this.contar('BORRADOR'));
+  readonly bloqueadas = computed(() => this.contar('BLOQUEADA'));
 
   // ---- Modal de aprobar / rechazar ----
   readonly accion = signal<{ tipo: AccionRevision; publicacion: PublicacionAdmin } | null>(null);
@@ -161,11 +163,7 @@ export class RevisarPublicaciones implements OnInit {
       next: (actualizada) => {
         const nueva: PublicacionAdmin = { ...a.publicacion, ...actualizada, estado: ACCIONES[a.tipo].resultado };
         this.publicaciones.update((lista) => lista.map((p) => (p.idAlojamiento === id ? nueva : p)));
-        this.mensaje.set(
-          a.tipo === 'aprobar'
-            ? `"${a.publicacion.titulo}" fue aprobada y ya está publicada.`
-            : `"${a.publicacion.titulo}" fue rechazada y volvió a borrador.`,
-        );
+        this.mensaje.set(mensajeExito(a.tipo, a.publicacion.titulo));
         this.enviando.set(false);
         this.accion.set(null);
       },

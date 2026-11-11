@@ -7,7 +7,7 @@
   </div>
 
   <!-- Métricas -->
-  <div class="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-3">
+  <div class="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-4">
     <div class="rounded-2xl border border-slate-200 bg-white p-5">
       <p class="text-sm text-slate-500">Pendientes de revisión</p>
       <p class="font-display mt-1 text-3xl font-bold text-amber-700">{{ pendientes() }}</p>
@@ -19,6 +19,10 @@
     <div class="rounded-2xl border border-slate-200 bg-white p-5">
       <p class="text-sm text-slate-500">En borrador</p>
       <p class="font-display mt-1 text-3xl font-bold text-slate-700">{{ enBorrador() }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+      <p class="text-sm text-slate-500">Bloqueadas</p>
+      <p class="font-display mt-1 text-3xl font-bold text-red-700">{{ bloqueadas() }}</p>
     </div>
   </div>
 
@@ -39,13 +43,12 @@
     />
     <select
       aria-label="Filtrar por estado"
-      [value]="filtroEstado()"
       (change)="filtrarEstado($any($event.target).value)"
       class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
     >
-      <option value="Todos">Todos los estados</option>
+      <option value="Todos" [selected]="filtroEstado() === 'Todos'">Todos los estados</option>
       @for (e of estados; track e.valor) {
-        <option [value]="e.valor">{{ e.texto }}</option>
+        <option [value]="e.valor" [selected]="filtroEstado() === e.valor">{{ e.texto }}</option>
       }
     </select>
   </div>
@@ -143,13 +146,13 @@
               (input)="motivo.set($any($event.target).value)"
               [attr.maxlength]="maxMotivo"
               rows="4"
-              placeholder="Explica al anfitrión qué debe corregir..."
+              [attr.placeholder]="accion()?.tipo === 'bloquear' ? 'Explica por qué se bloquea la publicación...' : 'Explica al anfitrión qué debe corregir...'"
               class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
             ></textarea>
             <span class="mt-1 block text-right text-xs text-slate-400">{{ motivo().length }} / {{ maxMotivo }}</span>
           </label>
           @if (!motivo().trim()) {
-            <p class="text-xs font-semibold text-red-600">El motivo del rechazo es obligatorio.</p>
+            <p class="text-xs font-semibold text-red-600">El motivo es obligatorio.</p>
           }
         }
 
