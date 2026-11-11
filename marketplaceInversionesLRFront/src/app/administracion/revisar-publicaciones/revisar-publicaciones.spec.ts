@@ -9,7 +9,8 @@ import { AdminPublicacionesService } from '../services/admin-publicaciones.servi
 import { PublicacionAdmin } from '../models/publicacion-admin';
 
 /**
- * HU-32 Revisar, aprobar o rechazar publicaciones (SCRUM-250).
+ * HU-32 Revisar, aprobar o rechazar publicaciones (SCRUM-250)
+ * y HU-11 Bloquear publicaciones (SCRUM-266).
  */
 describe('RevisarPublicaciones (HU-32)', () => {
   let componente: RevisarPublicaciones;
@@ -47,7 +48,7 @@ describe('RevisarPublicaciones (HU-32)', () => {
     expect(componente.visibles()).toEqual([pendiente]);
     expect(componente.pendientes()).toBe(1);
     expect(componente.accionesDe(pendiente)).toEqual(['aprobar', 'rechazar']);
-    expect(componente.accionesDe(activa)).toEqual([]);
+    expect(componente.accionesDe(activa)).toEqual(['bloquear']);
   });
 
   it('CA-195: aprobar deja la publicación ACTIVA y muestra confirmación', () => {
@@ -87,5 +88,27 @@ describe('RevisarPublicaciones (HU-32)', () => {
 
     expect(componente.errorAccion()).toBe('El alojamiento no está pendiente de revisión.');
     expect(componente.accion()).not.toBeNull();
+  });
+
+  it('CA-054: bloquea una publicación activa con motivo obligatorio', () => {
+    servicio.ejecutar.mockReturnValue(of({ ...activa, estado: 'BLOQUEADA' }));
+    expect(componente.accionesDe(activa)).toEqual(['bloquear']);
+
+    componente.pedirAccion('bloquear', activa);
+    componente.confirmarAccion();
+    expect(componente.puedeConfirmar()).toBe(false);
+    expect(servicio.ejecutar).not.toHaveBeenCalled();
+
+    componente.motivo.set(' Fotos engañosas ');
+    componente.confirmarAccion();
+
+    expect(servicio.ejecutar).toHaveBeenCalledWith('bloquear', 9, 'Fotos engañosas');
+    expect(componente.publicaciones().find((p) => p.idAlojamiento === 9)?.estado).toBe('BLOQUEADA');
+    expect(componente.bloqueadas()).toBe(1);
+    expect(componente.mensaje()).toContain('bloqueada');
+  });
+
+  it('CA-054: una publicación bloqueada no ofrece más acciones', () => {
+    expect(componente.accionesDe({ ...activa, estado: 'BLOQUEADA' })).toEqual([]);
   });
 });

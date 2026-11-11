@@ -12,12 +12,13 @@ import {
   claseBadge,
   estadoDe,
   etiquetaEstado,
+  mensajeExito,
   valorDe,
 } from '../services/admin-publicaciones.service';
 
 /**
- * Detalle de una publicación para el administrador (HU-32): datos, anfitrión, historial de estados
- * y botones para aprobar o rechazar con motivo.
+ * Detalle de una publicación para el administrador (HU-32 y HU-11): datos, anfitrión, historial de estados
+ * y botones para aprobar, rechazar o bloquear con motivo.
  */
 @Component({
   selector: 'app-detalle-publicacion',
@@ -63,7 +64,7 @@ export class DetallePublicacion implements OnInit {
     ].filter((fila) => !!fila.value);
   });
 
-  // ---- Modal de aprobar / rechazar ----
+  // ---- Modal de aprobar / rechazar / bloquear ----
   readonly accion = signal<AccionRevision | null>(null);
   readonly enviando = signal(false);
   readonly errorAccion = signal<string | null>(null);
@@ -136,11 +137,7 @@ export class DetallePublicacion implements OnInit {
     this.admin.ejecutar(tipo, this.id, this.motivo().trim()).subscribe({
       next: (actualizada) => {
         this.publicacion.set({ ...actual, ...actualizada, estado: ACCIONES[tipo].resultado });
-        this.mensaje.set(
-          tipo === 'aprobar'
-            ? 'La publicación fue aprobada y ya está visible para los huéspedes.'
-            : 'La publicación fue rechazada y volvió a borrador. Se notificó al anfitrión.',
-        );
+        this.mensaje.set(mensajeExito(tipo, actual.titulo));
         this.cargarHistorial();
         this.enviando.set(false);
         this.accion.set(null);
