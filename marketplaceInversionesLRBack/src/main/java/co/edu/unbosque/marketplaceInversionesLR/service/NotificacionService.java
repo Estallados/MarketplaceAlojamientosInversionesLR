@@ -19,8 +19,9 @@ import co.edu.unbosque.marketplaceInversionesLR.util.Resultado;
  * las crean con {@link #enviar} cuando ocurre un evento relevante (CA-010):
  * reservas confirmadas o canceladas, pagos no confirmados, decisiones sobre
  * publicaciones y cuentas restringidas o liberadas. Cada usuario las consulta,
- * las cuenta y las marca como leídas, solo las suyas (CA-013). No hay correo,
- * SMS ni push.
+ * las cuenta y las marca como leídas, solo las suyas (CA-013). Además se le
+ * envían en tiempo real por WebSocket ({@code /user/queue/notificaciones}). No
+ * hay correo, SMS ni push.
  */
 @Service
 public class NotificacionService {
@@ -53,6 +54,8 @@ public class NotificacionService {
 
 	/** Un huésped reseñó un alojamiento; la recibe su anfitrión (HU-03). */
 	public static final String RESENA_RECIBIDA = "RESENA_RECIBIDA";
+	/** Llegó un mensaje nuevo en una conversación (HU-28). */
+	public static final String MENSAJE_RECIBIDO = "MENSAJE_RECIBIDO";
 
 	/** Mensaje cuando la notificación no existe o es de otro usuario. */
 	public static final String NO_EXISTE = "La notificación no existe.";
@@ -60,13 +63,18 @@ public class NotificacionService {
 	/** Repositorio de notificaciones. */
 	private final NotificacionRepository notificacionRepo;
 
+	/** Envía la notificación por WebSocket. */
+	private final TiempoRealService tiempoReal;
+
 	/**
 	 * Crea el servicio.
 	 *
 	 * @param notificacionRepo repositorio de notificaciones
+	 * @param tiempoReal       servicio de envíos en tiempo real
 	 */
-	public NotificacionService(NotificacionRepository notificacionRepo) {
+	public NotificacionService(NotificacionRepository notificacionRepo, TiempoRealService tiempoReal) {
 		this.notificacionRepo = notificacionRepo;
+		this.tiempoReal = tiempoReal;
 	}
 
 	/**
@@ -89,6 +97,8 @@ public class NotificacionService {
 		notificacion.setFecha(LocalDateTime.now());
 		notificacion.setLeida(false);
 		notificacionRepo.save(notificacion);
+		// Una entidad nueva queda con su id al guardarla
+		tiempoReal.enviarAUsuario(idUsuario, TiempoRealService.NOTIFICACIONES, convertirDTO(notificacion));
 	}
 
 	/**

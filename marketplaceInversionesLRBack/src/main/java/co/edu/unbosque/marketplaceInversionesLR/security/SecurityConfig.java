@@ -110,6 +110,9 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
 						// HU-27: configuración de pagos (modo y clave publicable de Stripe) para el front
 						.requestMatchers(HttpMethod.GET, "/pagos/configuracion").permitAll()
+						// HU-28: handshake WebSocket; el navegador no envía Authorization aquí, el
+						// token se valida en el frame STOMP CONNECT (WebSocketAuthInterceptor)
+						.requestMatchers(HttpMethod.GET, "/ws").permitAll()
 						// HU-19: va antes de las rutas públicas para que /alojamientos/{id} no la cubra
 						.requestMatchers(HttpMethod.GET, "/alojamientos/mios").hasRole("ANFITRION")
 						// Políticas de cancelación que el anfitrión elige al crear la publicación (HU-15)

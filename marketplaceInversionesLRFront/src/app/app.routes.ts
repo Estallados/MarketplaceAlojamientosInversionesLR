@@ -106,6 +106,18 @@ export const routes: Routes = [
 
 
 
+  // ====================================
+  // DETALLE DEL ALOJAMIENTO CON MAPA (HU-18)
+  // PÚBLICA. Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
+    path: 'alojamientos/:id',
+    loadComponent: () =>
+      import('./alojamientos/detalle-alojamiento/detalle-alojamiento')
+        .then(m => m.DetalleAlojamientoPage)
+  },
+
   {
     path: 'alojamientos/:id/consultar-disponibilidad',
     loadComponent: () =>
