@@ -19,9 +19,13 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Reseña de una estancia, mapeada a la tabla {@code resena} de Neon. Por ahora
- * solo se lee para la calificación de los alojamientos y para ordenar la
- * búsqueda (HU-23); crearla y moderarla llega con la historia de reseñas.
+ * Reseña de una estancia, mapeada a la tabla {@code resena} de Neon. La
+ * escribe el huésped de una reserva completada (HU-03) y da la calificación de
+ * los alojamientos (HU-23). En Neon, el trigger
+ * {@code trg_resena_estancia_completada} rechaza la de una reserva no
+ * completada, {@code uq_resena_reserva} permite una por reserva y
+ * {@code trg_resena_proteger} impide borrarla o cambiar su contenido; solo el
+ * estado cambia (moderación, HU-14).
  */
 @Entity
 @Table(name = "resena")

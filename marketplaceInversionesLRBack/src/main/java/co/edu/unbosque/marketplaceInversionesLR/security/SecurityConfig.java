@@ -127,6 +127,8 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/alojamientos/*/disponibilidad").permitAll()
 						// HU-21: la consulta por fechas también es pública, con la misma regla
 						.requestMatchers(HttpMethod.GET, "/alojamientos/*/disponibilidad/consultar").permitAll()
+						// HU-03: las reseñas visibles de un alojamiento, con su promedio, son públicas (CA-019)
+						.requestMatchers(HttpMethod.GET, "/alojamientos/*/resenas").permitAll()
 						// HU-24: el anfitrión y el administrador configuran los porcentajes de tarifa
 						.requestMatchers("/admin/tarifas").hasAnyRole("ADMIN", "ANFITRION")
 						.requestMatchers("/admin/**").hasRole("ADMIN")

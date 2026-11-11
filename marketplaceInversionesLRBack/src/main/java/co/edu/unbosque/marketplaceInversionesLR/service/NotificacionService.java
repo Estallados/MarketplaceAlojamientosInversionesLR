@@ -52,6 +52,8 @@ public class NotificacionService {
 	/** El huésped canceló una reserva; la reciben el huésped y el anfitrión (HU-01). */
 	public static final String RESERVA_CANCELADA = "RESERVA_CANCELADA";
 
+	/** Un huésped reseñó un alojamiento; la recibe su anfitrión (HU-03). */
+	public static final String RESENA_RECIBIDA = "RESENA_RECIBIDA";
 	/** Llegó un mensaje nuevo en una conversación (HU-28). */
 	public static final String MENSAJE_RECIBIDO = "MENSAJE_RECIBIDO";
 
