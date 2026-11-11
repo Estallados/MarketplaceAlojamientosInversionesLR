@@ -3,7 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { EMPTY, Observable, expand, map, reduce } from 'rxjs';
 
 import { API_URL } from '../../core/services/api-url';
-import { PaginaReservas, Reserva, ReservaEntrada } from '../models/reserva';
+import {
+  CancelacionReserva,
+  PaginaReservas,
+  Reserva,
+  ReservaEntrada,
+  SimulacionCancelacion
+} from '../models/reserva';
 
 /** Resultado de POST /reservas. */
 export interface ReservaCreada {
@@ -110,5 +116,31 @@ export class ReservaService {
   obtener(id: number): Observable<Reserva> {
 
     return this.http.get<Reserva>(`${this.apiUrl}/${id}`);
+  }
+
+  // ====================================
+  // CANCELAR RESERVA (HU-01, solo HUESPED)
+  // GET  /reservas/{id}/simularcancelacion   política y devolución si cancela hoy (CA-001); no cancela nada
+  // POST /reservas/{id}/cancelar { motivo }  con la cabecera Idempotency-Key (RNF-008); aplica la política,
+  //      registra la cancelación (CA-004) y libera el período (CA-007) o respeta la política (CA-009).
+  // 400 motivo o clave inválidos · 401 sesión · 403 rol · 404 no existe o no es suya
+  // 409 no cancelable (estado o reserva ya iniciada) o petición en proceso · 422 clave reutilizada
+  // ====================================
+
+  simularCancelacion(id: number): Observable<SimulacionCancelacion> {
+
+    return this.http.get<SimulacionCancelacion>(`${this.apiUrl}/${id}/simularcancelacion`);
+  }
+
+  /**
+   * @param claveIdempotencia clave única por intento; repetirla solo al reintentar la misma cancelación
+   */
+  cancelar(id: number, motivo: string, claveIdempotencia: string): Observable<CancelacionReserva> {
+
+    return this.http.post<CancelacionReserva>(
+      `${this.apiUrl}/${id}/cancelar`,
+      { motivo },
+      { headers: { 'Idempotency-Key': claveIdempotencia } }
+    );
   }
 }

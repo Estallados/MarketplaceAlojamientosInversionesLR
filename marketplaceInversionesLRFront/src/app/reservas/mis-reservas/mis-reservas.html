@@ -103,7 +103,17 @@
                   Ver detalles
                 </button>
 
-                <!-- TODO(HU-01, SCRUM-252): botón "Cancelar reserva" del proyecto base (abre el detalle con ?accion=cancelar). -->
+                @if (puedeCancelar(r)) {
+                  <button
+                    type="button"
+                    data-cancelar
+                    (click)="abrir(r.idReserva, 'cancelar')"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition-all hover:bg-red-100"
+                  >
+                    Cancelar reserva
+                  </button>
+                }
+
                 <!-- TODO(HU-03): botones "Calificar estancia" / "Ver reseña" del proyecto base para reservas finalizadas. -->
               </div>
             </div>
