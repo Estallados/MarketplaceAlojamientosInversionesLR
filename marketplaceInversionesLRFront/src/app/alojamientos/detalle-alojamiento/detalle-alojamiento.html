@@ -63,15 +63,41 @@
         </p>
       }
 
-      <!-- Galería -->
-      <div class="mt-8 grid h-[520px] grid-cols-2 gap-3 overflow-hidden rounded-[26px]">
-        <img [src]="fotoPrincipal()" [alt]="'Foto principal de ' + stay.titulo" class="h-full w-full object-cover" />
-        <div class="grid grid-cols-2 gap-3">
-          @for (foto of fotosSecundarias(); track $index) {
-            <img [src]="foto" [alt]="'Foto ' + ($index + 2) + ' de ' + stay.titulo" class="h-full w-full object-cover" />
+      <!-- Galería: solo las fotos del alojamiento; la cuadrícula se ajusta a cuántas tiene -->
+      @if (fotoPrincipal(); as principal) {
+        <div
+          class="mt-8 grid h-[520px] gap-3 overflow-hidden rounded-[26px]"
+          [class.grid-cols-2]="fotosSecundarias().length > 0"
+          data-testid="galeria"
+        >
+          <img [src]="principal" [alt]="'Foto principal de ' + stay.titulo" class="h-full w-full object-cover" />
+          @if (fotosSecundarias().length === 1) {
+            <img [src]="fotosSecundarias()[0]" [alt]="'Foto 2 de ' + stay.titulo" class="h-full w-full object-cover" />
+          } @else if (fotosSecundarias().length > 1) {
+            <div class="grid grid-cols-2 gap-3" [class.grid-rows-2]="fotosSecundarias().length > 2">
+              @for (foto of fotosSecundarias(); track $index) {
+                <img
+                  [src]="foto"
+                  [alt]="'Foto ' + ($index + 2) + ' de ' + stay.titulo"
+                  class="h-full w-full object-cover"
+                  [class.row-span-2]="fotosSecundarias().length === 3 && $index === 0"
+                />
+              }
+            </div>
           }
         </div>
-      </div>
+      } @else {
+        <div class="mt-8 rounded-[26px] border border-dashed border-slate-300 bg-white p-16 text-center" data-testid="galeria-vacia">
+          <span class="mx-auto grid size-14 place-items-center rounded-full bg-emerald-50 text-emerald-700">
+            <svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <circle cx="9" cy="9" r="2" />
+              <path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21" />
+            </svg>
+          </span>
+          <p class="mt-4 text-sm text-slate-500">Este alojamiento todavía no tiene fotografías.</p>
+        </div>
+      }
 
       <div class="grid grid-cols-[1fr_400px] gap-16 py-14">
         <div>

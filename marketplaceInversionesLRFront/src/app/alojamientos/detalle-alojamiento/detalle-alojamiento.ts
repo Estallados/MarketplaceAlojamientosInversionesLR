@@ -8,15 +8,8 @@ import { DetalleAlojamientoService } from '../services/detalle-alojamiento.servi
 import { SessionService } from '../../core/services/session.service';
 import { FavoritoService } from '../../favoritos/services/favorito.service';
 
-/** Fotos de ejemplo para completar la galería cuando el alojamiento tiene pocas imágenes. */
-const FOTOS_RELLENO = [
-  'https://images.unsplash.com/photo-1613013383640-6226419147d7?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1623298460174-371443cc45f0?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1613013441633-785518cf90b3?auto=format&fit=crop&w=1200&q=85',
-  'https://images.unsplash.com/photo-1790141057166-6b41e4aeabfb?auto=format&fit=crop&w=1200&q=85',
-];
-const FOTO_PRINCIPAL =
-  'https://images.unsplash.com/photo-1684226910423-a4eb43a03257?auto=format&fit=crop&w=1200&q=85';
+/** Máximo de fotos de la galería: la principal y 4 pequeñas. */
+const MAX_FOTOS = 5;
 
 /** Distancia (metros) que se desplaza el punto del mapa para no mostrar la dirección exacta. */
 const DESPLAZAMIENTO_M = 300;
@@ -49,13 +42,14 @@ export class DetalleAlojamientoPage implements OnInit {
   readonly amenities = computed(() => this.stay()?.amenidades ?? []);
   readonly servicios = computed(() => this.stay()?.serviciosAdicionales ?? []);
 
-  /** Foto grande de la galería. */
-  readonly fotoPrincipal = computed(() => this.stay()?.imagenes?.[0] ?? FOTO_PRINCIPAL);
-  /** Las 4 fotos pequeñas: las del alojamiento y, si faltan, fotos de ejemplo. */
-  readonly fotosSecundarias = computed(() => {
-    const propias = (this.stay()?.imagenes ?? []).slice(1, 5);
-    return [...propias, ...FOTOS_RELLENO].slice(0, 4);
-  });
+  /** Solo las fotos que tiene el alojamiento (sin fotos de relleno), la principal primero. */
+  readonly fotos = computed(() =>
+    (this.stay()?.imagenes ?? []).filter((url) => !!url?.trim()).slice(0, MAX_FOTOS),
+  );
+  /** Foto grande de la galería; null si el alojamiento no tiene fotos. */
+  readonly fotoPrincipal = computed(() => this.fotos()[0] ?? null);
+  /** Hasta 4 fotos pequeñas, solo si el alojamiento las tiene. */
+  readonly fotosSecundarias = computed(() => this.fotos().slice(1));
 
   /** Reglas de la casa: horarios, política de cancelación y reglas escritas por el anfitrión. */
   readonly reglas = computed(() => {
