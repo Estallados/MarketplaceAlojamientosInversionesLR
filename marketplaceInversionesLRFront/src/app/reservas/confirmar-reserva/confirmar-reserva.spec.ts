@@ -192,11 +192,26 @@ describe('ConfirmarReserva (HU-22)', () => {
     return elemento().querySelector<HTMLButtonElement>(selector)!;
   }
 
+  /** Escribe en un campo del modal como lo haría el usuario. */
+  function escribir(selector: string, valor: string): void {
+    const campo = elemento().querySelector<HTMLInputElement>(selector)!;
+    campo.value = valor;
+    campo.dispatchEvent(new Event('input'));
+  }
+
+  /** Escribe los datos de una tarjeta de prueba en el modal de pago (HU-27). */
+  async function escribirTarjeta(numero: string, vencimiento = '12/40', cvc = '123'): Promise<void> {
+    escribir('[data-numero]', numero);
+    escribir('[data-vencimiento]', vencimiento);
+    escribir('[data-cvc]', cvc);
+    await estable();
+  }
+
   /**
    * Pulsa "Confirmar reserva". Si se abre el modal de pago (HU-27), responde su configuración,
-   * elige el método indicado (por defecto el aprobado) y pulsa "Pagar".
+   * escribe la tarjeta de prueba indicada (por defecto la Visa aprobada) y pulsa "Pagar".
    */
-  async function confirmar(metodo?: string): Promise<void> {
+  async function confirmar(numero = '4242 4242 4242 4242'): Promise<void> {
     boton('[data-confirmar]').click();
     await estable();
     if (!existe('[data-pago]')) {
@@ -206,12 +221,7 @@ describe('ConfirmarReserva (HU-22)', () => {
       .match(r => r.method === 'GET' && r.url === urlConfiguracionPago)
       .forEach(r => r.flush(configuracionPago));
     await estable();
-    if (metodo) {
-      const selector = elemento().querySelector<HTMLSelectElement>('[data-metodo-pago]')!;
-      selector.value = metodo;
-      selector.dispatchEvent(new Event('change'));
-      await estable();
-    }
+    await escribirTarjeta(numero);
     boton('[data-pagar]').click();
     await estable();
   }
@@ -361,6 +371,7 @@ describe('ConfirmarReserva (HU-22)', () => {
     await estable();
     http.expectOne(r => r.method === 'GET' && r.url === urlConfiguracionPago).flush(configuracionPago);
     await estable();
+    await escribirTarjeta('4242 4242 4242 4242');
 
     const pagar = boton('[data-pagar]');
     pagar.click();
@@ -956,17 +967,6 @@ describe('ConfirmarReserva (HU-22)', () => {
     await estable();
   }
 
-  function opcionesPago(): string[] {
-    return Array.from(elemento().querySelectorAll<HTMLOptionElement>('[data-metodo-pago] option'))
-      .map(o => (o.textContent ?? '').trim());
-  }
-
-  function elegirPago(metodo: string): void {
-    const selector = elemento().querySelector<HTMLSelectElement>('[data-metodo-pago]')!;
-    selector.value = metodo;
-    selector.dispatchEvent(new Event('change'));
-  }
-
   const pagoAprobado = {
     idPago: 9,
     valor: 740000,
@@ -977,48 +977,111 @@ describe('ConfirmarReserva (HU-22)', () => {
     metodo: 'pm_card_visa'
   };
 
-  it('CA-160 el pago se hace en ambiente de prueba: solo métodos de prueba del backend y sin datos de tarjeta', async () => {
+  it('CA-160 se paga escribiendo una tarjeta de prueba: solo viaja el método de prueba, nunca los datos de la tarjeta', async () => {
 
     await abrirPago();
 
-    expect(existe('[data-pago]')).toBe(true);
     expect(texto('[data-pago]')).toContain('Confirma y paga');
     expect(texto('[data-desglose-pago]')).toContain('Desayuno');
-    expect(opcionesPago()).toEqual([
-      'Tarjeta válida · pago aprobado',
-      'Tarjeta no válida · tarjeta rechazada',
-      'Tarjeta no válida · fondos insuficientes',
-      'Tarjeta no válida · falla de la pasarela (solo simulador)'
-    ]);
     expect(texto('[data-ambiente-prueba]')).toContain('no se realizan cobros reales');
-    // No se piden datos de tarjeta.
-    expect(elemento().querySelector('[data-pago] input')).toBeNull();
+    expect(boton('[data-pagar]').disabled).toBe(true);
+    expect(texto('[data-completar]')).toContain('Completa los datos de la tarjeta');
+
+    escribir('[data-titular]', 'Ana Pérez');
+    await escribirTarjeta('4000000000009995');
+
+    // Se formatea y se reconoce la marca mientras se escribe.
+    expect(elemento().querySelector<HTMLInputElement>('[data-numero]')!.value).toBe('4000 0000 0000 9995');
+    expect(texto('[data-marca]')).toBe('Visa');
+    expect(boton('[data-pagar]').disabled).toBe(false);
     expect(texto('[data-pagar]')).toContain('740');
 
-    elegirPago('pm_card_chargeDeclinedInsufficientFunds');
-    await estable();
     boton('[data-pagar]').click();
     await estable();
 
     const req = pedidoReserva();
     expect(req.request.body).toEqual({ idCotizacion: 42, metodoPago: 'pm_card_chargeDeclinedInsufficientFunds' });
-    expect(req.request.body.metodoPago).toMatch(/^pm_/);
+    const cuerpo = JSON.stringify(req.request.body);
+    expect(cuerpo).not.toContain('4000');
+    expect(cuerpo).not.toContain('12/40');
+    expect(cuerpo).not.toContain('Ana');
     rechazar(req, 402, 'El pago fue rechazado: fondos insuficientes. La reserva no quedó pagada.');
     await estable();
   });
 
-  it('CA-160 con Stripe en modo de prueba también usa solo métodos de prueba y lo indica', async () => {
+  it('CA-160 una tarjeta que no es de prueba se rechaza sin llamar al backend', async () => {
+
+    await abrirPago();
+    // Número válido (Luhn) que no es una tarjeta de prueba.
+    await escribirTarjeta('4111 1111 1111 1111');
+
+    expect(texto('[data-error-numero]')).toBe('Usa una tarjeta de prueba: en este ambiente no se aceptan tarjetas reales.');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+    boton('[data-pagar]').click();
+    await estable();
+    http.expectNone(r => r.method === 'POST' && r.url === urlReservas);
+  });
+
+  it('CA-160 valida el número, el vencimiento y el CVC antes de habilitar el pago', async () => {
+
+    await abrirPago();
+
+    await escribirTarjeta('4242 4242 4242 4241');
+    expect(texto('[data-error-numero]')).toBe('El número de tarjeta no es válido.');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    await escribirTarjeta('4242 4242 4242 4242', '01/20');
+    expect(texto('[data-error-vencimiento]')).toContain('vencida');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    await escribirTarjeta('4242 4242 4242 4242', '12/40', '12');
+    expect(boton('[data-pagar]').disabled).toBe(true);
+
+    await escribirTarjeta('4242 4242 4242 4242', '12/40', '123');
+    expect(existe('[data-error-numero]')).toBe(false);
+    expect(existe('[data-error-vencimiento]')).toBe(false);
+    expect(boton('[data-pagar]').disabled).toBe(false);
+  });
+
+  it('CA-160 muestra solo las tarjetas de prueba que ofrece el backend y permite usarlas', async () => {
+
+    await abrirPago();
+
+    const ayuda = Array.from(elemento().querySelectorAll<HTMLButtonElement>('[data-usar-tarjeta]'))
+      .map(b => (b.textContent ?? '').trim());
+    expect(ayuda).toEqual([
+      '4242 4242 4242 4242',
+      '5555 5555 5555 4444',
+      '4000 0000 0000 0002',
+      '4000 0000 0000 9995',
+      '9999 9999 9999 9995'
+    ]);
+    expect(texto('[data-ayuda-tarjetas]')).toContain('Fondos insuficientes');
+
+    elemento().querySelectorAll<HTMLButtonElement>('[data-usar-tarjeta]')[1].click();
+    await estable();
+    expect(elemento().querySelector<HTMLInputElement>('[data-numero]')!.value).toBe('5555 5555 5555 4444');
+    expect(texto('[data-marca]')).toBe('Mastercard');
+  });
+
+  it('CA-160 con Stripe en modo de prueba usa las mismas tarjetas de prueba y lo indica', async () => {
 
     await abrirPago({ ...configuracionPago, modo: 'STRIPE_TEST', clavePublica: 'pk_test_123' });
 
-    expect(texto('[data-pago]')).toContain('Método de pago de prueba');
     expect(texto('[data-ambiente-prueba]')).toContain('Modo de prueba de Stripe: no se realizan cobros reales');
-    expect(elemento().querySelector('[data-pago] input')).toBeNull();
+    await escribirTarjeta('4242 4242 4242 4242');
+    boton('[data-pagar]').click();
+    await estable();
+    const req = pedidoReserva();
+    expect(req.request.body.metodoPago).toBe('pm_card_visa');
+    rechazar(req, 402, 'El pago fue rechazado: prueba.');
+    await estable();
   });
 
   it('CA-161 con el pago aprobado muestra la reserva pagada con el pago registrado y su referencia', async () => {
 
     await abrirPago();
+    await escribirTarjeta('4242 4242 4242 4242');
     boton('[data-pagar]').click();
     await estable();
 
@@ -1039,11 +1102,10 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(texto('[data-reserva] [data-ambiente-prueba]')).toContain('Pago simulado: ambiente de prueba, no se hizo ningún cobro real');
   });
 
-  it('CA-162 con el pago rechazado la reserva no queda pagada, se informa el motivo y se puede pagar con otro método', async () => {
+  it('CA-162 con la tarjeta rechazada la reserva no queda pagada, se informa el motivo y se puede pagar con otra tarjeta', async () => {
 
     await abrirPago();
-    elegirPago('pm_card_chargeDeclined');
-    await estable();
+    await escribirTarjeta('4000 0000 0000 0002');
     boton('[data-pagar]').click();
     await estable();
 
@@ -1061,11 +1123,9 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(texto('[data-error-pago]')).toBe('El pago fue rechazado: tarjeta rechazada. La reserva no quedó pagada.');
     expect(existe('[data-reserva]')).toBe(false);
     expect(texto('[data-mensaje-error]')).toBe('El pago no se confirmó y la reserva no quedó pagada.');
-    expect(boton('[data-pagar]').disabled).toBe(false);
 
-    // Otro intento con un método aprobado es otra petición, con otra clave.
-    elegirPago('pm_card_visa');
-    await estable();
+    // Con otra tarjeta es otra petición, con otra clave.
+    await escribirTarjeta('4242 4242 4242 4242');
     boton('[data-pagar]').click();
     await estable();
 
@@ -1081,11 +1141,10 @@ describe('ConfirmarReserva (HU-22)', () => {
     expect(texto('[data-estado-pago]')).toContain('Aprobado');
   });
 
-  it('CA-162 si la pasarela falla informa que el pago no se confirmó y no muestra la reserva como pagada', async () => {
+  it('CA-162 con la tarjeta reservada para la falla de la pasarela informa que el pago no se confirmó', async () => {
 
     await abrirPago();
-    elegirPago('pm_card_error');
-    await estable();
+    await escribirTarjeta('9999 9999 9999 9995');
     boton('[data-pagar]').click();
     await estable();
 
@@ -1114,17 +1173,25 @@ describe('ConfirmarReserva (HU-22)', () => {
     boton('[data-recargar-config]').click();
     http.expectOne(r => r.url === urlConfiguracionPago).flush(configuracionPago);
     await estable();
+    await escribirTarjeta('4242 4242 4242 4242');
     expect(boton('[data-pagar]').disabled).toBe(false);
   });
 
-  it('"Cancelar" cierra el modal sin crear la reserva', async () => {
+  it('"Cancelar" cierra el modal sin crear la reserva y descarta los datos de la tarjeta', async () => {
 
     await abrirPago();
+    await escribirTarjeta('4242 4242 4242 4242');
     boton('[data-cancelar-pago]').click();
     await estable();
 
     expect(existe('[data-pago]')).toBe(false);
     http.expectNone(r => r.method === 'POST' && r.url === urlReservas);
-    expect(boton('[data-confirmar]').disabled).toBe(false);
+
+    // Al volver a abrirlo, los campos están vacíos.
+    boton('[data-confirmar]').click();
+    await estable();
+    http.expectOne(r => r.url === urlConfiguracionPago).flush(configuracionPago);
+    await estable();
+    expect(elemento().querySelector<HTMLInputElement>('[data-numero]')!.value).toBe('');
   });
 });
