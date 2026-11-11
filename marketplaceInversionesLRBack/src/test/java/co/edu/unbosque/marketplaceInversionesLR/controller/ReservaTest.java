@@ -342,6 +342,18 @@ class ReservaTest {
 	}
 
 	@Test
+	@DisplayName("CA-160 La configuración de pagos es pública y solo ofrece el modo de prueba con sus tarjetas")
+	void configuracionDePagos_CA160() throws Exception {
+		mockMvc.perform(get("/pagos/configuracion"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.modo").value(PagoService.PROVEEDOR_SIMULADO))
+				.andExpect(jsonPath("$.clavePublica").doesNotExist())
+				.andExpect(jsonPath("$.moneda").value("cop"))
+				.andExpect(jsonPath("$.metodosPrueba[0].metodo").value(PagoService.METODO_POR_DEFECTO))
+				.andExpect(jsonPath("$.metodosPrueba[0].resultado").value("APROBADO"));
+	}
+
+	@Test
 	@DisplayName("Datos inválidos al cotizar o reservar responden 400 o 404")
 	void datosInvalidos() throws Exception {
 		cotizar(tokenHuesped, BASE.plusDays(2), BASE, 1).andExpect(status().isBadRequest())

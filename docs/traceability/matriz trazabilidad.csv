@@ -535,20 +535,22 @@ feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;"Probado que no se muestra disp
 Front-end (SCRUM-112): probado con Vitest (ng test). El front no tiene todavía pantallas de búsqueda ni de reserva para el huésped; impedir la reserva le corresponde al backend."
 CA-160;RF-028;Procesamiento de pago simulado;Inicio del pago de prueba;Dado que el huésped confirma una reserva, cuando el sistema inicia el pago, entonces debe procesarlo únicamente en ambiente de pruebas, sin realizar cobros reales.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
-CP-063 Pago de prueba rechazado o con error";ReglasNegocioTest#nuncaSeCobraConUnaClaveQueNoSeaDePrueba_CA160;;38a9302;;;;
+CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#claveRealNoCobra_CA160
+PagoServiceTest#configuracionDePrueba_CA160
+PagoServiceTest#apruebaPorDefecto_CA160_CA161
+ReservaTest#configuracionDePagos_CA160";Probado (JUnit);;feat/SCRUM-184-be-pago-reserva-prueba;;;
 CA-161;RF-028;Procesamiento de pago simulado;Pago aprobado;Dado que el pago de prueba fue aprobado, cuando el sistema recibe el resultado, entonces debe registrarlo y asociarlo a la reserva, que queda con un pago exitoso.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
-CP-063 Pago de prueba rechazado o con error";"ReservasPagosTest#debeCrearLaReservaConfirmadaConElMontoCotizadoYPagoAprobado_CA070_CA075_CA086_CA161
-PagoStripeTest#creaYConfirmaElPaymentIntentEnCentavosConClaveDeIdempotencia_CA161
-ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"38a9302
-4cf6ba5";;;;
+CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#apruebaEnStripe_CA161
+PagoServiceTest#apruebaPorDefecto_CA160_CA161
+PagoServiceTest#otroMetodoSeAprueba_CA161";Probado (JUnit);;feat/SCRUM-184-be-pago-reserva-prueba;;;
 CA-162;RF-028;Procesamiento de pago simulado;Pago rechazado o con error;Dado que el pago de prueba es rechazado u ocurre un error que impide confirmarlo, cuando el sistema recibe el resultado, entonces la reserva no debe quedar marcada como pagada y se debe informar que el pago fue rechazado o no confirmado.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
-CP-063 Pago de prueba rechazado o con error";"ReservasPagosTest#unPagoRechazadoNoDejaLaReservaPagadaYLiberaLasFechas_CA162
-ReservasPagosTest#elRechazoDiceElMotivoYUnMetodoQueNoEsDeStripeNiSeIntenta_CA162
-PagoStripeTest#unRechazoDeLaTarjetaLlegaConSuMotivoEnEspanol_CA162
-ReglasNegocioTest#elSimuladorUsaLosMetodosDePruebaDeStripe_CA161_CA162_CA163";;"38a9302
-4cf6ba5";;;;
+CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#rechazoEnStripe_CA162
+PagoServiceTest#otrasRespuestasDeStripe_CA162
+PagoServiceTest#simuladorComoStripe_CA162
+PagoServiceTest#rechazo_CA162
+PagoServiceTest#falla_CA162";Probado (JUnit);;feat/SCRUM-184-be-pago-reserva-prueba;;;
 CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;"DetalleAlojamientoTest#detalleConUbicacion_CA164
 AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
 PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;"El back entrega la ubicación; el mapa se valida en el front"
