@@ -43,15 +43,25 @@ NotificacionControllerTest#marcarUna_CA013";Probado (JUnit);;feat/SCRUM-253-be-r
 CA-016;RF-004;Registro/Consulta de reseñas y calificaciones;Reseña según estado de la reserva;Dado que el huésped evalúa un alojamiento, cuando intenta registrar una reseña o calificación, entonces el sistema debe permitirlo solo si la reserva está completada e impedir el registro en caso contrario.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
-CP-048 Consulta de reseñas de alojamiento";NotificacionesResenasTest#elHuespedDeUnaReservaCompletadaPuedeResenarYQuedaAsociada_CA016_CA018;;38a9302;;;;
+CP-048 Consulta de reseñas de alojamiento";"ResenasTest#reseniaCompletada_CA016_CA018
+ResenasTest#rechazos_CA016
+ResenaServiceTest#reseniaPublicada_CA016_CA018
+ResenaServiceTest#soloCompletadas_CA016
+ResenaServiceTest#saleHoy_CA016";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;"POST /resenas (solo HUESPED): reserva propia CONFIRMADA con la salida ya alcanzada; si no, 409. Una reseña por reserva (409). En Neon lo respaldan trg_resena_estancia_completada y uq_resena_reserva."
 CA-018;RF-004;Registro/Consulta de reseñas y calificaciones;Asociación de reseña;Dado que se registra una reseña, cuando se almacena, entonces debe relacionarse con huésped, reserva, alojamiento, fecha y contenido.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
-CP-048 Consulta de reseñas de alojamiento";NotificacionesResenasTest#elHuespedDeUnaReservaCompletadaPuedeResenarYQuedaAsociada_CA016_CA018;;38a9302;;;;
+CP-048 Consulta de reseñas de alojamiento";"ResenasTest#reseniaCompletada_CA016_CA018
+ResenaServiceTest#reseniaPublicada_CA016_CA018
+ResenaServiceTest#comentarioVacio_CA018
+ResenaControllerTest#crear_CA018";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;"El autor sale del token y el alojamiento de la reserva; se ignoran si el cliente los manda. Queda PUBLICADA con fecha y contenido, se avisa al anfitrión (RESENA_RECIBIDA) y queda en la auditoría."
 CA-019;RF-004;Registro/Consulta de reseñas y calificaciones;Consulta por publicación;Dado que existen reseñas de diferentes alojamientos, cuando se consultan las valoraciones de una publicación, entonces el sistema debe mostrar únicamente las asociadas a ella.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
-CP-048 Consulta de reseñas de alojamiento";NotificacionesResenasTest#laConsultaPorPublicacionMuestraSoloSusResenasConPromedio_CA019_CA020;;38a9302;;;;
+CP-048 Consulta de reseñas de alojamiento";"ResenasTest#consultaPorAlojamiento_CA019
+ResenaServiceTest#resumenDelAlojamiento_CA019
+ResenaServiceTest#resumenVacioYNoExiste_CA019
+ResenaControllerTest#deAlojamiento_CA019";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;GET /alojamientos/{id}/resenas (pública): solo las PUBLICADA de ese alojamiento con promedio y cantidad. Además GET /resenas/mias (HUESPED, incluye ocultas) y GET /resenas/anfitrion (ANFITRION).
 CA-022;RF-005;Consulta de dashboard;Indicadores del dashboard;Dado que existen usuarios, publicaciones, reservas y operaciones registradas, cuando se consulta el dashboard, entonces debe mostrarse el indicador de usuarios, la cantidad de publicaciones activas, las reservas agrupadas por estado, los ingresos estimados y las ciudades con mayor demanda.;HU-04;CU-014;CP-055 Consulta de dashboard;DashboardReportesTest#elDashboardMuestraTodosLosIndicadores_CA022_CA023_CA024_CA025_CA026;;38a9302;;;;
 CA-027;RF-006;Exportación de reportes;Exportación y trazabilidad del reporte;Dado que un usuario solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel con datos que correspondan a la información disponible en el sistema y registrar solicitante y fecha.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"DashboardReportesTest#exportaEnPdfYRegistraSolicitanteYFecha_CA027_CA029
 DashboardReportesTest#elExcelCorrespondeConLaInformacionDelSistema_CA027_CA028";;38a9302;;;;
