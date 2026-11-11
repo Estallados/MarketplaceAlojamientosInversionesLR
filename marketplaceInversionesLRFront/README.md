@@ -63,7 +63,8 @@ src/app/
 ├── core/                 Piezas compartidas por toda la aplicación
 │   ├── services/         api-url (URL base) y session.service (sesión y roles)
 │   ├── interceptors/     auth.interceptor (agrega el token JWT)
-│   └── guards/           role.guard (acceso por rol)
+│   ├── guards/           role.guard (acceso por rol)
+│   └── layout/navbar/    barra de navegación por rol (solo enlaces a rutas que ya existen)
 ├── auth/                 Registro, inicio de sesión y recuperación de contraseña
 │   ├── services/
 │   ├── login/
@@ -95,6 +96,10 @@ src/app/
 │   ├── models/
 │   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07)
 │   └── validaciones/            interpretación de los rechazos del contrato
+├── favoritos/            Gestionar alojamientos favoritos (HU-29)
+│   ├── mis-favoritos/           lista del huésped y quitar con el corazón
+│   ├── models/
+│   └── services/                favorito.service (GET, POST y DELETE /favoritos, S13)
 └── api/                  Cliente generado desde OpenAPI (no editar a mano)
 ```
 
