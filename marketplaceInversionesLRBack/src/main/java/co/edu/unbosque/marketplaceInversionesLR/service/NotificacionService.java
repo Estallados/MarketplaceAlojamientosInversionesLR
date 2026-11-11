@@ -54,6 +54,10 @@ public class NotificacionService {
 
 	/** Un huésped reseñó un alojamiento; la recibe su anfitrión (HU-03). */
 	public static final String RESENA_RECIBIDA = "RESENA_RECIBIDA";
+
+	/** Un administrador ocultó una reseña; la recibe su autor con el motivo (HU-14, CA-066). */
+	public static final String RESENA_OCULTA = "RESENA_OCULTA";
+
 	/** Llegó un mensaje nuevo en una conversación (HU-28). */
 	public static final String MENSAJE_RECIBIDO = "MENSAJE_RECIBIDO";
 

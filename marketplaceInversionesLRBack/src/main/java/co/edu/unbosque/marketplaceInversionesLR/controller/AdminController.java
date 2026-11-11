@@ -22,9 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ConfiguracionTarifaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.MotivoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
+import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoResena;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PublicacionService;
+import co.edu.unbosque.marketplaceInversionesLR.service.ResenaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.TarifaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
@@ -72,6 +74,12 @@ public class AdminController {
 	/** Etiqueta de Swagger de la auditoría. */
 	private static final String TAG_AUDITORIA = "Auditoría";
 
+	/** Etiqueta de Swagger de la moderación de reseñas (HU-14). */
+	private static final String TAG_RESENAS = "Moderación de reseñas";
+
+	/** Orden de las reseñas: las más recientes primero. */
+	private static final Sort RESENAS_RECIENTES = Sort.by(Sort.Order.desc("fecha"), Sort.Order.desc("idResena"));
+
 	/** Elementos por página como máximo. */
 	public static final int TAMANIO_MAXIMO = 100;
 
@@ -96,6 +104,9 @@ public class AdminController {
 	/** Consulta de la auditoría. */
 	private final AuditoriaService auditoriaService;
 
+	/** Moderación de reseñas (HU-14). */
+	private final ResenaService resenaService;
+
 	/**
 	 * Crea el controlador.
 	 *
@@ -104,14 +115,90 @@ public class AdminController {
 	 * @param usuarioService     servicio de usuarios
 	 * @param reservaService     servicio de reservas
 	 * @param auditoriaService   servicio de auditoría
+	 * @param resenaService      servicio de reseñas
 	 */
 	public AdminController(TarifaService tarifaService, PublicacionService publicacionService,
-			UsuarioService usuarioService, ReservaService reservaService, AuditoriaService auditoriaService) {
+			UsuarioService usuarioService, ReservaService reservaService, AuditoriaService auditoriaService,
+			ResenaService resenaService) {
 		this.tarifaService = tarifaService;
 		this.publicacionService = publicacionService;
 		this.usuarioService = usuarioService;
 		this.reservaService = reservaService;
 		this.auditoriaService = auditoriaService;
+		this.resenaService = resenaService;
+	}
+
+	/**
+	 * Todas las reseñas para moderar, opcionalmente por estado, las más
+	 * recientes primero (HU-14). Ruta: {@code GET /admin/resenas}.
+	 *
+	 * @param estado  PUBLICADA u OCULTA; opcional
+	 * @param pagina  número de página, desde 0
+	 * @param tamanio elementos por página, de 1 a {@value #TAMANIO_MAXIMO}
+	 * @return 200 con la página de reseñas; 400 si el estado no es válido
+	 */
+	@Tag(name = TAG_RESENAS, description = "Ocultar y volver a mostrar reseñas")
+	@Operation(summary = "Todas las reseñas para moderar, opcionalmente por estado (ADMIN)", description = "Incluye "
+			+ "las OCULTA. Cada una trae su autor, alojamiento, reserva, calificación, comentario y estado.")
+	@ApiResponse(responseCode = "200", description = "Página de reseñas, de la más reciente a la más antigua")
+	@ApiResponse(responseCode = "400", description = "El valor de estado no es válido.")
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación (CA-069)")
+	@GetMapping("/resenas")
+	public ResponseEntity<Object> resenas(
+			@Parameter(description = "PUBLICADA u OCULTA; sin él, todas") @RequestParam(required = false)
+			EstadoResena estado,
+			@Parameter(description = PAGINA) @RequestParam(defaultValue = "0") int pagina,
+			@Parameter(description = TAMANIO) @RequestParam(defaultValue = "20") int tamanio) {
+		return ResponseEntity
+				.ok(resenaService.listarTodas(estado, RespuestaUtil.pagina(pagina, tamanio, RESENAS_RECIENTES)));
+	}
+
+	/**
+	 * Oculta una reseña que incumple las reglas, con un motivo (HU-14, CA-066).
+	 * No se borra: deja de mostrarse y de contar en el promedio, y se avisa a
+	 * su autor. Ruta: {@code PATCH /admin/resenas/{id}/ocultar}.
+	 *
+	 * @param id             reseña
+	 * @param datos          DTO con el {@code motivo}
+	 * @param authentication administrador autenticado
+	 * @return 200 con la reseña OCULTA; 400 si falta el motivo o es muy largo;
+	 *         404 si no existe
+	 */
+	@Tag(name = TAG_RESENAS)
+	@Operation(summary = "Ocultar una reseña con motivo (ADMIN)", description = "La reseña no se borra: pasa a OCULTA, "
+			+ "deja de mostrarse en el alojamiento y de contar en el promedio (CA-066), y su autor recibe el motivo. "
+			+ "Queda en la auditoría (RESENA_MODERADA). Si ya estaba oculta, responde igual sin repetir el aviso.")
+	@ApiResponse(responseCode = "200", description = "Reseña OCULTA; se notifica el motivo a su autor (CA-066)")
+	@ApiResponse(responseCode = "400", description = ResenaService.MOTIVO_OBLIGATORIO + " | "
+			+ LimitesTexto.MOTIVO_LARGO)
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación (CA-069)")
+	@ApiResponse(responseCode = "404", description = ResenaService.NO_EXISTE)
+	@PatchMapping("/resenas/{id}/ocultar")
+	public ResponseEntity<Object> ocultarResena(@PathVariable Long id,
+			@io.swagger.v3.oas.annotations.parameters.RequestBody(required = true, description = "Motivo de la "
+					+ "moderación, obligatorio (máximo 500 caracteres)") @RequestBody(required = false) MotivoDTO datos,
+			Authentication authentication) {
+		return RespuestaUtil.desde(resenaService.moderar(id, true, datos == null ? null : datos.getMotivo(),
+				RespuestaUtil.idUsuario(authentication)));
+	}
+
+	/**
+	 * Vuelve a mostrar una reseña oculta (HU-14). Ruta:
+	 * {@code PATCH /admin/resenas/{id}/mostrar}.
+	 *
+	 * @param id             reseña
+	 * @param authentication administrador autenticado
+	 * @return 200 con la reseña PUBLICADA; 404 si no existe
+	 */
+	@Tag(name = TAG_RESENAS)
+	@Operation(summary = "Volver a mostrar una reseña oculta (ADMIN)", description = "La reseña vuelve a PUBLICADA y a "
+			+ "contar en el promedio. Queda en la auditoría (RESENA_MODERADA).")
+	@ApiResponse(responseCode = "200", description = "Reseña PUBLICADA de nuevo")
+	@ApiResponse(responseCode = "403", description = "No tienes permisos para esta operación (CA-069)")
+	@ApiResponse(responseCode = "404", description = ResenaService.NO_EXISTE)
+	@PatchMapping("/resenas/{id}/mostrar")
+	public ResponseEntity<Object> mostrarResena(@PathVariable Long id, Authentication authentication) {
+		return RespuestaUtil.desde(resenaService.moderar(id, false, null, RespuestaUtil.idUsuario(authentication)));
 	}
 
 	/**
