@@ -87,31 +87,114 @@
           </button>
         </div>
       } @else if (config()) {
-        <div>
-          <label for="resultado-sim" class="block text-xs font-bold text-slate-700">
-            {{ modoStripe() ? 'Método de pago de prueba' : 'Resultado de la simulación' }}
-          </label>
-          <select
-            id="resultado-sim"
-            data-metodo-pago
-            [disabled]="pagando()"
-            class="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm"
-            (change)="elegirMetodo($any($event.target).value)"
-          >
-            @for (r of resultados(); track r.metodo) {
-              <option [value]="r.metodo" [selected]="r.metodo === metodoElegido()">{{ r.texto }}</option>
+        <!-- Datos de una tarjeta de prueba: solo se validan aquí, nunca se envían ni se guardan -->
+        <div class="space-y-3">
+          <div>
+            <label for="titular-sim" class="block text-xs font-bold text-slate-700">Nombre en la tarjeta (opcional)</label>
+            <input
+              id="titular-sim"
+              data-titular
+              type="text"
+              autocomplete="off"
+              placeholder="Como aparece en la tarjeta"
+              [disabled]="pagando()"
+              class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+              [value]="titular()"
+              (input)="titular.set($any($event.target).value)"
+            />
+          </div>
+          <div>
+            <label for="numero-sim" class="flex items-center justify-between text-xs font-bold text-slate-700">
+              Número de tarjeta
+              @if (marca()) {
+                <span data-marca class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">{{ etiquetaMarca() }}</span>
+              }
+            </label>
+            <input
+              id="numero-sim"
+              data-numero
+              type="text"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="1234 5678 9012 3456"
+              maxlength="23"
+              [disabled]="pagando()"
+              class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+              [value]="numero()"
+              (input)="onNumero($any($event.target))"
+            />
+            @if (errorNumero(); as e) {
+              <p data-error-numero class="mt-1 text-xs text-red-600">{{ e }}</p>
             }
-          </select>
-          @if (!resultados().length) {
-            <p class="mt-1 text-xs text-red-600">El servidor no devolvió métodos de prueba.</p>
-          }
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label for="vencimiento-sim" class="block text-xs font-bold text-slate-700">Vencimiento (MM/AA)</label>
+              <input
+                id="vencimiento-sim"
+                data-vencimiento
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                placeholder="MM/AA"
+                maxlength="5"
+                [disabled]="pagando()"
+                class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                [value]="vencimiento()"
+                (input)="onVencimiento($any($event.target))"
+              />
+              @if (errorVencimiento(); as e) {
+                <p data-error-vencimiento class="mt-1 text-xs text-red-600">{{ e }}</p>
+              }
+            </div>
+            <div>
+              <label for="cvc-sim" class="block text-xs font-bold text-slate-700">CVC</label>
+              <input
+                id="cvc-sim"
+                data-cvc
+                type="text"
+                inputmode="numeric"
+                autocomplete="off"
+                [placeholder]="marca() === 'amex' ? '4 dígitos' : '3 dígitos'"
+                maxlength="4"
+                [disabled]="pagando()"
+                class="mt-1 w-full rounded-xl border border-slate-200 p-3 text-sm outline-none focus:border-emerald-500"
+                [value]="cvc()"
+                (input)="onCvc($any($event.target))"
+              />
+            </div>
+          </div>
         </div>
+
+        <!-- Tarjetas de prueba disponibles -->
+        <details data-ayuda-tarjetas class="mt-3 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+          <summary class="cursor-pointer font-bold text-slate-700">Ver tarjetas de prueba</summary>
+          <ul class="mt-2 space-y-1">
+            @for (t of ayuda(); track t.numero) {
+              <li class="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  data-usar-tarjeta
+                  (click)="usarTarjeta(t.numero)"
+                  class="font-mono text-slate-800 underline-offset-2 hover:text-emerald-700 hover:underline"
+                >
+                  {{ t.formateado }}
+                </button>
+                <span [class]="t.aprobada ? 'text-emerald-700' : 'text-red-600'">{{ t.descripcion }}</span>
+              </li>
+            }
+          </ul>
+          <p class="mt-2">Usa cualquier fecha futura y cualquier CVC.</p>
+        </details>
+
         <p data-ambiente-prueba class="mt-3 text-xs text-slate-400">
           @if (modoStripe()) {
-            Modo de prueba de Stripe: no se realizan cobros reales. El resultado lo define el método de prueba elegido.
+            Modo de prueba de Stripe: no se realizan cobros reales.
           } @else {
-            Pago simulado: no se realizan cobros reales ni se piden datos de tarjeta. El resultado lo define la opción elegida.
+            Pago simulado: no se realizan cobros reales.
           }
+          Los datos de la tarjeta solo se validan en tu navegador (no se envían ni se guardan) y el resultado
+          depende de la tarjeta de prueba. No escribas tarjetas reales.
         </p>
       }
     </div>
@@ -119,6 +202,9 @@
       <div data-error-pago class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">
         {{ e }}
       </div>
+    }
+    @if (config() && !puedePagar() && !pagando()) {
+      <p data-completar class="mt-4 text-center text-xs text-slate-500">Completa los datos de la tarjeta para habilitar el pago.</p>
     }
     <div class="mt-6 flex gap-3">
       <button

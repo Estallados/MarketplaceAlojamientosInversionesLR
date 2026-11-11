@@ -2,37 +2,44 @@ import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 
 import { Cotizacion } from '../../cotizacion/models/cotizacion';
-import { ConfiguracionPago, MetodoPagoPrueba } from '../models/pago';
+import { ConfiguracionPago } from '../models/pago';
 import { PagoService } from '../services/pago.service';
+import {
+  TARJETAS_PRUEBA,
+  cvcValido,
+  formatearNumero,
+  formatearVencimiento,
+  marcaTarjeta,
+  metodoDeTarjeta,
+  numeroValido,
+  soloDigitos,
+  vencimientoValido
+} from '../validaciones/tarjetas-prueba';
 
-/** Texto de cada motivo de rechazo según el sufijo del método de prueba de Stripe (como en el proyecto base). */
-const MOTIVOS_RECHAZO: Record<string, string> = {
-  InsufficientFunds: 'fondos insuficientes',
-  LostCard: 'tarjeta reportada como perdida',
-  StolenCard: 'tarjeta reportada como robada',
-  ExpiredCard: 'tarjeta vencida',
-  IncorrectCvc: 'CVC incorrecto',
-  IncorrectNumber: 'número incorrecto',
-  ProcessingError: 'error de procesamiento',
+const ETIQUETAS_MARCA: Record<string, string> = {
+  visa: 'Visa',
+  mastercard: 'Mastercard',
+  amex: 'American Express'
 };
 
-/** Método aprobado que se usa para "Tarjeta válida" si el backend lo ofrece. */
-const METODO_APROBADO_PREFERIDO = 'pm_card_visa';
-
-/** Opción del selector: el método de prueba que se envía y su texto. */
-export interface OpcionPago {
-  metodo: string;
-  texto: string;
+/** Tarjeta de prueba que se muestra como ayuda, con el resultado que da el backend. */
+export interface AyudaTarjeta {
+  numero: string;
+  formateado: string;
+  descripcion: string;
+  aprobada: boolean;
 }
 
 // ======================================
 // MODAL "CONFIRMA Y PAGA" (HU-27)
-// Copia el modal pago-reserva del proyecto base. Solo usa los métodos de
-// prueba que devuelve GET /pagos/configuracion: no pide datos de tarjeta y
-// nunca hace un cobro real (CA-160). El cobro lo hace POST /reservas en la
-// pantalla Confirmar reserva, que recibe el método elegido con (pagar).
-// TODO(HU-27): con modo STRIPE_TEST se podría agregar Stripe Elements
-// (@stripe/stripe-js) para escribir tarjetas de prueba, como el proyecto base.
+// Copia el modal pago-reserva del proyecto base. Se escriben los datos de
+// una tarjeta de prueba (número, vencimiento, CVC y titular), que solo se
+// validan aquí y nunca se envían ni se guardan. El número elige el método
+// de prueba del backend (como las tarjetas de prueba de Stripe) y una
+// tarjeta que no sea de prueba se rechaza sin llamar al backend (CA-160).
+// El cobro lo hace POST /reservas en Confirmar reserva con (pagar).
+// TODO(HU-27): con modo STRIPE_TEST se podría usar Stripe Elements
+// (@stripe/stripe-js) en lugar de este formulario, como el proyecto base.
 // ======================================
 
 @Component({
@@ -55,6 +62,7 @@ export class PagoReserva implements OnInit {
   /** Motivo del último rechazo del pago (CA-162). */
   readonly error = input<string | null>(null);
 
+  /** Emite el método de prueba que corresponde a la tarjeta escrita. */
   readonly pagar = output<string>();
 
   readonly cerrado = output<void>();
@@ -65,28 +73,71 @@ export class PagoReserva implements OnInit {
 
   readonly errorConfig = signal<string | null>(null);
 
-  readonly metodoElegido = signal('');
+  // Datos de la tarjeta: solo viven en este componente.
+  readonly titular = signal('');
 
-  /** Tarjeta válida y luego cada motivo de rechazo o error que ofrece el backend. */
-  readonly resultados = computed<OpcionPago[]>(() => {
+  readonly numero = signal('');
+
+  readonly vencimiento = signal('');
+
+  readonly cvc = signal('');
+
+  readonly digitos = computed(() => soloDigitos(this.numero()));
+
+  readonly marca = computed(() => marcaTarjeta(this.digitos()));
+
+  readonly etiquetaMarca = computed(() => ETIQUETAS_MARCA[this.marca()] ?? '');
+
+  private readonly metodosDisponibles = computed(() =>
+    (this.config()?.metodosPrueba ?? []).map(m => m.metodo)
+  );
+
+  /** Método de prueba de la tarjeta escrita; null si no es una tarjeta de prueba disponible. */
+  readonly metodo = computed(() => metodoDeTarjeta(this.digitos(), this.metodosDisponibles()));
+
+  readonly errorNumero = computed(() => {
+    const d = this.digitos();
+    if (!numeroValido(d)) {
+      return d.length >= 13 ? 'El número de tarjeta no es válido.' : null;
+    }
+    return this.metodo() === null
+      ? 'Usa una tarjeta de prueba: en este ambiente no se aceptan tarjetas reales.'
+      : null;
+  });
+
+  readonly errorVencimiento = computed(() => {
+    const v = this.vencimiento();
+    if (vencimientoValido(v)) {
+      return null;
+    }
+    return v.length === 5 ? 'La fecha no es válida o la tarjeta está vencida.' : null;
+  });
+
+  readonly datosValidos = computed(() =>
+    this.metodo() !== null && vencimientoValido(this.vencimiento()) && cvcValido(this.cvc(), this.marca())
+  );
+
+  /** Tarjetas de prueba que ofrece el backend, para quien hace la demostración. */
+  readonly ayuda = computed<AyudaTarjeta[]>(() => {
     const metodos = this.config()?.metodosPrueba ?? [];
-    const aprobados = metodos.filter(m => m.resultado === 'APROBADO');
-    const opciones: OpcionPago[] = [];
-    const aprobado = aprobados.find(m => m.metodo === METODO_APROBADO_PREFERIDO) ?? aprobados[0];
-    if (aprobado) {
-      opciones.push({ metodo: aprobado.metodo, texto: 'Tarjeta válida · pago aprobado' });
-    }
-    for (const m of metodos.filter(x => x.resultado !== 'APROBADO')) {
-      opciones.push({ metodo: m.metodo, texto: `Tarjeta no válida · ${this.motivoRechazo(m)}` });
-    }
-    return opciones;
+    return TARJETAS_PRUEBA.flatMap(t => {
+      const m = metodos.find(x => x.metodo === t.metodo);
+      return m
+        ? [{
+          numero: t.numero,
+          formateado: formatearNumero(t.numero),
+          descripcion: m.descripcion,
+          aprobada: m.resultado === 'APROBADO'
+        }]
+        : [];
+    });
   });
 
   readonly modoStripe = computed(() => this.config()?.modo === 'STRIPE_TEST');
 
   readonly moneda = computed(() => (this.config()?.moneda ?? 'COP').toUpperCase());
 
-  readonly puedePagar = computed(() => !this.pagando() && !!this.config() && !!this.metodoElegido());
+  readonly puedePagar = computed(() => !this.pagando() && !!this.config() && this.datosValidos());
 
   ngOnInit(): void {
     this.cargarConfiguracion();
@@ -101,7 +152,6 @@ export class PagoReserva implements OnInit {
       next: config => {
         this.config.set(config);
         this.cargandoConfig.set(false);
-        this.metodoElegido.set(this.resultados()[0]?.metodo ?? '');
       },
       error: () => {
         this.cargandoConfig.set(false);
@@ -110,13 +160,39 @@ export class PagoReserva implements OnInit {
     });
   }
 
-  elegirMetodo(metodo: string): void {
-    this.metodoElegido.set(metodo);
+  // ---- Campos: se formatean mientras se escribe ----
+
+  onNumero(campo: HTMLInputElement): void {
+    const formateado = formatearNumero(soloDigitos(campo.value));
+    campo.value = formateado;
+    this.numero.set(formateado);
+  }
+
+  onVencimiento(campo: HTMLInputElement): void {
+    const formateado = formatearVencimiento(campo.value);
+    campo.value = formateado;
+    this.vencimiento.set(formateado);
+  }
+
+  onCvc(campo: HTMLInputElement): void {
+    const d = soloDigitos(campo.value).slice(0, 4);
+    campo.value = d;
+    this.cvc.set(d);
+  }
+
+  /** Escribe una tarjeta de la ayuda en el campo del número. */
+  usarTarjeta(numero: string): void {
+    if (!this.pagando()) {
+      this.numero.set(formatearNumero(numero));
+    }
   }
 
   confirmarPago(): void {
-    if (this.puedePagar()) {
-      this.pagar.emit(this.metodoElegido());
+
+    const metodo = this.metodo();
+
+    if (this.puedePagar() && metodo) {
+      this.pagar.emit(metodo);
     }
   }
 
@@ -124,13 +200,5 @@ export class PagoReserva implements OnInit {
     if (!this.pagando()) {
       this.cerrado.emit();
     }
-  }
-
-  private motivoRechazo(m: MetodoPagoPrueba): string {
-    const sufijo = m.metodo.replace(/^pm_card_chargeDeclined/, '');
-    if (MOTIVOS_RECHAZO[sufijo]) {
-      return MOTIVOS_RECHAZO[sufijo];
-    }
-    return m.metodo === 'pm_card_chargeDeclined' ? 'tarjeta rechazada' : (m.descripcion || m.metodo).toLowerCase();
   }
 }
