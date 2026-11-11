@@ -4,6 +4,7 @@ import { NavigationEnd, Route, Router, RouterLink, RouterLinkActive } from '@ang
 import { filter, map, startWith } from 'rxjs';
 
 import { RolUsuario, SessionService } from '../../services/session.service';
+import { CampanaNotificaciones } from '../../../notificaciones/campana/campana-notificaciones';
 
 type NavItem = [label: string, path: string];
 
@@ -54,12 +55,12 @@ const ROLE_HOME: Record<RolUsuario, string> = {
 
 /**
  * Barra de navegación superior, copiada del proyecto base (layout/navbar). Muestra el menú del rol
- * de la sesión, el menú de usuario con su perfil y el cierre de sesión.
+ * de la sesión, la campana de notificaciones (HU-02), el menú de usuario con su perfil y el cierre de sesión.
  */
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, CampanaNotificaciones],
   templateUrl: './navbar.html',
   host: {
     class: 'sticky top-0 z-40 block',

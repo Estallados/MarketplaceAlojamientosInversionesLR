@@ -274,5 +274,18 @@ export const routes: Routes = [
     data: { roles: ['Anfitrión'] }
   },
 
+  // ====================================
+  // RECIBIR Y CONSULTAR NOTIFICACIONES (HU-02)
+  // CUALQUIER USUARIO CON SESIÓN: cada uno ve solo las suyas.
+  // ====================================
+
+  {
+    path: 'notificaciones',
+    loadComponent: () =>
+      import('./notificaciones/mis-notificaciones/mis-notificaciones')
+        .then(m => m.MisNotificaciones),
+    canActivate: [roleGuard]
+  },
+
   { path: '**', redirectTo: 'login' }
 ];

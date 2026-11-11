@@ -5,6 +5,7 @@ import { vi } from 'vitest';
 
 import { Navbar } from './navbar';
 import { RolUsuario, SessionService } from '../../services/session.service';
+import { NotificacionesService } from '../../../notificaciones/services/notificaciones.service';
 
 @Component({ template: '' })
 class Vacia {}
@@ -36,6 +37,7 @@ describe('Navbar', () => {
           provide: SessionService,
           useValue: { rol, correo, autenticado: () => rol() !== null, cerrarSesion },
         },
+        { provide: NotificacionesService, useValue: { sinLeer: signal(0), actualizarContador: vi.fn() } },
       ],
     });
     const fixture = TestBed.createComponent(Navbar);
