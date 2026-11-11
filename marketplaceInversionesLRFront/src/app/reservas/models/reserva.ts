@@ -85,4 +85,56 @@ export interface Reserva {
   desglose?: string;
 
   pago?: PagoReserva | null;
+
+  // ---- Datos para consultar el historial (HU-25, GET /reservas/mias, /anfitrion y /{id}) ----
+
+  /** true cuando la estadía ya terminó. */
+  completada?: boolean;
+
+  imagenAlojamiento?: string | null;
+
+  ciudad?: string | null;
+
+  /** Dirección; el backend la comparte con la reserva confirmada. */
+  ubicacion?: string | null;
+
+  tipoAlojamiento?: string | null;
+
+  capacidadAlojamiento?: number | null;
+
+  nombrePolitica?: string | null;
+
+  nombreHuesped?: string | null;
+
+  idAnfitrion?: number | null;
+
+  nombreAnfitrion?: string | null;
+
+  tieneResena?: boolean;
+
+  /** Cancelación registrada, si la reserva se canceló (HU-01). */
+  cancelacion?: CancelacionReserva | null;
+}
+
+/** Cancelación de una reserva (CancelacionDTO del backend). */
+export interface CancelacionReserva {
+  idCancelacion?: number;
+  motivo?: string | null;
+  politica?: string | null;
+  porcentajeReembolso?: number | null;
+  valorReembolso?: number | null;
+  estado?: 'SOLICITADA' | 'APROBADA' | 'RECHAZADA' | string;
+  estadoFinalReserva?: EstadoReserva;
+  fecha?: string | null;
+  idUsuario?: number;
+  idReserva?: number;
+}
+
+/** Página de reservas (PaginaDTO), las más recientes primero. */
+export interface PaginaReservas {
+  contenido: Reserva[];
+  pagina: number;
+  tamanio: number;
+  totalElementos: number;
+  totalPaginas: number;
 }

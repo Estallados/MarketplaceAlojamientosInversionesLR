@@ -241,11 +241,28 @@ CA-078;RF-022;Consulta de estado e historial de reservas;Consulta de historial d
 CU-020";"CP-040 Consulta de historial de reservas
 CP-041 Consulta de reservas del anfitrión";"HistorialReservasTest#historialDelHuesped_CA078
 HistorialReservasServiceTest#historialDelHuesped_CA078
-HistorialReservasServiceTest#historialVacio_CA078";Probado (JUnit);;feat/SCRUM-275-be-consultar-historial-reservas;;;"GET /reservas/mias (paginado, las más recientes primero) con estado, alojamiento, imagen, política, último pago, cancelación, completada y tieneResena. GET /reservas/{id} solo para el huésped, el anfitrión del alojamiento o ADMIN; para los demás 404."
+HistorialReservasServiceTest#historialVacio_CA078
+mis-reservas.spec.ts#CA-078 consulta todas las reservas del huésped y las agrupa por su estado actual
+mis-reservas.spec.ts#CA-078 muestra en cada pestaña las reservas con su estado, fechas, huéspedes y total
+mis-reservas.spec.ts#CA-078 indica cuando no hay reservas en una categoría
+mis-reservas.spec.ts#CA-078 si la consulta falla lo informa y permite reintentar
+detalle-reserva.spec.ts#CA-078 muestra el estado actual, los datos de la reserva y el desglose cotizado
+detalle-reserva.spec.ts#CA-078 de una reserva cancelada muestra la fecha, la devolución y el motivo
+detalle-reserva.spec.ts#CA-078 si la reserva no existe o no es del huésped lo indica y permite volver";Probado (JUnit);;"feat/SCRUM-275-be-consultar-historial-reservas
+feat/SCRUM-276-fe-consultar-historial-reservas";;;"GET /reservas/mias (paginado, las más recientes primero) con estado, alojamiento, imagen, política, último pago, cancelación, completada y tieneResena. GET /reservas/{id} solo para el huésped, el anfitrión del alojamiento o ADMIN; para los demás 404.
+Front-end (SCRUM-276): pantallas Mis reservas (/reservas, solo Huésped; GET /reservas/mias con todas las páginas, pestañas Próximas, Activas, Finalizadas y Canceladas con el estado de cada reserva) y Detalle de la reserva (/reservas/:id; GET /reservas/{id} con estado, datos, desglose cotizado y cancelación). Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-079;RF-022;Consulta de estado e historial de reservas;Consulta de reservas propias del anfitrión;Dado que el anfitrión tiene alojamientos con reservas, cuando consulta sus reservas, entonces el sistema muestra solo las de sus alojamientos.;HU-25;"CU-026
 CU-020";"CP-040 Consulta de historial de reservas
 CP-041 Consulta de reservas del anfitrión";"HistorialReservasTest#reservasDelAnfitrion_CA079
-HistorialReservasServiceTest#reservasDelAnfitrion_CA079";Probado (JUnit);;feat/SCRUM-275-be-consultar-historial-reservas;;;GET /reservas/anfitrion (solo ANFITRION, 403 para los demás): reservas de sus alojamientos, nunca las de alojamientos de otros.
+HistorialReservasServiceTest#reservasDelAnfitrion_CA079
+reservas-anfitrion.spec.ts#CA-079 consulta GET /reservas/anfitrion y muestra las reservas de sus alojamientos con su estado
+reservas-anfitrion.spec.ts#CA-079 pagina las reservas con el backend
+reservas-anfitrion.spec.ts#CA-079 sin reservas en sus alojamientos lo indica
+reservas-anfitrion.spec.ts#CA-079 si el usuario no es anfitrión (403) lo informa sin mostrar reservas
+detalle-reserva-anfitrion.spec.ts#CA-079 muestra la reserva de su alojamiento con el huésped, las fechas, el estado y el total
+detalle-reserva-anfitrion.spec.ts#CA-079 una reserva que no es de sus alojamientos (404) no se muestra";Probado (JUnit);;"feat/SCRUM-275-be-consultar-historial-reservas
+feat/SCRUM-276-fe-consultar-historial-reservas";;;"GET /reservas/anfitrion (solo ANFITRION, 403 para los demás): reservas de sus alojamientos, nunca las de alojamientos de otros.
+Front-end (SCRUM-276): pantallas Reservas del anfitrión (/host/reservas, solo Anfitrión; GET /reservas/anfitrion paginado con huésped, alojamiento y estado) y su detalle (/host/reservas/:id; GET /reservas/{id}, 404 si no es de sus alojamientos). Probado con Vitest (ng test); el flujo completo con un anfitrión queda pendiente de verificar."
 CA-080;RNF-021;Cálculo consistente de cotización;Componentes y total de la cotización;Dado un alojamiento y fechas válidas, cuando se pide la cotización, entonces el sistema muestra todos los componentes exigidos y el total corresponde a la suma correcta de dichos componentes.;HU-31;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";"CotizacionServiceTest#totalEsLaSuma_CA080

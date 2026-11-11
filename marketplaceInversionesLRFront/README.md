@@ -92,11 +92,16 @@ src/app/
 │   ├── tarifas/
 │   ├── models/
 │   └── services/                tarifas.service y cotizacion.service (POST /cotizaciones, S06)
-├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22), cotización con servicios (HU-31) y pago de prueba (HU-27)
+├── reservas/             Crear reserva (HU-22), cotización con servicios (HU-31), pago de prueba (HU-27) e historial de reservas (HU-25)
 │   ├── confirmar-reserva/       huéspedes y servicios adicionales, desglose de la cotización y confirmación inmediata
 │   ├── models/
 │   ├── pago-reserva/            modal "Confirma y paga" con tarjetas de prueba (HU-27)
-│   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07) y pago.service (GET /pagos/configuracion)
+│   ├── mis-reservas/            historial del huésped por pestañas (HU-25)
+│   ├── detalle-reserva/         detalle de una reserva del huésped (HU-25)
+│   ├── reservas-anfitrion/      reservas de los alojamientos del anfitrión (HU-25)
+│   ├── detalle-reserva-anfitrion/ detalle de una reserva para el anfitrión (HU-25)
+│   ├── testing/                 datos de prueba compartidos por los .spec.ts
+│   ├── services/                reserva.service (POST /reservas con Idempotency-Key, historial y detalle, S07) y pago.service (GET /pagos/configuracion)
 │   └── validaciones/            interpretación de los rechazos del contrato y tarjetas de prueba (HU-27)
 ├── favoritos/            Gestionar alojamientos favoritos (HU-29)
 │   ├── mis-favoritos/           lista del huésped y quitar con el corazón
