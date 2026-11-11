@@ -118,7 +118,12 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
-{
+  // ====================================
+  // RESTRINGIR CUENTAS DE USUARIOS (HU-12)
+  // SOLO ADMINISTRADOR. Carga diferida para no aumentar el bundle inicial.
+  // ====================================
+
+  {
     path: 'admin/usuarios',
     loadComponent: () =>
       import('./administracion/usuarios/usuarios')
@@ -146,6 +151,20 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./administracion/reservas/reservas')
         .then(m => m.ReservasAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+  // ====================================
+  // CONSULTAR EVENTOS DE AUDITORÍA (HU-13)
+  // SOLO ADMINISTRADOR: GET /admin/auditoria exige el rol ADMIN.
+  // ====================================
+
+  {
+    path: 'admin/auditoria',
+    loadComponent: () =>
+      import('./auditoria/consultar-auditoria/consultar-auditoria')
+        .then(m => m.ConsultarAuditoria),
     canActivate: [roleGuard],
     data: { roles: ['Administrador'] }
   },
