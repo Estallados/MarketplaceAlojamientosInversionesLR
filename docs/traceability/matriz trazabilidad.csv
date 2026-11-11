@@ -70,8 +70,21 @@ ReporteServiceTest#estadosEnCero_CA022
 ReporteServiceTest#limiteDeCiudades_CA022
 ReporteControllerTest#dashboard_CA022
 ReporteControllerTest#soloAdministrador_CA022";Probado (JUnit);;feat/SCRUM-161-be-dashboard-indicadores;;;
-CA-027;RF-006;Exportación de reportes;Exportación y trazabilidad del reporte;Dado que un usuario solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel con datos que correspondan a la información disponible en el sistema y registrar solicitante y fecha.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"DashboardReportesTest#exportaEnPdfYRegistraSolicitanteYFecha_CA027_CA029
-DashboardReportesTest#elExcelCorrespondeConLaInformacionDelSistema_CA027_CA028";;38a9302;;;;
+CA-027;RF-006;Exportación de reportes;Exportación y trazabilidad del reporte;Dado que un usuario solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel con datos que correspondan a la información disponible en el sistema y registrar solicitante y fecha.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"ReportesTest#exportaPdf_CA027
+ReportesTest#exportaExcelConLosDatos_CA027
+ReportesTest#historial_CA027
+ReportesTest#validaciones_CA027
+ReporteServiceTest#exportaPdfYRegistra_CA027
+ReporteServiceTest#exportaExcelConLosDatos_CA027
+ReporteServiceTest#reporteDeIngresos_CA027
+ReporteServiceTest#tipoOFormatoInvalido_CA027
+ReporteServiceTest#historial_CA027
+ReporteControllerTest#exportar_CA027
+ReporteControllerTest#exportarInvalido_CA027
+ReporteControllerTest#historial_CA027
+ExportadorUtilTest#excelConPresentacion_CA027
+ExportadorUtilTest#pdfConYSinDatos_CA027
+ExportadorUtilTest#excelDeUnaColumna_CA027";Probado (JUnit);;feat/SCRUM-162-be-exportar-reportes;;;
 CA-030;RF-001;Registro de usuarios;Crear cuenta con rol;Dado que el usuario no está registrado, cuando proporciona todos los datos obligatorios y un rol válido, entonces el sistema crea la cuenta, le asigna el rol seleccionado y muestra una confirmación.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
 CP-002 Validación de campos obligatorios en registro";"UsuarioServiceTest#creaLaCuentaYEnviaElCodigo_CA030
 UsuarioServiceTest#sinRolUsaHuesped_CA030
