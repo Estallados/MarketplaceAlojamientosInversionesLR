@@ -125,6 +125,17 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	List<Object[]> contarPorEstado();
 
 	/**
+	 * Cantidad de reservas no canceladas por ciudad, de mayor a menor, para el
+	 * reporte de demanda (HU-05).
+	 *
+	 * @return filas con la forma [ciudad, cantidad]
+	 */
+	@Query("select a.ciudad, count(r) from Reserva r, Alojamiento a where r.idAlojamiento = a.idAlojamiento "
+			+ "and r.estado <> co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva.CANCELADA "
+			+ "group by a.ciudad order by count(r) desc")
+	List<Object[]> contarPorCiudad();
+
+	/**
 	 * Ciudades con más reservas, contando todos los estados: de mayor a menor
 	 * y, si hay empate, por nombre (HU-04). El {@code Pageable} limita cuántas
 	 * se devuelven.
