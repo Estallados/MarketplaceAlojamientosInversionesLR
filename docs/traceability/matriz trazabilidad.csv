@@ -556,13 +556,31 @@ AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
 PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;"El back entrega la ubicación; el mapa se valida en el front"
 CA-165;RF-029;Mensajería entre huésped y anfitrión;Envío y respuesta de mensajes;Dado que el huésped o el anfitrión participan en una conversación, cuando envían un mensaje o una respuesta, entonces el sistema debe registrarlo asociado a la misma conversación, identificando al remitente y conservando la fecha de envío.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
-CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
+CP-066 Acceso a conversación ajena";"MensajeriaTest#enviaYElOtroLoLee_CA165
+MensajeriaTest#llegaPorWebSocket_CA165
+MensajeriaServiceTest#enviaConRemitenteYFecha_CA165
+MensajeriaServiceTest#enviaPorWebSocket_CA165
+MensajeriaServiceTest#mensajeInvalido_CA165
+MensajeriaControllerTest#enviar_CA165
+NotificacionServiceTest#enviaPorWebSocket_CA165";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;;
 CA-167;RF-029;Mensajería entre huésped y anfitrión;Acceso restringido a la conversación;Dado que un usuario no participa en una conversación, cuando intenta consultarla, entonces el sistema debe impedirlo, permitiendo el acceso solo a los participantes autorizados.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
-CP-066 Acceso a conversación ajena";OpcionalesTest#quienNoParticipaNoPuedeVerNiEscribirEnLaConversacion_CA167;;38a9302;;;;
+CP-066 Acceso a conversación ajena";"MensajeriaTest#soloParticipantes_CA167
+MensajeriaTest#webSocketSoloLoPropio_CA167
+MensajeriaServiceTest#soloParticipantes_CA167
+MensajeriaServiceTest#participantesLeen_CA167
+MensajeriaServiceTest#conversacionInexistente_CA167
+MensajeriaServiceTest#listaLasPropias_CA167
+MensajeriaControllerTest#mensajes_CA167
+MensajeriaControllerTest#listar_CA167";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;;
 CA-169;RF-029;Mensajería entre huésped y anfitrión;Inicio de conversación;Dado que el huésped está autenticado y el alojamiento existe, cuando inicia una conversación con el anfitrión del alojamiento, entonces el sistema debe crearla.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
-CP-066 Acceso a conversación ajena";OpcionalesTest#elHuespedIniciaUnaConversacionYElAnfitrionResponde_CA165_CA166_CA168_CA169;;38a9302;;;;
+CP-066 Acceso a conversación ajena";"MensajeriaTest#iniciaConElAnfitrion_CA169
+MensajeriaServiceTest#iniciaConElAnfitrion_CA169
+MensajeriaServiceTest#retomaLaExistente_CA169
+MensajeriaServiceTest#validaciones_CA169
+MensajeriaControllerTest#iniciar_CA169
+MensajeriaControllerTest#iniciarPropio_CA169";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;;
 CA-170;RF-007;Gestión de alojamientos favoritos;Consulta de favoritos;Dado que el huésped está autenticado, cuando consulta sus alojamientos favoritos, entonces el sistema debe mostrar solo los asociados a su usuario o indicar que la lista está vacía si no tiene ninguno.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
 CP-069 Eliminación de favorito";"FavoritosTest#listaVacia_CA170
