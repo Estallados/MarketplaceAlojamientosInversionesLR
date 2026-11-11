@@ -569,19 +569,27 @@ CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#claveRealNoCobra_CA160
 PagoServiceTest#configuracionDePrueba_CA160
 PagoServiceTest#apruebaPorDefecto_CA160_CA161
-ReservaTest#configuracionDePagos_CA160";Probado (JUnit);;feat/SCRUM-184-be-pago-reserva-prueba;;;
+ReservaTest#configuracionDePagos_CA160
+confirmar-reserva.spec.ts#CA-160 el pago se hace en ambiente de prueba: solo métodos de prueba del backend y sin datos de tarjeta
+confirmar-reserva.spec.ts#CA-160 con Stripe en modo de prueba también usa solo métodos de prueba y lo indica";Probado (JUnit);;"feat/SCRUM-184-be-pago-reserva-prueba
+feat/SCRUM-246-fe-pago-reserva-prueba";;;"Front-end (SCRUM-246): ""Confirmar reserva"" abre el modal ""Confirma y paga"" con los métodos de prueba de GET /pagos/configuracion (SIMULADO o STRIPE_TEST); no pide datos de tarjeta y avisa que no hay cobros reales. Probado con Vitest (ng test); GET /pagos/configuracion verificado con el backend local (modo SIMULADO)."
 CA-161;RF-028;Procesamiento de pago simulado;Pago aprobado;Dado que el pago de prueba fue aprobado, cuando el sistema recibe el resultado, entonces debe registrarlo y asociarlo a la reserva, que queda con un pago exitoso.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#apruebaEnStripe_CA161
 PagoServiceTest#apruebaPorDefecto_CA160_CA161
-PagoServiceTest#otroMetodoSeAprueba_CA161";Probado (JUnit);;feat/SCRUM-184-be-pago-reserva-prueba;;;
+PagoServiceTest#otroMetodoSeAprueba_CA161
+confirmar-reserva.spec.ts#CA-161 con el pago aprobado muestra la reserva pagada con el pago registrado y su referencia";Probado (JUnit);;"feat/SCRUM-184-be-pago-reserva-prueba
+feat/SCRUM-246-fe-pago-reserva-prueba";;;"Front-end (SCRUM-246): con el pago aprobado, la reserva confirmada muestra el pago registrado (estado, valor y referencia) y el ambiente de prueba. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-162;RF-028;Procesamiento de pago simulado;Pago rechazado o con error;Dado que el pago de prueba es rechazado u ocurre un error que impide confirmarlo, cuando el sistema recibe el resultado, entonces la reserva no debe quedar marcada como pagada y se debe informar que el pago fue rechazado o no confirmado.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#rechazoEnStripe_CA162
 PagoServiceTest#otrasRespuestasDeStripe_CA162
 PagoServiceTest#simuladorComoStripe_CA162
 PagoServiceTest#rechazo_CA162
-PagoServiceTest#falla_CA162";Probado (JUnit);;feat/SCRUM-184-be-pago-reserva-prueba;;;
+PagoServiceTest#falla_CA162
+confirmar-reserva.spec.ts#CA-162 con el pago rechazado la reserva no queda pagada, se informa el motivo y se puede pagar con otro método
+confirmar-reserva.spec.ts#CA-162 si la pasarela falla informa que el pago no se confirmó y no muestra la reserva como pagada";Probado (JUnit);;"feat/SCRUM-184-be-pago-reserva-prueba
+feat/SCRUM-246-fe-pago-reserva-prueba";;;Front-end (SCRUM-246): con 402 o 502 el modal muestra el motivo del backend, la reserva no aparece como pagada y se puede pagar con otro método (nueva Idempotency-Key). Probado con Vitest (ng test).
 CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;"DetalleAlojamientoTest#detalleConUbicacion_CA164
 AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
 PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;"El back entrega la ubicación; el mapa se valida en el front"

@@ -92,10 +92,11 @@ src/app/
 │   ├── tarifas/
 │   ├── models/
 │   └── services/                tarifas.service y cotizacion.service (POST /cotizaciones, S06)
-├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22) y cotización con servicios (HU-31)
+├── reservas/             Crear reserva con bloqueo automático de fechas (HU-22), cotización con servicios (HU-31) y pago de prueba (HU-27)
 │   ├── confirmar-reserva/       huéspedes y servicios adicionales, desglose de la cotización y confirmación inmediata
 │   ├── models/
-│   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07)
+│   ├── pago-reserva/            modal "Confirma y paga" con métodos de pago de prueba (HU-27)
+│   ├── services/                reserva.service (POST /reservas con Idempotency-Key, S07) y pago.service (GET /pagos/configuracion)
 │   └── validaciones/            interpretación de los rechazos del contrato
 ├── favoritos/            Gestionar alojamientos favoritos (HU-29)
 │   ├── mis-favoritos/           lista del huésped y quitar con el corazón
