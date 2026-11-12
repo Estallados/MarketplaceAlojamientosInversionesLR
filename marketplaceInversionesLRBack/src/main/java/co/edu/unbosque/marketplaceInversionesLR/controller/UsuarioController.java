@@ -11,6 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +44,24 @@ public class UsuarioController {
 
 	/** Mensaje cuando el usuario no existe. */
 	private static final String USUARIO_NO_ENCONTRADO = UsuarioService.NO_ENCONTRADO;
+
+	/** Mensaje cuando se creó el administrador. */
+	static final String ADMIN_CREADO = "Administrador creado correctamente. Ya puede iniciar sesión.";
+
+	/** Mensaje cuando no se pudo guardar el administrador. */
+	static final String ADMIN_NO_CREADO = "No se pudo crear el administrador.";
+
+	/** Mensaje cuando el correo ya está registrado. */
+	static final String CORREO_DUPLICADO = "Ya existe un usuario con ese correo electrónico.";
+
+	/** Mensaje cuando faltan datos o no son válidos (igual que en el registro). */
+	static final String DATOS_INVALIDOS = "Datos incompletos o inválidos: nombre (máximo 255 caracteres), correo "
+			+ "válido (máximo 150) y contraseña son obligatorios; el teléfono, si se envía, debe tener de 7 a 15 "
+			+ "dígitos.";
+
+	/** Mensaje cuando la contraseña no es segura (igual que en el registro). */
+	static final String CONTRASENIA_DEBIL = "La contraseña debe tener entre 8 y 64 caracteres, una mayúscula, una "
+			+ "minúscula, un número y un símbolo.";
 
 	/** Mensaje cuando un usuario consulta a otro sin ser administrador. */
 	public static final String SIN_PERMISO_CONSULTA = "No tienes permisos para consultar este usuario.";
@@ -128,6 +147,36 @@ public class UsuarioController {
 				.ok(Map.of("message", "Cuenta desactivada correctamente.", "estado", EstadoUsuario.INACTIVO.name()));
 		case 1 -> RespuestaUtil.mensaje(HttpStatus.NOT_FOUND, USUARIO_NO_ENCONTRADO);
 		default -> RespuestaUtil.mensaje(HttpStatus.FORBIDDEN, "Esta cuenta no se puede desactivar.");
+		};
+	}
+
+	/**
+	 * Crea otro administrador (solo administradores). El registro público nunca
+	 * crea administradores y el rol enviado aquí se ignora. Ruta:
+	 * {@code POST /usuarios/crearadministrador}.
+	 *
+	 * @param datos          nombre, correo, contraseña y, si se quiere, teléfono
+	 *                       del nuevo administrador
+	 * @param authentication administrador autenticado
+	 * @return 201 si se creó; 400 si los datos o la contraseña no son válidos;
+	 *         409 si el correo ya existe; 500 si falló el guardado
+	 */
+	@Operation(summary = "Crear un administrador (solo ADMIN)", description = "El registro público nunca crea "
+			+ "administradores; el rol enviado se ignora. El correo del nuevo administrador queda verificado, "
+			+ "así que puede iniciar sesión de inmediato.")
+	@PreAuthorize("hasRole('ADMIN')")
+	@ApiResponse(responseCode = "201", description = ADMIN_CREADO)
+	@ApiResponse(responseCode = "400", description = DATOS_INVALIDOS + " | " + CONTRASENIA_DEBIL)
+	@ApiResponse(responseCode = "409", description = CORREO_DUPLICADO)
+	@ApiResponse(responseCode = "500", description = ADMIN_NO_CREADO)
+	@PostMapping("/crearadministrador")
+	public ResponseEntity<Object> crearAdministrador(@RequestBody UsuarioDTO datos, Authentication authentication) {
+		return switch (usuarioService.crearAdministrador(datos, RespuestaUtil.idUsuario(authentication))) {
+		case UsuarioService.CREADO -> RespuestaUtil.mensaje(HttpStatus.CREATED, ADMIN_CREADO);
+		case UsuarioService.CORREO_DUPLICADO -> RespuestaUtil.mensaje(HttpStatus.CONFLICT, CORREO_DUPLICADO);
+		case UsuarioService.CONTRASENIA_DEBIL -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, CONTRASENIA_DEBIL);
+		case UsuarioService.DATOS_INVALIDOS -> RespuestaUtil.mensaje(HttpStatus.BAD_REQUEST, DATOS_INVALIDOS);
+		default -> RespuestaUtil.mensaje(HttpStatus.INTERNAL_SERVER_ERROR, ADMIN_NO_CREADO);
 		};
 	}
 
