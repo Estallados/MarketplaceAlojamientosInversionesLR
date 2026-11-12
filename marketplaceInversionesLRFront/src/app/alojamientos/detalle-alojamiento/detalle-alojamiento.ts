@@ -1,12 +1,13 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { DetalleAlojamiento, ResenaDetalle } from '../models/detalle-alojamiento';
 import { DetalleAlojamientoService } from '../services/detalle-alojamiento.service';
 import { SessionService } from '../../core/services/session.service';
 import { FavoritoService } from '../../favoritos/services/favorito.service';
+import { MensajeriaService } from '../../mensajeria/services/mensajeria.service';
 
 /** Máximo de fotos de la galería: la principal y 4 pequeñas. */
 const MAX_FOTOS = 5;
@@ -19,7 +20,7 @@ const MARGEN_MAPA = 0.01;
 /**
  * Detalle de un alojamiento (HU-18): galería, información, servicios, reglas, reseñas y,
  * como último bloque, el mapa con la ubicación aproximada (CA-164). El huésped puede guardarlo
- * en sus favoritos (HU-29, CA-173).
+ * en sus favoritos (HU-29, CA-173) y contactar al anfitrión (HU-28, CA-169).
  */
 @Component({
   selector: 'app-detalle-alojamiento',
@@ -33,6 +34,8 @@ export class DetalleAlojamientoPage implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   protected readonly session = inject(SessionService);
   protected readonly favoritoService = inject(FavoritoService);
+  private readonly router = inject(Router);
+  private readonly mensajeria = inject(MensajeriaService);
 
   // ==================== Alojamiento ====================
   readonly stay = signal<DetalleAlojamiento | null>(null);
@@ -144,6 +147,30 @@ export class DetalleAlojamientoPage implements OnInit {
 
   toggleFavorite(): void {
     this.favoritoService.toggle(this.stay()?.idAlojamiento);
+  }
+
+  // ==================== Contactar al anfitrión (HU-28) ====================
+  readonly contactando = signal(false);
+  readonly errorContacto = signal<string | null>(null);
+
+  /** Inicia (o retoma) la conversación con el anfitrión y abre la mensajería en ella (CA-169). */
+  contactHost(): void {
+    const id = this.stay()?.idAlojamiento;
+    if (id == null || this.contactando()) {
+      return;
+    }
+    this.contactando.set(true);
+    this.errorContacto.set(null);
+    this.mensajeria.iniciar(id).subscribe({
+      next: (conversacion) => {
+        this.contactando.set(false);
+        void this.router.navigate(['/mensajes'], { queryParams: { conversacion: conversacion.id } });
+      },
+      error: (error: unknown) => {
+        this.contactando.set(false);
+        this.errorContacto.set(this.mensajeria.mensajeDeError(error, 'No se pudo iniciar la conversación.'));
+      },
+    });
   }
 
   // ==================== Inicialización ====================

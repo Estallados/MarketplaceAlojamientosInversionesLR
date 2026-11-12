@@ -426,6 +426,25 @@
             </div>
           }
         </div>
+
+        <!-- Contactar al anfitrión (HU-28, CA-169) -->
+        @if (session.tieneRol('Huésped')) {
+          <div class="mt-6 rounded-2xl bg-emerald-50 p-6">
+            <h3 class="font-display text-lg font-bold text-emerald-900">¿Tienes preguntas para {{ stay.nombreAnfitrion }}?</h3>
+            <p class="mt-2 text-sm text-emerald-800">Consulta detalles del alojamiento antes de reservar.</p>
+            <button
+              type="button"
+              (click)="contactHost()"
+              [disabled]="contactando()"
+              class="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {{ contactando() ? 'Abriendo conversación...' : 'Contactar al anfitrión' }}
+            </button>
+            @if (errorContacto()) {
+              <p class="mt-3 text-sm text-red-700" role="alert">{{ errorContacto() }}</p>
+            }
+          </div>
+        }
       </section>
     </main>
   }
