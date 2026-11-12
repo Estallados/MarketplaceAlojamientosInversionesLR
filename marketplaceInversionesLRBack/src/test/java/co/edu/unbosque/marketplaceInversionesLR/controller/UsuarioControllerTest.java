@@ -14,10 +14,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.UsuarioDTO;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
 
 /**
@@ -71,5 +73,38 @@ class UsuarioControllerTest {
 		assertThat(invalido.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
 		assertThat(invalido.getBody()).isEqualTo(Map.of("message",
 				"Envía un nombre no vacío (máximo 255 caracteres) y/o un teléfono de 7 a 15 dígitos."));
+	}
+
+	@Test
+	@DisplayName("Crear un administrador responde 201, 409, 400 o 500 a nombre del administrador del token")
+	void crearAdministrador() {
+		Usuario admin = new Usuario();
+		admin.setIdUsuario(2L);
+		Authentication sesionAdmin = new UsernamePasswordAuthenticationToken(admin, null, List.of());
+		UsuarioDTO datos = new UsuarioDTO();
+		when(usuarioService.crearAdministrador(datos, 2L)).thenReturn(UsuarioService.CREADO,
+				UsuarioService.CORREO_DUPLICADO, UsuarioService.CONTRASENIA_DEBIL, UsuarioService.DATOS_INVALIDOS,
+				UsuarioService.ERROR_INTERNO);
+
+		ResponseEntity<Object> creado = controlador.crearAdministrador(datos, sesionAdmin);
+		assertThat(creado.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+		assertThat(creado.getBody()).isEqualTo(Map.of("message", UsuarioController.ADMIN_CREADO));
+		assertThat(controlador.crearAdministrador(datos, sesionAdmin).getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(controlador.crearAdministrador(datos, sesionAdmin).getBody())
+				.isEqualTo(Map.of("message", UsuarioController.CONTRASENIA_DEBIL));
+		assertThat(controlador.crearAdministrador(datos, sesionAdmin).getStatusCode())
+				.isEqualTo(HttpStatus.BAD_REQUEST);
+		assertThat(controlador.crearAdministrador(datos, sesionAdmin).getStatusCode())
+				.isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Test
+	@DisplayName("Solo un administrador puede crear administradores")
+	void crearAdministradorSoloAdmin() throws Exception {
+		PreAuthorize regla = UsuarioController.class
+				.getMethod("crearAdministrador", UsuarioDTO.class, Authentication.class)
+				.getAnnotation(PreAuthorize.class);
+
+		assertThat(regla.value()).isEqualTo("hasRole('ADMIN')");
 	}
 }

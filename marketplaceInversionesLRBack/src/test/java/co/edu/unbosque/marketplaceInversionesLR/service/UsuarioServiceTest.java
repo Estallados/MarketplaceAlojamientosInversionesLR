@@ -2,10 +2,12 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -167,6 +169,45 @@ class UsuarioServiceTest {
 				.isEqualTo(UsuarioService.ERROR_INTERNO);
 		verify(auditoriaService).registrar(isNull(), eq(AuditoriaService.REGISTRO_USUARIO),
 				eq(AuditoriaService.ENTIDAD_USUARIO), isNull(), eq(ResultadoAuditoria.ERROR), anyString());
+	}
+
+	@Test
+	@DisplayName("Un administrador crea otro administrador ya verificado, sin código al correo y a su nombre en la auditoría")
+	void administradorCreaAdministrador() {
+		when(usuarioRepo.saveAndFlush(any(Usuario.class))).thenAnswer(inv -> conId(inv.getArgument(0), 9L));
+
+		int resultado = servicio.crearAdministrador(datos("Laura Admin", "Laura@Correo.com", CONTRASENIA, null,
+				Role.HUESPED), 2L);
+
+		assertThat(resultado).isEqualTo(UsuarioService.CREADO);
+		Usuario guardado = capturarGuardado();
+		assertThat(guardado.getRol()).isEqualTo(Role.ADMIN);
+		assertThat(guardado.getEstado()).isEqualTo(EstadoUsuario.ACTIVO);
+		assertThat(guardado.esCorreoVerificado()).isTrue();
+		assertThat(AESUtil.decrypt(guardado.getCorreo())).isEqualTo("laura@correo.com");
+		assertThat(passwordEncoder.matches(CONTRASENIA, guardado.getContrasenia())).isTrue();
+		verify(auditoriaService).registrar(eq(2L), eq(AuditoriaService.REGISTRO_USUARIO),
+				eq(AuditoriaService.ENTIDAD_USUARIO), eq(9L), eq(ResultadoAuditoria.EXITOSO), eq("Rol ADMIN"));
+		verify(verificacionCorreoService, never()).enviarCodigo(any(), anyString(), anyString(), anyBoolean());
+	}
+
+	@Test
+	@DisplayName("Crear un administrador valida igual que el registro: datos, contraseña y correo repetido")
+	void crearAdministradorValida() {
+		when(usuarioRepo.existsByCorreoHash(UsuarioService.hashCorreo("ana@correo.com"))).thenReturn(true);
+
+		assertThat(servicio.crearAdministrador(datos(" ", "laura@correo.com", CONTRASENIA, null, null), 2L))
+				.isEqualTo(UsuarioService.DATOS_INVALIDOS);
+		assertThat(servicio.crearAdministrador(null, 2L)).isEqualTo(UsuarioService.DATOS_INVALIDOS);
+		assertThat(servicio.crearAdministrador(datos("Laura", "laura@correo.com", "debil", null, null), 2L))
+				.isEqualTo(UsuarioService.CONTRASENIA_DEBIL);
+		assertThat(servicio.crearAdministrador(datos("Ana", "ana@correo.com", CONTRASENIA, null, null), 2L))
+				.isEqualTo(UsuarioService.CORREO_DUPLICADO);
+
+		verify(usuarioRepo, never()).saveAndFlush(any());
+		verify(auditoriaService, times(4)).registrar(eq(2L),
+				eq(AuditoriaService.REGISTRO_USUARIO), eq(AuditoriaService.ENTIDAD_USUARIO), isNull(),
+				eq(ResultadoAuditoria.RECHAZADO), anyString());
 	}
 
 	@Test

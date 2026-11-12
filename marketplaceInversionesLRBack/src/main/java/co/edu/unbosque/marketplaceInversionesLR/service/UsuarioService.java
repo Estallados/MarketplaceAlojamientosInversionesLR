@@ -187,21 +187,40 @@ public class UsuarioService {
 					ResultadoAuditoria.RECHAZADO, "Intento de registro público como ADMIN");
 			return ROL_NO_PERMITIDO;
 		}
-		return registrar(data, rol);
+		return registrar(data, rol, null);
 	}
 
 	/**
-	 * Validaciones y guardado del registro.
+	 * Crea otro administrador. Solo lo puede pedir un ADMIN (lo controla
+	 * {@code UsuarioController} con {@code @PreAuthorize}); el registro público
+	 * nunca crea administradores. Tiene las mismas validaciones del registro,
+	 * pero el correo queda verificado y no se envía código: el nuevo
+	 * administrador puede iniciar sesión de inmediato.
 	 *
-	 * @param data datos del usuario
-	 * @param rol  rol con el que se crea
+	 * @param data    datos del nuevo administrador; el rol enviado se ignora
+	 * @param idActor administrador que lo crea
+	 * @return los mismos códigos de {@link #create(UsuarioDTO)}, excepto
+	 *         {@link #ROL_NO_PERMITIDO}
+	 */
+	public int crearAdministrador(UsuarioDTO data, Long idActor) {
+		return registrar(data, Role.ADMIN, idActor);
+	}
+
+	/**
+	 * Validaciones y guardado del registro. Si la cuenta la crea un
+	 * administrador, el correo queda verificado y no se envía código.
+	 *
+	 * @param data    datos del usuario
+	 * @param rol     rol con el que se crea
+	 * @param idActor administrador que lo crea; {@code null} en el registro
+	 *                público
 	 * @return código del resultado
 	 */
-	private int registrar(UsuarioDTO data, Role rol) {
+	private int registrar(UsuarioDTO data, Role rol, Long idActor) {
 		if (data == null || esVacio(data.getNombre()) || esVacio(data.getCorreo()) || esVacio(data.getContrasenia())
 				|| !telefonoValido(data.getTelefono()) || LimitesTexto.excede(data.getNombre(), LimitesTexto.CORTO)
 				|| LimitesTexto.excede(data.getCorreo(), LimitesTexto.CORREO)) {
-			auditarRechazo("Datos incompletos o inválidos");
+			auditarRechazo(idActor, "Datos incompletos o inválidos");
 			return DATOS_INVALIDOS;
 		}
 
@@ -209,21 +228,22 @@ public class UsuarioService {
 		try {
 			ExceptionCheker.checkerMail(correo);
 		} catch (MailException e) {
-			auditarRechazo("Correo con formato inválido");
+			auditarRechazo(idActor, "Correo con formato inválido");
 			return DATOS_INVALIDOS;
 		}
 		try {
 			ExceptionCheker.checkerPasword(data.getContrasenia());
 		} catch (CharacterException | CapitalException | SmallException | NumberException | SymbolException e) {
-			auditarRechazo("Contraseña débil");
+			auditarRechazo(idActor, "Contraseña débil");
 			return CONTRASENIA_DEBIL;
 		}
 
+		boolean creadaPorAdmin = idActor != null;
 		Usuario usuario;
 		try {
 			String correoHash = AESUtil.hash(correo);
 			if (usuarioRepo.existsByCorreoHash(correoHash)) {
-				auditarRechazo("Correo ya registrado");
+				auditarRechazo(idActor, "Correo ya registrado");
 				return CORREO_DUPLICADO;
 			}
 
@@ -238,26 +258,29 @@ public class UsuarioService {
 			usuario.setRol(rol);
 			usuario.setEstado(EstadoUsuario.ACTIVO);
 			usuario.setFechaRegistro(LocalDateTime.now());
-			usuario.setCorreoVerificado(false);
+			// La cuenta que crea un administrador no necesita verificar el correo
+			usuario.setCorreoVerificado(creadaPorAdmin);
 			usuario.setTotpHabilitado(false);
 
 			usuario = usuarioRepo.saveAndFlush(usuario);
 		} catch (DataIntegrityViolationException e) {
 			// Dos registros simultáneos con el mismo correo: lo frena el índice único
-			auditarRechazo("Correo ya registrado");
+			auditarRechazo(idActor, "Correo ya registrado");
 			return CORREO_DUPLICADO;
 		} catch (RuntimeException e) {
 			LOG.error("Error al registrar el usuario", e);
-			auditoriaService.registrar(null, AuditoriaService.REGISTRO_USUARIO, AuditoriaService.ENTIDAD_USUARIO, null,
-					ResultadoAuditoria.ERROR, e.getClass().getSimpleName());
+			auditoriaService.registrar(idActor, AuditoriaService.REGISTRO_USUARIO, AuditoriaService.ENTIDAD_USUARIO,
+					null, ResultadoAuditoria.ERROR, e.getClass().getSimpleName());
 			return ERROR_INTERNO;
 		}
 
-		auditoriaService.registrar(usuario.getIdUsuario(), AuditoriaService.REGISTRO_USUARIO,
+		auditoriaService.registrar(idActor == null ? usuario.getIdUsuario() : idActor, AuditoriaService.REGISTRO_USUARIO,
 				AuditoriaService.ENTIDAD_USUARIO, usuario.getIdUsuario(), ResultadoAuditoria.EXITOSO, "Rol " + rol);
 
-		// Correo de bienvenida con el código de verificación
-		verificacionCorreoService.enviarCodigo(usuario, correo, usuario.getNombre(), true);
+		// Correo de bienvenida con el código de verificación (solo en el registro público)
+		if (!creadaPorAdmin) {
+			verificacionCorreoService.enviarCodigo(usuario, correo, usuario.getNombre(), true);
+		}
 		return CREADO;
 	}
 
@@ -274,10 +297,12 @@ public class UsuarioService {
 	/**
 	 * Registra en la auditoría un registro rechazado.
 	 *
-	 * @param motivo causa del rechazo
+	 * @param idActor administrador que lo intentó; {@code null} en el registro
+	 *                público
+	 * @param motivo  causa del rechazo
 	 */
-	private void auditarRechazo(String motivo) {
-		auditoriaService.registrar(null, AuditoriaService.REGISTRO_USUARIO, AuditoriaService.ENTIDAD_USUARIO, null,
+	private void auditarRechazo(Long idActor, String motivo) {
+		auditoriaService.registrar(idActor, AuditoriaService.REGISTRO_USUARIO, AuditoriaService.ENTIDAD_USUARIO, null,
 				ResultadoAuditoria.RECHAZADO, motivo);
 	}
 
