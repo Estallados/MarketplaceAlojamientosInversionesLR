@@ -13,6 +13,7 @@ import {
 import { Reserva, SimulacionCancelacion } from '../models/reserva';
 import { ReservaService } from '../services/reserva.service';
 import { MAX_MOTIVO_CANCELACION, mensajeErrorCancelacion } from '../validaciones/errores-cancelacion';
+import { CalificarEstancia } from '../../resenas/calificar-estancia/calificar-estancia';
 
 /** Línea del resumen de la cotización. */
 export interface LineaDesglose {
@@ -38,7 +39,8 @@ export interface LineaDesglose {
 @Component({
   selector: 'app-detalle-reserva',
   standalone: true,
-  templateUrl: './detalle-reserva.html'
+  templateUrl: './detalle-reserva.html',
+  imports: [CalificarEstancia]
 })
 export class DetalleReserva implements OnInit, OnDestroy {
 
@@ -163,6 +165,39 @@ export class DetalleReserva implements OnInit, OnDestroy {
     return fechaCorta(this.reserva()?.cancelacion?.fecha);
   }
 
+  // ==================== RESEÑA (HU-03) ====================
+
+  /** Solo una estadía completada y no cancelada se puede calificar (CA-016). */
+  readonly finalizada = computed(() => {
+    const r = this.reserva();
+    return !!r && !!r.completada && r.estado !== 'CANCELADA';
+  });
+
+  readonly tieneResena = computed(() => !!this.reserva()?.tieneResena);
+
+  readonly mostrarResena = signal(false);
+
+  abrirResena(): void {
+    if (this.finalizada() && !this.tieneResena()) {
+      this.mostrarResena.set(true);
+    }
+  }
+
+  cerrarResena(): void {
+    this.mostrarResena.set(false);
+  }
+
+  /** La reseña quedó asociada a la reserva (CA-018): se recarga para actualizar tieneResena. */
+  resenaPublicada(): void {
+    this.mostrarResena.set(false);
+    this.mostrarAviso('¡Gracias! Tu reseña fue publicada.');
+    this.cargarReserva(true);
+  }
+
+  verResenas(): void {
+    void this.router.navigateByUrl('/resenas');
+  }
+
   // ==================== CANCELACIÓN (HU-01) ====================
 
   readonly maxMotivo = MAX_MOTIVO_CANCELACION;
@@ -277,6 +312,9 @@ export class DetalleReserva implements OnInit, OnDestroy {
     this.accionPendiente = null;
     if (accion === 'cancelar' && this.puedeCancelar()) {
       this.abrirCancelacion();
+    }
+    if (accion === 'resenar') {
+      this.abrirResena();
     }
     // Limpia ?accion= para que no se reabra al refrescar la página.
     void this.router.navigate([], {

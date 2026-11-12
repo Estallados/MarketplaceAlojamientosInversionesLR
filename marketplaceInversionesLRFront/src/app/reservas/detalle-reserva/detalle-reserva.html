@@ -146,11 +146,31 @@
             </button>
           }
 
-          <!-- TODO(HU-03): botón "Calificar estancia" / "Ver reseña" del proyecto base para reservas finalizadas. -->
+          <!-- CALIFICAR ESTANCIA (HU-03): solo reservas finalizadas -->
+          @if (finalizada()) {
+            <button
+              type="button"
+              data-calificar
+              (click)="tieneResena() ? verResenas() : abrirResena()"
+              class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-800"
+            >
+              {{ tieneResena() ? 'Ver reseña' : 'Calificar estancia' }}
+            </button>
+          }
         </section>
       </div>
     </div>
   </main>
+}
+
+<!-- ================= MODAL: CALIFICAR ESTANCIA (HU-03) ================= -->
+@if (mostrarResena() && reserva(); as r) {
+  <app-calificar-estancia
+    [idReserva]="r.idReserva"
+    [tituloAlojamiento]="r.tituloAlojamiento ?? ''"
+    (publicada)="resenaPublicada()"
+    (cerrar)="cerrarResena()"
+  />
 }
 
 <!-- ================= MODAL: CANCELAR RESERVA (HU-01) ================= -->
