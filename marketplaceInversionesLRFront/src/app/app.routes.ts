@@ -275,6 +275,31 @@ export const routes: Routes = [
   },
 
   // ====================================
+  // CALIFICAR, RESEÑAR Y CONSULTAR RESEÑAS (HU-03)
+  // /resenas: reseñas del huésped (GET /resenas/mias).
+  // /host/resenas: reseñas de los alojamientos del anfitrión (GET /resenas/anfitrion).
+  // El formulario para calificar está en el detalle de la reserva finalizada.
+  // ====================================
+
+  {
+    path: 'resenas',
+    loadComponent: () =>
+      import('./resenas/mis-resenas/mis-resenas')
+        .then(m => m.MisResenas),
+    canActivate: [roleGuard],
+    data: { roles: ['Huésped'] }
+  },
+
+  {
+    path: 'host/resenas',
+    loadComponent: () =>
+      import('./resenas/resenas-anfitrion/resenas-anfitrion')
+        .then(m => m.ResenasAnfitrion),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  // ====================================
   // MENSAJERÍA ENTRE HUÉSPED Y ANFITRIÓN (HU-28)
   // /mensajes: huésped y anfitrión; /host/chat: la misma bandeja desde el menú del anfitrión.
   // Solo los participantes ven cada conversación (GET /conversaciones).
