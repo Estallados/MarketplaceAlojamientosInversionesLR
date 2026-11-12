@@ -275,6 +275,30 @@ export const routes: Routes = [
   },
 
   // ====================================
+  // MENSAJERÍA ENTRE HUÉSPED Y ANFITRIÓN (HU-28)
+  // /mensajes: huésped y anfitrión; /host/chat: la misma bandeja desde el menú del anfitrión.
+  // Solo los participantes ven cada conversación (GET /conversaciones).
+  // ====================================
+
+  {
+    path: 'mensajes',
+    loadComponent: () =>
+      import('./mensajeria/mensajes/mensajes')
+        .then(m => m.Mensajes),
+    canActivate: [roleGuard],
+    data: { roles: ['Huésped', 'Anfitrión'] }
+  },
+
+  {
+    path: 'host/chat',
+    loadComponent: () =>
+      import('./mensajeria/mensajes/mensajes')
+        .then(m => m.Mensajes),
+    canActivate: [roleGuard],
+    data: { roles: ['Anfitrión'] }
+  },
+
+  // ====================================
   // RECIBIR Y CONSULTAR NOTIFICACIONES (HU-02)
   // CUALQUIER USUARIO CON SESIÓN: cada uno ve solo las suyas.
   // ====================================
