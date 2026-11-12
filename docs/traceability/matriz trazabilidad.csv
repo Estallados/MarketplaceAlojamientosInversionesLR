@@ -188,9 +188,16 @@ CP-050 Moderación de reseña sin permisos";"ModeracionResenasTest#ocultarYMostr
 ModeracionResenasTest#validaciones_CA066
 ModeracionResenasServiceTest#ocultar_CA066
 ModeracionResenasServiceTest#motivoObligatorio_CA066
-AdminControllerResenasTest#ocultar_CA066";Probado (JUnit);;feat/SCRUM-271-be-ocultar-resenas;;;"PATCH /admin/resenas/{id}/ocultar con motivo (obligatorio, máximo 500): solo cambia el estado a OCULTA (no se borra; en Neon trg_resena_proteger solo permite cambiar el estado), deja de mostrarse y de contar en el promedio, avisa al autor (RESENA_OCULTA) y audita RESENA_MODERADA. PATCH .../mostrar la vuelve a PUBLICADA y GET /admin/resenas lista por estado."
+AdminControllerResenasTest#ocultar_CA066
+resenas.spec.ts#CA-066 lista todas las reseñas con su estado y la acción que corresponde
+resenas.spec.ts#CA-066 oculta la reseña con el motivo y la marca como oculta cuando el backend lo confirma";Probado (JUnit);;"feat/SCRUM-271-be-ocultar-resenas
+feat/SCRUM-272-fe-ocultar-resenas";;;"PATCH /admin/resenas/{id}/ocultar con motivo (obligatorio, máximo 500): solo cambia el estado a OCULTA (no se borra; en Neon trg_resena_proteger solo permite cambiar el estado), deja de mostrarse y de contar en el promedio, avisa al autor (RESENA_OCULTA) y audita RESENA_MODERADA. PATCH .../mostrar la vuelve a PUBLICADA y GET /admin/resenas lista por estado.
+Front-end (SCRUM-272): en Moderación de reseñas (/admin/resenas, pantalla del proyecto base) el administrador ve todas las reseñas (GET /admin/resenas) con su estado; ""Ocultar reseña"" abre el modal con el motivo obligatorio (máximo 500 caracteres, con contador) y envía PATCH /admin/resenas/{id}/ocultar; la fila pasa a Oculta solo cuando el backend lo confirma y el contenido no se modifica. ""Mostrar reseña"" (PATCH .../mostrar) la vuelve a publicar. Dejar de mostrarla al público y en el promedio lo hace el backend. Probado con Vitest (ng test); el flujo completo con un administrador queda pendiente de verificar."
 CA-069;RF-016;Moderación de reseñas;Restringir moderación;Dado que el usuario no tiene permisos administrativos, cuando intenta ocultar una reseña, entonces el sistema impide la acción.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
-CP-050 Moderación de reseña sin permisos";ModeracionResenasTest#sinPermisos_CA069;Probado (JUnit);;feat/SCRUM-271-be-ocultar-resenas;;;"/admin/** exige ADMIN: HUESPED y ANFITRION reciben 403 y sin sesión 401; la reseña no cambia y no se notifica a nadie."
+CP-050 Moderación de reseña sin permisos";"ModeracionResenasTest#sinPermisos_CA069
+resenas.spec.ts#CA-069 si el usuario no es administrador no puede entrar ni ocultar la reseña";Probado (JUnit);;"feat/SCRUM-271-be-ocultar-resenas
+feat/SCRUM-272-fe-ocultar-resenas";;;"/admin/** exige ADMIN: HUESPED y ANFITRION reciben 403 y sin sesión 401; la reseña no cambia y no se notifica a nadie.
+Front-end (SCRUM-272): la ruta /admin/resenas exige el rol Administrador (roleGuard): sin sesión va al login y el huésped o el anfitrión vuelven al inicio; si el backend responde 403 se muestra ""No tienes permisos para realizar esta operación."" y la reseña no cambia. Probado con Vitest (ng test); el flujo completo con un administrador queda pendiente de verificar."
 CA-070;RF-021;Creación de reserva por el huésped;Creación exitosa con cotización vigente;Dado una cotización vigente y un alojamiento ACTIVA, cuando el huésped confirma, entonces el sistema crea la reserva con el monto cotizado.;HU-22;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas

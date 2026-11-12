@@ -107,6 +107,15 @@ src/app/
 │   ├── mis-favoritos/           lista del huésped y quitar con el corazón
 │   ├── models/
 │   └── services/                favorito.service (GET, POST y DELETE /favoritos, S13)
+├── administracion/       Pantallas del administrador
+│   ├── revisar-publicaciones/   revisar, aprobar, rechazar y bloquear publicaciones (HU-32, HU-11)
+│   ├── detalle-publicacion/     detalle de una publicación para el administrador (HU-32, HU-11)
+│   ├── usuarios/                usuarios con filtros y restricción de cuentas (HU-12)
+│   ├── detalle-usuario/         detalle y restricción de un usuario (HU-12)
+│   ├── reservas/                reservas en revisión por bloqueo (HU-11)
+│   ├── resenas/                 moderación de reseñas: ocultar con motivo y volver a mostrar (HU-14)
+│   ├── models/
+│   └── services/                admin-publicaciones, admin-usuarios, admin-reservas y admin-resenas (GET /admin/resenas, PATCH .../ocultar y .../mostrar)
 └── api/                  Cliente generado desde OpenAPI (no editar a mano)
 ```
 
