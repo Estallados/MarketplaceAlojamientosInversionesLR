@@ -169,6 +169,20 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+  // ====================================
+  // OCULTAR RESEÑAS QUE INCUMPLAN REGLAS DE MODERACIÓN (HU-14)
+  // SOLO ADMINISTRADOR (CA-069): /admin/resenas/** exige el rol ADMIN.
+  // ====================================
+
+  {
+    path: 'admin/resenas',
+    loadComponent: () =>
+      import('./administracion/resenas/resenas')
+        .then(m => m.ResenasAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
 
 
   // ====================================
