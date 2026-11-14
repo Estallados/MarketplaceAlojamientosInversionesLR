@@ -226,6 +226,12 @@
     </aside>
   </div>
 
+  <!-- VERIFICACIÓN EN DOS PASOS (HU-30) -->
+  <app-segundo-factor
+    [habilitado]="segundoFactor()"
+    (cambiado)="cargarPerfil()"
+  />
+
   <!-- CONFIRMACIÓN DE DESACTIVACIÓN -->
   @if (confirmAccount()) {
     <div class="modal-backdrop z-[80]">

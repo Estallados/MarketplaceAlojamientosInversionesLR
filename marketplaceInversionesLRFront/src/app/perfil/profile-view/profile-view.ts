@@ -15,6 +15,8 @@ import {
   UsuarioDTO
 } from '../services/user';
 
+import { SegundoFactor } from '../segundo-factor/segundo-factor';
+
 import { SessionService } from '../../core/services/session.service';
 
 export interface Profile {
@@ -31,6 +33,7 @@ type EditableKey = 'firstName' | 'phone';
 @Component({
   selector: 'app-profile-view',
   standalone: true,
+  imports: [SegundoFactor],
   templateUrl: './profile-view.html'
 })
 export class ProfileView implements OnInit {
@@ -80,6 +83,9 @@ export class ProfileView implements OnInit {
   readonly desactivando = signal(false);
 
   readonly estadoConsultado = signal(false);
+
+  /** Segundo factor según el backend; null mientras no se haya podido consultar. */
+  readonly segundoFactor = signal<boolean | null>(null);
 
   readonly mensaje = signal('');
   readonly error = signal('');
@@ -173,6 +179,9 @@ export class ProfileView implements OnInit {
 
           this.estadoConsultado.set(estadoDisponible);
 
+          // El backend guarda null o false cuando nunca se habilitó (CA-177).
+          this.segundoFactor.set(usuario.totpHabilitado === true);
+
           if (usuario.correo) {
             sessionStorage.setItem(
               'correo',
@@ -182,6 +191,8 @@ export class ProfileView implements OnInit {
         },
 
         error: (err: unknown) => {
+
+          this.segundoFactor.set(null);
 
           this.error.set(
             this.obtenerMensajeError(
