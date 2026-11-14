@@ -1,8 +1,8 @@
-<main class="mx-auto max-w-[1100px] px-4 py-14 sm:px-8">
+<main class="mx-auto max-w-page px-4 py-14 sm:px-8">
   <div>
-    <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Tu opinión cuenta</p>
-    <h1 class="font-display mt-3 text-4xl font-semibold text-slate-900">Mis reseñas</h1>
-    <p class="mt-3 text-slate-500">Las calificaciones que dejaste después de tus estancias.</p>
+    <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Tu opinión cuenta</p>
+    <h1 class="font-display mt-3 text-4xl font-semibold text-ink-900">Mis reseñas</h1>
+    <p class="mt-3 text-ink-500">Las calificaciones que dejaste después de tus estancias.</p>
   </div>
 
   <div class="mt-9">
@@ -10,22 +10,22 @@
       <!-- CARGANDO -->
       <div class="grid animate-pulse gap-4 sm:grid-cols-2" aria-label="Cargando reseñas" aria-busy="true">
         @for (item of [1, 2, 3, 4]; track item) {
-          <div class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6">
-            <div class="h-4 w-28 rounded-md bg-neutral-200"></div>
-            <div class="h-4 w-full rounded-md bg-neutral-200"></div>
-            <div class="h-4 w-2/3 rounded-md bg-neutral-200"></div>
+          <div class="space-y-4 rounded-lg border border-ink-200 bg-white p-6">
+            <div class="h-4 w-28 rounded-md bg-ink-200"></div>
+            <div class="h-4 w-full rounded-md bg-ink-200"></div>
+            <div class="h-4 w-2/3 rounded-md bg-ink-200"></div>
           </div>
         }
       </div>
     } @else if (errorCarga()) {
       <!-- ERROR -->
-      <div class="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center">
-        <h2 class="font-display text-2xl font-bold text-slate-900">No pudimos cargar tus reseñas</h2>
-        <p class="mt-2 text-sm text-slate-500">Comprueba tu conexión e inténtalo de nuevo.</p>
+      <div class="rounded-lg border border-ink-200 bg-white px-6 py-16 text-center">
+        <h2 class="font-display text-2xl font-semibold text-ink-900">No pudimos cargar tus reseñas</h2>
+        <p class="mt-2 text-sm text-ink-500">Comprueba tu conexión e inténtalo de nuevo.</p>
         <button
           type="button"
           (click)="reintentar()"
-          class="mt-6 rounded-xl bg-emerald-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-emerald-800"
+          class="mt-6 rounded-md bg-brand-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-800"
         >
           Reintentar
         </button>
@@ -33,9 +33,9 @@
     } @else {
       <div class="grid gap-4 sm:grid-cols-2">
         @for (r of reviews(); track r.idResena) {
-          <article class="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 transition-shadow hover:shadow-lg hover:shadow-slate-900/5">
+          <article class="flex flex-col rounded-lg border border-ink-200 bg-white p-6 transition-colors">
             @if (tituloAlojamiento(r)) {
-              <p class="mb-3 truncate text-sm font-bold text-emerald-700">{{ tituloAlojamiento(r) }}</p>
+              <p class="mb-3 truncate text-sm font-bold text-brand-700">{{ tituloAlojamiento(r) }}</p>
             }
 
             <!-- Estrellas -->
@@ -44,7 +44,7 @@
                 <svg
                   class="size-4"
                   [class.text-amber-500]="s <= r.calificacion"
-                  [class.text-slate-200]="s > r.calificacion"
+                  [class.text-ink-200]="s > r.calificacion"
                   viewBox="0 0 24 24"
                   fill="currentColor"
                   aria-hidden="true"
@@ -52,36 +52,36 @@
                   <path d="m12 2 3 6 7 .9-5 4.8 1.4 6.8L12 17.3l-6.4 3.2L7 13.7 2 8.9 9 8Z" />
                 </svg>
               }
-              <span class="ml-2 text-sm font-bold text-slate-800">{{ r.calificacion }}.0</span>
+              <span class="ml-2 text-sm font-bold text-ink-800">{{ r.calificacion }}.0</span>
             </div>
 
             <!-- Comentario -->
-            <p class="mt-4 flex-1 leading-7 text-slate-600">
+            <p class="mt-4 flex-1 leading-7 text-ink-600">
               {{ r.comentario || 'Sin comentario.' }}
             </p>
 
             <!-- Pie -->
-            <div class="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-              <p class="text-xs text-slate-500">{{ r.fecha | date: 'dd/MM/yyyy' }}</p>
+            <div class="mt-6 flex items-center justify-between border-t border-ink-100 pt-4">
+              <p class="text-xs text-ink-500">{{ r.fecha | date: 'dd/MM/yyyy' }}</p>
               @if (estaOculta(r)) {
-                <span class="rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-700">
+                <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-amber-700">
                   Oculta por moderación
                 </span>
               } @else {
-                <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                <span class="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-brand-700">
                   Publicada
                 </span>
               }
             </div>
           </article>
         } @empty {
-          <div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white p-14 text-center">
-            <h2 class="font-display text-xl font-bold">Aún no has dejado reseñas</h2>
-            <p class="mt-2 text-sm text-slate-500">Cuando termines una estancia podrás calificarla desde tus reservas.</p>
+          <div class="col-span-full rounded-lg border border-dashed border-ink-300 bg-white p-14 text-center">
+            <h2 class="font-display text-xl font-semibold">Aún no has dejado reseñas</h2>
+            <p class="mt-2 text-sm text-ink-500">Cuando termines una estancia podrás calificarla desde tus reservas.</p>
             <button
               type="button"
               (click)="irAReservas()"
-              class="mt-6 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:border-emerald-300 hover:bg-emerald-50"
+              class="mt-6 rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition hover:border-brand-300 hover:bg-brand-50"
             >
               Ir a mis reservas
             </button>

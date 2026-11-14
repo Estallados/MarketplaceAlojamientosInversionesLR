@@ -57,8 +57,8 @@ export class DetalleUsuario implements OnInit {
     const e = String(estado ?? '').toUpperCase();
     if (e.includes('BLOQUE')) return 'bg-red-50 text-red-700';
     if (e.includes('PAUSAD') || e.includes('PENDIENTE')) return 'bg-amber-50 text-amber-700';
-    if (e.includes('ACTIV')) return 'bg-emerald-50 text-emerald-700';
-    return 'bg-slate-100 text-slate-600';
+    if (e.includes('ACTIV')) return 'bg-brand-50 text-brand-700';
+    return 'bg-ink-100 text-ink-600';
   }
 
   // ==================== Información visual ====================

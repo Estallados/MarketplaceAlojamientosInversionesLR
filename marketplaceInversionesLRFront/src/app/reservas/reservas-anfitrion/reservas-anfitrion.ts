@@ -116,9 +116,9 @@ export class ReservasAnfitrion implements OnInit, OnDestroy {
     if (r.estado === 'CANCELADA') {
       tono = 'bg-red-50 text-red-700';
     } else if (r.estado === 'EN_REVISION') {
-      tono = 'bg-orange-50 text-orange-700';
+      tono = 'bg-amber-50 text-amber-700';
     } else if (r.estado === 'CONFIRMADA') {
-      tono = r.completada ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700';
+      tono = r.completada ? 'bg-ink-100 text-ink-600' : 'bg-brand-50 text-brand-700';
     }
     return `inline-flex rounded-full px-3 py-1 text-xs font-bold ${tono}`;
   }

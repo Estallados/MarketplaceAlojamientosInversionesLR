@@ -124,9 +124,9 @@ export class Navbar {
   readonly isLoginPage = computed(() => this.url().split(/[?#]/)[0] === '/login');
 
   readonly activeClass =
-    'text-emerald-700 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:bg-emerald-700';
+    'text-brand-700 after:absolute after:bottom-0 after:left-4 after:right-4 after:h-0.5 after:bg-brand-700';
 
-  readonly inactiveClass = 'text-slate-500 hover:text-slate-900';
+  readonly inactiveClass = 'text-ink-500 hover:text-ink-900';
 
   /** true si alguna ruta del router (sin contar el comodín) atiende esa URL. */
   rutaDisponible(url: string): boolean {

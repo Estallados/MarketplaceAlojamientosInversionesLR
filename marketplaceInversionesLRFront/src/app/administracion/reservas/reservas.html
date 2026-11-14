@@ -1,19 +1,19 @@
-<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+<main class="mx-auto max-w-page px-4 py-10 sm:px-8">
   <div class="flex items-end justify-between">
     <div>
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Inversiones LR</p>
-      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">Administración de reservas</h1>
-      <p class="mt-2 text-sm text-slate-500">Consulta el historial completo de transacciones simuladas.</p>
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Inversiones LR</p>
+      <h1 class="font-display mt-2 text-3xl font-semibold text-ink-900">Administración de reservas</h1>
+      <p class="mt-2 text-sm text-ink-500">Consulta el historial completo de transacciones simuladas.</p>
     </div>
     @if (!loading() && !errorCarga()) {
-      <p class="text-sm text-slate-500">
+      <p class="text-sm text-ink-500">
         <strong class="text-amber-700">{{ enRevision() }}</strong>
         {{ enRevision() === 1 ? 'reserva en revisión' : 'reservas en revisión' }}
       </p>
     }
     <select
       aria-label="Filtrar por estado"
-      class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
+      class="rounded-md border border-ink-200 bg-white px-4 py-2.5 text-sm font-semibold text-ink-700"
       (change)="cambiarEstado($any($event.target).value)"
     >
       @for (f of filtros; track f.valor) {
@@ -23,7 +23,7 @@
   </div>
 
   @if (filtroEstado() === 'EN_REVISION') {
-    <div class="mt-6 flex items-start gap-3 rounded-xl bg-amber-50 p-4">
+    <div class="mt-6 flex items-start gap-3 rounded-md bg-amber-50 p-4">
       <svg class="mt-0.5 size-5 shrink-0 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10" />
         <path d="M12 16v-4" />
@@ -36,9 +36,9 @@
     </div>
   }
 
-  <div class="mt-8 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <div class="mt-8 overflow-hidden rounded-lg border border-ink-200 bg-white">
     <table class="w-full text-left text-sm">
-      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+      <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
       <tr>
         @for (h of headers; track h) {
           <th class="px-5 py-4 font-bold">{{ h }}</th>
@@ -47,38 +47,38 @@
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="7" class="px-5 py-10 text-center text-slate-500">Cargando reservas...</td></tr>
+          <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500">Cargando reservas...</td></tr>
         } @else if (errorCarga()) {
           <tr>
             <td colspan="7" class="px-5 py-10 text-center">
               <p class="text-red-600" role="alert">No se pudieron cargar las reservas.</p>
-              <button type="button" (click)="cargar()" class="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">
+              <button type="button" (click)="cargar()" class="mt-3 rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white hover:bg-brand-800">
                 Reintentar
               </button>
             </td>
           </tr>
         } @else {
           @for (r of reservations(); track r.idReserva) {
-            <tr class="border-t border-slate-100 hover:bg-slate-50">
+            <tr class="border-t border-ink-100 hover:bg-ink-50">
               <td class="px-5 py-5"><strong>#{{ r.idReserva }}</strong></td>
               <td class="px-5 py-5">{{ r.nombreHuesped }}</td>
               <td class="px-5 py-5">
                 {{ r.tituloAlojamiento }}
                 @if (r.ciudad) {
-                  <span class="block text-xs text-slate-400">{{ r.ciudad }}</span>
+                  <span class="block text-xs text-ink-500">{{ r.ciudad }}</span>
                 }
               </td>
               <td class="px-5 py-5">{{ r.nombreAnfitrion }}</td>
               <td class="px-5 py-5 whitespace-nowrap">
                 {{ r.fechaEntrada | date: 'dd/MM/yyyy' }} → {{ r.fechaSalida | date: 'dd/MM/yyyy' }}
-                <span class="block text-xs text-slate-400">{{ r.noches }} {{ r.noches === 1 ? 'noche' : 'noches' }}</span>
+                <span class="block text-xs text-ink-500">{{ r.noches }} {{ r.noches === 1 ? 'noche' : 'noches' }}</span>
               </td>
               <td class="px-5 py-5 whitespace-nowrap">{{ r.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</td>
               <td class="px-5 py-5"><span [class]="badgeClass(r)">{{ etiqueta(r) }}</span></td>
             </tr>
           } @empty {
             <tr>
-              <td colspan="7" class="px-5 py-10 text-center text-slate-500">
+              <td colspan="7" class="px-5 py-10 text-center text-ink-500">
                 {{ filtroEstado() === 'EN_REVISION' ? 'No hay reservas marcadas para revisión.' : 'No hay reservas para mostrar.' }}
               </td>
             </tr>
@@ -86,14 +86,14 @@
         }
       </tbody>
     </table>
-    <div class="flex items-center justify-between border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
+    <div class="flex items-center justify-between border-t border-ink-100 px-5 py-4 text-xs text-ink-500">
       <span>Mostrando {{ reservations().length }} de {{ totalElementos() }} reservas</span>
       <div class="flex gap-2">
         <button
           type="button"
           (click)="irAPagina(pagina() - 1)"
           [disabled]="pagina() === 0 || loading()"
-          class="rounded-lg border px-3 py-2 disabled:text-slate-300"
+          class="rounded-md border px-3 py-2 disabled:text-ink-300"
         >
           Anterior
         </button>
@@ -102,7 +102,7 @@
             type="button"
             (click)="irAPagina(p)"
             [disabled]="loading()"
-            [class]="p === pagina() ? 'rounded-lg bg-emerald-700 px-3 py-2 text-white' : 'rounded-lg border px-3 py-2 hover:bg-slate-50'"
+            [class]="p === pagina() ? 'rounded-md bg-brand-700 px-3 py-2 text-white' : 'rounded-md border px-3 py-2 hover:bg-ink-50'"
             [attr.aria-current]="p === pagina() ? 'page' : null"
           >
             {{ p + 1 }}
@@ -112,7 +112,7 @@
           type="button"
           (click)="irAPagina(pagina() + 1)"
           [disabled]="pagina() >= totalPaginas() - 1 || loading()"
-          class="rounded-lg border px-3 py-2 disabled:text-slate-300"
+          class="rounded-md border px-3 py-2 disabled:text-ink-300"
         >
           Siguiente
         </button>

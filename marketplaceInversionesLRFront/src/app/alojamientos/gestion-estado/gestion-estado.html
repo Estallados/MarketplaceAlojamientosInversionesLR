@@ -1,13 +1,13 @@
 <section
   data-gestion-estado
-  class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 sm:p-6"
+  class="mt-6 rounded-lg border border-ink-200 bg-white p-5 sm:p-6"
 >
 
-  <h2 class="text-lg font-bold text-slate-900">
+  <h2 class="text-lg font-bold text-ink-900">
     Estado de la publicación
   </h2>
 
-  <p data-descripcion-estado class="mt-2 text-sm text-slate-600">
+  <p data-descripcion-estado class="mt-2 text-sm text-ink-600">
     {{ presentacion().descripcion }}
   </p>
 
@@ -15,7 +15,7 @@
   @if (estado() === 'PAUSADA' || estado() === 'BLOQUEADA') {
     <p
       data-no-disponible
-      class="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+      class="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
     >
       Esta publicación no está disponible para nuevas reservas ni
       aparece como disponible para los huéspedes.
@@ -23,7 +23,7 @@
   } @else if (disponibleParaReservas()) {
     <p
       data-disponible
-      class="mt-3 text-xs font-semibold text-emerald-700"
+      class="mt-3 text-xs font-semibold text-brand-700"
     >
       Disponible para nuevas reservas.
     </p>
@@ -34,7 +34,7 @@
     <div
       role="alert"
       data-error-estado
-      class="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+      class="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
     >
       {{ error() }}
 
@@ -53,7 +53,7 @@
     <div
       role="status"
       data-mensaje-estado
-      class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+      class="mt-4 rounded-md border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800"
     >
       {{ mensaje() }}
     </div>
@@ -70,7 +70,7 @@
           data-enviar-revision
           (click)="enviarARevision()"
           [disabled]="procesando() !== null"
-          class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {{ procesando() === 'enviarRevision' ? 'Enviando...' : 'Enviar a revisión' }}
         </button>
@@ -82,7 +82,7 @@
           data-pausar
           (click)="solicitarPausa()"
           [disabled]="procesando() !== null"
-          class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
           Pausar publicación
         </button>
@@ -94,7 +94,7 @@
           data-reanudar
           (click)="reanudar()"
           [disabled]="procesando() !== null"
-          class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+          class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {{ procesando() === 'reanudar' ? 'Reanudando...' : 'Reanudar publicación' }}
         </button>
@@ -106,7 +106,7 @@
     @if (confirmandoPausa()) {
       <div
         data-confirmar-pausa
-        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4"
+        class="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4"
       >
         <p class="text-sm text-amber-900">
           Mientras esté pausada, la publicación no recibirá nuevas
@@ -119,7 +119,7 @@
             data-confirmar-pausa-si
             (click)="confirmarPausa()"
             [disabled]="procesando() !== null"
-            class="rounded-xl bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-md bg-amber-700 px-4 py-2 text-sm font-bold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {{ procesando() === 'pausar' ? 'Pausando...' : 'Sí, pausar' }}
           </button>
@@ -129,7 +129,7 @@
             data-confirmar-pausa-no
             (click)="cancelarPausa()"
             [disabled]="procesando() !== null"
-            class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-800 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            class="rounded-md border border-ink-200 bg-white px-4 py-2 text-sm font-bold text-ink-800 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Cancelar
           </button>
@@ -139,7 +139,7 @@
 
   } @else if (!esAnfitrion && estadoReconocido()) {
 
-    <p data-solo-anfitrion class="mt-4 text-xs text-slate-500">
+    <p data-solo-anfitrion class="mt-4 text-xs text-ink-500">
       Enviar a revisión, pausar y reanudar los solicita el anfitrión
       propietario. La aprobación de la publicación se gestiona en la
       revisión administrativa.

@@ -1,33 +1,33 @@
-<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+<main class="mx-auto max-w-page px-4 py-10 sm:px-8">
 
   <div>
-    <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Inversiones LR</p>
-    <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">Revisión de publicaciones</h1>
-    <p class="mt-2 text-sm text-slate-500">Revisa las solicitudes de los anfitriones antes de publicarlas en el marketplace.</p>
+    <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Inversiones LR</p>
+    <h1 class="font-display mt-2 text-3xl font-semibold text-ink-900">Revisión de publicaciones</h1>
+    <p class="mt-2 text-sm text-ink-500">Revisa las solicitudes de los anfitriones antes de publicarlas en el marketplace.</p>
   </div>
 
   <!-- Métricas -->
   <div class="mt-7 grid grid-cols-1 gap-4 sm:grid-cols-4">
-    <div class="rounded-2xl border border-slate-200 bg-white p-5">
-      <p class="text-sm text-slate-500">Pendientes de revisión</p>
-      <p class="font-display mt-1 text-3xl font-bold text-amber-700">{{ pendientes() }}</p>
+    <div class="rounded-lg border border-ink-200 bg-white p-5">
+      <p class="text-sm text-ink-500">Pendientes de revisión</p>
+      <p class="font-display mt-1 text-3xl font-semibold text-amber-700">{{ pendientes() }}</p>
     </div>
-    <div class="rounded-2xl border border-slate-200 bg-white p-5">
-      <p class="text-sm text-slate-500">Activas</p>
-      <p class="font-display mt-1 text-3xl font-bold text-emerald-700">{{ activas() }}</p>
+    <div class="rounded-lg border border-ink-200 bg-white p-5">
+      <p class="text-sm text-ink-500">Activas</p>
+      <p class="font-display mt-1 text-3xl font-semibold text-brand-700">{{ activas() }}</p>
     </div>
-    <div class="rounded-2xl border border-slate-200 bg-white p-5">
-      <p class="text-sm text-slate-500">En borrador</p>
-      <p class="font-display mt-1 text-3xl font-bold text-slate-700">{{ enBorrador() }}</p>
+    <div class="rounded-lg border border-ink-200 bg-white p-5">
+      <p class="text-sm text-ink-500">En borrador</p>
+      <p class="font-display mt-1 text-3xl font-semibold text-ink-700">{{ enBorrador() }}</p>
     </div>
-    <div class="rounded-2xl border border-slate-200 bg-white p-5">
-      <p class="text-sm text-slate-500">Bloqueadas</p>
-      <p class="font-display mt-1 text-3xl font-bold text-red-700">{{ bloqueadas() }}</p>
+    <div class="rounded-lg border border-ink-200 bg-white p-5">
+      <p class="text-sm text-ink-500">Bloqueadas</p>
+      <p class="font-display mt-1 text-3xl font-semibold text-red-700">{{ bloqueadas() }}</p>
     </div>
   </div>
 
   @if (mensaje()) {
-    <div role="status" class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+    <div role="status" class="mt-6 rounded-md border border-brand-200 bg-brand-50 px-4 py-3 text-sm font-medium text-brand-800">
       {{ mensaje() }}
     </div>
   }
@@ -39,12 +39,12 @@
       (input)="buscar($any($event.target).value)"
       aria-label="Buscar alojamiento o anfitrión"
       placeholder="Buscar alojamiento, anfitrión o ciudad"
-      class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500"
+      class="rounded-md border border-ink-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand-500"
     />
     <select
       aria-label="Filtrar por estado"
       (change)="filtrarEstado($any($event.target).value)"
-      class="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm"
+      class="rounded-md border border-ink-200 bg-white px-4 py-3 text-sm"
     >
       <option value="Todos" [selected]="filtroEstado() === 'Todos'">Todos los estados</option>
       @for (e of estados; track e.valor) {
@@ -54,9 +54,9 @@
   </div>
 
   <!-- Tabla -->
-  <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+  <div class="mt-6 overflow-x-auto rounded-lg border border-ink-200 bg-white">
     <table class="w-full min-w-[900px] text-left text-sm">
-      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+      <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
       <tr>
         @for (h of headers; track h) {
           <th class="px-5 py-4 font-bold">{{ h }}</th>
@@ -65,25 +65,25 @@
       </thead>
       <tbody>
         @if (cargando()) {
-          <tr><td colspan="8" class="px-5 py-10 text-center text-slate-500">Cargando publicaciones...</td></tr>
+          <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">Cargando publicaciones...</td></tr>
         } @else if (errorCarga()) {
           <tr>
             <td colspan="8" class="px-5 py-10 text-center">
               <p class="text-red-600" role="alert">No se pudieron cargar las publicaciones.</p>
-              <button type="button" (click)="cargar()" class="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">
+              <button type="button" (click)="cargar()" class="mt-3 rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white hover:bg-brand-800">
                 Reintentar
               </button>
             </td>
           </tr>
         } @else {
           @for (p of visibles(); track p.idAlojamiento) {
-            <tr class="border-t border-slate-100 hover:bg-slate-50">
+            <tr class="border-t border-ink-100 hover:bg-ink-50">
               <td class="px-5 py-4">
                 <div class="flex items-center gap-3">
                   @if (p.imagenes?.[0]) {
-                    <img [src]="p.imagenes?.[0]" alt="" class="size-12 rounded-xl bg-slate-100 object-cover" />
+                    <img [src]="p.imagenes?.[0]" alt="" class="size-12 rounded-md bg-ink-100 object-cover" />
                   } @else {
-                    <span class="size-12 rounded-xl bg-slate-100"></span>
+                    <span class="size-12 rounded-md bg-ink-100"></span>
                   }
                   <strong>{{ p.titulo }}</strong>
                 </div>
@@ -96,12 +96,12 @@
               <td class="px-5 py-4"><span [class]="badge(p)">{{ etiqueta(p) }}</span></td>
               <td class="px-5 py-4">
                 <div class="flex gap-3">
-                  <button type="button" (click)="verDetalle(p.idAlojamiento)" class="font-bold text-emerald-700">Ver detalle</button>
+                  <button type="button" (click)="verDetalle(p.idAlojamiento)" class="font-bold text-brand-700">Ver detalle</button>
                   @for (a of accionesDe(p); track a) {
                     <button
                       type="button"
                       (click)="pedirAccion(a, p)"
-                      [class]="acciones[a].peligro ? 'font-bold text-red-600' : 'font-bold text-emerald-700'"
+                      [class]="acciones[a].peligro ? 'font-bold text-red-600' : 'font-bold text-brand-700'"
                     >
                       {{ acciones[a].boton }}
                     </button>
@@ -110,20 +110,20 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="8" class="px-5 py-10 text-center text-slate-500">No hay publicaciones que coincidan con los filtros.</td></tr>
+            <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">No hay publicaciones que coincidan con los filtros.</td></tr>
           }
         }
       </tbody>
     </table>
 
-    <div class="flex items-center justify-between border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
+    <div class="flex items-center justify-between border-t border-ink-100 px-5 py-4 text-xs text-ink-500">
       <span>Mostrando {{ visibles().length }} de {{ filtradas().length }} resultados</span>
       <div class="flex gap-2">
-        <button type="button" (click)="irAPagina(paginaActual() - 1)" [disabled]="paginaActual() === 0" class="rounded-lg border px-3 py-2 disabled:text-slate-300">
+        <button type="button" (click)="irAPagina(paginaActual() - 1)" [disabled]="paginaActual() === 0" class="rounded-md border px-3 py-2 disabled:text-ink-300">
           Anterior
         </button>
         <span class="px-2 py-2">Página {{ paginaActual() + 1 }} de {{ totalPaginas() }}</span>
-        <button type="button" (click)="irAPagina(paginaActual() + 1)" [disabled]="paginaActual() >= totalPaginas() - 1" class="rounded-lg border px-3 py-2 disabled:text-slate-300">
+        <button type="button" (click)="irAPagina(paginaActual() + 1)" [disabled]="paginaActual() >= totalPaginas() - 1" class="rounded-md border px-3 py-2 disabled:text-ink-300">
           Siguiente
         </button>
       </div>
@@ -132,11 +132,11 @@
 
   <!-- Modal aprobar / rechazar -->
   @if (config(); as c) {
-    <div class="fixed inset-0 z-[70] grid place-items-center bg-slate-950/55 p-6" role="dialog" aria-modal="true" aria-labelledby="accion-titulo">
-      <div class="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl">
-        <h2 id="accion-titulo" class="font-display text-2xl font-bold">{{ c.titulo }}</h2>
-        <p class="mt-2 text-sm font-semibold text-slate-700">{{ accion()?.publicacion?.titulo }}</p>
-        <p class="mt-3 text-sm leading-6 text-slate-500">{{ c.texto }}</p>
+    <div class="fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-6" role="dialog" aria-modal="true" aria-labelledby="accion-titulo">
+      <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-overlay">
+        <h2 id="accion-titulo" class="font-display text-2xl font-semibold">{{ c.titulo }}</h2>
+        <p class="mt-2 text-sm font-semibold text-ink-700">{{ accion()?.publicacion?.titulo }}</p>
+        <p class="mt-3 text-sm leading-6 text-ink-500">{{ c.texto }}</p>
 
         @if (c.requiereMotivo) {
           <label class="mt-6 block">
@@ -147,9 +147,9 @@
               [attr.maxlength]="maxMotivo"
               rows="4"
               [attr.placeholder]="accion()?.tipo === 'bloquear' ? 'Explica por qué se bloquea la publicación...' : 'Explica al anfitrión qué debe corregir...'"
-              class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+              class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
             ></textarea>
-            <span class="mt-1 block text-right text-xs text-slate-400">{{ motivo().length }} / {{ maxMotivo }}</span>
+            <span class="mt-1 block text-right text-xs text-ink-500">{{ motivo().length }} / {{ maxMotivo }}</span>
           </label>
           @if (!motivo().trim()) {
             <p class="text-xs font-semibold text-red-600">El motivo es obligatorio.</p>
@@ -157,18 +157,18 @@
         }
 
         @if (errorAccion()) {
-          <p class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorAccion() }}</p>
+          <p class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorAccion() }}</p>
         }
 
         <div class="mt-7 flex gap-3">
-          <button type="button" (click)="cancelarAccion()" [disabled]="enviando()" class="flex-1 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 disabled:opacity-45">
+          <button type="button" (click)="cancelarAccion()" [disabled]="enviando()" class="flex-1 rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 disabled:opacity-45">
             Cancelar
           </button>
           <button
             type="button"
             (click)="confirmarAccion()"
             [disabled]="!puedeConfirmar()"
-            [class]="c.peligro ? 'flex-1 rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-45' : 'flex-1 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-800 disabled:opacity-45'"
+            [class]="c.peligro ? 'flex-1 rounded-md bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-45' : 'flex-1 rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-45'"
           >
             {{ enviando() ? 'Procesando...' : c.confirmar }}
           </button>

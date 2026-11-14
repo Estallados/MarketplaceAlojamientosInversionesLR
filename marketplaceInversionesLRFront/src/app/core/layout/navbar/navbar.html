@@ -1,6 +1,6 @@
-<header class="border-b border-slate-200/80 bg-white/95 backdrop-blur">
+<header class="border-b border-ink-200/80 bg-white">
   <div
-    class="mx-auto flex h-20 max-w-[1440px] items-center gap-3 px-3 sm:gap-8 sm:px-8"
+    class="mx-auto flex h-20 max-w-wide items-center gap-3 px-3 sm:gap-8 sm:px-8"
   >
     <!-- ===================================== -->
     <!-- LOGO -->
@@ -8,7 +8,7 @@
     <a [routerLink]="homePath()" class="block shrink-0">
       <div class="flex items-center gap-3">
         <div
-          class="grid size-10 place-items-center rounded-xl bg-emerald-700 text-white shadow-sm"
+          class="grid size-10 place-items-center rounded-md bg-brand-700 text-white"
         >
           <svg
             width="20"
@@ -27,12 +27,12 @@
         </div>
         <div class="hidden text-left sm:block">
           <div
-            class="font-display text-lg font-bold leading-none text-slate-900"
+            class="font-display text-lg font-semibold leading-none text-ink-900"
           >
             INVERSIONES
           </div>
           <div
-            class="mt-1 text-[10px] font-bold tracking-[0.35em] text-emerald-700"
+            class="mt-1 text-xs font-bold tracking-[0.35em] text-brand-700"
           >
             LR
           </div>
@@ -50,7 +50,7 @@
         @if (rutaDisponible('/home')) {
           <a
             routerLink="/home"
-            class="whitespace-nowrap rounded-lg px-2 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-emerald-700 sm:px-3 sm:text-sm"
+            class="whitespace-nowrap rounded-md px-2 py-2 text-xs font-semibold text-ink-600 transition hover:bg-ink-50 hover:text-brand-700 sm:px-3 sm:text-sm"
           >
             Inicio
           </a>
@@ -58,7 +58,7 @@
         @if (rutaDisponible('/explorar')) {
           <a
             routerLink="/explorar"
-            class="whitespace-nowrap rounded-lg px-2 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 hover:text-emerald-700 sm:px-3 sm:text-sm"
+            class="whitespace-nowrap rounded-md px-2 py-2 text-xs font-semibold text-ink-600 transition hover:bg-ink-50 hover:text-brand-700 sm:px-3 sm:text-sm"
           >
             Explorar
           </a>
@@ -66,7 +66,7 @@
         @if (!estaAutenticado()) {
           <a
             routerLink="/registro"
-            class="whitespace-nowrap rounded-lg px-2 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 sm:px-3 sm:text-sm"
+            class="whitespace-nowrap rounded-md px-2 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-50 sm:px-3 sm:text-sm"
           >
             Crear cuenta
           </a>
@@ -102,13 +102,13 @@
         @if (!estaAutenticado()) {
           <a
             routerLink="/login"
-            class="whitespace-nowrap rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+            class="whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold text-ink-600 transition hover:bg-ink-100"
           >
             Iniciar sesión
           </a>
           <a
             routerLink="/registro"
-            class="whitespace-nowrap rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-emerald-800"
+            class="whitespace-nowrap rounded-md bg-brand-700 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-brand-800"
           >
             Crear cuenta
           </a>
@@ -121,7 +121,7 @@
           @if (role() === 'Anfitrión' && rutaDisponible('/host/alojamientos')) {
             <a
               routerLink="/host/alojamientos"
-              class="hidden items-center justify-center gap-2 whitespace-nowrap rounded-xl px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-100 lg:flex"
+              class="hidden items-center justify-center gap-2 whitespace-nowrap rounded-md px-5 py-3 text-sm font-bold text-ink-600 transition hover:bg-ink-100 lg:flex"
             >
               Mis alojamientos
             </a>
@@ -139,22 +139,22 @@
               (click)="roleMenu = !roleMenu"
               [attr.aria-expanded]="roleMenu"
               aria-label="Abrir menú de usuario"
-              class="flex items-center gap-3 rounded-full border border-slate-200 py-1.5 pl-1.5 pr-3 transition hover:shadow-md"
+              class="flex items-center gap-3 rounded-full border border-ink-200 py-1.5 pl-1.5 pr-3 transition"
             >
               <!-- INICIALES REALES -->
               <span
-                class="grid size-9 place-items-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800"
+                class="grid size-9 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-800"
               >
                 {{ user().initials }}
               </span>
               <!-- DATOS DEL USUARIO -->
               <span class="hidden text-left md:block">
                 <span
-                  class="block max-w-36 truncate text-xs font-bold text-slate-800"
+                  class="block max-w-36 truncate text-xs font-bold text-ink-800"
                 >
                   {{ user().name }}
                 </span>
-                <span class="block text-[10px] text-slate-500">
+                <span class="block text-xs text-ink-500">
                   {{ role() }}
                 </span>
               </span>
@@ -178,26 +178,26 @@
             <!-- ===================================== -->
             @if (roleMenu) {
               <div
-                class="absolute right-0 top-14 z-50 w-72 rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl"
+                class="absolute right-0 top-14 z-50 w-72 rounded-lg border border-ink-200 bg-white p-3 shadow-overlay"
               >
                 <!-- INFORMACIÓN REAL -->
                 <div
-                  class="border-b border-slate-100 px-3 pb-4 pt-2"
+                  class="border-b border-ink-100 px-3 pb-4 pt-2"
                 >
                   <div class="flex items-center gap-3">
                     <span
-                      class="grid size-11 shrink-0 place-items-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-800"
+                      class="grid size-11 shrink-0 place-items-center rounded-full bg-brand-100 text-sm font-bold text-brand-800"
                     >
                       {{ user().initials }}
                     </span>
                     <div class="min-w-0">
                       <p
-                        class="truncate text-sm font-bold text-slate-900"
+                        class="truncate text-sm font-bold text-ink-900"
                       >
                         {{ user().name }}
                       </p>
                       <p
-                        class="truncate text-xs text-slate-500"
+                        class="truncate text-xs text-ink-500"
                       >
                         {{ user().email }}
                       </p>
@@ -206,7 +206,7 @@
                   <!-- ROL ASIGNADO -->
                   <div class="mt-4">
                     <span
-                      class="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700"
+                      class="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700"
                     >
                       <svg
                         width="15"
@@ -236,7 +236,7 @@
                   <a
                     routerLink="/perfil"
                     (click)="closeMenu()"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    class="flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold text-ink-700 transition hover:bg-ink-50"
                   >
                     <svg
                       width="18"
@@ -260,7 +260,7 @@
                   <a
                     [routerLink]="homePath()"
                     (click)="closeMenu()"
-                    class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    class="flex w-full items-center gap-3 rounded-md px-3 py-3 text-sm font-semibold text-ink-700 transition hover:bg-ink-50"
                   >
                     <svg
                       width="18"
@@ -279,14 +279,14 @@
                     Ir a mi inicio
                   </a>
                 </div>
-                <div class="my-2 border-t border-slate-100"></div>
+                <div class="my-2 border-t border-ink-100"></div>
                 <!-- ===================================== -->
                 <!-- CERRAR SESIÓN -->
                 <!-- ===================================== -->
                 <button
                   type="button"
                   (click)="cerrarSesion()"
-                  class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                  class="flex w-full items-center gap-3 rounded-md px-3 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
                 >
                   <svg
                     width="18"

@@ -1,13 +1,13 @@
-<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+<main class="mx-auto max-w-page px-4 py-10 sm:px-8">
   <div class="flex items-end justify-between">
     <div>
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Inversiones LR</p>
-      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">Moderación de reseñas</h1>
-      <p class="mt-2 text-sm text-slate-500">Consulta y controla la visibilidad sin modificar el contenido original.</p>
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Inversiones LR</p>
+      <h1 class="font-display mt-2 text-3xl font-semibold text-ink-900">Moderación de reseñas</h1>
+      <p class="mt-2 text-sm text-ink-500">Consulta y controla la visibilidad sin modificar el contenido original.</p>
     </div>
   </div>
   <div class="mt-7 grid grid-cols-[1fr_auto] gap-3">
-    <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4">
+    <label class="flex items-center gap-3 rounded-md border border-ink-200 bg-white px-4">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7" />
         <path d="m20 20-4-4" />
@@ -20,18 +20,18 @@
         class="w-full py-3 text-sm outline-none"
       />
     </label>
-    <select aria-label="Filtrar por estado" (change)="filtrarEstado($any($event.target).value)" class="rounded-xl border border-slate-200 bg-white px-4 text-sm">
+    <select aria-label="Filtrar por estado" (change)="filtrarEstado($any($event.target).value)" class="rounded-md border border-ink-200 bg-white px-4 text-sm">
       @for (f of filtros; track f.valor) {
         <option [value]="f.valor">{{ f.texto }}</option>
       }
     </select>
   </div>
   @if (errorFila()) {
-    <p class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorFila() }}</p>
+    <p class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorFila() }}</p>
   }
-  <div class="mt-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+  <div class="mt-6 overflow-hidden rounded-lg border border-ink-200 bg-white">
     <table class="w-full text-left text-sm">
-      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+      <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
       <tr>
         @for (h of headers; track h) {
           <th class="px-5 py-4 font-bold">{{ h }}</th>
@@ -40,26 +40,26 @@
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="8" class="px-5 py-10 text-center text-slate-500">Cargando reseñas...</td></tr>
+          <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">Cargando reseñas...</td></tr>
         } @else if (errorCarga()) {
           <tr>
             <td colspan="8" class="px-5 py-10 text-center">
               <p class="text-red-600" role="alert">No se pudieron cargar las reseñas.</p>
-              <button type="button" (click)="cargar()" class="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">
+              <button type="button" (click)="cargar()" class="mt-3 rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white hover:bg-brand-800">
                 Reintentar
               </button>
             </td>
           </tr>
         } @else {
           @for (r of visibles(); track r.idResena) {
-            <tr data-resena [attr.data-id]="r.idResena" class="border-t border-slate-100 hover:bg-slate-50">
+            <tr data-resena [attr.data-id]="r.idResena" class="border-t border-ink-100 hover:bg-ink-50">
               <td class="px-5 py-5"><strong>{{ huesped(r) }}</strong></td>
               <td class="px-5 py-5">{{ alojamiento(r) }}</td>
               <td class="px-5 py-5">{{ reserva(r) }}</td>
               <td class="px-5 py-5">
                 <div class="flex items-center gap-1" [attr.aria-label]="r.calificacion + ' de 5 estrellas'">
                   @for (s of starList; track s) {
-                    <span [class]="s <= r.calificacion ? 'text-amber-500' : 'text-slate-200'">
+                    <span [class]="s <= r.calificacion ? 'text-amber-500' : 'text-ink-200'">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="m12 2 3 6 7 .9-5 4.8 1.4 6.8L12 17.3l-6.4 3.2L7 13.7 2 8.9 9 8Z" />
                       </svg>
@@ -68,19 +68,19 @@
                 </div>
               </td>
               <td class="px-5 py-5 whitespace-nowrap">{{ r.fecha | date: 'dd/MM/yyyy' }}</td>
-              <td class="px-5 py-5"><p class="max-w-xs leading-5 text-slate-600">{{ comentario(r) }}</p></td>
+              <td class="px-5 py-5"><p class="max-w-xs leading-5 text-ink-600">{{ comentario(r) }}</p></td>
               <td class="px-5 py-5">
                 <span
                   data-estado
                   class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
-                  [class]="oculta(r) ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700'"
+                  [class]="oculta(r) ? 'bg-ink-100 text-ink-600' : 'bg-brand-50 text-brand-700'"
                 >
                   {{ oculta(r) ? 'Oculta' : 'Visible' }}
                 </span>
               </td>
               <td class="px-5 py-5">
                 @if (oculta(r)) {
-                  <button type="button" data-mostrar (click)="mostrar(r)" [disabled]="mostrando() !== null" class="font-bold text-emerald-700 disabled:opacity-45">
+                  <button type="button" data-mostrar (click)="mostrar(r)" [disabled]="mostrando() !== null" class="font-bold text-brand-700 disabled:opacity-45">
                     {{ mostrando() === r.idResena ? 'Mostrando...' : 'Mostrar reseña' }}
                   </button>
                 } @else {
@@ -89,28 +89,28 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="8" class="px-5 py-10 text-center text-slate-500">No hay reseñas que coincidan.</td></tr>
+            <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">No hay reseñas que coincidan.</td></tr>
           }
         }
       </tbody>
     </table>
-    <div class="flex items-center justify-between border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
+    <div class="flex items-center justify-between border-t border-ink-100 px-5 py-4 text-xs text-ink-500">
       <span>Mostrando {{ visibles().length }} de {{ filtered().length }} reseñas</span>
       <div class="flex gap-2">
-        <button type="button" (click)="irAPagina(paginaActual() - 1)" [disabled]="paginaActual() === 0" class="rounded-lg border px-3 py-2 disabled:text-slate-300">
+        <button type="button" (click)="irAPagina(paginaActual() - 1)" [disabled]="paginaActual() === 0" class="rounded-md border px-3 py-2 disabled:text-ink-300">
           Anterior
         </button>
         @for (p of paginasVisibles(); track p) {
           <button
             type="button"
             (click)="irAPagina(p)"
-            [class]="p === paginaActual() ? 'rounded-lg bg-emerald-700 px-3 py-2 text-white' : 'rounded-lg border px-3 py-2 hover:bg-slate-50'"
+            [class]="p === paginaActual() ? 'rounded-md bg-brand-700 px-3 py-2 text-white' : 'rounded-md border px-3 py-2 hover:bg-ink-50'"
             [attr.aria-current]="p === paginaActual() ? 'page' : null"
           >
             {{ p + 1 }}
           </button>
         }
-        <button type="button" (click)="irAPagina(paginaActual() + 1)" [disabled]="paginaActual() >= totalPaginas() - 1" class="rounded-lg border px-3 py-2 disabled:text-slate-300">
+        <button type="button" (click)="irAPagina(paginaActual() + 1)" [disabled]="paginaActual() >= totalPaginas() - 1" class="rounded-md border px-3 py-2 disabled:text-ink-300">
           Siguiente
         </button>
       </div>
@@ -118,18 +118,18 @@
   </div>
   <!-- Modal: ocultar reseña -->
   @if (aOcultar()) {
-    <div class="fixed inset-0 z-[70] grid place-items-center bg-slate-950/55 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="ocultar-titulo">
-      <div class="w-full max-w-md rounded-[28px] bg-white p-8 shadow-2xl">
+    <div class="fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-6" role="dialog" aria-modal="true" aria-labelledby="ocultar-titulo">
+      <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-overlay">
         <div class="flex items-start justify-between">
           <div>
             <span class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">Moderación</span>
-            <h2 id="ocultar-titulo" class="font-display mt-3 text-3xl font-bold">Ocultar reseña</h2>
-            <p class="mt-3 text-sm leading-6 text-slate-500">
+            <h2 id="ocultar-titulo" class="font-display mt-3 text-3xl font-semibold">Ocultar reseña</h2>
+            <p class="mt-3 text-sm leading-6 text-ink-500">
               La reseña dejará de ser visible para huéspedes y anfitriones. El contenido original se
               conservará sin modificaciones.
             </p>
           </div>
-          <button type="button" (click)="cancelarOcultar()" [disabled]="enviando()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full bg-slate-100 disabled:opacity-40">
+          <button type="button" (click)="cancelarOcultar()" [disabled]="enviando()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full bg-ink-100 disabled:opacity-40">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
@@ -143,18 +143,18 @@
             [attr.maxlength]="maxMotivo"
             rows="3"
             placeholder="Describe brevemente el motivo..."
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+            class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
           ></textarea>
-          <span class="mt-1 block text-right text-xs text-slate-400">{{ motivo().length }} / {{ maxMotivo }}</span>
+          <span class="mt-1 block text-right text-xs text-ink-500">{{ motivo().length }} / {{ maxMotivo }}</span>
         </label>
         @if (!motivo().trim()) {
           <p class="text-xs font-semibold text-red-600">El motivo es obligatorio.</p>
         }
         @if (errorAccion()) {
-          <p class="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorAccion() }}</p>
+          <p class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorAccion() }}</p>
         }
         <div class="mt-7 flex gap-3">
-          <button type="button" (click)="cancelarOcultar()" [disabled]="enviando()" class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-45">
+          <button type="button" (click)="cancelarOcultar()" [disabled]="enviando()" class="inline-flex flex-1 items-center justify-center gap-2 rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition-colors hover:border-brand-300 hover:bg-brand-50 disabled:opacity-45">
             Cancelar
           </button>
           <button
@@ -162,7 +162,7 @@
             data-confirmar-ocultar
             (click)="confirmarOcultar()"
             [disabled]="!puedeConfirmar()"
-            class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition-all hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-45"
+            class="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition-colors hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-45"
           >
             {{ enviando() ? 'Procesando...' : 'Ocultar reseña' }}
           </button>

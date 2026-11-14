@@ -2,7 +2,7 @@
 <main class="min-h-[calc(100vh-160px)] bg-white">
 
   <section
-    class="mx-auto grid w-full max-w-[1180px] grid-cols-1 items-center gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[390px_minmax(0,1fr)] lg:gap-16 lg:py-10 xl:gap-24"
+    class="mx-auto grid w-full max-w-page grid-cols-1 items-center gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[390px_minmax(0,1fr)] lg:gap-16 lg:py-10 xl:gap-24"
   >
 
     <!-- ======================================
@@ -13,15 +13,15 @@
 
       <!-- ENCABEZADO -->
 
-      <p class="mb-3 text-[11px] font-bold uppercase tracking-wide text-emerald-700">
+      <p class="mb-3 text-xs font-bold uppercase tracking-wide text-brand-700">
         TU PRÓXIMA HISTORIA EMPIEZA AQUÍ
       </p>
 
-      <h1 class="mb-3 text-4xl font-bold tracking-tight text-slate-900">
+      <h1 class="mb-3 text-4xl font-bold tracking-tight text-ink-900">
         {{ cuentaCreada ? '¡Registro exitoso!' : 'Crea tu cuenta' }}
       </h1>
 
-      <p class="mb-6 text-sm leading-relaxed text-slate-500">
+      <p class="mb-6 text-sm leading-relaxed text-ink-500">
 
         @if (cuentaCreada) {
 
@@ -46,7 +46,7 @@
 
         <div
           role="alert"
-          class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4"
+          class="mb-5 rounded-md border border-red-200 bg-red-50 p-4"
         >
 
           <div class="flex items-start gap-3">
@@ -98,7 +98,7 @@
 
             <label
               for="nombre"
-              class="mb-2 block text-xs font-bold text-slate-800"
+              class="mb-2 block text-xs font-bold text-ink-800"
             >
               Nombre completo
             </label>
@@ -108,7 +108,7 @@
               <!-- ICONO DE USUARIO -->
 
               <svg
-                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -138,7 +138,7 @@
                 [disabled]="guardando"
                 [class.border-red-400]="nombreControl.invalid && (nombreControl.touched || nombreControl.dirty)"
                 [attr.aria-invalid]="nombreControl.invalid && (nombreControl.touched || nombreControl.dirty)"
-                class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
 
             </div>
@@ -187,7 +187,7 @@
 
             <label
               for="correo"
-              class="mb-2 block text-xs font-bold text-slate-800"
+              class="mb-2 block text-xs font-bold text-ink-800"
             >
               Correo electrónico
             </label>
@@ -195,7 +195,7 @@
             <div class="relative">
 
               <svg
-                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -219,7 +219,7 @@
                 email
                 maxlength="200"
                 [disabled]="guardando"
-                class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
 
             </div>
@@ -234,12 +234,12 @@
 
             <label
               for="telefono"
-              class="mb-2 block text-xs font-bold text-slate-800"
+              class="mb-2 block text-xs font-bold text-ink-800"
             >
 
               Teléfono
 
-              <span class="font-normal text-slate-400">
+              <span class="font-normal text-ink-500">
                 (opcional)
               </span>
 
@@ -248,7 +248,7 @@
             <div class="relative">
 
               <svg
-                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -271,7 +271,7 @@
                 autocomplete="tel"
                 maxlength="20"
                 [disabled]="guardando"
-                class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-10 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
 
             </div>
@@ -284,7 +284,7 @@
 
           <fieldset [disabled]="guardando">
 
-            <legend class="mb-2 text-xs font-bold text-slate-800">
+            <legend class="mb-2 text-xs font-bold text-ink-800">
               Rol
             </legend>
 
@@ -293,12 +293,12 @@
               <!-- HUÉSPED -->
 
               <label
-                class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 text-sm transition hover:border-emerald-500"
-                [class.border-emerald-600]="rol === 'HUESPED'"
-                [class.bg-emerald-50]="rol === 'HUESPED'"
-                [class.text-emerald-700]="rol === 'HUESPED'"
-                [class.border-slate-200]="rol !== 'HUESPED'"
-                [class.text-slate-500]="rol !== 'HUESPED'"
+                class="flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3.5 text-sm transition hover:border-brand-500"
+                [class.border-brand-600]="rol === 'HUESPED'"
+                [class.bg-brand-50]="rol === 'HUESPED'"
+                [class.text-brand-700]="rol === 'HUESPED'"
+                [class.border-ink-200]="rol !== 'HUESPED'"
+                [class.text-ink-500]="rol !== 'HUESPED'"
               >
 
                 <input
@@ -306,7 +306,7 @@
                   name="rol"
                   value="HUESPED"
                   [(ngModel)]="rol"
-                  class="size-4 accent-emerald-700"
+                  class="size-4 accent-brand-700"
                 />
 
                 <span>Huésped</span>
@@ -316,12 +316,12 @@
               <!-- ANFITRIÓN -->
 
               <label
-                class="flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3.5 text-sm transition hover:border-emerald-500"
-                [class.border-emerald-600]="rol === 'ANFITRION'"
-                [class.bg-emerald-50]="rol === 'ANFITRION'"
-                [class.text-emerald-700]="rol === 'ANFITRION'"
-                [class.border-slate-200]="rol !== 'ANFITRION'"
-                [class.text-slate-500]="rol !== 'ANFITRION'"
+                class="flex cursor-pointer items-center gap-3 rounded-md border px-4 py-3.5 text-sm transition hover:border-brand-500"
+                [class.border-brand-600]="rol === 'ANFITRION'"
+                [class.bg-brand-50]="rol === 'ANFITRION'"
+                [class.text-brand-700]="rol === 'ANFITRION'"
+                [class.border-ink-200]="rol !== 'ANFITRION'"
+                [class.text-ink-500]="rol !== 'ANFITRION'"
               >
 
                 <input
@@ -329,7 +329,7 @@
                   name="rol"
                   value="ANFITRION"
                   [(ngModel)]="rol"
-                  class="size-4 accent-emerald-700"
+                  class="size-4 accent-brand-700"
                 />
 
                 <span>Anfitrión</span>
@@ -348,7 +348,7 @@
 
             <label
               for="contrasena"
-              class="mb-2 block text-xs font-bold text-slate-800"
+              class="mb-2 block text-xs font-bold text-ink-800"
             >
               Contraseña
             </label>
@@ -358,7 +358,7 @@
               <!-- ICONO DE CANDADO -->
 
               <svg
-                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400"
+                class="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-500"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -382,7 +382,7 @@
                 required
                 minlength="8"
                 [disabled]="guardando"
-                class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-10 pr-11 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 disabled:opacity-60"
+                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-11 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
               />
 
               <!-- MOSTRAR / OCULTAR CONTRASEÑA -->
@@ -393,7 +393,7 @@
                 [disabled]="guardando"
                 [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
                 [attr.aria-pressed]="showPassword"
-                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-emerald-700 disabled:opacity-50"
+                class="absolute right-3.5 top-1/2 -translate-y-1/2 text-ink-500 transition hover:text-brand-700 disabled:opacity-50"
               >
 
                 <svg
@@ -427,7 +427,7 @@
 
             </div>
 
-            <p class="mt-2 text-[11px] leading-5 text-slate-400">
+            <p class="mt-2 text-xs leading-5 text-ink-500">
               Al menos 8 caracteres, mayúscula, minúscula,
               número y símbolo.
             </p>
@@ -441,7 +441,7 @@
           <button
             type="submit"
             [disabled]="guardando || registroForm.invalid"
-            class="flex w-full items-center justify-center gap-3 rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800 focus:ring-2 focus:ring-emerald-300 disabled:cursor-not-allowed disabled:opacity-50"
+            class="flex w-full items-center justify-center gap-3 rounded-md bg-brand-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800 focus:ring-2 focus:ring-brand-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
 
             @if (guardando) {
@@ -502,7 +502,7 @@
 
             <p
               role="status"
-              class="text-center text-xs leading-5 text-slate-500"
+              class="text-center text-xs leading-5 text-ink-500"
             >
               Estamos registrando tu cuenta y procesando
               el envío del correo de verificación.
@@ -520,13 +520,13 @@
 
         <div
           role="status"
-          class="rounded-2xl border border-emerald-200 bg-emerald-50 p-7 text-center"
+          class="rounded-lg border border-brand-200 bg-brand-50 p-7 text-center"
         >
 
           <!-- ICONO DE ÉXITO -->
 
           <div
-            class="mx-auto flex size-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"
+            class="mx-auto flex size-16 items-center justify-center rounded-full bg-brand-100 text-brand-700"
           >
 
             <svg
@@ -545,33 +545,33 @@
 
           </div>
 
-          <h2 class="mt-5 text-2xl font-bold text-slate-900">
+          <h2 class="mt-5 text-2xl font-bold text-ink-900">
             ¡Cuenta creada correctamente!
           </h2>
 
-          <p class="mt-4 text-sm leading-6 text-slate-600">
+          <p class="mt-4 text-sm leading-6 text-ink-600">
             {{ mensaje }}
           </p>
 
-          <p class="mt-4 text-sm text-slate-500">
+          <p class="mt-4 text-sm text-ink-500">
             Correo registrado:
           </p>
 
-          <p class="mt-1 break-all text-sm font-bold text-emerald-700">
+          <p class="mt-1 break-all text-sm font-bold text-brand-700">
             {{ correo }}
           </p>
 
           <!-- INSTRUCCIONES DE VERIFICACIÓN -->
 
           <div
-            class="mt-5 rounded-xl border border-emerald-200 bg-white p-4 text-left"
+            class="mt-5 rounded-md border border-brand-200 bg-white p-4 text-left"
           >
 
-            <p class="text-sm font-bold text-slate-800">
+            <p class="text-sm font-bold text-ink-800">
               ¿Qué sigue?
             </p>
 
-            <p class="mt-2 text-xs leading-6 text-slate-600">
+            <p class="mt-2 text-xs leading-6 text-ink-600">
               Revisa tu bandeja de entrada y la carpeta de spam.
               Cuando tengas el código de 6 dígitos,
               continúa en <strong>Iniciar sesión</strong>.
@@ -584,7 +584,7 @@
 
           <a
             routerLink="/login"
-            class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800"
+            class="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-md bg-brand-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-brand-800"
           >
 
             Ir a iniciar sesión
@@ -616,15 +616,15 @@
 
       @if (!cuentaCreada) {
 
-        <div class="mt-5 border-t border-slate-200 pt-5 text-center">
+        <div class="mt-5 border-t border-ink-200 pt-5 text-center">
 
-          <p class="text-xs text-slate-500">
+          <p class="text-xs text-ink-500">
 
             ¿Ya tienes una cuenta?
 
             <a
               routerLink="/login"
-              class="ml-1 font-bold text-emerald-700 hover:underline"
+              class="ml-1 font-bold text-brand-700 hover:underline"
             >
               Iniciar sesión
             </a>
@@ -640,7 +640,7 @@
            ====================================== -->
 
       <div
-        class="mt-6 flex items-center justify-center gap-2 text-[11px] text-slate-400"
+        class="mt-6 flex items-center justify-center gap-2 text-xs text-ink-500"
       >
 
         <svg
@@ -668,7 +668,7 @@
          ====================================== -->
 
     <div
-      class="relative min-h-[480px] overflow-hidden rounded-[22px] bg-emerald-950 shadow-lg lg:min-h-[610px]"
+      class="relative min-h-[480px] overflow-hidden rounded-lg bg-brand-950 lg:min-h-[610px]"
     >
 
       <!-- FOTO DEL ALOJAMIENTO -->
@@ -682,13 +682,13 @@
       <!-- DEGRADADO -->
 
       <div
-        class="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/20 to-black/10"
+        class="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/20 to-black/10"
       ></div>
 
       <!-- ETIQUETA SUPERIOR -->
 
       <div
-        class="absolute left-7 top-7 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2 text-[11px] font-semibold text-emerald-800"
+        class="absolute left-7 top-7 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-brand-800"
       >
 
         <svg
@@ -749,7 +749,7 @@
 
           </span>
 
-          <span class="text-[10px] tracking-widest text-white/75">
+          <span class="text-xs tracking-widest text-white/75">
             COLOMBIA
           </span>
 

@@ -61,11 +61,11 @@ export function claseEtiquetaReserva(etiqueta: string): string {
     etiqueta === 'Cancelada'
       ? 'bg-red-50 text-red-700'
       : etiqueta === 'Finalizada'
-        ? 'bg-slate-100 text-slate-600'
+        ? 'bg-ink-100 text-ink-600'
         : etiqueta === 'Activa'
           ? 'bg-sky-50 text-sky-700'
           : etiqueta === 'Confirmada'
-            ? 'bg-emerald-50 text-emerald-700'
+            ? 'bg-brand-50 text-brand-700'
             : 'bg-amber-50 text-amber-700';
   return 'inline-flex rounded-full px-3 py-1 text-xs font-bold ' + tono;
 }
