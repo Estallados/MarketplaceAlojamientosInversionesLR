@@ -25,7 +25,7 @@
     <button
       type="button"
       (click)="volver()"
-      class="rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-semibold text-ink-700 hover:bg-ink-50"
+      class="btn btn-secondary"
     >
       ← Mis alojamientos
     </button>
@@ -353,7 +353,7 @@
           <button
             type="button"
             (click)="abrirCrear()"
-            class="mt-5 w-full rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white hover:bg-brand-800"
+            class="btn btn-primary mt-5 w-full"
           >
             + Agregar disponibilidad
           </button>
@@ -469,11 +469,11 @@
 
   @if (formularioAbierto()) {
 
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4">
+    <div class="modal-backdrop z-50">
 
       <form
         (ngSubmit)="guardarPeriodo()"
-        class="w-full max-w-lg rounded-lg bg-white p-6 shadow-overlay sm:p-8"
+        class="modal-panel"
       >
 
         <h2 class="text-xl font-bold text-ink-900">
@@ -553,7 +553,7 @@
           <button
             type="submit"
             [disabled]="guardando()"
-            class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white hover:bg-brand-800 disabled:opacity-50"
+            class="btn btn-primary"
           >
             {{ guardando() ? 'Guardando...' : 'Guardar período' }}
           </button>
@@ -570,9 +570,9 @@
 
   @if (periodoPorEliminar(); as periodo) {
 
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4">
+    <div class="modal-backdrop z-50">
 
-      <div class="w-full max-w-md rounded-lg bg-white p-7 shadow-overlay">
+      <div class="modal-panel max-w-md">
 
         <h2 class="text-xl font-bold text-ink-900">
           ¿Eliminar este período?

@@ -1,5 +1,5 @@
-<div class="fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-6" role="dialog" aria-modal="true" aria-labelledby="resena-titulo">
-  <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-overlay">
+<div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="resena-titulo">
+  <div class="modal-panel max-w-md">
     <div class="flex justify-between">
       <div>
         <h2 id="resena-titulo" class="font-display text-3xl font-semibold">Calificar estancia</h2>
@@ -67,7 +67,7 @@
         type="button"
         (click)="enviar()"
         [disabled]="enviando() || calificacion() === 0"
-        class="inline-flex flex-1 items-center justify-center gap-2 rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-45"
+        class="btn btn-primary flex-1"
       >
         {{ enviando() ? 'Publicando...' : 'Publicar reseña' }}
       </button>

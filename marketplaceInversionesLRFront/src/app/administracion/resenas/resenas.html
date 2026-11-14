@@ -45,7 +45,7 @@
           <tr>
             <td colspan="8" class="px-5 py-10 text-center">
               <p class="text-red-600" role="alert">No se pudieron cargar las reseñas.</p>
-              <button type="button" (click)="cargar()" class="mt-3 rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white hover:bg-brand-800">
+              <button type="button" (click)="cargar()" class="btn btn-primary mt-3 text-xs">
                 Reintentar
               </button>
             </td>
@@ -118,8 +118,8 @@
   </div>
   <!-- Modal: ocultar reseña -->
   @if (aOcultar()) {
-    <div class="fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-6" role="dialog" aria-modal="true" aria-labelledby="ocultar-titulo">
-      <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-overlay">
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="ocultar-titulo">
+      <div class="modal-panel max-w-md">
         <div class="flex items-start justify-between">
           <div>
             <span class="inline-flex rounded-full bg-red-50 px-3 py-1 text-xs font-bold text-red-700">Moderación</span>

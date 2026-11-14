@@ -1,12 +1,12 @@
 @let c = cotizacion();
 <div
   data-pago
-  class="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink-900/50 p-4"
+  class="modal-backdrop z-50 overflow-y-auto"
   role="dialog"
   aria-modal="true"
   aria-labelledby="pago-titulo"
 >
-  <div class="w-full max-w-lg rounded-lg bg-white p-7 shadow-overlay">
+  <div class="modal-panel">
     <div class="flex items-start justify-between gap-4">
       <div>
         <h2 id="pago-titulo" class="font-display text-2xl font-semibold text-ink-900">Confirma y paga</h2>
@@ -81,7 +81,7 @@
             type="button"
             data-recargar-config
             (click)="cargarConfiguracion()"
-            class="mt-2 block rounded-md bg-red-600 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-red-700"
+            class="btn btn-danger mt-2 text-xs"
           >
             Reintentar
           </button>
@@ -222,7 +222,7 @@
         (click)="confirmarPago()"
         [disabled]="!puedePagar()"
         [attr.aria-busy]="pagando()"
-        class="flex-[2] rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-60"
+        class="btn btn-primary flex-[2]"
       >
         @if (pagando()) {
           Procesando pago...

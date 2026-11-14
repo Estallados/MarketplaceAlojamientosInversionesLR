@@ -78,7 +78,7 @@
         <button
           type="button"
           (click)="reintentar()"
-          class="mt-6 rounded-md bg-brand-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-brand-800"
+          class="btn btn-primary mt-6"
         >
           Reintentar
         </button>
@@ -148,8 +148,8 @@
 
   <!-- ================= MODAL DE CONFIRMACIÓN ================= -->
   @if (modal(); as m) {
-    <div class="fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-6" role="dialog" aria-modal="true">
-      <div class="w-full max-w-md rounded-lg bg-white p-8 shadow-overlay">
+    <div class="modal-backdrop" role="dialog" aria-modal="true">
+      <div class="modal-panel max-w-md">
         <div class="flex justify-between">
           <div>
             <h2 class="font-display text-3xl font-semibold">{{ m.titulo }}</h2>

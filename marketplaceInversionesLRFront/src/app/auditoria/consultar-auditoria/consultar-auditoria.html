@@ -43,10 +43,10 @@
       <span class="text-xs font-bold text-ink-600">Hasta</span>
       <input type="date" [value]="hasta()" (input)="hasta.set($any($event.target).value)" class="mt-1 w-full rounded-md border border-ink-200 bg-white px-4 py-3 text-sm" />
     </label>
-    <button type="submit" class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-brand-800">
+    <button type="submit" class="btn btn-primary">
       Filtrar
     </button>
-    <button type="button" (click)="limpiar()" class="rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition-colors hover:bg-ink-50">
+    <button type="button" (click)="limpiar()" class="btn btn-secondary">
       Limpiar
     </button>
   </form>
@@ -71,7 +71,7 @@
           <tr>
             <td colspan="7" class="px-5 py-10 text-center">
               <p class="text-red-600" role="alert">{{ errorCarga() }}</p>
-              <button type="button" (click)="cargar()" class="mt-3 rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white hover:bg-brand-800">
+              <button type="button" (click)="cargar()" class="btn btn-primary mt-3 text-xs">
                 Reintentar
               </button>
             </td>
@@ -126,8 +126,8 @@
 
   <!-- Detalle de un evento -->
   @if (detalleAbierto()) {
-    <div class="fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-6" role="dialog" aria-modal="true" aria-labelledby="evento-titulo">
-      <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-8 shadow-overlay">
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="evento-titulo">
+      <div class="modal-panel">
         <div class="flex items-start justify-between">
           <h2 id="evento-titulo" class="font-display text-3xl font-semibold">Detalle del evento</h2>
           <button type="button" (click)="cerrarDetalle()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full bg-ink-100">

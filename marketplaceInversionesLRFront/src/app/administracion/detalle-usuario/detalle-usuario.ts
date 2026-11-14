@@ -13,6 +13,7 @@ import {
   tipoEstado,
   tipoRol,
 } from '../services/admin-usuarios.service';
+import { Cargando } from '../../core/ui/cargando/cargando';
 
 /**
  * Detalle de un usuario para el administrador (HU-12): información, estado y motivo de la
@@ -21,6 +22,7 @@ import {
 @Component({
   selector: 'app-admin-detalle-usuario',
   standalone: true,
+  imports: [Cargando],
   templateUrl: './detalle-usuario.html',
 })
 export class DetalleUsuario implements OnInit {

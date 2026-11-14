@@ -261,7 +261,7 @@
                   (click)="iniciarConfirmacion()"
                   [disabled]="enviando() || !puedeConfirmar()"
                   [attr.aria-busy]="enviando()"
-                  class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="btn btn-primary"
                 >
                   @if (enviando()) {
                     Confirmando reserva...
@@ -316,7 +316,7 @@
             type="button"
             data-recotizar
             (click)="cotizar()"
-            class="rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-800"
+            class="btn btn-primary text-xs"
           >
             Cotizar de nuevo
           </button>
@@ -328,7 +328,7 @@
             type="button"
             data-recotizar
             (click)="cotizar()"
-            class="rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-800"
+            class="btn btn-primary text-xs"
           >
             Reintentar
           </button>
@@ -337,7 +337,7 @@
         @if (e.tipo === 'sesion') {
           <a
             routerLink="/login"
-            class="rounded-md bg-brand-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-brand-800"
+            class="btn btn-primary text-xs"
           >
             Iniciar sesión
           </a>

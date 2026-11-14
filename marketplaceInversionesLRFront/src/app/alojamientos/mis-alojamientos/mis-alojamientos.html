@@ -21,7 +21,7 @@
     <button
       type="button"
       (click)="create()"
-      class="inline-flex shrink-0 items-center justify-center gap-2 rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800"
+      class="btn btn-primary shrink-0"
     >
       <svg
         class="size-[18px]"
@@ -615,7 +615,7 @@
                   data-editar
                   (click)="edit(l.idAlojamiento)"
                   [disabled]="l.estado === 'BLOQUEADA'"
-                  class="flex w-full items-center justify-center gap-2 rounded-md bg-brand-700 px-3 py-2.5 text-xs font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-40"
+                  class="btn btn-primary w-full text-xs"
                 >
 
                   <svg
@@ -716,7 +716,7 @@
             <button
               type="button"
               (click)="create()"
-              class="mt-6 rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800"
+              class="btn btn-primary mt-6"
             >
               Crear mi primer alojamiento
             </button>

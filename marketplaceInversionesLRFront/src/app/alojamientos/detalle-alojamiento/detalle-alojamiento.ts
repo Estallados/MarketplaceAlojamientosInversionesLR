@@ -8,6 +8,7 @@ import { DetalleAlojamientoService } from '../services/detalle-alojamiento.servi
 import { SessionService } from '../../core/services/session.service';
 import { FavoritoService } from '../../favoritos/services/favorito.service';
 import { MensajeriaService } from '../../mensajeria/services/mensajeria.service';
+import { Cargando } from '../../core/ui/cargando/cargando';
 
 /** Máximo de fotos de la galería: la principal y 4 pequeñas. */
 const MAX_FOTOS = 5;
@@ -26,7 +27,7 @@ const MARGEN_MAPA = 0.01;
   selector: 'app-detalle-alojamiento',
   standalone: true,
   templateUrl: './detalle-alojamiento.html',
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, RouterLink],
+  imports: [Cargando, CurrencyPipe, DatePipe, DecimalPipe, RouterLink],
 })
 export class DetalleAlojamientoPage implements OnInit {
   private readonly route = inject(ActivatedRoute);

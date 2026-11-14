@@ -22,7 +22,7 @@
         type="button"
         (click)="startEditing()"
         [disabled]="cargando()"
-        class="inline-flex items-center justify-center gap-2 rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:opacity-50"
+        class="btn btn-primary"
       >
         Editar perfil
       </button>
@@ -131,7 +131,7 @@
               type="button"
               (click)="cancelEdit()"
               [disabled]="guardando()"
-              class="rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition hover:bg-ink-50 disabled:opacity-50"
+              class="btn btn-secondary"
             >
               Cancelar
             </button>
@@ -140,7 +140,7 @@
               type="button"
               (click)="save()"
               [disabled]="!valid() || guardando()"
-              class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-45"
+              class="btn btn-primary"
             >
               {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
             </button>
@@ -231,12 +231,12 @@
 
   <!-- CONFIRMACIÓN DE DESACTIVACIÓN -->
   @if (confirmAccount()) {
-    <div class="fixed inset-0 z-[80] grid place-items-center bg-ink-950/50 p-6">
+    <div class="modal-backdrop z-[80]">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="titulo-desactivar"
-        class="w-full max-w-md rounded-lg bg-white p-8 shadow-overlay"
+        class="modal-panel max-w-md"
       >
         <h2 id="titulo-desactivar" class="text-2xl font-bold text-ink-900">
           Desactivar cuenta
@@ -260,7 +260,7 @@
             type="button"
             (click)="toggleAccount()"
             [disabled]="desactivando()"
-            class="flex-1 rounded-md bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50"
+            class="btn btn-danger flex-1"
           >
             {{ desactivando() ? 'Procesando...' : 'Confirmar' }}
           </button>

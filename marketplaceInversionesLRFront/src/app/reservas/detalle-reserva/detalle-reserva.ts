@@ -14,6 +14,7 @@ import { Reserva, SimulacionCancelacion } from '../models/reserva';
 import { ReservaService } from '../services/reserva.service';
 import { MAX_MOTIVO_CANCELACION, mensajeErrorCancelacion } from '../validaciones/errores-cancelacion';
 import { CalificarEstancia } from '../../resenas/calificar-estancia/calificar-estancia';
+import { Cargando } from '../../core/ui/cargando/cargando';
 
 /** Línea del resumen de la cotización. */
 export interface LineaDesglose {
@@ -40,7 +41,7 @@ export interface LineaDesglose {
   selector: 'app-detalle-reserva',
   standalone: true,
   templateUrl: './detalle-reserva.html',
-  imports: [CalificarEstancia]
+  imports: [Cargando, CalificarEstancia]
 })
 export class DetalleReserva implements OnInit, OnDestroy {
 

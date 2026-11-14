@@ -89,7 +89,7 @@
         type="submit"
         data-consultar
         [disabled]="consultando() || idAlojamiento() === null"
-        class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+        class="btn btn-primary"
       >
         {{ consultando() ? 'Consultando...' : 'Consultar disponibilidad' }}
       </button>
@@ -129,7 +129,7 @@
           data-continuar
           (click)="continuarConReserva()"
           [disabled]="!puedeContinuar()"
-          class="mt-4 rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+          class="btn btn-primary mt-4"
         >
           Continuar con la reserva
         </button>

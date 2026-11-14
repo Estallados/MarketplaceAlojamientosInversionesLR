@@ -21,7 +21,7 @@
       type="button"
       data-volver
       (click)="volver()"
-      class="rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-semibold text-ink-700 hover:bg-ink-50"
+      class="btn btn-secondary"
     >
       ← Volver
     </button>
@@ -556,7 +556,7 @@
         type="submit"
         data-guardar
         [disabled]="guardando()"
-        class="rounded-md bg-brand-700 px-5 py-3 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+        class="btn btn-primary"
       >
         {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
       </button>

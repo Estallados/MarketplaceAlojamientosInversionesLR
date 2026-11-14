@@ -99,7 +99,7 @@
                   data-guardar-servicio
                   (click)="guardarEdicion()"
                   [disabled]="procesando()"
-                  class="rounded-md bg-brand-700 px-4 py-3 text-xs font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="btn btn-primary text-xs"
                 >
                   {{ procesando() ? 'Guardando...' : 'Guardar' }}
                 </button>
@@ -168,7 +168,7 @@
                     data-confirmar
                     (click)="confirmarEliminar()"
                     [disabled]="procesando()"
-                    class="rounded-md bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="btn btn-danger text-xs"
                   >
                     {{ procesando() ? 'Eliminando...' : 'Sí, eliminar' }}
                   </button>
@@ -177,7 +177,7 @@
                     data-cancelar-eliminar
                     (click)="cancelarEliminar()"
                     [disabled]="procesando()"
-                    class="rounded-md border border-ink-200 bg-white px-4 py-2 text-xs font-bold text-ink-800 transition hover:bg-ink-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="btn btn-secondary text-xs"
                   >
                     Cancelar
                   </button>
@@ -251,7 +251,7 @@
         type="submit"
         data-agregar-servicio
         [disabled]="procesando()"
-        class="w-full rounded-md bg-brand-700 px-5 py-4 text-sm font-bold text-white transition hover:bg-brand-800 disabled:cursor-not-allowed disabled:opacity-50"
+        class="btn btn-primary w-full"
       >
         {{ procesando() ? 'Procesando...' : 'Agregar servicio' }}
       </button>
