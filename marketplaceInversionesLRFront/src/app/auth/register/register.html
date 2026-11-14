@@ -1,38 +1,27 @@
 
-<main class="min-h-[calc(100vh-160px)] bg-white">
+<main class="px-4 py-10 sm:py-16">
 
-  <section
-    class="mx-auto grid w-full max-w-page grid-cols-1 items-center gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[390px_minmax(0,1fr)] lg:gap-16 lg:py-10 xl:gap-24"
-  >
+  <section class="card mx-auto w-full max-w-md p-6 sm:p-8">
 
-    <!-- ======================================
-         COLUMNA IZQUIERDA
-         ====================================== -->
-
-    <div class="mx-auto w-full max-w-[360px] lg:mx-0">
+    <div>
 
       <!-- ENCABEZADO -->
 
-      <p class="mb-3 text-xs font-bold uppercase tracking-wide text-brand-700">
-        TU PRÓXIMA HISTORIA EMPIEZA AQUÍ
-      </p>
-
-      <h1 class="mb-3 text-4xl font-bold tracking-tight text-ink-900">
-        {{ cuentaCreada ? '¡Registro exitoso!' : 'Crea tu cuenta' }}
+      <h1 class="page-title mb-2">
+        {{ cuentaCreada ? 'Cuenta creada' : 'Registro de usuario' }}
       </h1>
 
       <p class="mb-6 text-sm leading-relaxed text-ink-500">
 
         @if (cuentaCreada) {
 
-          Tu cuenta ha sido registrada en Inversiones LR.
-            Ahora puedes continuar con la verificación
+          Tu cuenta quedó registrada. Verifica tu correo
             desde Iniciar sesión.
 
         } @else {
 
-          Regístrate para encontrar tu próximo destino
-            o compartir ese lugar que se siente como casa.
+          Completa tus datos para crear una cuenta de huésped
+            o de anfitrión.
 
         }
 
@@ -98,7 +87,7 @@
 
             <label
               for="nombre"
-              class="mb-2 block text-xs font-bold text-ink-800"
+              class="field-label"
             >
               Nombre completo
             </label>
@@ -138,7 +127,7 @@
                 [disabled]="guardando"
                 [class.border-red-400]="nombreControl.invalid && (nombreControl.touched || nombreControl.dirty)"
                 [attr.aria-invalid]="nombreControl.invalid && (nombreControl.touched || nombreControl.dirty)"
-                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+                class="field pl-10 pr-4"
               />
 
             </div>
@@ -187,7 +176,7 @@
 
             <label
               for="correo"
-              class="mb-2 block text-xs font-bold text-ink-800"
+              class="field-label"
             >
               Correo electrónico
             </label>
@@ -219,7 +208,7 @@
                 email
                 maxlength="200"
                 [disabled]="guardando"
-                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+                class="field pl-10 pr-4"
               />
 
             </div>
@@ -234,7 +223,7 @@
 
             <label
               for="telefono"
-              class="mb-2 block text-xs font-bold text-ink-800"
+              class="field-label"
             >
 
               Teléfono
@@ -271,7 +260,7 @@
                 autocomplete="tel"
                 maxlength="20"
                 [disabled]="guardando"
-                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+                class="field pl-10 pr-4"
               />
 
             </div>
@@ -284,7 +273,7 @@
 
           <fieldset [disabled]="guardando">
 
-            <legend class="mb-2 text-xs font-bold text-ink-800">
+            <legend class="field-label">
               Rol
             </legend>
 
@@ -348,7 +337,7 @@
 
             <label
               for="contrasena"
-              class="mb-2 block text-xs font-bold text-ink-800"
+              class="field-label"
             >
               Contraseña
             </label>
@@ -382,7 +371,7 @@
                 required
                 minlength="8"
                 [disabled]="guardando"
-                class="w-full rounded-md border border-ink-200 bg-white py-3.5 pl-10 pr-11 text-sm text-ink-900 outline-none transition placeholder:text-ink-500 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
+                class="field pl-10 pr-11"
               />
 
               <!-- MOSTRAR / OCULTAR CONTRASEÑA -->
@@ -441,7 +430,7 @@
           <button
             type="submit"
             [disabled]="guardando || registroForm.invalid"
-            class="btn btn-primary w-full gap-3 focus:ring-2 focus:ring-brand-300"
+            class="btn btn-primary w-full"
           >
 
             @if (guardando) {
@@ -478,20 +467,6 @@
 
               <span>Crear cuenta</span>
 
-              <svg
-                class="size-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path d="M5 12h14"/>
-                <path d="m13 6 6 6-6 6"/>
-              </svg>
-
             }
 
           </button>
@@ -518,67 +493,22 @@
              REGISTRO EXITOSO
              ====================================== -->
 
-        <div
-          role="status"
-          class="rounded-lg border border-brand-200 bg-brand-50 p-7 text-center"
-        >
+        <div role="status" class="space-y-4">
 
-          <!-- ICONO DE ÉXITO -->
-
-          <div
-            class="mx-auto flex size-16 items-center justify-center rounded-full bg-brand-100 text-brand-700"
-          >
-
-            <svg
-              width="34"
-              height="34"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="m5 12 4 4L19 6"/>
-            </svg>
-
-          </div>
-
-          <h2 class="mt-5 text-2xl font-bold text-ink-900">
-            ¡Cuenta creada correctamente!
-          </h2>
-
-          <p class="mt-4 text-sm leading-6 text-ink-600">
+          <p class="alert alert-success">
             {{ mensaje }}
           </p>
 
-          <p class="mt-4 text-sm text-ink-500">
+          <p class="text-sm text-ink-600">
             Correo registrado:
+            <strong class="break-all text-ink-900">{{ correo }}</strong>
           </p>
 
-          <p class="mt-1 break-all text-sm font-bold text-brand-700">
-            {{ correo }}
+          <p class="text-sm leading-6 text-ink-600">
+            Revisa tu bandeja de entrada y la carpeta de spam.
+            Cuando tengas el código de 6 dígitos, ingresa en
+            <strong>Iniciar sesión</strong> para verificar tu correo.
           </p>
-
-          <!-- INSTRUCCIONES DE VERIFICACIÓN -->
-
-          <div
-            class="mt-5 rounded-md border border-brand-200 bg-white p-4 text-left"
-          >
-
-            <p class="text-sm font-bold text-ink-800">
-              ¿Qué sigue?
-            </p>
-
-            <p class="mt-2 text-xs leading-6 text-ink-600">
-              Revisa tu bandeja de entrada y la carpeta de spam.
-              Cuando tengas el código de 6 dígitos,
-              continúa en <strong>Iniciar sesión</strong>.
-              Allí podrás verificar tu correo electrónico.
-            </p>
-
-          </div>
 
           <!-- IR AL LOGIN -->
 
@@ -588,21 +518,6 @@
           >
 
             Ir a iniciar sesión
-
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14"/>
-              <path d="m13 6 6 6-6 6"/>
-            </svg>
 
           </a>
 
@@ -634,128 +549,6 @@
         </div>
 
       }
-
-      <!-- ======================================
-           MENSAJE DE SEGURIDAD
-           ====================================== -->
-
-      <div
-        class="mt-6 flex items-center justify-center gap-2 text-xs text-ink-500"
-      >
-
-        <svg
-          class="size-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
-          <path d="m9 12 2 2 4-4"/>
-        </svg>
-
-        Tus datos seguros. Tu próxima escapada, más cerca.
-
-      </div>
-
-    </div>
-
-    <!-- ======================================
-         COLUMNA DERECHA: IMAGEN
-         ====================================== -->
-
-    <div
-      class="relative min-h-[480px] overflow-hidden rounded-lg bg-brand-950 lg:min-h-[610px]"
-    >
-
-      <!-- FOTO DEL ALOJAMIENTO -->
-
-      <img
-        src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&amp;fit=crop&amp;w=1400&amp;q=85"
-        alt="Alojamiento rodeado de naturaleza"
-        class="absolute inset-0 h-full w-full object-cover"
-      />
-
-      <!-- DEGRADADO -->
-
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-brand-950 via-brand-950/20 to-black/10"
-      ></div>
-
-      <!-- ETIQUETA SUPERIOR -->
-
-      <div
-        class="absolute left-7 top-7 flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-brand-800"
-      >
-
-        <svg
-          class="size-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M20 4c-8 0-14 4-14 11a5 5 0 0 0 5 5c7 0 11-6 9-16Z"/>
-          <path d="M4 21c3-6 7-10 12-13"/>
-        </svg>
-
-        Hospitalidad con esencia colombiana
-
-      </div>
-
-      <!-- TEXTO INFERIOR -->
-
-      <div class="absolute inset-x-0 bottom-0 p-8 text-white">
-
-        <h2
-          class="max-w-lg text-4xl font-medium leading-tight tracking-tight lg:text-5xl"
-        >
-          Hay lugares que se sienten como casa.
-        </h2>
-
-        <p class="mt-4 text-sm text-white/80">
-          Encuentra el tuyo y vive Colombia a tu manera.
-        </p>
-
-        <!-- UBICACIÓN -->
-
-        <div
-          class="mt-6 flex items-center justify-between border-t border-white/25 pt-5"
-        >
-
-          <span class="flex items-center gap-2 text-xs">
-
-            <svg
-              class="size-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/>
-              <circle cx="12" cy="10" r="2.5"/>
-            </svg>
-
-            El Retiro, Antioquia
-
-          </span>
-
-          <span class="text-xs tracking-widest text-white/75">
-            COLOMBIA
-          </span>
-
-        </div>
-
-      </div>
 
     </div>
 
