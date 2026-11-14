@@ -1,4 +1,4 @@
-<main class="mx-auto max-w-page px-4 py-10 sm:px-8">
+<main class="page">
 
   <button type="button" (click)="volver()" class="mb-7 text-sm font-bold text-brand-700">
     ← Volver a la revisión
@@ -142,7 +142,7 @@
               [attr.maxlength]="maxMotivo"
               rows="4"
               [attr.placeholder]="accion() === 'bloquear' ? 'Explica por qué se bloquea la publicación...' : 'Explica al anfitrión qué debe corregir...'"
-              class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              class="field"
             ></textarea>
             <span class="mt-1 block text-right text-xs text-ink-500">{{ motivo().length }} / {{ maxMotivo }}</span>
           </label>

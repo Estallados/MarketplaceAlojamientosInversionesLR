@@ -1,4 +1,4 @@
-<main class="mx-auto max-w-form px-4 py-10 sm:px-8">
+<main class="page-form">
 
   <!-- ENCABEZADO -->
   <div>
@@ -38,7 +38,7 @@
           (ngModelChange)="cambiarFecha('llegada', $event)"
           (blur)="marcarTocado('llegada')"
           [attr.aria-invalid]="mostrarError('llegada')"
-          class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500"
+          class="field"
         />
         @if (mostrarError('llegada')) {
           <span data-error="llegada" class="mt-2 block text-xs text-red-600">
@@ -62,7 +62,7 @@
           (ngModelChange)="cambiarFecha('salida', $event)"
           (blur)="marcarTocado('salida')"
           [attr.aria-invalid]="mostrarError('salida')"
-          class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500"
+          class="field"
         />
         @if (mostrarError('salida')) {
           <span data-error="salida" class="mt-2 block text-xs text-red-600">

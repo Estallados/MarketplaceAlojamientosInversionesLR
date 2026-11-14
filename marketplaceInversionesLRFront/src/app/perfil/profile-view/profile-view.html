@@ -1,5 +1,5 @@
 
-<main class="mx-auto max-w-page px-4 py-10 sm:px-8 sm:py-14">
+<main class="page">
 
   <!-- ENCABEZADO -->
   <div class="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
@@ -96,7 +96,7 @@
                   (input)="setField(f.key, $event)"
                   [type]="f.key === 'phone' ? 'tel' : 'text'"
                   [attr.autocomplete]="f.key === 'phone' ? 'tel' : 'name'"
-                  class="w-full rounded-md border border-ink-200 bg-white p-4 text-sm text-ink-900 outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  class="field"
                 />
               </label>
             }

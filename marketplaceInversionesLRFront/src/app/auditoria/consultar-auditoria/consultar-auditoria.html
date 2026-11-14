@@ -1,4 +1,4 @@
-<main class="mx-auto max-w-page px-4 py-10 sm:px-8">
+<main class="page">
   <div class="flex items-end justify-between">
     <div>
       <h1 class="page-title">Auditoría</h1>
@@ -15,7 +15,7 @@
         (input)="accion.set($any($event.target).value)"
         placeholder="Ej. LOGIN"
         list="acciones-auditoria"
-        class="mt-1 w-full rounded-md border border-ink-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand-500"
+        class="field mt-1"
       />
       <datalist id="acciones-auditoria">
         @for (a of acciones; track a) {
@@ -31,7 +31,7 @@
         [value]="idActor()"
         (input)="idActor.set($any($event.target).value)"
         placeholder="Ej. 14"
-        class="mt-1 w-full rounded-md border border-ink-200 bg-white px-4 py-3 text-sm outline-none focus:border-brand-500 lg:w-28"
+        class="field mt-1 lg:w-28"
       />
     </label>
     <label class="block">
@@ -55,7 +55,7 @@
   }
 
   <div class="mt-6 overflow-x-auto rounded-lg border border-ink-200 bg-white">
-    <table class="w-full min-w-[900px] text-left text-sm">
+    <table class="table-base min-w-[900px]">
       <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
       <tr>
         @for (h of headers; track h) {

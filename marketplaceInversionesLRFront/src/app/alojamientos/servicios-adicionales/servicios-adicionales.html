@@ -66,7 +66,7 @@
                   type="text"
                   maxlength="255"
                   [(ngModel)]="edicion.nombre"
-                  class="w-full rounded-md border border-ink-200 p-3 text-sm outline-none focus:border-brand-500"
+                  class="field"
                 />
                 @if (mostrarErrorEdicion('nombre')) {
                   <span data-error="edicion-nombre" class="mt-2 block text-xs text-red-600">
@@ -84,7 +84,7 @@
                   step="any"
                   [(ngModel)]="edicion.costo"
                   (input)="revisarNumero('edicion', $event)"
-                  class="w-full rounded-md border border-ink-200 p-3 text-sm outline-none focus:border-brand-500"
+                  class="field"
                 />
                 @if (mostrarErrorEdicion('costo')) {
                   <span data-error="edicion-costo" class="mt-2 block text-xs text-red-600">
@@ -214,7 +214,7 @@
         maxlength="255"
         [(ngModel)]="nuevo.nombre"
         placeholder="Desayuno, traslado al aeropuerto..."
-        class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500"
+        class="field"
       />
       @if (mostrarErrorNuevo('nombre')) {
         <span data-error="nuevo-nombre" class="mt-2 block text-xs text-red-600">
@@ -237,7 +237,7 @@
         [(ngModel)]="nuevo.costo"
         (input)="revisarNumero('nuevo', $event)"
         placeholder="35000"
-        class="w-full rounded-md border border-ink-200 p-4 text-sm outline-none focus:border-brand-500"
+        class="field"
       />
       @if (mostrarErrorNuevo('costo')) {
         <span data-error="nuevo-costo" class="mt-2 block text-xs text-red-600">
