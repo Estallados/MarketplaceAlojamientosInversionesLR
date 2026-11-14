@@ -9,8 +9,6 @@ import { BusquedaService } from '../services/busqueda.service';
 type SortOption = 'Recomendados' | 'Precio menor' | 'Precio mayor' | 'Mejor calificados';
 
 /** Foto de ejemplo cuando el alojamiento no tiene imágenes. */
-const FOTO_RELLENO =
-  'https://images.unsplash.com/photo-1613013383640-6226419147d7?auto=format&fit=crop&w=1200&q=85';
 
 /** Alojamientos por página en los resultados. */
 const POR_PAGINA = 9;
@@ -31,7 +29,6 @@ export class BuscarAlojamientos implements OnInit {
   protected readonly busquedaService = inject(BusquedaService);
 
 
-  readonly fotoRelleno = FOTO_RELLENO;
   readonly stays = signal<AlojamientoResultado[]>([]);
   readonly loading = signal(true);
   readonly errorCarga = signal(false);
@@ -156,6 +153,11 @@ export class BuscarAlojamientos implements OnInit {
     this.entrada.set(q.get('llegada') ?? '');
     this.salida.set(q.get('salida') ?? '');
     this.huespedes.set(q.get('huespedes') ?? '');
+    // Desde la página de inicio se puede llegar con ?tipo= para ver solo ese tipo.
+    const tipo = q.get('tipo');
+    if (tipo) {
+      this.filterType.set(tipo);
+    }
     const error = this.busquedaService.validarBusqueda(this.camposBusqueda());
     if (error) {
       this.errorBusqueda.set(error);

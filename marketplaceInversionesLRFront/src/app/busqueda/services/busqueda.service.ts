@@ -19,6 +19,11 @@ export class BusquedaService {
       .pipe(map((r) => r?.contenido ?? r?.content ?? []));
   }
 
+  /** GET /alojamientos/tipos: cantidad de alojamientos por tipo. */
+  cantidadPorTipo(): Observable<Record<string, number>> {
+    return this.http.get<Record<string, number>>(`${this.base}/tipos`);
+  }
+
   /** Búsqueda con filtros (ciudad, fechas, huéspedes). */
   buscar(filtros: Record<string, string | number>, tamanio = 100): Observable<AlojamientoResultado[]> {
     let params = new HttpParams().set('pagina', 0).set('tamanio', tamanio);

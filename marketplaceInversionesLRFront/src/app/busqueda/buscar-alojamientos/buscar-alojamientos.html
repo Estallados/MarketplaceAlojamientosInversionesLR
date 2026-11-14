@@ -362,12 +362,18 @@
                 <div
                   class="relative aspect-[4/3] overflow-hidden rounded-lg bg-ink-100"
                 >
-                  <img
-                    [src]="s.imagenes?.at(0) || fotoRelleno"
-                    [alt]="s.titulo"
-                    loading="lazy"
-                    class="h-full w-full object-cover"
-                  />
+                  @if (s.imagenes?.at(0); as foto) {
+                    <img
+                      [src]="foto"
+                      [alt]="s.titulo"
+                      loading="lazy"
+                      class="h-full w-full object-cover"
+                    />
+                  } @else {
+                    <span class="absolute inset-0 grid place-items-center text-xs font-medium text-ink-500">
+                      Sin fotografía
+                    </span>
+                  }
                   <!-- Tipo -->
                   <span
                     class="absolute left-3 top-3 max-w-[75%] truncate rounded-full bg-white px-3 py-1.5 text-xs font-bold text-ink-800"
