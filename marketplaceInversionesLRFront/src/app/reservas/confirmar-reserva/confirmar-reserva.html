@@ -1,16 +1,13 @@
-<main class="mx-auto max-w-[720px] px-4 py-10 sm:px-8">
+<main class="page-form">
 
   <!-- ENCABEZADO -->
   <div>
-    <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-      Inversiones LR
-    </p>
 
-    <h1 class="mt-2 text-3xl font-bold text-slate-900">
+    <h1 class="page-title">
       {{ reserva() ? 'Reserva creada' : 'Confirmar reserva' }}
     </h1>
 
-    <p class="mt-2 text-sm text-slate-500">
+    <p class="mt-2 text-sm text-ink-500">
       Revisa la cotización de tu estadía y confirma. La reserva es inmediata:
       no necesita aprobación del anfitrión.
     </p>
@@ -22,21 +19,21 @@
     <section
       data-personalizar
       aria-labelledby="titulo-personalizar"
-      class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+      class="mt-8 rounded-lg border border-ink-200 bg-white p-5 sm:p-8"
     >
-      <h2 id="titulo-personalizar" class="text-lg font-bold text-slate-900">
+      <h2 id="titulo-personalizar" class="text-lg font-bold text-ink-900">
         Personaliza tu estadía
       </h2>
-      <p class="mt-1 text-sm text-slate-500">
+      <p class="mt-1 text-sm text-ink-500">
         Personaliza tu estancia y consulta el precio de tu reserva.
       </p>
 
       <!-- Selector de huéspedes -->
-      <div class="mt-5 overflow-hidden rounded-2xl border border-slate-300">
+      <div class="mt-5 overflow-hidden rounded-lg border border-ink-300">
         <div class="p-4">
           <label
             for="huespedes"
-            class="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-800"
+            class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-800"
           >
             Huéspedes
           </label>
@@ -46,7 +43,7 @@
               data-huespedes-select
               [disabled]="enviando()"
               (change)="cambiarHuespedes($any($event.target).value)"
-              class="w-full rounded-lg bg-transparent text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-600"
+              class="w-full rounded-md bg-transparent text-sm text-ink-700 outline-none focus:ring-2 focus:ring-brand-600"
             >
               @for (n of opcionesHuespedes(); track n) {
                 <option [value]="n" [selected]="n === huespedesMostrados()">
@@ -54,7 +51,7 @@
                 </option>
               }
             </select>
-            <p class="mt-2 text-xs text-slate-500">
+            <p class="mt-2 text-xs text-ink-500">
               Capacidad máxima: {{ capacidad() }} huéspedes.
             </p>
           } @else {
@@ -66,7 +63,7 @@
               [value]="huespedesMostrados()"
               [disabled]="enviando()"
               (change)="cambiarHuespedes($any($event.target).value)"
-              class="w-full rounded-lg bg-transparent text-sm text-slate-700 outline-none focus:ring-2 focus:ring-emerald-600"
+              class="w-full rounded-md bg-transparent text-sm text-ink-700 outline-none focus:ring-2 focus:ring-brand-600"
             />
           }
         </div>
@@ -75,10 +72,10 @@
       <!-- Servicios adicionales -->
       <div class="mt-6">
         <div>
-          <h3 class="text-base font-bold text-slate-900">
+          <h3 class="text-base font-bold text-ink-900">
             Servicios adicionales
           </h3>
-          <p class="mt-1 text-sm text-slate-500">
+          <p class="mt-1 text-sm text-ink-500">
             Selecciona los servicios que quieras añadir a tu estancia.
           </p>
         </div>
@@ -87,34 +84,34 @@
             @for (servicio of serviciosDisponibles(); track servicio.idServicio) {
               <label
                 data-servicio
-                class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-emerald-300 hover:bg-emerald-50/50"
-                [class.border-emerald-500]="servicioElegido(servicio.idServicio)"
-                [class.bg-emerald-50]="servicioElegido(servicio.idServicio)"
+                class="flex cursor-pointer items-start gap-3 rounded-md border border-ink-200 p-4 transition hover:border-brand-300 hover:bg-brand-50/50"
+                [class.border-brand-500]="servicioElegido(servicio.idServicio)"
+                [class.bg-brand-50]="servicioElegido(servicio.idServicio)"
               >
                 <input
                   type="checkbox"
                   [checked]="servicioElegido(servicio.idServicio)"
                   [disabled]="enviando()"
                   (change)="toggleServicio(servicio.idServicio, $any($event.target).checked)"
-                  class="mt-1 size-4 shrink-0 rounded border-slate-300 text-emerald-700 focus:ring-emerald-600"
+                  class="mt-1 size-4 shrink-0 rounded border-ink-300 text-brand-700 focus:ring-brand-600"
                 />
                 <div class="min-w-0 flex-1">
-                  <span class="block text-sm font-semibold text-slate-800">
+                  <span class="block text-sm font-semibold text-ink-800">
                     {{ servicio.nombre }}
                   </span>
-                  <span class="mt-1 block text-xs text-slate-500">
+                  <span class="mt-1 block text-xs text-ink-500">
                     Servicio opcional
                   </span>
                 </div>
-                <span class="whitespace-nowrap text-sm font-bold text-slate-900">
+                <span class="whitespace-nowrap text-sm font-bold text-ink-900">
                   {{ moneda(servicio.costo) }}
                 </span>
               </label>
             }
           </div>
         } @else {
-          <div data-sin-servicios class="mt-4 rounded-xl bg-slate-50 p-4">
-            <p class="text-sm text-slate-500">
+          <div data-sin-servicios class="mt-4 rounded-md bg-ink-50 p-4">
+            <p class="text-sm text-ink-500">
               Este alojamiento no tiene servicios adicionales disponibles.
             </p>
           </div>
@@ -122,7 +119,7 @@
       </div>
 
       @if (recotizando()) {
-        <p data-recotizando role="status" class="mt-4 text-xs text-slate-500">
+        <p data-recotizando role="status" class="mt-4 text-xs text-ink-500">
           Actualizando la cotización...
         </p>
       }
@@ -136,7 +133,7 @@
       <div
         data-cotizando
         role="status"
-        class="mt-8 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500"
+        class="mt-8 rounded-md border border-ink-200 bg-white p-4 text-sm text-ink-500"
       >
         Calculando la cotización...
       </div>
@@ -149,7 +146,7 @@
           <div
             data-sin-datos
             role="alert"
-            class="mt-8 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
+            class="mt-8 rounded-md border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900"
           >
             {{ estado.mensaje }}
           </div>
@@ -163,80 +160,80 @@
         <section
           data-resumen
           aria-labelledby="titulo-resumen"
-          class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+          class="mt-8 rounded-lg border border-ink-200 bg-white p-5 sm:p-8"
           [class.opacity-60]="!reserva() && !puedeConfirmar() && !enviando()"
         >
-          <h2 id="titulo-resumen" class="text-lg font-bold text-slate-900">
+          <h2 id="titulo-resumen" class="text-lg font-bold text-ink-900">
             Resumen de la cotización
           </h2>
 
           <dl class="mt-5 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div>
-              <dt class="text-slate-500">Alojamiento</dt>
-              <dd data-alojamiento class="font-semibold text-slate-900">
+              <dt class="text-ink-500">Alojamiento</dt>
+              <dd data-alojamiento class="font-semibold text-ink-900">
                 {{ reserva()?.tituloAlojamiento || ('#' + c.idAlojamiento) }}
               </dd>
             </div>
             <div>
-              <dt class="text-slate-500">Huéspedes</dt>
-              <dd data-huespedes class="font-semibold text-slate-900">{{ c.huespedes }}</dd>
+              <dt class="text-ink-500">Huéspedes</dt>
+              <dd data-huespedes class="font-semibold text-ink-900">{{ c.huespedes }}</dd>
             </div>
             <div>
-              <dt class="text-slate-500">Llegada</dt>
-              <dd data-llegada class="font-semibold text-slate-900">{{ fechaLegible(c.fechaEntrada) }}</dd>
+              <dt class="text-ink-500">Llegada</dt>
+              <dd data-llegada class="font-semibold text-ink-900">{{ fechaLegible(c.fechaEntrada) }}</dd>
             </div>
             <div>
-              <dt class="text-slate-500">Salida</dt>
-              <dd data-salida class="font-semibold text-slate-900">{{ fechaLegible(c.fechaSalida) }}</dd>
+              <dt class="text-ink-500">Salida</dt>
+              <dd data-salida class="font-semibold text-ink-900">{{ fechaLegible(c.fechaSalida) }}</dd>
             </div>
           </dl>
 
           <!-- DESGLOSE (valores calculados por el backend) -->
-          <dl data-desglose class="mt-6 space-y-2 border-t border-slate-100 pt-5 text-sm">
+          <dl data-desglose class="mt-6 space-y-2 border-t border-ink-100 pt-5 text-sm">
             <div class="flex justify-between gap-4">
-              <dt class="text-slate-600">
+              <dt class="text-ink-600">
                 {{ moneda(c.precioNoche) }} × {{ c.noches }} {{ c.noches === 1 ? 'noche' : 'noches' }}
               </dt>
               <dd>{{ moneda(c.precioBase) }}</dd>
             </div>
             @if (c.descuento > 0) {
               <div class="flex justify-between gap-4">
-                <dt class="text-slate-600">Descuento</dt>
-                <dd class="text-emerald-700">−{{ moneda(c.descuento) }}</dd>
+                <dt class="text-ink-600">Descuento</dt>
+                <dd class="text-brand-700">−{{ moneda(c.descuento) }}</dd>
               </div>
             }
             <div class="flex justify-between gap-4">
-              <dt class="text-slate-600">Limpieza ({{ c.porcentajeLimpieza }} %)</dt>
+              <dt class="text-ink-600">Limpieza ({{ c.porcentajeLimpieza }} %)</dt>
               <dd>{{ moneda(c.valorLimpieza) }}</dd>
             </div>
             <div class="flex justify-between gap-4">
-              <dt class="text-slate-600">Tarifa de servicio ({{ c.porcentajeServicio }} %)</dt>
+              <dt class="text-ink-600">Tarifa de servicio ({{ c.porcentajeServicio }} %)</dt>
               <dd>{{ moneda(c.valorServicio) }}</dd>
             </div>
             @for (s of c.serviciosAdicionales ?? []; track s.idServicio) {
               <div class="flex justify-between gap-4">
-                <dt class="text-slate-600">{{ s.nombre }}</dt>
+                <dt class="text-ink-600">{{ s.nombre }}</dt>
                 <dd>{{ moneda(s.costo) }}</dd>
               </div>
             } @empty {
               @if (c.valorAdicionales > 0) {
                 <div class="flex justify-between gap-4">
-                  <dt class="text-slate-600">Servicios adicionales</dt>
+                  <dt class="text-ink-600">Servicios adicionales</dt>
                   <dd>{{ moneda(c.valorAdicionales) }}</dd>
                 </div>
               }
             }
           </dl>
 
-          <div class="mt-5 flex items-baseline justify-between gap-4 border-t border-slate-200 pt-5">
-            <span class="text-base font-bold text-slate-900">Total</span>
-            <span data-total class="text-2xl font-bold text-emerald-800">
+          <div class="mt-5 flex items-baseline justify-between gap-4 border-t border-ink-200 pt-5">
+            <span class="text-base font-bold text-ink-900">Total</span>
+            <span data-total class="text-2xl font-bold text-brand-800">
               {{ moneda(c.total) }}
             </span>
           </div>
 
           @if (!reserva() && horaExpiracion(c.fechaExpiracion)) {
-            <p data-expiracion class="mt-2 text-xs text-slate-500">
+            <p data-expiracion class="mt-2 text-xs text-ink-500">
               Esta cotización sirve para reservar hasta las {{ horaExpiracion(c.fechaExpiracion) }}.
             </p>
           }
@@ -249,7 +246,7 @@
                   data-volver
                   [routerLink]="ruta"
                   [queryParams]="queryFechas()"
-                  class="rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-700 transition hover:bg-slate-50"
+                  class="rounded-md border border-ink-200 px-5 py-3 text-center text-sm font-bold text-ink-700 transition hover:bg-ink-50"
                 >
                   Cambiar fechas
                 </a>
@@ -261,7 +258,7 @@
                   (click)="iniciarConfirmacion()"
                   [disabled]="enviando() || !puedeConfirmar()"
                   [attr.aria-busy]="enviando()"
-                  class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  class="btn btn-primary"
                 >
                   @if (enviando()) {
                     Confirmando reserva...
@@ -276,7 +273,7 @@
           }
 
           @if (enviando()) {
-            <p data-enviando role="status" class="mt-3 text-right text-xs text-slate-500">
+            <p data-enviando role="status" class="mt-3 text-right text-xs text-ink-500">
               Verificando la disponibilidad y confirmando tu reserva...
             </p>
           }
@@ -292,8 +289,8 @@
       [attr.data-tipo]="e.tipo"
       role="alert"
       [class]="e.tipo === 'conexion' || e.tipo === 'servidor' || e.tipo === 'en-proceso'
-        ? 'mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900'
-        : 'mt-6 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800'"
+        ? 'mt-6 rounded-md border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900'
+        : 'mt-6 rounded-md border border-red-200 bg-red-50 p-5 text-sm text-red-800'"
     >
       <p data-mensaje-error class="font-bold">{{ e.mensaje }}</p>
 
@@ -316,7 +313,7 @@
             type="button"
             data-recotizar
             (click)="cotizar()"
-            class="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-800"
+            class="btn btn-primary text-xs"
           >
             Cotizar de nuevo
           </button>
@@ -328,7 +325,7 @@
             type="button"
             data-recotizar
             (click)="cotizar()"
-            class="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-800"
+            class="btn btn-primary text-xs"
           >
             Reintentar
           </button>
@@ -337,7 +334,7 @@
         @if (e.tipo === 'sesion') {
           <a
             routerLink="/login"
-            class="rounded-xl bg-emerald-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-emerald-800"
+            class="btn btn-primary text-xs"
           >
             Iniciar sesión
           </a>
@@ -349,7 +346,7 @@
               data-elegir-fechas
               [routerLink]="ruta"
               [queryParams]="queryFechas()"
-              class="rounded-xl border border-current px-4 py-2 text-xs font-bold transition hover:bg-white/60"
+              class="rounded-md border border-current px-4 py-2 text-xs font-bold transition-colors hover:bg-white"
             >
               {{ e.tipo === 'no-activo' ? 'Volver al alojamiento'
                 : e.tipo === 'conflicto' ? 'Revisar disponibilidad' : 'Elegir otras fechas' }}
@@ -367,12 +364,12 @@
       [attr.data-estado]="r.estado"
       role="status"
       [class]="r.estado === 'CONFIRMADA'
-        ? 'mt-6 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 sm:p-6'
-        : 'mt-6 rounded-2xl border border-amber-200 bg-amber-50 p-5 sm:p-6'"
+        ? 'mt-6 rounded-lg border border-brand-200 bg-brand-50 p-5 sm:p-6'
+        : 'mt-6 rounded-lg border border-amber-200 bg-amber-50 p-5 sm:p-6'"
     >
       @if (r.estado === 'CONFIRMADA') {
-        <p data-titulo-reserva class="text-base font-bold text-emerald-900">
-          ✓ Tu reserva quedó confirmada.
+        <p data-titulo-reserva class="text-base font-bold text-brand-900">
+          Tu reserva quedó confirmada.
         </p>
       } @else {
         <p data-titulo-reserva class="text-base font-bold text-amber-900">
@@ -382,46 +379,46 @@
 
       <dl class="mt-4 grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
         <div>
-          <dt class="text-slate-600">Número de reserva</dt>
-          <dd data-id-reserva class="font-semibold text-slate-900">#{{ r.idReserva }}</dd>
+          <dt class="text-ink-600">Número de reserva</dt>
+          <dd data-id-reserva class="font-semibold text-ink-900">#{{ r.idReserva }}</dd>
         </div>
         <div>
-          <dt class="text-slate-600">Estado</dt>
-          <dd data-estado-reserva class="font-semibold text-slate-900">{{ etiquetaEstado(r.estado) }}</dd>
+          <dt class="text-ink-600">Estado</dt>
+          <dd data-estado-reserva class="font-semibold text-ink-900">{{ etiquetaEstado(r.estado) }}</dd>
         </div>
         <div>
-          <dt class="text-slate-600">Fechas</dt>
-          <dd class="font-semibold text-slate-900">
+          <dt class="text-ink-600">Fechas</dt>
+          <dd class="font-semibold text-ink-900">
             Del {{ fechaLegible(r.fechaEntrada) }} al {{ fechaLegible(r.fechaSalida) }}
           </dd>
         </div>
         <div>
-          <dt class="text-slate-600">Total</dt>
-          <dd data-total-reserva class="font-semibold text-slate-900">{{ moneda(r.total) }}</dd>
+          <dt class="text-ink-600">Total</dt>
+          <dd data-total-reserva class="font-semibold text-ink-900">{{ moneda(r.total) }}</dd>
         </div>
       </dl>
 
       <!-- PAGO REGISTRADO (HU-27, CA-160, CA-161) -->
       @if (r.pago; as pago) {
-        <dl data-pago-registrado [attr.data-resultado-pago]="pago.estado" class="mt-4 grid grid-cols-1 gap-3 border-t border-emerald-200/70 pt-4 text-sm sm:grid-cols-2">
+        <dl data-pago-registrado [attr.data-resultado-pago]="pago.estado" class="mt-4 grid grid-cols-1 gap-3 border-t border-brand-200/70 pt-4 text-sm sm:grid-cols-2">
           <div>
-            <dt class="text-slate-600">Pago</dt>
-            <dd data-estado-pago class="font-semibold text-slate-900">{{ etiquetaPago(pago.estado) }} · {{ moneda(pago.valor) }}</dd>
+            <dt class="text-ink-600">Pago</dt>
+            <dd data-estado-pago class="font-semibold text-ink-900">{{ etiquetaPago(pago.estado) }} · {{ moneda(pago.valor) }}</dd>
           </div>
           @if (pago.referencia) {
             <div>
-              <dt class="text-slate-600">Referencia del pago</dt>
-              <dd data-referencia-pago class="break-all font-semibold text-slate-900">{{ pago.referencia }}</dd>
+              <dt class="text-ink-600">Referencia del pago</dt>
+              <dd data-referencia-pago class="break-all font-semibold text-ink-900">{{ pago.referencia }}</dd>
             </div>
           }
         </dl>
-        <p data-ambiente-prueba class="mt-2 text-xs text-slate-600">
+        <p data-ambiente-prueba class="mt-2 text-xs text-ink-600">
           {{ proveedorPago(pago.proveedor) }}: ambiente de prueba, no se hizo ningún cobro real.
         </p>
       }
 
       @if (reservaRepetida()) {
-        <p data-repetida class="mt-3 text-xs text-slate-600">
+        <p data-repetida class="mt-3 text-xs text-ink-600">
           Esta reserva ya se había registrado con tu solicitud anterior; no se creó otra.
         </p>
       }
@@ -429,23 +426,23 @@
       <!-- DISPONIBILIDAD ACTUALIZADA (CA-076) -->
       @switch (bloqueo().tipo) {
         @case ('consultando') {
-          <p data-bloqueo="consultando" class="mt-4 text-xs text-slate-600">
+          <p data-bloqueo="consultando" class="mt-4 text-xs text-ink-600">
             Actualizando la disponibilidad del alojamiento...
           </p>
         }
         @case ('bloqueado') {
-          <p data-bloqueo="bloqueado" class="mt-4 text-sm text-emerald-900">
+          <p data-bloqueo="bloqueado" class="mt-4 text-sm text-brand-900">
             Las fechas del {{ fechaLegible(r.fechaEntrada) }} al {{ fechaLegible(r.fechaSalida) }}
             quedaron bloqueadas y ya no aparecen disponibles para otros huéspedes.
           </p>
         }
         @case ('disponible') {
-          <p data-bloqueo="disponible" class="mt-4 text-xs text-slate-600">
+          <p data-bloqueo="disponible" class="mt-4 text-xs text-ink-600">
             El calendario todavía muestra estas fechas como disponibles.
           </p>
         }
         @case ('error') {
-          <p data-bloqueo="error" class="mt-4 text-xs text-slate-600">
+          <p data-bloqueo="error" class="mt-4 text-xs text-ink-600">
             No se pudo actualizar la disponibilidad del alojamiento.
           </p>
         }
@@ -456,7 +453,7 @@
           data-ver-disponibilidad
           [routerLink]="ruta"
           [queryParams]="queryFechas()"
-          class="mt-5 inline-block rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+          class="mt-5 inline-block rounded-md border border-ink-300 bg-white px-4 py-2 text-xs font-bold text-ink-700 transition hover:bg-ink-50"
         >
           Ver disponibilidad del alojamiento
         </a>

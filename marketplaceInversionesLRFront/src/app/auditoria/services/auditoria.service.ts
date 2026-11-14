@@ -53,7 +53,7 @@ export function etiquetaResultado(resultado: string): string {
 
 /** Clases de Tailwind de la etiqueta de color de un resultado. */
 export function claseResultado(resultado: string): string {
-  let tono = 'bg-emerald-50 text-emerald-700';
+  let tono = 'bg-brand-50 text-brand-700';
   if (resultado === 'RECHAZADO') {
     tono = 'bg-amber-50 text-amber-700';
   } else if (resultado === 'ERROR') {

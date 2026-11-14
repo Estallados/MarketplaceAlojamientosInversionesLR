@@ -1,5 +1,5 @@
-<main class="mx-auto max-w-[1100px] px-8 py-12">
-  <button type="button" (click)="back()" class="mb-6 flex items-center gap-2 text-sm font-bold text-emerald-700">
+<main class="page">
+  <button type="button" (click)="back()" class="mb-6 flex items-center gap-2 text-sm font-bold text-brand-700">
     <span class="rotate-180">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="m9 18 6-6-6-6" />
@@ -9,46 +9,45 @@
   </button>
 
   @if (loading()) {
-    <p data-cargando role="status" class="rounded-2xl border border-slate-200 bg-white p-12 text-center text-slate-500">Cargando la reserva...</p>
+    <p data-cargando role="status" class="rounded-lg border border-ink-200 bg-white p-12 text-center text-ink-500">Cargando la reserva...</p>
   } @else if (error(); as e) {
-    <div role="alert" class="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
+    <div role="alert" class="rounded-lg border border-red-200 bg-red-50 p-5 text-sm text-red-700">
       <p>{{ e }}</p>
       <button type="button" (click)="cargar()" class="mt-3 font-bold underline">Reintentar</button>
     </div>
   } @else if (reserva(); as r) {
     <div class="flex items-end justify-between">
       <div>
-        <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Inversiones LR</p>
-        <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">Detalle de la reserva</h1>
-        <p class="mt-2 text-sm text-slate-500">#{{ r.idReserva }} · {{ r.tituloAlojamiento }}</p>
+        <h1 class="page-title">Detalle de la reserva</h1>
+        <p class="mt-2 text-sm text-ink-500">#{{ r.idReserva }} · {{ r.tituloAlojamiento }}</p>
       </div>
       <span data-etiqueta [class]="badgeClass()">{{ etiqueta() }}</span>
     </div>
 
-    <div class="mt-8 grid grid-cols-[1fr_340px] gap-6">
-      <section data-resumen class="rounded-2xl border border-slate-200 bg-white p-7">
-        <h2 class="font-display text-xl font-bold">Resumen de la estancia</h2>
+    <div class="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <section data-resumen class="rounded-lg border border-ink-200 bg-white p-7">
+        <h2 class="section-title">Resumen de la estancia</h2>
         <div class="mt-6 grid grid-cols-2 gap-6 text-sm">
           @for (s of summary(); track s.label) {
             <div>
-              <span class="block text-xs text-slate-500">{{ s.label }}</span>
+              <span class="block text-xs text-ink-500">{{ s.label }}</span>
               <strong class="mt-1 block">{{ s.value }}</strong>
             </div>
           }
         </div>
-        <div class="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+        <div class="mt-6 rounded-md bg-ink-50 p-4 text-sm text-ink-600">
           Por privacidad, esta vista muestra únicamente los datos necesarios para gestionar la estancia.
         </div>
       </section>
 
-      <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+      <section class="overflow-hidden rounded-lg border border-ink-200 bg-white">
         @if (r.imagenAlojamiento) {
           <img [src]="r.imagenAlojamiento" [alt]="r.tituloAlojamiento" class="h-48 w-full object-cover" />
         }
         <div class="p-6">
-          <p class="text-xs text-slate-500">Valor total</p>
-          <p data-total class="font-display mt-1 text-2xl font-bold">{{ moneda(r.total) }}</p>
-          <p class="mt-4 text-sm text-slate-500">{{ r.ciudad }}{{ r.ubicacion ? ' · ' + r.ubicacion : '' }}</p>
+          <p class="text-xs text-ink-500">Valor total</p>
+          <p data-total class="font-display mt-1 text-2xl font-semibold">{{ moneda(r.total) }}</p>
+          <p class="mt-4 text-sm text-ink-500">{{ r.ciudad }}{{ r.ubicacion ? ' · ' + r.ubicacion : '' }}</p>
         </div>
       </section>
     </div>

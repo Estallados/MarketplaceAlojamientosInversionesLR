@@ -310,25 +310,25 @@ export class Availability implements OnInit {
     const estados: Record<EstadoDia, string> = {
 
       pasado:
-        'bg-slate-50 text-slate-400 border-slate-100',
+        'bg-ink-50 text-ink-500 border-ink-100',
 
       reservado:
         'bg-red-50 text-red-700 border-red-200',
 
       disponible:
-        'bg-emerald-50 text-emerald-800 border-emerald-200',
+        'bg-brand-50 text-brand-800 border-brand-200',
 
       'no-ofrecido':
         'bg-amber-50 text-amber-800 border-amber-200'
     };
 
     return `
-      min-h-20 rounded-xl border p-2
-      text-left transition hover:shadow-sm
+      min-h-20 rounded-md border p-2
+      text-left transition
       ${estados[dia.estado]}
       ${
       this.fechaSeleccionada() === dia.fecha
-        ? 'ring-2 ring-emerald-600 ring-offset-2'
+        ? 'ring-2 ring-brand-600 ring-offset-2'
         : ''
     }
     `;

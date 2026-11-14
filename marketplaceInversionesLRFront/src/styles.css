@@ -1,1 +1,231 @@
 @import "tailwindcss";
+
+/*
+ * Sistema de diseño de Inversiones LR (dirección editorial, solo modo claro).
+ *
+ * - Colores: brand (verde bosque), ink (neutros), gold (calificaciones) y
+ *   estados semánticos con las escalas red (error), amber (advertencia) y
+ *   sky (información). brand también se usa para el estado "correcto".
+ * - Tipografía: Fraunces para títulos (font-display) e Inter para el resto
+ *   (font-sans). Las fuentes se cargan una sola vez desde index.html.
+ * - Radios: rounded-md (8px) para botones y campos, rounded-lg (12px) para
+ *   tarjetas, paneles y modales, rounded-full solo para avatares y estados.
+ * - Sombras: shadow-raised (paneles fijos) y shadow-overlay (menús y modales).
+ *   Las tarjetas se separan con borde, no con sombra.
+ * - Contenedores: max-w-page, max-w-wide (tablas de administración) y
+ *   max-w-form (formularios).
+ *
+ * Las paletas de Tailwind que no forman parte del sistema se desactivan para
+ * que un color fuera de los tokens no compile a ningún estilo.
+ */
+@theme {
+  --color-slate-*: initial;
+  --color-gray-*: initial;
+  --color-zinc-*: initial;
+  --color-neutral-*: initial;
+  --color-stone-*: initial;
+  --color-emerald-*: initial;
+  --color-green-*: initial;
+  --color-teal-*: initial;
+  --color-cyan-*: initial;
+  --color-blue-*: initial;
+  --color-indigo-*: initial;
+  --color-violet-*: initial;
+  --color-purple-*: initial;
+  --color-fuchsia-*: initial;
+  --color-pink-*: initial;
+  --color-rose-*: initial;
+  --color-lime-*: initial;
+  --color-yellow-*: initial;
+
+  --color-canvas: #f6f7f3;
+
+  --color-brand-50: #f1f7f4;
+  --color-brand-100: #dcebe4;
+  --color-brand-200: #b9d7ca;
+  --color-brand-300: #8dbca9;
+  --color-brand-400: #5f9c85;
+  --color-brand-500: #3f8069;
+  --color-brand-600: #2c6b56;
+  --color-brand-700: #1f5c4a;
+  --color-brand-800: #1a4b3d;
+  --color-brand-900: #163e33;
+  --color-brand-950: #0c241d;
+
+  --color-ink-50: #f6f7f5;
+  --color-ink-100: #eceeeb;
+  --color-ink-200: #dcdfdb;
+  --color-ink-300: #c3c8c3;
+  --color-ink-400: #949b95;
+  --color-ink-500: #646c66;
+  --color-ink-600: #4f5751;
+  --color-ink-700: #3e4540;
+  --color-ink-800: #2a302c;
+  --color-ink-900: #1b201d;
+  --color-ink-950: #101411;
+
+  --color-gold-500: #c08a1e;
+  --color-gold-600: #a8730b;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+
+  --shadow-*: initial;
+  --shadow-raised: 0 1px 2px rgb(16 20 17 / 0.05), 0 6px 16px rgb(16 20 17 / 0.06);
+  --shadow-overlay: 0 16px 40px rgb(16 20 17 / 0.16);
+
+  --container-page: 80rem;
+  --container-wide: 90rem;
+  --container-form: 45rem;
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-ink-900);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-600);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Contenedores de página */
+  .page {
+    @apply mx-auto w-full max-w-page px-4 py-8 sm:px-6 lg:px-8;
+  }
+  .page-wide {
+    @apply mx-auto w-full max-w-wide px-4 py-8 sm:px-6 lg:px-8;
+  }
+  .page-form {
+    @apply mx-auto w-full max-w-form px-4 py-8 sm:px-6;
+  }
+
+  /* Títulos */
+  .page-title {
+    @apply font-display text-3xl font-medium leading-tight text-ink-900;
+  }
+  .section-title {
+    @apply font-display text-xl font-medium text-ink-900;
+  }
+
+  /* Botones */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply bg-brand-700 text-white hover:bg-brand-800;
+  }
+  .btn-secondary {
+    @apply border-ink-200 bg-white text-ink-800 hover:bg-ink-50;
+  }
+  .btn-outline {
+    @apply border-brand-700 bg-white text-brand-700 hover:bg-brand-50;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-ghost {
+    @apply text-ink-700 hover:bg-ink-100;
+  }
+
+  /* Campos de formulario */
+  .field-label {
+    @apply mb-1.5 block text-sm font-semibold text-ink-800;
+  }
+  .field {
+    @apply w-full rounded-md border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none transition-colors placeholder:text-ink-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:bg-ink-50 disabled:text-ink-500;
+  }
+  .field-hint {
+    @apply mt-1.5 text-xs text-ink-500;
+  }
+  .field-error {
+    @apply mt-1.5 text-xs font-medium text-red-700;
+  }
+
+  /* Tarjetas */
+  .card {
+    @apply rounded-lg border border-ink-200 bg-white;
+  }
+
+  /* Estados (insignias) */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  /* Mensajes */
+  .alert {
+    @apply rounded-md border px-4 py-3 text-sm;
+  }
+  .alert-danger {
+    @apply border-red-200 bg-red-50 text-red-800;
+  }
+  .alert-success {
+    @apply border-brand-200 bg-brand-50 text-brand-800;
+  }
+  .alert-warning {
+    @apply border-amber-200 bg-amber-50 text-amber-900;
+  }
+  .alert-info {
+    @apply border-sky-200 bg-sky-50 text-sky-900;
+  }
+
+  /* Tablas */
+  .table-base {
+    @apply w-full text-left text-sm;
+  }
+  .table-base thead {
+    @apply bg-ink-50 text-xs font-semibold text-ink-600;
+  }
+  .table-base th,
+  .table-base td {
+    @apply px-4 py-3 align-middle;
+  }
+  .table-base tbody tr {
+    @apply border-t border-ink-100;
+  }
+
+  /* Modales */
+  .modal-backdrop {
+    @apply fixed inset-0 z-[70] grid place-items-center bg-ink-950/50 p-4;
+  }
+  .modal-panel {
+    @apply max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6 shadow-overlay;
+  }
+
+  /* Carga */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-ink-100;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
