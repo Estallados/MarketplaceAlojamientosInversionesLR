@@ -137,9 +137,17 @@ export class Login implements AfterViewInit {
 
   requiereSegundoFactor = false;
 
+  /** Indica si la última petición del login llevó código (para distinguir un código rechazado de un reenvío). */
+  private intentoConCodigo = false;
+
 
 
   rolGoogle: RegistroRol = 'HUESPED';
+
+  /** El backend pidió el código de la app autenticadora para entrar con Google (2FA habilitado). */
+  googleRequiereCodigo = false;
+
+  codigoGoogle = '';
 
   googleDisponible = false;
 
@@ -217,6 +225,8 @@ export class Login implements AfterViewInit {
     }
 
     this.cargando = true;
+
+    this.intentoConCodigo = !!codigo;
 
     this.error = '';
 
@@ -472,7 +482,7 @@ export class Login implements AfterViewInit {
 
 
 
-    if (estabaVerificando) {
+    if (estabaVerificando && this.intentoConCodigo) {
 
       this.error =
         mensajeBackend ||
@@ -729,6 +739,25 @@ export class Login implements AfterViewInit {
       .slice(0, 6);
 
     this.error = '';
+
+  }
+
+
+
+  /**
+   * Pide otro código de inicio de sesión repitiendo POST /auth/login sin código (el backend lo envía
+   * de nuevo y limita los reenvíos a uno por minuto).
+   */
+  reenviarCodigoInicio(): void {
+
+    if (
+      this.cargando ||
+      !this.requiereSegundoFactor
+    ) {
+      return;
+    }
+
+    this.ejecutarLogin();
 
   }
 
@@ -1115,9 +1144,15 @@ export class Login implements AfterViewInit {
 
     this.actualizarVista();
 
+    const codigo =
+      this.googleRequiereCodigo
+        ? this.codigoGoogle
+        : undefined;
+
     this.auth.iniciarConGoogle(
       this.googleIdToken,
-      this.rolGoogle
+      this.rolGoogle,
+      codigo
     )
       .pipe(
 
@@ -1127,7 +1162,10 @@ export class Login implements AfterViewInit {
 
           this.googleCargando = false;
 
-          this.googleIdToken = '';
+          // Solo se conserva el ID token mientras se espera el código de la app.
+          if (!this.googleRequiereCodigo) {
+            this.googleIdToken = '';
+          }
 
           this.actualizarVista();
 
@@ -1140,6 +1178,8 @@ export class Login implements AfterViewInit {
 
         next: respuesta => {
 
+          this.cancelarCodigoGoogle();
+
           this.guardarSesion(respuesta);
 
         },
@@ -1151,18 +1191,36 @@ export class Login implements AfterViewInit {
             const datos =
               this.obtenerDatosError(err);
 
-            this.googleError =
+            if (
+              err.status === 401 &&
               datos.requiereSegundoFactor
+            ) {
 
-                ? 'Este servidor todavía solicita ' +
-                'un autenticador en algunas cuentas Google. ' +
-                'Para mantener Google independiente, ' +
-                'debemos ajustar esa regla en Spring Boot.'
+              // La cuenta tiene el segundo factor: Google exige el código de la app (CA-174).
+              this.googleRequiereCodigo = true;
 
-                : this.obtenerMensaje(datos) ||
+              this.codigoGoogle = '';
+
+              this.googleError =
+                codigo
+                  ? this.obtenerMensaje(datos) ||
+                  'El código de verificación no es válido.'
+                  : '';
+
+            } else {
+
+              this.cancelarCodigoGoogle();
+
+              this.googleError =
+                this.obtenerMensaje(datos) ||
                 'No fue posible iniciar sesión con Google.';
 
+            }
+
           } else {
+
+            this.cancelarCodigoGoogle();
+
 
             this.googleError =
               this.mensajeError(
@@ -1177,6 +1235,55 @@ export class Login implements AfterViewInit {
         }
 
       });
+
+  }
+
+
+
+  /** Envía el código de la app autenticadora junto con el ID token de Google ya recibido. */
+  confirmarCodigoGoogle(): void {
+
+    if (
+      !this.googleRequiereCodigo ||
+      !/^\d{6}$/.test(this.codigoGoogle)
+    ) {
+
+      this.googleError =
+        'Escribe el código de 6 dígitos de tu aplicación autenticadora.';
+
+      this.actualizarVista();
+
+      return;
+    }
+
+    this.ejecutarLoginGoogle();
+
+  }
+
+
+
+  cambiarCodigoGoogle(valor: string): void {
+
+    this.codigoGoogle = (valor || '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+
+    this.googleError = '';
+
+  }
+
+
+
+  /** Abandona el paso del código de Google y borra el ID token y el código de la memoria. */
+  cancelarCodigoGoogle(): void {
+
+    this.googleRequiereCodigo = false;
+
+    this.codigoGoogle = '';
+
+    this.googleIdToken = '';
+
+    this.actualizarVista();
 
   }
 
