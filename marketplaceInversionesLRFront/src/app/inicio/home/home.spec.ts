@@ -69,7 +69,7 @@ describe('Home (página de inicio)', () => {
 
   it('muestra los alojamientos disponibles con enlace a su detalle', () => {
     const f = crear();
-    expect(disponibles).toHaveBeenCalledWith(4);
+    expect(disponibles).toHaveBeenCalledWith(100);
     const tarjetas = el(f).querySelectorAll('[data-alojamiento]');
     expect(tarjetas.length).toBe(2);
     expect(tarjetas[0].textContent).toContain('Casa del lago');
@@ -85,6 +85,15 @@ describe('Home (página de inicio)', () => {
     const enlace = el(f).querySelector('[data-tipo]') as HTMLAnchorElement;
     expect(enlace.getAttribute('href')).toBe('/explorar?tipo=Apartamento');
     expect(enlace.textContent).toContain('5 alojamientos');
+  });
+
+  it('ilustra cada tipo con la foto de un alojamiento real o, si no hay, con una foto de referencia por nombre', () => {
+    const f = crear();
+    const porNombre = Object.fromEntries(f.componentInstance.tipos().map((t) => [t.nombre, t.foto]));
+    expect(porNombre['Casa']).toBe('https://ejemplo.com/1.jpg');
+    expect(porNombre['Cabaña']).toContain('images.unsplash.com');
+    expect(porNombre['Apartamento']).toContain('images.unsplash.com');
+    expect(porNombre['Cabaña']).not.toBe(porNombre['Apartamento']);
   });
 
   it('si fallan las consultas muestra el error y permite reintentar', () => {

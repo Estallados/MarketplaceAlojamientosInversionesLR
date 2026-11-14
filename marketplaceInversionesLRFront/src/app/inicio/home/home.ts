@@ -6,14 +6,20 @@ import { SessionService } from '../../core/services/session.service';
 import { BusquedaService } from '../../busqueda/services/busqueda.service';
 import { AlojamientoResultado } from '../../busqueda/models/busqueda';
 import { FavoritoService } from '../../favoritos/services/favorito.service';
+import { FOTOS, fotoDeReferencia } from './fotos';
 
 /** Cantidad de alojamientos destacados en la página de inicio. */
 const DESTACADOS = 4;
+
+/** Alojamientos que se consultan para elegir la foto real de cada tipo. */
+const CONSULTADOS = 100;
 
 /** Tipo de alojamiento con su cantidad, tal como lo devuelve GET /alojamientos/tipos. */
 export interface TipoConCantidad {
   nombre: string;
   cantidad: number;
+  /** Foto de un alojamiento real de ese tipo o, si no hay, una foto de referencia. */
+  foto: string;
 }
 
 /**
@@ -38,10 +44,19 @@ export class Home implements OnInit {
   readonly errorCarga = signal(false);
   readonly alojamientos = signal<AlojamientoResultado[]>([]);
 
+  /** Primera foto de un alojamiento real por tipo, para ilustrar la sección de tipos. */
+  private readonly fotosPorTipo = signal<Record<string, string>>({});
+
+  readonly fotoPortada = FOTOS.portada;
+
   // ---- Tipos (GET /alojamientos/tipos) ----
   readonly cargandoTipos = signal(true);
   readonly errorTipos = signal(false);
-  readonly tipos = signal<TipoConCantidad[]>([]);
+  private readonly cantidades = signal<{ nombre: string; cantidad: number }[]>([]);
+
+  readonly tipos = computed<TipoConCantidad[]>(() =>
+    this.cantidades().map((t) => ({ ...t, foto: this.fotosPorTipo()[t.nombre] ?? fotoDeReferencia(t.nombre) })),
+  );
 
   // ---- Barra de búsqueda: al buscar se abre Explorar con estos filtros ----
   readonly hoy = this.busquedaService.fechaHoy();
@@ -66,9 +81,17 @@ export class Home implements OnInit {
   cargarAlojamientos(): void {
     this.cargando.set(true);
     this.errorCarga.set(false);
-    this.busquedaService.disponibles(DESTACADOS).subscribe({
+    this.busquedaService.disponibles(CONSULTADOS).subscribe({
       next: (lista) => {
         this.alojamientos.set(lista.slice(0, DESTACADOS));
+        const fotos: Record<string, string> = {};
+        for (const a of lista) {
+          const foto = a.imagenes?.at(0);
+          if (a.tipo && foto && !fotos[a.tipo]) {
+            fotos[a.tipo] = foto;
+          }
+        }
+        this.fotosPorTipo.set(fotos);
         this.cargando.set(false);
       },
       error: () => {
@@ -85,7 +108,7 @@ export class Home implements OnInit {
     this.errorTipos.set(false);
     this.busquedaService.cantidadPorTipo().subscribe({
       next: (datos) => {
-        this.tipos.set(
+        this.cantidades.set(
           Object.entries(datos ?? {})
             .map(([nombre, cantidad]) => ({ nombre, cantidad: Number(cantidad) }))
             .filter((t) => t.nombre.trim() && t.cantidad > 0)
@@ -94,7 +117,7 @@ export class Home implements OnInit {
         this.cargandoTipos.set(false);
       },
       error: () => {
-        this.tipos.set([]);
+        this.cantidades.set([]);
         this.errorTipos.set(true);
         this.cargandoTipos.set(false);
       },

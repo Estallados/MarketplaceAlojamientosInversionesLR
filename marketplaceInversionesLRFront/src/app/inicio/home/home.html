@@ -1,237 +1,278 @@
-<main class="page">
-  <!-- ================= BÚSQUEDA ================= -->
-  <section aria-labelledby="titulo-inicio">
-    <h1 id="titulo-inicio" class="page-title">Buscar alojamientos</h1>
-    <p class="mt-1 text-sm text-ink-500">
-      Filtra por ciudad, fechas de la estadía y número de huéspedes.
-    </p>
+<main>
+  <!-- ================= PORTADA CON BÚSQUEDA ================= -->
+  <section class="mx-auto w-full max-w-wide px-4 pt-6 sm:px-6 lg:px-8" aria-labelledby="titulo-inicio">
+    <div class="relative overflow-hidden rounded-lg bg-brand-950">
+      <img
+        [src]="fotoPortada"
+        alt=""
+        class="absolute inset-0 h-full w-full object-cover"
+      />
+      <!-- Capa uniforme para que el texto se lea sobre la foto -->
+      <div class="absolute inset-0 bg-ink-950/55" aria-hidden="true"></div>
 
-    <div
-      class="mt-6 grid grid-cols-1 divide-y divide-ink-100 overflow-hidden rounded-lg border border-ink-200 bg-white shadow-raised sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_.8fr_auto] lg:divide-y-0"
-    >
-      <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50">
-        <span class="text-xs font-semibold text-ink-800">Ciudad</span>
-        <input
-          data-ciudad
-          type="text"
-          placeholder="Ciudad o destino"
-          autocomplete="off"
-          [value]="ciudad()"
-          (input)="ciudad.set($any($event.target).value)"
-          (keydown.enter)="buscar()"
-          class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-500"
-        />
-      </label>
-      <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50 lg:border-l lg:border-ink-100">
-        <span class="text-xs font-semibold text-ink-800">Entrada</span>
-        <input
-          data-entrada
-          type="date"
-          [min]="hoy"
-          [value]="entrada()"
-          (input)="entrada.set($any($event.target).value)"
-          (keydown.enter)="buscar()"
-          class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none"
-        />
-      </label>
-      <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50 lg:border-l lg:border-ink-100">
-        <span class="text-xs font-semibold text-ink-800">Salida</span>
-        <input
-          data-salida
-          type="date"
-          [min]="entrada() || hoy"
-          [value]="salida()"
-          (input)="salida.set($any($event.target).value)"
-          (keydown.enter)="buscar()"
-          class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none"
-        />
-      </label>
-      <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50 lg:border-l lg:border-ink-100">
-        <span class="text-xs font-semibold text-ink-800">Huéspedes</span>
-        <input
-          data-huespedes
-          type="number"
-          min="1"
-          placeholder="Cuántos"
-          [value]="huespedes()"
-          (input)="huespedes.set($any($event.target).value)"
-          (keydown.enter)="buscar()"
-          class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-500"
-        />
-      </label>
-      <button
-        type="button"
-        data-buscar
-        (click)="buscar()"
-        class="btn btn-primary m-2 sm:col-span-2 lg:col-span-1"
-      >
-        Buscar
-      </button>
+      <div class="relative flex min-h-[460px] flex-col justify-end gap-8 px-5 pb-6 pt-16 sm:px-10 sm:pb-8 lg:min-h-[560px] lg:px-14">
+        <div class="max-w-2xl text-white">
+          <h1 id="titulo-inicio" class="font-display text-4xl font-medium leading-tight sm:text-5xl">
+            Busca y reserva alojamientos en Colombia
+          </h1>
+          <p class="mt-4 max-w-xl text-base leading-7 text-white/85">
+            Filtra por ciudad, fechas de la estadía y número de huéspedes.
+          </p>
+        </div>
+
+        <div>
+          @if (errorBusqueda()) {
+            <p class="alert alert-danger mb-2 w-fit" role="alert">{{ errorBusqueda() }}</p>
+          }
+          <div
+            class="grid grid-cols-1 divide-y divide-ink-100 overflow-hidden rounded-lg bg-white text-ink-900 shadow-overlay sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_.8fr_auto] lg:divide-y-0"
+          >
+            <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50">
+              <span class="text-xs font-semibold text-ink-800">Ciudad</span>
+              <input
+                data-ciudad
+                type="text"
+                placeholder="Ciudad o destino"
+                autocomplete="off"
+                [value]="ciudad()"
+                (input)="ciudad.set($any($event.target).value)"
+                (keydown.enter)="buscar()"
+                class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-500"
+              />
+            </label>
+            <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50 lg:border-l lg:border-ink-100">
+              <span class="text-xs font-semibold text-ink-800">Entrada</span>
+              <input
+                data-entrada
+                type="date"
+                [min]="hoy"
+                [value]="entrada()"
+                (input)="entrada.set($any($event.target).value)"
+                (keydown.enter)="buscar()"
+                class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none"
+              />
+            </label>
+            <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50 lg:border-l lg:border-ink-100">
+              <span class="text-xs font-semibold text-ink-800">Salida</span>
+              <input
+                data-salida
+                type="date"
+                [min]="entrada() || hoy"
+                [value]="salida()"
+                (input)="salida.set($any($event.target).value)"
+                (keydown.enter)="buscar()"
+                class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none"
+              />
+            </label>
+            <label class="flex flex-col px-5 py-3 transition-colors focus-within:bg-brand-50 hover:bg-ink-50 lg:border-l lg:border-ink-100">
+              <span class="text-xs font-semibold text-ink-800">Huéspedes</span>
+              <input
+                data-huespedes
+                type="number"
+                min="1"
+                placeholder="Cuántos"
+                [value]="huespedes()"
+                (input)="huespedes.set($any($event.target).value)"
+                (keydown.enter)="buscar()"
+                class="mt-1 w-full bg-transparent text-sm text-ink-900 outline-none placeholder:text-ink-500"
+              />
+            </label>
+            <button
+              type="button"
+              data-buscar
+              (click)="buscar()"
+              class="btn btn-primary m-2 sm:col-span-2 lg:col-span-1"
+            >
+              Buscar
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
-
-    @if (errorBusqueda()) {
-      <p class="alert alert-danger mt-3" role="alert">{{ errorBusqueda() }}</p>
-    }
   </section>
 
-  <!-- ================= ALOJAMIENTOS DISPONIBLES ================= -->
-  <section class="mt-14" aria-labelledby="titulo-disponibles">
-    <div class="flex flex-wrap items-end justify-between gap-3">
-      <h2 id="titulo-disponibles" class="section-title">Alojamientos disponibles</h2>
-      <a routerLink="/explorar" class="text-sm font-semibold text-brand-700 hover:underline">
-        Ver todos los alojamientos
-      </a>
-    </div>
-
-    @if (cargando()) {
-      <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-label="Cargando alojamientos">
-        @for (item of [1, 2, 3, 4]; track item) {
-          <div>
-            <div class="skeleton aspect-[4/3] w-full rounded-lg"></div>
-            <div class="skeleton mt-4 h-4 w-3/4"></div>
-            <div class="skeleton mt-2 h-3 w-1/2"></div>
-          </div>
-        }
+  <!-- ================= ALOJAMIENTOS DISPONIBLES (FONDO BLANCO) ================= -->
+  <section class="mt-14 border-y border-ink-200 bg-white" aria-labelledby="titulo-disponibles">
+    <div class="mx-auto max-w-page px-4 py-14 sm:px-6 lg:px-8">
+      <div class="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 id="titulo-disponibles" class="font-display text-3xl font-medium text-ink-900">Alojamientos disponibles</h2>
+          <p class="mt-2 text-sm text-ink-500">Publicaciones activas con fechas abiertas desde hoy.</p>
+        </div>
+        <a routerLink="/explorar" class="text-sm font-semibold text-brand-700 hover:underline">
+          Ver todos los alojamientos
+        </a>
       </div>
-    } @else if (errorCarga()) {
-      <div class="alert alert-danger mt-6" role="alert">
-        <p>No se pudieron cargar los alojamientos.</p>
-        <button type="button" (click)="cargarAlojamientos()" class="mt-2 font-semibold underline">
-          Reintentar
+
+      @if (cargando()) {
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true" aria-label="Cargando alojamientos">
+          @for (item of [1, 2, 3, 4]; track item) {
+            <div>
+              <div class="skeleton aspect-[4/3] w-full rounded-lg"></div>
+              <div class="skeleton mt-4 h-4 w-3/4"></div>
+              <div class="skeleton mt-2 h-3 w-1/2"></div>
+            </div>
+          }
+        </div>
+      } @else if (errorCarga()) {
+        <div class="alert alert-danger mt-8" role="alert">
+          <p>No se pudieron cargar los alojamientos.</p>
+          <button type="button" (click)="cargarAlojamientos()" class="mt-2 font-semibold underline">
+            Reintentar
+          </button>
+        </div>
+      } @else {
+        <div class="mt-8 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          @for (s of alojamientos(); track s.idAlojamiento) {
+            <article data-alojamiento class="relative min-w-0">
+              <a [routerLink]="['/alojamientos', s.idAlojamiento]" class="group block min-w-0 rounded-lg">
+                <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-ink-100">
+                  @if (s.imagenes?.at(0); as foto) {
+                    <img [src]="foto" [alt]="s.titulo" loading="lazy" class="h-full w-full object-cover transition-opacity group-hover:opacity-90" />
+                  } @else {
+                    <span class="absolute inset-0 grid place-items-center text-xs font-medium text-ink-500">
+                      Sin fotografía
+                    </span>
+                  }
+                  @if (s.tipo) {
+                    <span class="badge absolute left-3 top-3 bg-white text-ink-800">{{ s.tipo }}</span>
+                  }
+                </div>
+                <div class="mt-3 flex items-start justify-between gap-3">
+                  <div class="min-w-0">
+                    <h3 class="truncate font-semibold text-ink-900 group-hover:text-brand-700" [title]="s.titulo">{{ s.titulo }}</h3>
+                    <p class="mt-0.5 text-sm text-ink-500">{{ s.ciudad }}</p>
+                  </div>
+                  @if (s.promedioCalificacion != null) {
+                    <p class="flex shrink-0 items-center gap-1 text-sm font-semibold text-ink-900">
+                      <span class="text-gold-500" aria-hidden="true">★</span>
+                      <span class="sr-only">Calificación</span>
+                      {{ s.promedioCalificacion | number: '1.1-1' }}
+                    </p>
+                  }
+                </div>
+                <p class="mt-1 text-sm text-ink-500">
+                  Hasta {{ s.capacidad }} {{ s.capacidad === 1 ? 'huésped' : 'huéspedes' }}
+                  · {{ busquedaService.amenidadesResumen(s) }}
+                </p>
+                <p class="mt-1 text-sm text-ink-700">
+                  <strong>{{ s.precioNoche | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</strong>
+                  <span class="text-ink-500"> / noche</span>
+                </p>
+              </a>
+
+              @if (favoritoService.disponible()) {
+                <button
+                  type="button"
+                  data-favorito
+                  (click)="favoritoService.toggle(s.idAlojamiento)"
+                  [attr.aria-label]="(favoritoService.esFavorito(s.idAlojamiento) ? 'Quitar de favoritos: ' : 'Guardar en favoritos: ') + s.titulo"
+                  [attr.aria-pressed]="favoritoService.esFavorito(s.idAlojamiento)"
+                  class="absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-white transition-colors"
+                  [class.text-red-600]="favoritoService.esFavorito(s.idAlojamiento)"
+                  [class.text-ink-700]="!favoritoService.esFavorito(s.idAlojamiento)"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    [attr.fill]="favoritoService.esFavorito(s.idAlojamiento) ? 'currentColor' : 'none'"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
+                  </svg>
+                </button>
+              }
+            </article>
+          } @empty {
+            <p class="col-span-full rounded-lg border border-dashed border-ink-300 px-6 py-12 text-center text-sm text-ink-500">
+              No hay alojamientos disponibles en este momento.
+            </p>
+          }
+        </div>
+      }
+
+      @if (favoritoService.disponible() && favoritoService.mensaje(); as mensaje) {
+        <p class="alert alert-danger mt-4" role="alert">{{ mensaje }}</p>
+      }
+    </div>
+  </section>
+
+  <!-- ================= TIPOS DE ALOJAMIENTO (FONDO VERDE CLARO) ================= -->
+  <section class="bg-brand-50" aria-labelledby="titulo-tipos">
+    <div class="mx-auto max-w-page px-4 py-14 sm:px-6 lg:px-8">
+      <h2 id="titulo-tipos" class="font-display text-3xl font-medium text-ink-900">Explora por tipo</h2>
+      <p class="mt-2 text-sm text-ink-600">Cantidad de alojamientos publicados de cada tipo.</p>
+
+      @if (cargandoTipos()) {
+        <div class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5" aria-busy="true" aria-label="Cargando tipos">
+          @for (item of [1, 2, 3, 4, 5]; track item) {
+            <div class="aspect-[3/4] animate-pulse rounded-lg bg-brand-100"></div>
+          }
+        </div>
+      } @else if (errorTipos()) {
+        <div class="alert alert-danger mt-8" role="alert">
+          <p>No se pudieron cargar los tipos de alojamiento.</p>
+          <button type="button" (click)="cargarTipos()" class="mt-2 font-semibold underline">Reintentar</button>
+        </div>
+      } @else {
+        <ul class="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          @for (t of tipos(); track t.nombre) {
+            <li>
+              <a
+                data-tipo
+                [routerLink]="['/explorar']"
+                [queryParams]="{ tipo: t.nombre }"
+                class="group relative block aspect-[3/4] overflow-hidden rounded-lg bg-brand-900 text-white"
+              >
+                <img [src]="t.foto" alt="" loading="lazy" class="h-full w-full object-cover transition-opacity group-hover:opacity-90" />
+                <span class="absolute inset-x-0 bottom-0 bg-ink-950/65 px-4 py-3">
+                  <strong class="block font-display text-xl font-medium">{{ t.nombre }}</strong>
+                  <span class="mt-0.5 block text-sm tabular-nums text-white/85">
+                    {{ t.cantidad }} {{ t.cantidad === 1 ? 'alojamiento' : 'alojamientos' }}
+                  </span>
+                </span>
+              </a>
+            </li>
+          } @empty {
+            <li class="col-span-full text-sm text-ink-600">Aún no hay alojamientos publicados.</li>
+          }
+        </ul>
+      }
+    </div>
+  </section>
+
+  <!-- ================= PARA ANFITRIONES ================= -->
+  @if (mostrarPublicar()) {
+    <section class="mx-auto max-w-page px-4 py-14 sm:px-6 lg:px-8" aria-labelledby="titulo-publicar">
+      <div class="flex flex-col gap-6 rounded-lg bg-brand-800 px-6 py-10 text-white sm:px-12 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-sm font-medium text-brand-200">Para anfitriones</p>
+          <h2 id="titulo-publicar" class="mt-2 font-display text-3xl font-medium">Publica tu alojamiento</h2>
+          <p class="mt-3 max-w-xl text-brand-100">
+            @if (session.tieneRol('Anfitrión')) {
+              Crea publicaciones, administra la disponibilidad y consulta tus reservas.
+            } @else {
+              Publica tu propiedad, administra su disponibilidad y recibe reservas. Necesitas una cuenta de anfitrión.
+            }
+          </p>
+        </div>
+        <button
+          type="button"
+          data-publicar
+          (click)="publicar()"
+          class="btn shrink-0 bg-white text-brand-800 hover:bg-brand-50"
+        >
+          {{ session.tieneRol('Anfitrión') ? 'Ir a mis alojamientos' : 'Publicar alojamiento' }}
         </button>
       </div>
-    } @else {
-      <div class="mt-6 grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-        @for (s of alojamientos(); track s.idAlojamiento) {
-          <article data-alojamiento class="relative min-w-0">
-            <a [routerLink]="['/alojamientos', s.idAlojamiento]" class="block min-w-0 rounded-lg">
-              <div class="relative aspect-[4/3] overflow-hidden rounded-lg bg-ink-100">
-                @if (s.imagenes?.at(0); as foto) {
-                  <img [src]="foto" [alt]="s.titulo" loading="lazy" class="h-full w-full object-cover" />
-                } @else {
-                  <span class="absolute inset-0 grid place-items-center text-xs font-medium text-ink-500">
-                    Sin fotografía
-                  </span>
-                }
-              </div>
-              <div class="mt-3 flex items-start justify-between gap-3">
-                <div class="min-w-0">
-                  <h3 class="truncate font-semibold text-ink-900" [title]="s.titulo">{{ s.titulo }}</h3>
-                  <p class="mt-0.5 text-sm text-ink-500">{{ s.ciudad }} · {{ s.tipo }}</p>
-                </div>
-                @if (s.promedioCalificacion != null) {
-                  <p class="flex shrink-0 items-center gap-1 text-sm font-semibold text-ink-900">
-                    <span class="text-gold-500" aria-hidden="true">★</span>
-                    <span class="sr-only">Calificación</span>
-                    {{ s.promedioCalificacion | number: '1.1-1' }}
-                  </p>
-                }
-              </div>
-              <p class="mt-1 text-sm text-ink-500">
-                Hasta {{ s.capacidad }} {{ s.capacidad === 1 ? 'huésped' : 'huéspedes' }}
-                · {{ busquedaService.amenidadesResumen(s) }}
-              </p>
-              <p class="mt-1 text-sm text-ink-700">
-                <strong>{{ s.precioNoche | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}</strong>
-                <span class="text-ink-500"> / noche</span>
-              </p>
-            </a>
-
-            @if (favoritoService.disponible()) {
-              <button
-                type="button"
-                data-favorito
-                (click)="favoritoService.toggle(s.idAlojamiento)"
-                [attr.aria-label]="(favoritoService.esFavorito(s.idAlojamiento) ? 'Quitar de favoritos: ' : 'Guardar en favoritos: ') + s.titulo"
-                [attr.aria-pressed]="favoritoService.esFavorito(s.idAlojamiento)"
-                class="absolute right-3 top-3 grid size-9 place-items-center rounded-full bg-white transition-colors"
-                [class.text-red-600]="favoritoService.esFavorito(s.idAlojamiento)"
-                [class.text-ink-700]="!favoritoService.esFavorito(s.idAlojamiento)"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  [attr.fill]="favoritoService.esFavorito(s.idAlojamiento) ? 'currentColor' : 'none'"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z" />
-                </svg>
-              </button>
-            }
-          </article>
-        } @empty {
-          <p class="col-span-full rounded-lg border border-dashed border-ink-300 bg-white px-6 py-12 text-center text-sm text-ink-500">
-            No hay alojamientos disponibles en este momento.
-          </p>
-        }
-      </div>
-    }
-
-    @if (favoritoService.disponible() && favoritoService.mensaje(); as mensaje) {
-      <p class="alert alert-danger mt-4" role="alert">{{ mensaje }}</p>
-    }
-  </section>
-
-  <!-- ================= TIPOS DE ALOJAMIENTO ================= -->
-  <section class="mt-14" aria-labelledby="titulo-tipos">
-    <h2 id="titulo-tipos" class="section-title">Tipos de alojamiento</h2>
-
-    @if (cargandoTipos()) {
-      <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" aria-busy="true" aria-label="Cargando tipos">
-        @for (item of [1, 2, 3, 4, 5]; track item) {
-          <div class="skeleton h-[4.5rem]"></div>
-        }
-      </div>
-    } @else if (errorTipos()) {
-      <div class="alert alert-danger mt-6" role="alert">
-        <p>No se pudieron cargar los tipos de alojamiento.</p>
-        <button type="button" (click)="cargarTipos()" class="mt-2 font-semibold underline">Reintentar</button>
-      </div>
-    } @else {
-      <ul class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        @for (t of tipos(); track t.nombre) {
-          <li>
-            <a
-              data-tipo
-              [routerLink]="['/explorar']"
-              [queryParams]="{ tipo: t.nombre }"
-              class="card block px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
-            >
-              <span class="block font-semibold text-ink-900">{{ t.nombre }}</span>
-              <span class="mt-0.5 block text-sm tabular-nums text-ink-500">
-                {{ t.cantidad }} {{ t.cantidad === 1 ? 'alojamiento' : 'alojamientos' }}
-              </span>
-            </a>
-          </li>
-        } @empty {
-          <li class="col-span-full text-sm text-ink-500">Aún no hay alojamientos publicados.</li>
-        }
-      </ul>
-    }
-  </section>
-
-  <!-- ================= PUBLICAR ================= -->
-  @if (mostrarPublicar()) {
-    <section class="card mt-14 flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between" aria-labelledby="titulo-publicar">
-      <div>
-        <h2 id="titulo-publicar" class="section-title">Publicar un alojamiento</h2>
-        <p class="mt-1 text-sm text-ink-600">
-          @if (session.tieneRol('Anfitrión')) {
-            Crea publicaciones, administra la disponibilidad y consulta tus reservas.
-          } @else {
-            Necesitas una cuenta de anfitrión para publicar y administrar alojamientos.
-          }
-        </p>
-      </div>
-      <button type="button" data-publicar (click)="publicar()" class="btn btn-primary shrink-0">
-        {{ session.tieneRol('Anfitrión') ? 'Ir a mis alojamientos' : 'Publicar alojamiento' }}
-      </button>
     </section>
+  } @else {
+    <div class="pb-14"></div>
   }
 </main>
 
