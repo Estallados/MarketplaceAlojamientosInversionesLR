@@ -183,6 +183,20 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+  // ====================================
+  // EXPORTAR REPORTES DE GESTIÓN EN PDF O EXCEL (HU-05)
+  // SOLO ADMINISTRADOR: GET /admin/reportes/** exige el rol ADMIN.
+  // ====================================
+
+  {
+    path: 'admin/reportes',
+    loadComponent: () =>
+      import('./administracion/reportes/reportes')
+        .then(m => m.ReportesAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
 
 
   // ====================================
