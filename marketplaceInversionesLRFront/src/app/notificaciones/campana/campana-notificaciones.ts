@@ -21,7 +21,7 @@ const INTERVALO = 60_000;
     <a
       routerLink="/notificaciones"
       [attr.aria-label]="contador() > 0 ? 'Notificaciones, ' + contador() + ' sin leer' : 'Notificaciones'"
-      class="relative grid size-11 place-items-center rounded-full text-slate-600 transition hover:bg-slate-100"
+      class="relative grid size-11 place-items-center rounded-full text-ink-600 transition hover:bg-ink-100"
     >
       <svg
         width="20"
@@ -38,7 +38,7 @@ const INTERVALO = 60_000;
       </svg>
       @if (contador() > 0) {
         <span
-          class="absolute right-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-emerald-700 px-1 text-[10px] font-bold text-white"
+          class="absolute right-1.5 top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-brand-700 px-1 text-xs font-bold text-white"
         >
           {{ contador() > 99 ? '99+' : contador() }}
         </span>

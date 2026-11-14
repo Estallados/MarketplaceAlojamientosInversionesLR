@@ -15,6 +15,7 @@ import {
 } from '@angular/common/http';
 
 import {
+  ActivatedRoute,
   RouterLink
 } from '@angular/router';
 
@@ -52,6 +53,8 @@ export class Register {
 
   private readonly cdr = inject(ChangeDetectorRef);
 
+  private readonly route = inject(ActivatedRoute);
+
   // ======================================
   // DATOS DEL FORMULARIO
   // ======================================
@@ -64,8 +67,9 @@ export class Register {
 
   contrasena = '';
 
-  // Rol inicial
-  rol: RegistroRol = 'HUESPED';
+  // Rol inicial: anfitrión si se llega con ?rol=anfitrion (botón "Publicar alojamiento" del inicio)
+  rol: RegistroRol =
+    this.route.snapshot.queryParamMap.get('rol') === 'anfitrion' ? 'ANFITRION' : 'HUESPED';
 
   // ======================================
   // MOSTRAR / OCULTAR CONTRASEÑA

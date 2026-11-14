@@ -111,8 +111,8 @@ export class MisNotificaciones implements OnInit, OnDestroy {
 
   claseItem(notificacion: Notificacion): string {
     return (
-      'flex w-full gap-4 border-b border-slate-100 p-6 text-left last:border-0 hover:bg-slate-50 ' +
-      (notificacion.leida ? '' : 'bg-emerald-50/40')
+      'flex w-full gap-4 border-b border-ink-100 p-6 text-left last:border-0 hover:bg-ink-50 ' +
+      (notificacion.leida ? '' : 'bg-brand-50/40')
     );
   }
 

@@ -8,15 +8,12 @@
 
     <div>
 
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-        Inversiones LR
-      </p>
 
-      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">
+      <h1 class="page-title">
         Tarifas de limpieza y servicio
       </h1>
 
-      <p class="mt-2 text-sm text-slate-500">
+      <p class="mt-2 text-sm text-ink-500">
         Configura los porcentajes que se aplican sobre el precio base
         de las cotizaciones nuevas.
       </p>
@@ -29,14 +26,14 @@
 
     @if (cargando()) {
 
-      <p class="mt-8 text-sm text-slate-500">
+      <p class="mt-8 text-sm text-ink-500">
         Cargando porcentajes de tarifas...
       </p>
 
     } @else if (errorCarga()) {
 
       <div
-        class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center"
+        class="mt-8 rounded-lg border border-dashed border-ink-300 bg-white p-10 text-center"
         role="alert"
       >
 
@@ -47,7 +44,7 @@
         <button
           type="button"
           (click)="cargar()"
-          class="mt-4 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-800"
+          class="btn btn-primary mt-4"
         >
           Reintentar
         </button>
@@ -62,23 +59,23 @@
              PORCENTAJES VIGENTES
              ====================================== -->
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-6">
+        <section class="rounded-lg border border-ink-200 bg-white p-6">
 
-          <h2 class="font-display text-xl font-bold">
+          <h2 class="section-title">
             Porcentajes vigentes
           </h2>
 
-          <div class="mt-5 space-y-3 border-t border-slate-100 pt-4 text-sm">
+          <div class="mt-5 space-y-3 border-t border-ink-100 pt-4 text-sm">
 
             <div class="flex justify-between gap-2">
-              <span class="text-slate-500">Tarifa de limpieza</span>
+              <span class="text-ink-500">Tarifa de limpieza</span>
               <strong data-vigente="limpieza">
                 {{ actual.porcentajeLimpieza + '%' }}
               </strong>
             </div>
 
             <div class="flex justify-between gap-2">
-              <span class="text-slate-500">Tarifa de servicio</span>
+              <span class="text-ink-500">Tarifa de servicio</span>
               <strong data-vigente="servicio">
                 {{ actual.porcentajeServicio + '%' }}
               </strong>
@@ -90,7 +87,7 @@
 
             <p
               data-por-defecto
-              class="mt-5 rounded-xl bg-emerald-50 p-4 text-xs leading-5 text-emerald-800"
+              class="mt-5 rounded-md bg-brand-50 p-4 text-xs leading-5 text-brand-800"
             >
               Aún no hay una configuración guardada.
               Se aplican los porcentajes predeterminados del sistema.
@@ -98,7 +95,7 @@
 
           } @else {
 
-            <p class="mt-5 text-xs text-slate-500">
+            <p class="mt-5 text-xs text-ink-500">
               Última actualización:
               {{ actual.fecha ? (actual.fecha | date: 'dd/MM/yyyy HH:mm') : 'Sin definir' }}
             </p>
@@ -111,9 +108,9 @@
              FORMULARIO DE CONFIGURACIÓN
              ====================================== -->
 
-        <section class="rounded-2xl border border-slate-200 bg-white p-6">
+        <section class="rounded-lg border border-ink-200 bg-white p-6">
 
-          <h2 class="font-display text-xl font-bold">
+          <h2 class="section-title">
             Modificar porcentajes
           </h2>
 
@@ -123,7 +120,7 @@
 
             <p
               role="alert"
-              class="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+              class="mt-5 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
             >
               {{ error() }}
             </p>
@@ -136,7 +133,7 @@
 
             <p
               role="status"
-              class="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-800"
+              class="mt-5 rounded-md border border-brand-200 bg-brand-50 p-4 text-sm leading-6 text-brand-800"
             >
               {{ mensaje() }}
             </p>
@@ -169,7 +166,7 @@
                 #limpieza="ngModel"
                 [(ngModel)]="porcentajeLimpieza"
                 placeholder="0 a 100"
-                class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+                class="field"
               />
 
               @if (mostrarError('porcentajeLimpieza', limpieza.touched)) {
@@ -204,7 +201,7 @@
                 #servicio="ngModel"
                 [(ngModel)]="porcentajeServicio"
                 placeholder="0 a 100"
-                class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+                class="field"
               />
 
               @if (mostrarError('porcentajeServicio', servicio.touched)) {
@@ -223,7 +220,7 @@
             <!-- INFORMACIÓN -->
 
             <p
-              class="rounded-xl bg-emerald-50 p-4 text-xs leading-5 text-emerald-800"
+              class="rounded-md bg-brand-50 p-4 text-xs leading-5 text-brand-800"
             >
               Los porcentajes deben estar entre 0 y 100.
               Los cambios aplican a las cotizaciones nuevas,
@@ -235,7 +232,7 @@
             <button
               type="submit"
               [disabled]="guardando()"
-              class="w-full rounded-xl bg-emerald-700 px-5 py-3.5 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+              class="btn btn-primary w-full"
             >
               {{
                 guardando()
@@ -250,7 +247,7 @@
               type="button"
               (click)="restaurar()"
               [disabled]="guardando()"
-              class="w-full text-sm font-semibold text-emerald-700 hover:underline disabled:opacity-50"
+              class="w-full text-sm font-semibold text-brand-700 hover:underline disabled:opacity-50"
             >
               Descartar cambios
             </button>

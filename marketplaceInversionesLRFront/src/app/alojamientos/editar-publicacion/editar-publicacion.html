@@ -1,17 +1,14 @@
-<main class="mx-auto max-w-[1100px] px-4 py-10 sm:px-8">
+<main class="page">
 
   <!-- ENCABEZADO -->
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">
-        Inversiones LR
-      </p>
 
-      <h1 class="mt-2 text-3xl font-bold text-slate-900">
+      <h1 class="page-title">
         Editar publicación
       </h1>
 
-      <p class="mt-2 text-sm text-slate-500">
+      <p class="mt-2 text-sm text-ink-500">
         Actualiza los datos, precios, reglas y servicios
         adicionales de tu alojamiento.
       </p>
@@ -21,7 +18,7 @@
       type="button"
       data-volver
       (click)="volver()"
-      class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+      class="btn btn-secondary"
     >
       ← Volver
     </button>
@@ -31,7 +28,7 @@
   @if (acceso() === 'cargando') {
     <div
       data-cargando
-      class="mt-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500"
+      class="mt-6 rounded-md border border-ink-200 bg-white p-4 text-sm text-ink-500"
     >
       Cargando la publicación...
     </div>
@@ -42,15 +39,15 @@
     @if (puedeEditar) {
       <div
         data-resumen
-        class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4"
+        class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-md border border-brand-200 bg-brand-50 p-4"
       >
         <div>
-          <p class="text-sm font-bold text-emerald-800">
+          <p class="text-sm font-bold text-brand-800">
             Publicación #{{ a.idAlojamiento }} · {{ a.titulo }}
             <app-insignia-estado class="ml-2" [estado]="a.estado" />
           </p>
           @if (esAdministrador && a.nombreAnfitrion) {
-            <p class="mt-1 text-xs text-emerald-700">
+            <p class="mt-1 text-xs text-brand-700">
               Anfitrión: {{ a.nombreAnfitrion }}
             </p>
           }
@@ -59,7 +56,7 @@
         @if (!esAdministrador) {
           <a
             [routerLink]="['/host/alojamientos', a.idAlojamiento, 'disponibilidad']"
-            class="text-xs font-bold text-emerald-700 underline hover:text-emerald-900"
+            class="text-xs font-bold text-brand-700 underline hover:text-brand-900"
           >
             Gestionar disponibilidad
           </a>
@@ -80,7 +77,7 @@
   @if (error()) {
     <div
       role="alert"
-      class="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+      class="mt-6 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700"
     >
       {{ error() }}
 
@@ -99,7 +96,7 @@
   @if (mensaje()) {
     <div
       role="status"
-      class="mt-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
+      class="mt-6 rounded-md border border-brand-200 bg-brand-50 p-4 text-sm text-brand-800"
     >
       {{ mensaje() }}
     </div>
@@ -112,7 +109,7 @@
     data-formulario-edicion
     (ngSubmit)="guardar()"
     novalidate
-    class="mt-8 rounded-2xl border border-slate-200 bg-white p-5 sm:p-8"
+    class="mt-8 rounded-lg border border-ink-200 bg-white p-5 sm:p-8"
   >
 
     <!-- ====================================== -->
@@ -121,7 +118,7 @@
 
     <section>
 
-      <h2 class="text-xl font-bold text-slate-900">
+      <h2 class="text-xl font-bold text-ink-900">
         Información del alojamiento
       </h2>
 
@@ -141,7 +138,7 @@
             maxlength="255"
             [(ngModel)]="draft.titulo"
             (blur)="marcarTocado('titulo')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('titulo')) {
             <span data-error="titulo" class="mt-2 block text-xs text-red-600">
@@ -162,7 +159,7 @@
             maxlength="255"
             [(ngModel)]="draft.ciudad"
             (blur)="marcarTocado('ciudad')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('ciudad')) {
             <span data-error="ciudad" class="mt-2 block text-xs text-red-600">
@@ -183,7 +180,7 @@
             maxlength="2000"
             [(ngModel)]="draft.descripcion"
             (blur)="marcarTocado('descripcion')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           ></textarea>
           @if (mostrarError('descripcion')) {
             <span data-error="descripcion" class="mt-2 block text-xs text-red-600">
@@ -204,7 +201,7 @@
             maxlength="255"
             [(ngModel)]="draft.ubicacion"
             (blur)="marcarTocado('ubicacion')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('ubicacion')) {
             <span data-error="ubicacion" class="mt-2 block text-xs text-red-600">
@@ -222,7 +219,7 @@
             id="tipo"
             name="tipo"
             [(ngModel)]="draft.tipo"
-            class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           >
             <option value="">Selecciona un tipo</option>
             @for (tipo of tipos; track tipo) {
@@ -241,9 +238,9 @@
     <!-- CAPACIDAD Y PRECIO -->
     <!-- ====================================== -->
 
-    <section class="mt-10 border-t border-slate-100 pt-8">
+    <section class="mt-10 border-t border-ink-100 pt-8">
 
-      <h2 class="text-xl font-bold text-slate-900">
+      <h2 class="text-xl font-bold text-ink-900">
         Capacidad y precio
       </h2>
 
@@ -263,7 +260,7 @@
             [(ngModel)]="draft.capacidad"
             (input)="revisarNumero('capacidad', $event)"
             (blur)="marcarTocado('capacidad')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('capacidad')) {
             <span data-error="capacidad" class="mt-2 block text-xs text-red-600">
@@ -286,7 +283,7 @@
             [(ngModel)]="draft.habitaciones"
             (input)="revisarNumero('habitaciones', $event)"
             (blur)="marcarTocado('habitaciones')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('habitaciones')) {
             <span data-error="habitaciones" class="mt-2 block text-xs text-red-600">
@@ -309,7 +306,7 @@
             [(ngModel)]="draft.camas"
             (input)="revisarNumero('camas', $event)"
             (blur)="marcarTocado('camas')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('camas')) {
             <span data-error="camas" class="mt-2 block text-xs text-red-600">
@@ -332,7 +329,7 @@
             [(ngModel)]="draft.banos"
             (input)="revisarNumero('banos', $event)"
             (blur)="marcarTocado('banos')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
           @if (mostrarError('banos')) {
             <span data-error="banos" class="mt-2 block text-xs text-red-600">
@@ -355,9 +352,9 @@
             [(ngModel)]="draft.precioNoche"
             (input)="revisarNumero('precioNoche', $event)"
             (blur)="marcarTocado('precioNoche')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
-          <span class="mt-2 block text-xs text-slate-500">
+          <span class="mt-2 block text-xs text-ink-500">
             Introduce el valor sin puntos ni símbolo de moneda.
           </span>
           @if (mostrarError('precioNoche')) {
@@ -374,13 +371,13 @@
     <!-- TARIFAS DEL ALOJAMIENTO (RF-023) -->
     <!-- ====================================== -->
 
-    <section data-tarifas class="mt-10 border-t border-slate-100 pt-8">
+    <section data-tarifas class="mt-10 border-t border-ink-100 pt-8">
 
-      <h2 class="text-xl font-bold text-slate-900">
+      <h2 class="text-xl font-bold text-ink-900">
         Tarifas del alojamiento
       </h2>
 
-      <p class="mt-2 text-sm text-slate-500">
+      <p class="mt-2 text-sm text-ink-500">
         Porcentajes que se suman al precio base en cada cotización. Si dejas
         un campo vacío, se aplica la tarifa general configurada en la plataforma.
       </p>
@@ -403,9 +400,9 @@
               (input)="revisarNumero(t.campo, $event)"
               (blur)="marcarTocado(t.campo)"
               [placeholder]="'Sin definir'"
-              class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+              class="field"
             />
-            <span [attr.data-tarifa-actual]="t.campo" class="mt-2 block text-xs text-slate-500">
+            <span [attr.data-tarifa-actual]="t.campo" class="mt-2 block text-xs text-ink-500">
               Actual:
               {{ alojamiento()?.[t.campo] == null ? 'Sin definir' : alojamiento()?.[t.campo] + '%' }}
             </span>
@@ -424,9 +421,9 @@
     <!-- HORARIOS Y REGLAS -->
     <!-- ====================================== -->
 
-    <section class="mt-10 border-t border-slate-100 pt-8">
+    <section class="mt-10 border-t border-ink-100 pt-8">
 
-      <h2 class="text-xl font-bold text-slate-900">
+      <h2 class="text-xl font-bold text-ink-900">
         Horarios y reglas
       </h2>
 
@@ -441,7 +438,7 @@
             name="horaEntrada"
             type="time"
             [(ngModel)]="draft.horaEntrada"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
         </label>
 
@@ -454,7 +451,7 @@
             name="horaSalida"
             type="time"
             [(ngModel)]="draft.horaSalida"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           />
         </label>
 
@@ -469,7 +466,7 @@
             maxlength="2000"
             [(ngModel)]="draft.reglas"
             (blur)="marcarTocado('reglas')"
-            class="w-full rounded-xl border border-slate-200 p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           ></textarea>
           @if (mostrarError('reglas')) {
             <span data-error="reglas" class="mt-2 block text-xs text-red-600">
@@ -487,7 +484,7 @@
             id="idPolitica"
             name="idPolitica"
             [(ngModel)]="draft.idPolitica"
-            class="w-full rounded-xl border border-slate-200 bg-white p-4 text-sm outline-none focus:border-emerald-500"
+            class="field"
           >
             <option [ngValue]="null">
               Selecciona una política
@@ -508,13 +505,13 @@
     <!-- SERVICIOS INCLUIDOS -->
     <!-- ====================================== -->
 
-    <section class="mt-10 border-t border-slate-100 pt-8">
+    <section class="mt-10 border-t border-ink-100 pt-8">
 
-      <h2 class="text-xl font-bold text-slate-900">
+      <h2 class="text-xl font-bold text-ink-900">
         Servicios incluidos
       </h2>
 
-      <p class="mt-2 text-sm text-slate-500">
+      <p class="mt-2 text-sm text-ink-500">
         Servicios sin costo que ofrece tu alojamiento.
       </p>
 
@@ -522,13 +519,13 @@
 
         @for (servicio of servicios; track servicio) {
           <label
-            class="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 text-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+            class="cursor-pointer rounded-md border border-ink-200 px-4 py-3 text-sm transition hover:border-brand-300 hover:bg-brand-50"
           >
             <input
               type="checkbox"
               [checked]="tieneAmenidad(servicio)"
               (change)="toggleAmenidad(servicio)"
-              class="mr-2 accent-emerald-700"
+              class="mr-2 accent-brand-700"
             />
             {{ servicio }}
           </label>
@@ -539,7 +536,7 @@
 
     <!-- ACCIONES -->
     <div
-      class="mt-10 flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 pt-8"
+      class="mt-10 flex flex-wrap items-center justify-end gap-3 border-t border-ink-100 pt-8"
     >
 
       <button
@@ -547,7 +544,7 @@
         data-descartar
         (click)="descartar()"
         [disabled]="guardando() || !hayCambios"
-        class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50"
+        class="rounded-md border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
       >
         Descartar cambios
       </button>
@@ -556,7 +553,7 @@
         type="submit"
         data-guardar
         [disabled]="guardando()"
-        class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+        class="btn btn-primary"
       >
         {{ guardando() ? 'Guardando...' : 'Guardar cambios' }}
       </button>

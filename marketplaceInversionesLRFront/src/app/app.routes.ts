@@ -8,7 +8,7 @@ import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publica
 import { ProfileView } from './perfil/profile-view/profile-view';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'registro', component: Register },
 
@@ -186,6 +186,18 @@ export const routes: Routes = [
 
 
   // ====================================
+  // PÁGINA DE INICIO
+  // PÚBLICA. Búsqueda, alojamientos disponibles y tipos. Carga diferida.
+  // ====================================
+
+  {
+    path: 'home',
+    loadComponent: () =>
+      import('./inicio/home/home')
+        .then(m => m.Home)
+  },
+
+  // ====================================
   // BUSCAR ALOJAMIENTOS CON FILTROS (HU-23)
   // PÚBLICA. Carga diferida para no aumentar el bundle inicial.
   // ====================================
@@ -350,5 +362,5 @@ export const routes: Routes = [
     canActivate: [roleGuard]
   },
 
-  { path: '**', redirectTo: 'login' }
+  { path: '**', redirectTo: 'home' }
 ];

@@ -8,6 +8,7 @@ import { DetalleAlojamientoService } from '../services/detalle-alojamiento.servi
 import { SessionService } from '../../core/services/session.service';
 import { FavoritoService } from '../../favoritos/services/favorito.service';
 import { MensajeriaService } from '../../mensajeria/services/mensajeria.service';
+import { Cargando } from '../../core/ui/cargando/cargando';
 
 /** Máximo de fotos de la galería: la principal y 4 pequeñas. */
 const MAX_FOTOS = 5;
@@ -26,7 +27,7 @@ const MARGEN_MAPA = 0.01;
   selector: 'app-detalle-alojamiento',
   standalone: true,
   templateUrl: './detalle-alojamiento.html',
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, RouterLink],
+  imports: [Cargando, CurrencyPipe, DatePipe, DecimalPipe, RouterLink],
 })
 export class DetalleAlojamientoPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -82,21 +83,6 @@ export class DetalleAlojamientoPage implements OnInit {
     });
   });
 
-  // ==================== Información visual ====================
-  readonly highlights = computed(() => [
-    { icon: 'home', title: 'Un espacio solo para ti', text: 'Tendrás todo el alojamiento durante tu estancia.' },
-    {
-      icon: 'pin',
-      title: 'Ubicación privilegiada',
-      text: `Cerca de naturaleza, restaurantes y puntos de interés de ${this.stay()?.ciudad ?? 'la ciudad'}.`,
-    },
-    {
-      icon: 'star',
-      title: 'Experiencia destacada',
-      text: `${this.stay()?.cantidadResenas ?? 0} huéspedes han calificado este alojamiento.`,
-    },
-  ]);
-
   // ==================== Mapa (CA-164) ====================
   /** Punto aproximado: las coordenadas reales desplazadas unos metros por privacidad. */
   readonly puntoAproximado = computed<[number, number] | null>(() => {
@@ -136,9 +122,6 @@ export class DetalleAlojamientoPage implements OnInit {
     const ciudad = this.stay()?.ciudad ?? '';
     return `https://www.openstreetmap.org/search?query=${encodeURIComponent(ciudad)}`;
   });
-
-  readonly horizontalLines = [18, 38, 58, 78];
-  readonly verticalLines = [15, 35, 55, 75];
 
   // ==================== Favoritos (HU-29) ====================
   /** true si el alojamiento está en los favoritos del huésped, según el backend. */

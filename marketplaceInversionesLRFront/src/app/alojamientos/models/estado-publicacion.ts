@@ -99,7 +99,7 @@ const PRESENTACION: Record<EstadoAlojamiento, PresentacionEstado> = {
     descripcion:
       'La publicación todavía no es visible para los huéspedes. ' +
       'Completa sus datos y envíala a revisión.',
-    clases: 'bg-slate-100 text-slate-700'
+    clases: 'bg-ink-100 text-ink-700'
   },
 
   PENDIENTE_REVISION: {
@@ -114,7 +114,7 @@ const PRESENTACION: Record<EstadoAlojamiento, PresentacionEstado> = {
     etiqueta: 'Activa',
     descripcion:
       'La publicación es visible y está disponible para nuevas reservas.',
-    clases: 'bg-emerald-100 text-emerald-800'
+    clases: 'bg-brand-100 text-brand-800'
   },
 
   PAUSADA: {
@@ -122,7 +122,7 @@ const PRESENTACION: Record<EstadoAlojamiento, PresentacionEstado> = {
     descripcion:
       'No está disponible para nuevas reservas. ' +
       'Las reservas ya confirmadas se mantienen.',
-    clases: 'bg-blue-50 text-blue-700'
+    clases: 'bg-sky-50 text-sky-700'
   },
 
   BLOQUEADA: {
@@ -139,7 +139,7 @@ const DESCONOCIDO: PresentacionEstado = {
   descripcion:
     'El servidor envió un estado que la aplicación no reconoce. ' +
     'No se ofrecen acciones sobre la publicación.',
-  clases: 'bg-slate-100 text-slate-500'
+  clases: 'bg-ink-100 text-ink-500'
 };
 
 /** Etiqueta, descripción y colores del estado; neutros si es desconocido. */

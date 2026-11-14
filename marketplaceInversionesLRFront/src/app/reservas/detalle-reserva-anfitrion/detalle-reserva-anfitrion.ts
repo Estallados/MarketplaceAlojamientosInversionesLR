@@ -54,10 +54,10 @@ export class DetalleReservaAnfitrion implements OnInit {
       s === 'Cancelada'
         ? 'bg-red-50 text-red-700'
         : s === 'Finalizada'
-          ? 'bg-slate-100 text-slate-600'
+          ? 'bg-ink-100 text-ink-600'
           : s === 'Pendiente'
             ? 'bg-amber-50 text-amber-700'
-            : 'bg-emerald-50 text-emerald-700';
+            : 'bg-brand-50 text-brand-700';
     return 'inline-flex rounded-full px-3 py-1 text-xs font-bold ' + tone;
   });
 

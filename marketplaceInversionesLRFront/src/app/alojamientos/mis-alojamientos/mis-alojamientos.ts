@@ -7,6 +7,7 @@ import { API_URL } from '../../core/services/api-url';
 import { InsigniaEstado } from '../insignia-estado/insignia-estado';
 import { AlojamientoRespuesta, EstadoAlojamiento } from '../models/alojamiento';
 import { PublicacionHostService } from '../services/publicacion-host.service';
+import { Cargando } from '../../core/ui/cargando/cargando';
 
 export type FiltroAlojamiento = 'TODOS' | EstadoAlojamiento;
 
@@ -26,7 +27,7 @@ const ESPERA_MS = 15000;
 @Component({
   selector: 'app-mis-alojamientos',
   standalone: true,
-  imports: [InsigniaEstado],
+  imports: [Cargando, InsigniaEstado],
   templateUrl: './mis-alojamientos.html'
 })
 export class MisAlojamientos implements OnInit {

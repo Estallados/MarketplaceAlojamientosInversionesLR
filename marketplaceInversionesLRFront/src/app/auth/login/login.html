@@ -1,37 +1,58 @@
+<main class="px-4 py-10 sm:py-16">
+  <section class="card mx-auto w-full max-w-md p-6 sm:p-8">
+    <h1 class="page-title">Iniciar sesión</h1>
+    <p class="mt-2 text-sm text-ink-500">
+      Ingresa con tu correo y contraseña.
+    </p>
 
-<main class="min-h-[calc(100vh-160px)] bg-white">
-  <section
-    class="mx-auto grid w-full max-w-[1440px] grid-cols-1 items-center gap-12 px-6 py-10 md:px-10 lg:grid-cols-2 lg:gap-16 lg:py-12"
-  >
+    <form
+      #loginForm="ngForm"
+      (ngSubmit)="iniciarSesion(loginForm)"
+      class="mt-6 space-y-5"
+    >
+      <!-- CORREO -->
+      <div>
+        <label for="correo" class="field-label">Correo electrónico</label>
+        <input
+          id="correo"
+          name="correo"
+          type="email"
+          placeholder="tu@correo.com"
+          autocomplete="email"
+          [ngModel]="correo"
+          (ngModelChange)="cambiarCorreo($event)"
+          [readonly]="requiereSegundoFactor || requiereVerificacion"
+          required
+          email
+          class="field read-only:bg-ink-50"
+        />
+      </div>
 
-    <div class="mx-auto w-full max-w-md">
-      <p class="mb-4 text-xs font-bold uppercase tracking-[0.15em] text-emerald-700">
-        TU PRÓXIMA HISTORIA TE ESPERA
-      </p>
-
-      <h1 class="mb-4 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
-        Bienvenido de nuevo
-      </h1>
-
-      <p class="mb-8 text-base leading-relaxed text-slate-500">
-        Inicia sesión para gestionar tus reservas y volver a esos
-        lugares que se sienten como casa.
-      </p>
-
-
-      <form
-        #loginForm="ngForm"
-        (ngSubmit)="iniciarSesion(loginForm)"
-        class="space-y-5"
-      >
-        <!-- CORREO -->
-        <div>
-          <label for="correo" class="mb-2 block text-sm font-semibold text-slate-800">
-            Correo electrónico
-          </label>
-          <div class="relative">
+      <!-- CONTRASEÑA -->
+      <div>
+        <label for="contrasena" class="field-label">Contraseña</label>
+        <div class="relative">
+          <input
+            id="contrasena"
+            name="contrasena"
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Ingresa tu contraseña"
+            autocomplete="current-password"
+            [ngModel]="contrasenia"
+            (ngModelChange)="cambiarContrasenia($event)"
+            [readonly]="requiereSegundoFactor || requiereVerificacion"
+            required
+            class="field pr-12 read-only:bg-ink-50"
+          />
+          <button
+            type="button"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+            [attr.aria-pressed]="showPassword"
+            class="absolute right-1.5 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-md text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-800"
+          >
             <svg
-              class="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400"
+              class="size-5"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -40,377 +61,164 @@
               stroke-linejoin="round"
               aria-hidden="true"
             >
-              <rect x="3" y="5" width="18" height="14" rx="2" />
-              <path d="m3 7 9 6 9-6" />
+              @if (showPassword) {
+                <path d="M3 3 21 21" />
+                <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+                <path d="M9.9 5.2A10.9 10.9 0 0 1 12 5c5 0 9 7 9 7a14 14 0 0 1-3 3.6" />
+                <path d="M6.1 6.1C3.7 7.7 3 12 3 12s4 7 9 7a9.5 9.5 0 0 0 4-.9" />
+              } @else {
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+              }
             </svg>
-            <input
-              id="correo"
-              name="correo"
-              type="email"
-              placeholder="tu@correo.com"
-              autocomplete="email"
-              [ngModel]="correo"
-              (ngModelChange)="cambiarCorreo($event)"
-              [readonly]="requiereSegundoFactor || requiereVerificacion"
-              required
-              email
-              class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-12 pr-4 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 read-only:bg-slate-50"
-            />
-          </div>
+          </button>
         </div>
+      </div>
 
-        <!-- CONTRASEÑA -->
-        <div>
-          <label for="contrasena" class="mb-2 block text-sm font-semibold text-slate-800">
-            Contraseña
-          </label>
-          <div class="relative">
-            <input
-              id="contrasena"
-              name="contrasena"
-              [type]="showPassword ? 'text' : 'password'"
-              placeholder="Ingresa tu contraseña"
-              autocomplete="current-password"
-              [ngModel]="contrasenia"
-              (ngModelChange)="cambiarContrasenia($event)"
-              [readonly]="requiereSegundoFactor || requiereVerificacion"
-              required
-              class="w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-4 pr-12 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100 read-only:bg-slate-50"
-            />
-            <button
-              type="button"
-              (click)="showPassword = !showPassword"
-              [attr.aria-label]="showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'"
-              [attr.aria-pressed]="showPassword"
-              class="absolute right-3 top-1/2 grid size-9 -translate-y-1/2 place-items-center rounded-lg text-slate-500 transition hover:bg-emerald-50 hover:text-emerald-700"
-            >
-              <svg
-                class="size-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                @if (showPassword) {
-                  <path d="M3 3 21 21" />
-                  <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
-                  <path d="M9.9 5.2A10.9 10.9 0 0 1 12 5c5 0 9 7 9 7a14 14 0 0 1-3 3.6" />
-                  <path d="M6.1 6.1C3.7 7.7 3 12 3 12s4 7 9 7a9.5 9.5 0 0 0 4-.9" />
-                } @else {
-                  <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
-                  <circle cx="12" cy="12" r="3" />
-                }
-              </svg>
-            </button>
-          </div>
-        </div>
-
-
-        @if (requiereVerificacion || requiereSegundoFactor) {
-          <div class="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4">
-            <div class="flex items-start gap-3">
-              <div class="grid size-10 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
-                <svg
-                  class="size-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.8"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <rect x="3" y="5" width="18" height="14" rx="2" />
-                  <path d="m3 7 9 6 9-6" />
-                  <path d="m8 15 2 2 5-5" />
-                </svg>
-              </div>
-              <div>
-                <p class="text-sm font-bold text-slate-900">
-                  {{ requiereSegundoFactor ? 'Verificación de inicio de sesión' : 'Verifica tu correo electrónico' }}
-                </p>
-                @if (requiereSegundoFactor) {
-                  <p class="mt-1 text-xs leading-5 text-slate-600">
-                    Por seguridad, introduce el código de 6 dígitos
-                    enviado a tu correo. Este código será diferente
-                    en cada nuevo inicio de sesión.
-                  </p>
-                } @else {
-                  <p class="mt-1 text-xs leading-5 text-slate-600">
-                    Introduce el código que recibiste al registrarte
-                    para confirmar tu dirección de correo.
-                  </p>
-                }
-              </div>
-            </div>
-
-            <label for="codigo" class="block text-sm font-semibold text-slate-800">
-              Código enviado al correo
-            </label>
-            <input
-              id="codigo"
-              name="codigo"
-              type="text"
-              inputmode="numeric"
-              autocomplete="one-time-code"
-              maxlength="6"
-              pattern="[0-9]{6}"
-              [ngModel]="codigo"
-              (ngModelChange)="cambiarCodigo($event)"
-              [disabled]="cargando"
-              required
-              placeholder="000000"
-              class="w-full rounded-xl border border-emerald-200 bg-white px-4 py-3.5 text-center font-mono text-xl tracking-[0.45em] text-slate-900 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-            />
-
+      @if (requiereVerificacion || requiereSegundoFactor) {
+        <div class="space-y-3 rounded-md border border-brand-200 bg-brand-50 p-4">
+          <div>
+            <p class="text-sm font-semibold text-ink-900">
+              {{ requiereSegundoFactor ? 'Verificación de inicio de sesión' : 'Verifica tu correo electrónico' }}
+            </p>
             @if (requiereSegundoFactor) {
-              <p class="text-xs text-slate-600">
-                Revisa tu bandeja de entrada y la carpeta de spam.
+              <p class="mt-1 text-xs leading-5 text-ink-600">
+                Introduce el código de 6 dígitos enviado a tu correo.
+                El código cambia en cada inicio de sesión.
               </p>
-              <button
-                type="button"
-                (click)="cancelarSegundoFactor()"
-                [disabled]="cargando"
-                class="text-xs font-semibold text-emerald-800 hover:underline disabled:opacity-50"
-              >
-                Volver a las credenciales
-              </button>
+            } @else {
+              <p class="mt-1 text-xs leading-5 text-ink-600">
+                Introduce el código que recibiste al registrarte
+                para confirmar tu dirección de correo.
+              </p>
             }
           </div>
-        }
 
-        <!-- REENVIAR CÓDIGO DEL REGISTRO (NO DEL LOGIN) -->
-        @if (requiereVerificacion) {
-          <div class="space-y-2">
-            <p class="text-xs text-slate-500">¿No recibiste el código de registro o ya venció?</p>
+          <label for="codigo" class="field-label mb-0">Código enviado al correo</label>
+          <input
+            id="codigo"
+            name="codigo"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            [ngModel]="codigo"
+            (ngModelChange)="cambiarCodigo($event)"
+            [disabled]="cargando"
+            required
+            placeholder="000000"
+            class="field text-center font-mono text-xl tracking-[0.45em]"
+          />
+
+          @if (requiereSegundoFactor) {
+            <p class="text-xs text-ink-600">
+              Revisa tu bandeja de entrada y la carpeta de spam.
+            </p>
             <button
               type="button"
-              (click)="reenviarCodigo()"
-              [disabled]="reenviando || cargando || !correo.trim()"
-              class="text-sm font-semibold text-emerald-700 transition hover:text-emerald-900 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+              (click)="cancelarSegundoFactor()"
+              [disabled]="cargando"
+              class="text-xs font-semibold text-brand-800 hover:underline disabled:opacity-50"
             >
-              {{ reenviando ? 'Enviando código...' : 'Reenviar código de registro' }}
+              Volver a las credenciales
             </button>
-          </div>
-        }
-
-
-        @if (error) {
-          <p
-            role="alert"
-            class="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700"
-          >
-            {{ error }}
-          </p>
-        }
-        @if (mensaje) {
-          <p
-            role="status"
-            class="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
-          >
-            {{ mensaje }}
-          </p>
-        }
-
-
-        <div class="flex items-center justify-end">
-          <a
-            routerLink="/recuperar-contrasena"
-            class="text-sm font-semibold text-emerald-700 hover:underline"
-          >
-            ¿Olvidaste tu contraseña?
-          </a>
-        </div>
-
-
-        <button
-          type="submit"
-          [disabled]="cargando || loginForm.invalid"
-          class="flex w-full items-center justify-center gap-3 rounded-xl bg-emerald-700 px-6 py-4 text-sm font-bold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {{
-            cargando
-              ? 'Procesando...'
-              : requiereVerificacion
-                ? 'Verificar correo'
-                : requiereSegundoFactor
-                  ? 'Confirmar código e iniciar sesión'
-                  : 'Iniciar sesión'
-          }}
-          <svg
-            class="size-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M5 12h14" />
-            <path d="m13 6 6 6-6 6" />
-          </svg>
-        </button>
-      </form>
-
-
-      <div class="mt-7">
-        <div class="mb-5 flex items-center gap-3 text-xs text-slate-400">
-          <span class="h-px flex-1 bg-slate-200"></span>
-          <span>O continúa con</span>
-          <span class="h-px flex-1 bg-slate-200"></span>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-5 text-center shadow-sm sm:px-6">
-          <p class="mb-4 text-sm font-semibold text-slate-800">
-            Inicia sesión de forma segura
-          </p>
-
-          <div class="mb-5 flex flex-wrap items-center justify-center gap-2">
-            <label for="google-role" class="text-xs text-slate-500">
-              Crear cuenta como:
-            </label>
-            <select
-              id="google-role"
-              [value]="rolGoogle"
-              (change)="cambiarRolGoogle($any($event.target).value)"
-              class="h-9 w-36 rounded-full border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 outline-none transition focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
-            >
-              <option value="HUESPED">Huésped</option>
-              <option value="ANFITRION">Anfitrión</option>
-            </select>
-          </div>
-
-
-          <div class="flex justify-center">
-            <div
-              class="group relative inline-flex max-w-full items-center justify-center overflow-hidden rounded-full bg-[linear-gradient(#e9e9e9,#e9e9e9_50%,#fff)] p-1.5 shadow-[0_3px_8px_rgba(15,23,42,0.18)] transition-all duration-300 ease-out hover:scale-105 hover:rotate-1 hover:shadow-xl active:scale-95 active:rotate-0"
-            >
-              <span
-                aria-hidden="true"
-                class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/80 to-transparent transition-transform duration-700 group-hover:translate-x-full"
-              ></span>
-              <div
-                class="relative z-10 rounded-full bg-[linear-gradient(to_top,#ececec,#fff)] p-1 shadow-[inset_0_1px_2px_rgba(255,255,255,0.9),0_2px_4px_rgba(0,0,0,0.12)]"
-              >
-                <div
-                  #googleButton
-                  class="flex min-h-11 min-w-[200px] items-center justify-center rounded-full"
-                ></div>
-              </div>
-            </div>
-          </div>
-
-          <p class="mt-3 text-[11px] text-slate-400">
-            El rol solo se utiliza al crear una cuenta nueva.
-          </p>
-
-          @if (!googleDisponible && !googleError) {
-            <p class="mt-3 text-xs text-slate-500">Preparando acceso seguro...</p>
-          }
-          @if (googleCargando) {
-            <p class="mt-3 text-xs text-emerald-700">Validando tu cuenta de Google...</p>
           }
         </div>
+      }
 
-        @if (googleError) {
-          <p
-            role="alert"
-            class="mt-3 rounded-lg bg-amber-50 px-4 py-3 text-xs text-amber-800"
+      <!-- REENVIAR CÓDIGO DEL REGISTRO (NO DEL LOGIN) -->
+      @if (requiereVerificacion) {
+        <div class="space-y-2">
+          <p class="text-xs text-ink-500">¿No recibiste el código de registro o ya venció?</p>
+          <button
+            type="button"
+            (click)="reenviarCodigo()"
+            [disabled]="reenviando || cargando || !correo.trim()"
+            class="text-sm font-semibold text-brand-700 hover:text-brand-900 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {{ googleError }}
-          </p>
-        }
-      </div>
-
-      <!-- CREAR CUENTA -->
-      <div class="mt-8 border-t border-slate-200 pt-7 text-center">
-        <p class="text-sm text-slate-500">
-          ¿Aún no tienes una cuenta?
-          <a
-            routerLink="/registro"
-            class="ml-1 font-bold text-emerald-700 hover:text-emerald-900 hover:underline"
-          >
-            Crear cuenta
-          </a>
-        </p>
-      </div>
-
-      <!-- SEGURIDAD -->
-      <div class="mt-8 flex items-center justify-center gap-2 text-xs text-slate-400">
-        <svg
-          class="size-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
-          <path d="m9 12 2 2 4-4" />
-        </svg>
-        Tus datos seguros. Tu próxima escapada, más cerca.
-      </div>
-    </div>
-
-
-    <div class="relative min-h-[440px] overflow-hidden rounded-3xl bg-emerald-950 shadow-xl lg:min-h-[650px]">
-      <img
-        src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&amp;fit=crop&amp;w=1400&amp;q=85"
-        alt="Alojamiento rodeado de naturaleza"
-        class="absolute inset-0 size-full object-cover"
-      />
-      <div class="absolute inset-0 bg-gradient-to-t from-emerald-950 via-emerald-950/30 to-black/10"></div>
-
-      <div class="absolute left-8 top-8 flex items-center gap-2 rounded-full bg-white/95 px-4 py-2.5 text-xs font-semibold text-emerald-800 shadow-md">
-        <svg
-          class="size-4"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.8"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M20 4c-8 0-14 4-14 11a5 5 0 0 0 5 5c7 0 11-6 9-16Z" />
-          <path d="M4 21c3-6 7-10 12-13" />
-        </svg>
-        Hospitalidad con esencia colombiana
-      </div>
-
-      <div class="absolute inset-x-0 bottom-0 p-8 text-white lg:p-10">
-        <h2 class="max-w-lg text-3xl font-semibold leading-tight tracking-tight md:text-4xl lg:text-5xl">
-          Hay lugares que se sienten como casa.
-        </h2>
-        <p class="mt-4 text-sm text-white/80 md:text-base">
-          Encuentra el tuyo y vive Colombia a tu manera.
-        </p>
-        <div class="mt-8 flex items-center justify-between border-t border-white/25 pt-5 text-xs">
-          <span class="flex items-center gap-2">
-            <svg
-              class="size-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" />
-              <circle cx="12" cy="10" r="2.5" />
-            </svg>
-            Colombia
-          </span>
-          <span class="tracking-widest text-white/70">COLOMBIA</span>
+            {{ reenviando ? 'Enviando código...' : 'Reenviar código de registro' }}
+          </button>
         </div>
+      }
+
+      @if (error) {
+        <p role="alert" class="alert alert-danger">{{ error }}</p>
+      }
+      @if (mensaje) {
+        <p role="status" class="alert alert-success">{{ mensaje }}</p>
+      }
+
+      <div class="flex justify-end">
+        <a
+          routerLink="/recuperar-contrasena"
+          class="text-sm font-semibold text-brand-700 hover:underline"
+        >
+          ¿Olvidaste tu contraseña?
+        </a>
       </div>
+
+      <button
+        type="submit"
+        [disabled]="cargando || loginForm.invalid"
+        class="btn btn-primary w-full"
+      >
+        {{
+          cargando
+            ? 'Procesando...'
+            : requiereVerificacion
+              ? 'Verificar correo'
+              : requiereSegundoFactor
+                ? 'Confirmar código e iniciar sesión'
+                : 'Iniciar sesión'
+        }}
+      </button>
+    </form>
+
+    <!-- GOOGLE -->
+    <div class="mt-8 border-t border-ink-200 pt-6">
+      <h2 class="text-sm font-semibold text-ink-800">Ingresar con Google</h2>
+
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <label for="google-role" class="text-xs text-ink-600">
+          Crear cuenta como:
+        </label>
+        <select
+          id="google-role"
+          [value]="rolGoogle"
+          (change)="cambiarRolGoogle($any($event.target).value)"
+          class="field w-auto py-1.5 text-xs"
+        >
+          <option value="HUESPED">Huésped</option>
+          <option value="ANFITRION">Anfitrión</option>
+        </select>
+      </div>
+      <p class="field-hint">El rol solo se usa si la cuenta de Google aún no está registrada.</p>
+
+      <div class="mt-4 flex justify-center">
+        <div
+          #googleButton
+          class="flex min-h-11 min-w-[200px] items-center justify-center"
+        ></div>
+      </div>
+
+      @if (!googleDisponible && !googleError) {
+        <p class="mt-3 text-center text-xs text-ink-500">Cargando acceso con Google...</p>
+      }
+      @if (googleCargando) {
+        <p class="mt-3 text-center text-xs text-brand-700">Validando tu cuenta de Google...</p>
+      }
+      @if (googleError) {
+        <p role="alert" class="alert alert-warning mt-3 text-xs">{{ googleError }}</p>
+      }
     </div>
+
+    <!-- CREAR CUENTA -->
+    <p class="mt-8 border-t border-ink-200 pt-6 text-center text-sm text-ink-600">
+      ¿No tienes una cuenta?
+      <a routerLink="/registro" class="ml-1 font-semibold text-brand-700 hover:underline">
+        Crear cuenta
+      </a>
+    </p>
   </section>
 </main>

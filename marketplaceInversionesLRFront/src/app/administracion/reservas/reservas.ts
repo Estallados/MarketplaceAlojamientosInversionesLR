@@ -101,7 +101,7 @@ export class ReservasAdmin implements OnInit {
     if (r.estado === 'CANCELADA') {
       tone = 'bg-red-50 text-red-700';
     } else if (r.estado === 'CONFIRMADA') {
-      tone = r.completada ? 'bg-slate-100 text-slate-600' : 'bg-emerald-50 text-emerald-700';
+      tone = r.completada ? 'bg-ink-100 text-ink-600' : 'bg-brand-50 text-brand-700';
     }
     return 'inline-flex rounded-full px-3 py-1 text-xs font-bold ' + tone;
   }

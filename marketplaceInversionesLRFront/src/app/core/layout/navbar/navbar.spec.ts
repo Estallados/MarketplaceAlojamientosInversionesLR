@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
-import { Router, provideRouter } from '@angular/router';
+import { Router, Routes, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 
 import { Navbar } from './navbar';
@@ -19,7 +19,7 @@ describe('Navbar', () => {
   const correo = signal('');
   const cerrarSesion = vi.fn();
 
-  function crear() {
+  function crear(extra: Routes = []) {
     TestBed.configureTestingModule({
       imports: [Navbar],
       providers: [
@@ -31,6 +31,7 @@ describe('Navbar', () => {
           { path: 'favoritos', component: Vacia },
           { path: 'admin/alojamientos', component: Vacia },
           { path: 'admin/alojamientos/:id', component: Vacia },
+          ...extra,
           { path: '**', redirectTo: 'login' },
         ]),
         {
@@ -80,6 +81,30 @@ describe('Navbar', () => {
     expect(texto).toContain('Iniciar sesión');
     expect(texto).toContain('Crear cuenta');
     expect(enlaces(fixture)).toEqual([]);
+  });
+
+  it('Inicio y Explorar van siempre primero, a la izquierda, y la cuenta queda fuera de la navegación', async () => {
+    const publicas: Routes = [
+      { path: 'home', component: Vacia },
+      { path: 'explorar', component: Vacia },
+    ];
+    const visitante = crear(publicas);
+    expect(enlaces(visitante)).toEqual(['Inicio', 'Explorar']);
+    const nav = visitante.nativeElement.querySelector('nav') as HTMLElement;
+    expect(nav.textContent).not.toContain('Iniciar sesión');
+
+    // En el login la barra no cambia de forma
+    await TestBed.inject(Router).navigateByUrl('/login');
+    visitante.detectChanges();
+    expect(enlaces(visitante)).toEqual(['Inicio', 'Explorar']);
+    expect(visitante.nativeElement.textContent).toContain('Crear cuenta');
+
+    TestBed.resetTestingModule();
+    rol.set('Administrador');
+    correo.set('admin@correo.com');
+    const admin = crear(publicas);
+    expect(enlaces(admin)).toEqual(['Inicio', 'Explorar', 'Alojamientos']);
+    expect(admin.componentInstance.homePath()).toBe('/home');
   });
 
   it('el logo lleva al inicio del rol o, si aún no existe, al perfil', () => {

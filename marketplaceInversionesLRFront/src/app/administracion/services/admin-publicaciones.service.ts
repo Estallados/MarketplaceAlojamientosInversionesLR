@@ -117,9 +117,9 @@ export function etiquetaEstado(estado: string): string {
 
 /** Clases de Tailwind de la etiqueta de color de un estado. */
 export function claseBadge(estado: string): string {
-  let tono = 'bg-slate-100 text-slate-600';
+  let tono = 'bg-ink-100 text-ink-600';
   if (estado === 'ACTIVA') {
-    tono = 'bg-emerald-50 text-emerald-700';
+    tono = 'bg-brand-50 text-brand-700';
   } else if (estado === 'BLOQUEADA') {
     tono = 'bg-red-50 text-red-700';
   } else if (estado === 'PENDIENTE_REVISION') {

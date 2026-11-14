@@ -1,22 +1,21 @@
-<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+<main class="page">
   <div class="flex items-end justify-between">
     <div>
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Inversiones LR</p>
-      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">Auditoría</h1>
-      <p class="mt-2 text-sm text-slate-500">Trazabilidad de acciones realizadas en la plataforma.</p>
+      <h1 class="page-title">Auditoría</h1>
+      <p class="mt-2 text-sm text-ink-500">Trazabilidad de acciones realizadas en la plataforma.</p>
     </div>
   </div>
 
   <!-- Filtros -->
   <form class="mt-7 grid grid-cols-1 items-end gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto_auto_auto_auto]" (submit)="$event.preventDefault(); filtrar()">
     <label class="block">
-      <span class="text-xs font-bold text-slate-600">Acción</span>
+      <span class="text-xs font-bold text-ink-600">Acción</span>
       <input
         [value]="accion()"
         (input)="accion.set($any($event.target).value)"
         placeholder="Ej. LOGIN"
         list="acciones-auditoria"
-        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500"
+        class="field mt-1"
       />
       <datalist id="acciones-auditoria">
         @for (a of acciones; track a) {
@@ -25,28 +24,28 @@
       </datalist>
     </label>
     <label class="block">
-      <span class="text-xs font-bold text-slate-600">ID del actor</span>
+      <span class="text-xs font-bold text-ink-600">ID del actor</span>
       <input
         type="number"
         min="1"
         [value]="idActor()"
         (input)="idActor.set($any($event.target).value)"
         placeholder="Ej. 14"
-        class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500 lg:w-28"
+        class="field mt-1 lg:w-28"
       />
     </label>
     <label class="block">
-      <span class="text-xs font-bold text-slate-600">Desde</span>
-      <input type="date" [value]="desde()" (input)="desde.set($any($event.target).value)" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm" />
+      <span class="text-xs font-bold text-ink-600">Desde</span>
+      <input type="date" [value]="desde()" (input)="desde.set($any($event.target).value)" class="mt-1 w-full rounded-md border border-ink-200 bg-white px-4 py-3 text-sm" />
     </label>
     <label class="block">
-      <span class="text-xs font-bold text-slate-600">Hasta</span>
-      <input type="date" [value]="hasta()" (input)="hasta.set($any($event.target).value)" class="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm" />
+      <span class="text-xs font-bold text-ink-600">Hasta</span>
+      <input type="date" [value]="hasta()" (input)="hasta.set($any($event.target).value)" class="mt-1 w-full rounded-md border border-ink-200 bg-white px-4 py-3 text-sm" />
     </label>
-    <button type="submit" class="rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition-all hover:bg-emerald-800">
+    <button type="submit" class="btn btn-primary">
       Filtrar
     </button>
-    <button type="button" (click)="limpiar()" class="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-bold text-slate-800 transition-all hover:bg-slate-50">
+    <button type="button" (click)="limpiar()" class="btn btn-secondary">
       Limpiar
     </button>
   </form>
@@ -55,9 +54,9 @@
     <p class="mt-3 text-xs font-semibold text-red-600" role="alert">{{ errorFiltro() }}</p>
   }
 
-  <div class="mt-6 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-    <table class="w-full min-w-[900px] text-left text-sm">
-      <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+  <div class="mt-6 overflow-x-auto rounded-lg border border-ink-200 bg-white">
+    <table class="table-base min-w-[900px]">
+      <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
       <tr>
         @for (h of headers; track h) {
           <th class="px-5 py-4 font-bold">{{ h }}</th>
@@ -66,44 +65,44 @@
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="7" class="px-5 py-10 text-center text-slate-500">Cargando eventos...</td></tr>
+          <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500">Cargando eventos...</td></tr>
         } @else if (errorCarga()) {
           <tr>
             <td colspan="7" class="px-5 py-10 text-center">
               <p class="text-red-600" role="alert">{{ errorCarga() }}</p>
-              <button type="button" (click)="cargar()" class="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white hover:bg-emerald-800">
+              <button type="button" (click)="cargar()" class="btn btn-primary mt-3 text-xs">
                 Reintentar
               </button>
             </td>
           </tr>
         } @else {
           @for (e of auditEvents(); track e.idEvento) {
-            <tr class="border-t border-slate-100 hover:bg-slate-50">
+            <tr class="border-t border-ink-100 hover:bg-ink-50">
               <td class="px-5 py-5 whitespace-nowrap"><strong>{{ e.fecha | date: 'dd/MM/yyyy HH:mm' }}</strong></td>
               <td class="px-5 py-5">{{ usuario(e) }}</td>
               <td class="px-5 py-5">{{ rol(e) }}</td>
               <td class="px-5 py-5">
                 {{ e.accion }}
                 @if (e.detalle) {
-                  <span class="mt-1 block max-w-xs truncate text-xs text-slate-500">{{ e.detalle }}</span>
+                  <span class="mt-1 block max-w-xs truncate text-xs text-ink-500">{{ e.detalle }}</span>
                 }
               </td>
               <td class="px-5 py-5">{{ entidad(e) }}</td>
               <td class="px-5 py-5"><span [class]="badgeClass(e)">{{ resultado(e) }}</span></td>
               <td class="px-5 py-5">
-                <button type="button" (click)="verDetalle(e)" class="font-bold text-emerald-700">Ver detalle</button>
+                <button type="button" (click)="verDetalle(e)" class="font-bold text-brand-700">Ver detalle</button>
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="7" class="px-5 py-10 text-center text-slate-500">No hay eventos para mostrar.</td></tr>
+            <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500">No hay eventos para mostrar.</td></tr>
           }
         }
       </tbody>
     </table>
-    <div class="flex items-center justify-between border-t border-slate-100 px-5 py-4 text-xs text-slate-500">
+    <div class="flex items-center justify-between border-t border-ink-100 px-5 py-4 text-xs text-ink-500">
       <span>Mostrando {{ auditEvents().length }} de {{ totalElementos() }} eventos</span>
       <div class="flex gap-2">
-        <button type="button" (click)="irAPagina(pagina() - 1)" [disabled]="pagina() === 0 || loading()" class="rounded-lg border px-3 py-2 disabled:text-slate-300">
+        <button type="button" (click)="irAPagina(pagina() - 1)" [disabled]="pagina() === 0 || loading()" class="rounded-md border px-3 py-2 disabled:text-ink-300">
           Anterior
         </button>
         @for (p of paginasVisibles(); track p) {
@@ -111,13 +110,13 @@
             type="button"
             (click)="irAPagina(p)"
             [disabled]="loading()"
-            [class]="p === pagina() ? 'rounded-lg bg-emerald-700 px-3 py-2 text-white' : 'rounded-lg border px-3 py-2 hover:bg-slate-50'"
+            [class]="p === pagina() ? 'rounded-md bg-brand-700 px-3 py-2 text-white' : 'rounded-md border px-3 py-2 hover:bg-ink-50'"
             [attr.aria-current]="p === pagina() ? 'page' : null"
           >
             {{ p + 1 }}
           </button>
         }
-        <button type="button" (click)="irAPagina(pagina() + 1)" [disabled]="pagina() >= totalPaginas() - 1 || loading()" class="rounded-lg border px-3 py-2 disabled:text-slate-300">
+        <button type="button" (click)="irAPagina(pagina() + 1)" [disabled]="pagina() >= totalPaginas() - 1 || loading()" class="rounded-md border px-3 py-2 disabled:text-ink-300">
           Siguiente
         </button>
       </div>
@@ -126,25 +125,25 @@
 
   <!-- Detalle de un evento -->
   @if (detalleAbierto()) {
-    <div class="fixed inset-0 z-[70] grid place-items-center bg-slate-950/55 p-6 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="evento-titulo">
-      <div class="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-[28px] bg-white p-8 shadow-2xl">
+    <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="evento-titulo">
+      <div class="modal-panel">
         <div class="flex items-start justify-between">
-          <h2 id="evento-titulo" class="font-display text-3xl font-bold">Detalle del evento</h2>
-          <button type="button" (click)="cerrarDetalle()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full bg-slate-100">
+          <h2 id="evento-titulo" class="font-display text-3xl font-semibold">Detalle del evento</h2>
+          <button type="button" (click)="cerrarDetalle()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-md text-ink-500 transition-colors hover:bg-ink-100 hover:text-ink-900">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
         @if (cargandoDetalle()) {
-          <p class="mt-6 text-sm text-slate-500">Cargando detalle...</p>
+          <p class="mt-6 text-sm text-ink-500">Cargando detalle...</p>
         } @else if (errorDetalle()) {
-          <p class="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">No se pudo cargar el detalle del evento.</p>
+          <p class="mt-6 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">No se pudo cargar el detalle del evento.</p>
         } @else {
           <dl class="mt-6 space-y-3 text-sm">
             @for (c of camposDetalle(); track c.clave) {
-              <div class="flex justify-between gap-6 border-b border-slate-100 pb-3">
-                <dt class="text-slate-500">{{ c.clave }}</dt>
+              <div class="flex justify-between gap-6 border-b border-ink-100 pb-3">
+                <dt class="text-ink-500">{{ c.clave }}</dt>
                 <dd class="text-right font-semibold break-words">{{ c.valor }}</dd>
               </div>
             }

@@ -220,19 +220,19 @@ export class Mensajes implements OnInit {
 
   itemClass(c: Conversacion): string {
     return (
-      'flex w-full gap-3 border-b border-slate-100 p-5 text-left ' +
-      (this.selectedId() === c.id ? 'bg-emerald-50' : 'hover:bg-slate-50')
+      'flex w-full gap-3 border-b border-ink-100 p-5 text-left ' +
+      (this.selectedId() === c.id ? 'bg-brand-50' : 'hover:bg-ink-50')
     );
   }
 
   bubbleClass(m: Mensaje): string {
     return (
-      'max-w-[70%] rounded-2xl px-5 py-3 text-sm leading-6 break-words ' +
-      (m.mio ? 'bg-emerald-700 text-white' : 'border border-slate-200 bg-white')
+      'max-w-[70%] rounded-lg px-5 py-3 text-sm leading-6 break-words ' +
+      (m.mio ? 'bg-brand-700 text-white' : 'border border-ink-200 bg-white')
     );
   }
 
   timeClass(m: Mensaje): string {
-    return 'mt-1 text-right text-[10px] ' + (m.mio ? 'text-emerald-100' : 'text-slate-400');
+    return 'mt-1 text-right text-xs ' + (m.mio ? 'text-brand-100' : 'text-ink-500');
   }
 }

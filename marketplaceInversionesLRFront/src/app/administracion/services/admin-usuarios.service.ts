@@ -78,9 +78,9 @@ export function etiquetaEstado(estado: unknown): string {
 
 export function claseEstado(estado: unknown): string {
   const e = tipoEstado(estado);
-  let tono = 'bg-slate-100 text-slate-600';
+  let tono = 'bg-ink-100 text-ink-600';
   if (e === 'ACTIVO') {
-    tono = 'bg-emerald-50 text-emerald-700';
+    tono = 'bg-brand-50 text-brand-700';
   } else if (e === 'RESTRINGIDO') {
     tono = 'bg-red-50 text-red-700';
   }

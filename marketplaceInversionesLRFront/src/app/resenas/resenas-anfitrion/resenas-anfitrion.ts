@@ -5,6 +5,7 @@ import { AlojamientoRespuesta } from '../../alojamientos/models/alojamiento';
 import { PublicacionHostService } from '../../alojamientos/services/publicacion-host.service';
 import { Resena, ResumenResenas } from '../models/resena';
 import { ResenaService } from '../services/resena.service';
+import { Cargando } from '../../core/ui/cargando/cargando';
 
 /** Reseñas por página. */
 const TAMANIO = 10;
@@ -15,6 +16,7 @@ const TAMANIO = 10;
  */
 @Component({
   selector: 'app-resenas-anfitrion',
+  imports: [Cargando],
   standalone: true,
   templateUrl: './resenas-anfitrion.html',
 })

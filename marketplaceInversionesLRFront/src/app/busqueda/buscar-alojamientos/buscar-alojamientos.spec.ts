@@ -98,4 +98,10 @@ describe('BuscarAlojamientos (HU-23)', () => {
     expect(c.errorCarga()).toBe(true);
     expect(c.stays()).toEqual([]);
   });
+
+  it('desde el inicio con ?tipo= muestra solo los alojamientos de ese tipo', () => {
+    const c = crear({ tipo: 'Cabaña' });
+    expect(c.filterType()).toBe('Cabaña');
+    expect(c.visible().map((a) => a.titulo)).toEqual(['Cabaña']);
+  });
 });
