@@ -4,7 +4,7 @@
       <div>
         <h2 id="resena-titulo" class="font-display text-3xl font-semibold">Calificar estancia</h2>
         <p class="mt-3 text-sm leading-6 text-ink-500">
-          Cuéntanos cómo fue tu experiencia en {{ tituloAlojamiento() || 'este alojamiento' }}.
+          Califica tu estancia en {{ tituloAlojamiento() || 'este alojamiento' }}.
         </p>
       </div>
       <button type="button" (click)="cancelar()" aria-label="Cerrar" class="grid size-9 shrink-0 place-items-center rounded-full bg-ink-100">
@@ -29,7 +29,7 @@
           >
             <svg
               class="size-8"
-              [class.text-amber-500]="s <= (calificacionHover() || calificacion())"
+              [class.text-gold-500]="s <= (calificacionHover() || calificacion())"
               [class.text-ink-200]="s > (calificacionHover() || calificacion())"
               viewBox="0 0 24 24"
               fill="currentColor"

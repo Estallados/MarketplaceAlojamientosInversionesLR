@@ -1,8 +1,7 @@
 <main class="mx-auto max-w-page px-4 py-10 sm:px-8">
   <div class="flex items-end justify-between">
     <div>
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Inversiones LR</p>
-      <h1 class="font-display mt-2 text-3xl font-semibold text-ink-900">Moderación de reseñas</h1>
+      <h1 class="page-title">Moderación de reseñas</h1>
       <p class="mt-2 text-sm text-ink-500">Consulta y controla la visibilidad sin modificar el contenido original.</p>
     </div>
   </div>
@@ -59,7 +58,7 @@
               <td class="px-5 py-5">
                 <div class="flex items-center gap-1" [attr.aria-label]="r.calificacion + ' de 5 estrellas'">
                   @for (s of starList; track s) {
-                    <span [class]="s <= r.calificacion ? 'text-amber-500' : 'text-ink-200'">
+                    <span [class]="s <= r.calificacion ? 'text-gold-500' : 'text-ink-200'">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="m12 2 3 6 7 .9-5 4.8 1.4 6.8L12 17.3l-6.4 3.2L7 13.7 2 8.9 9 8Z" />
                       </svg>

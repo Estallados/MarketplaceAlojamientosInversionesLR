@@ -29,8 +29,7 @@
 
     <div class="flex items-end justify-between">
       <div>
-        <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Detalle de reserva</p>
-        <h1 class="font-display mt-2 text-4xl font-semibold">{{ reserva.tituloAlojamiento }}</h1>
+        <h1 class="page-title">{{ reserva.tituloAlojamiento }}</h1>
         <p class="mt-2 text-ink-500">{{ reserva.ciudad }} · Reserva #{{ reserva.idReserva }}</p>
       </div>
       <span data-etiqueta [class]="claseEtiqueta()">{{ etiqueta() }}</span>
@@ -39,7 +38,7 @@
     <div class="mt-8 grid grid-cols-[1.1fr_.9fr] gap-6">
       <div class="space-y-6">
         <section data-informacion class="rounded-lg border border-ink-200 bg-white p-7">
-          <h2 class="font-display text-xl font-semibold">Información de la reserva</h2>
+          <h2 class="section-title">Información de la reserva</h2>
           <div class="mt-6 grid grid-cols-3 gap-6 text-sm">
             @for (i of informacion(); track i.label) {
               <div>
@@ -55,7 +54,7 @@
             <img [src]="reserva.imagenAlojamiento" [alt]="reserva.tituloAlojamiento" class="h-64 w-full object-cover" />
           }
           <div class="p-7">
-            <h2 class="font-display text-xl font-semibold">Información del alojamiento</h2>
+            <h2 class="section-title">Información del alojamiento</h2>
             <div class="mt-5 grid grid-cols-2 gap-5 text-sm">
               <div>
                 <span class="text-ink-500">Tipo</span>
@@ -76,7 +75,7 @@
 
       <div class="space-y-6">
         <section class="rounded-lg border border-ink-200 bg-white p-7">
-          <h2 class="font-display text-xl font-semibold">Resumen de la cotización</h2>
+          <h2 class="section-title">Resumen de la cotización</h2>
           <div data-desglose class="mt-6 space-y-4 text-sm">
             <div class="flex justify-between"><span>Noches</span><strong>{{ reserva.noches }}</strong></div>
             @for (l of lineasDesglose(); track $index) {
@@ -95,7 +94,7 @@
         </section>
 
         <section class="rounded-lg border border-ink-200 bg-white p-7">
-          <h2 class="font-display text-xl font-semibold">Información adicional</h2>
+          <h2 class="section-title">Información adicional</h2>
           <div class="mt-5 space-y-3 text-sm">
             <p class="flex justify-between">
               <span class="text-ink-500">Política de cancelación</span>

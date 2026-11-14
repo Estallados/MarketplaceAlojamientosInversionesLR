@@ -83,21 +83,6 @@ export class DetalleAlojamientoPage implements OnInit {
     });
   });
 
-  // ==================== Información visual ====================
-  readonly highlights = computed(() => [
-    { icon: 'home', title: 'Un espacio solo para ti', text: 'Tendrás todo el alojamiento durante tu estancia.' },
-    {
-      icon: 'pin',
-      title: 'Ubicación privilegiada',
-      text: `Cerca de naturaleza, restaurantes y puntos de interés de ${this.stay()?.ciudad ?? 'la ciudad'}.`,
-    },
-    {
-      icon: 'star',
-      title: 'Experiencia destacada',
-      text: `${this.stay()?.cantidadResenas ?? 0} huéspedes han calificado este alojamiento.`,
-    },
-  ]);
-
   // ==================== Mapa (CA-164) ====================
   /** Punto aproximado: las coordenadas reales desplazadas unos metros por privacidad. */
   readonly puntoAproximado = computed<[number, number] | null>(() => {
@@ -137,9 +122,6 @@ export class DetalleAlojamientoPage implements OnInit {
     const ciudad = this.stay()?.ciudad ?? '';
     return `https://www.openstreetmap.org/search?query=${encodeURIComponent(ciudad)}`;
   });
-
-  readonly horizontalLines = [18, 38, 58, 78];
-  readonly verticalLines = [15, 35, 55, 75];
 
   // ==================== Favoritos (HU-29) ====================
   /** true si el alojamiento está en los favoritos del huésped, según el backend. */

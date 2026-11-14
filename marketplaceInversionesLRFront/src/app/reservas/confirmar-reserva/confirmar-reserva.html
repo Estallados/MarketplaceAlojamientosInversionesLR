@@ -2,11 +2,8 @@
 
   <!-- ENCABEZADO -->
   <div>
-    <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">
-      Inversiones LR
-    </p>
 
-    <h1 class="mt-2 text-3xl font-bold text-ink-900">
+    <h1 class="page-title">
       {{ reserva() ? 'Reserva creada' : 'Confirmar reserva' }}
     </h1>
 
@@ -372,7 +369,7 @@
     >
       @if (r.estado === 'CONFIRMADA') {
         <p data-titulo-reserva class="text-base font-bold text-brand-900">
-          ✓ Tu reserva quedó confirmada.
+          Tu reserva quedó confirmada.
         </p>
       } @else {
         <p data-titulo-reserva class="text-base font-bold text-amber-900">

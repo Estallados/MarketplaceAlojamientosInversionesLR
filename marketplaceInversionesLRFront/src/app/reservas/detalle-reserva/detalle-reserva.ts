@@ -191,7 +191,7 @@ export class DetalleReserva implements OnInit, OnDestroy {
   /** La reseña quedó asociada a la reserva (CA-018): se recarga para actualizar tieneResena. */
   resenaPublicada(): void {
     this.mostrarResena.set(false);
-    this.mostrarAviso('¡Gracias! Tu reseña fue publicada.');
+    this.mostrarAviso('Tu reseña fue publicada.');
     this.cargarReserva(true);
   }
 

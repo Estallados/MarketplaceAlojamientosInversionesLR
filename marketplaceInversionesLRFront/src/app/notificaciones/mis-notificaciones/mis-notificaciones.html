@@ -1,10 +1,9 @@
 <main class="mx-auto max-w-form px-4 py-14 sm:px-8">
   <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
     <div>
-      <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Centro de actividad</p>
-      <h1 class="font-display mt-3 text-4xl font-semibold text-ink-900">Notificaciones</h1>
+      <h1 class="page-title">Notificaciones</h1>
       <p class="mt-3 text-ink-500">
-        Mantente al día con tus reservas y alojamientos.
+        Avisos sobre tus reservas, alojamientos y mensajes.
         @if (!loading() && !errorCarga() && sinLeer() > 0) {
           <strong class="text-brand-700">{{ sinLeer() }} sin leer.</strong>
         }

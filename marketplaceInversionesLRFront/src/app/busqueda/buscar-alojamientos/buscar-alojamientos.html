@@ -63,7 +63,7 @@
       <p class="text-sm text-brand-700">
         Inicio / Explorar alojamientos
       </p>
-      <h1 class="font-display mt-3 text-4xl font-semibold text-ink-900">
+      <h1 class="page-title">
         Alojamientos disponibles
       </h1>
       <p class="mt-2 text-ink-500">
@@ -107,7 +107,7 @@
       class="h-fit rounded-lg border border-ink-200 bg-white p-6"
     >
       <div class="flex items-center justify-between">
-        <h2 class="font-display text-xl font-semibold text-ink-900">
+        <h2 class="section-title">
           Filtros
         </h2>
         <svg
@@ -384,7 +384,7 @@
                     [src]="s.imagenes?.at(0) || fotoRelleno"
                     [alt]="s.titulo"
                     loading="lazy"
-                    class="h-full w-full object-cover transition duration-500"
+                    class="h-full w-full object-cover"
                   />
                   <!-- Tipo -->
                   <span
@@ -409,7 +409,7 @@
                   <div
                     class="flex shrink-0 items-center gap-1 text-sm font-bold text-ink-900"
                   >
-                    <span class="text-amber-500">★</span>
+                    <span class="text-gold-500">★</span>
                     @if (s.promedioCalificacion != null) {
                       {{ s.promedioCalificacion | number: '1.1-1' }}
                     } @else {
