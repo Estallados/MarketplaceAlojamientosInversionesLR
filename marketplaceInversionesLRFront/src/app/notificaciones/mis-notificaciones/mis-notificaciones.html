@@ -59,11 +59,6 @@
     } @else {
       @for (n of items(); track n.idNotificacion) {
         <button type="button" (click)="abrir(n)" [class]="claseItem(n)">
-          <span class="grid size-11 shrink-0 place-items-center rounded-full bg-brand-100 text-brand-700">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
-            </svg>
-          </span>
           <span class="flex-1">
             <span class="flex justify-between gap-4">
               <strong>{{ titulo(n) }}</strong>
