@@ -346,7 +346,7 @@
               data-elegir-fechas
               [routerLink]="ruta"
               [queryParams]="queryFechas()"
-              class="rounded-md border border-current px-4 py-2 text-xs font-bold transition hover:bg-white/60"
+              class="rounded-md border border-current px-4 py-2 text-xs font-bold transition-colors hover:bg-white"
             >
               {{ e.tipo === 'no-activo' ? 'Volver al alojamiento'
                 : e.tipo === 'conflicto' ? 'Revisar disponibilidad' : 'Elegir otras fechas' }}
