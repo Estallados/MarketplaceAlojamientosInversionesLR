@@ -46,7 +46,7 @@ describe('Footer', () => {
 
   it('solo muestra los enlaces del rol que tienen pantalla en el router', () => {
     rol.set('Anfitrión');
-    expect(enlaces(crear())).toEqual(['Mis alojamientos', 'Mi perfil']);
+    expect(enlaces(crear())).toEqual(['Inicio', 'Explorar', 'Mis alojamientos', 'Mi perfil']);
   });
 
   it('muestra el año actual', () => {

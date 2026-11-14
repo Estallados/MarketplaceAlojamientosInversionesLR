@@ -10,78 +10,48 @@
       aria-label="Inversiones LR, ir al inicio"
       class="shrink-0 font-display text-xl font-semibold leading-none text-ink-900"
     >
-      Inversiones <span class="text-brand-700">LR</span>
+      <span class="hidden min-[400px]:inline">Inversiones </span><span class="text-brand-700">LR</span>
     </a>
     <!-- ===================================== -->
-    <!-- NAVBAR EXCLUSIVO DEL LOGIN -->
+    <!-- NAVEGACIÓN: INICIO Y EXPLORAR SIEMPRE PRIMERO, LUEGO LAS SECCIONES DEL ROL -->
+    <!-- Sin sesión se ve en todos los tamaños; con sesión, en pantallas pequeñas -->
+    <!-- las secciones están en el menú de usuario. -->
     <!-- ===================================== -->
-    @if (isLoginPage()) {
-      <nav
-        aria-label="Navegación de inicio de sesión"
-        class="ml-auto flex items-center gap-1 sm:gap-4"
-      >
-        @if (rutaDisponible('/home')) {
-          <a
-            routerLink="/home"
-            class="whitespace-nowrap rounded-md px-2 py-2 text-xs font-semibold text-ink-600 transition hover:bg-ink-50 hover:text-brand-700 sm:px-3 sm:text-sm"
-          >
-            Inicio
-          </a>
-        }
-        @if (rutaDisponible('/explorar')) {
-          <a
-            routerLink="/explorar"
-            class="whitespace-nowrap rounded-md px-2 py-2 text-xs font-semibold text-ink-600 transition hover:bg-ink-50 hover:text-brand-700 sm:px-3 sm:text-sm"
-          >
-            Explorar
-          </a>
-        }
-        @if (!estaAutenticado()) {
-          <a
-            routerLink="/registro"
-            class="whitespace-nowrap rounded-md px-2 py-2 text-xs font-bold text-brand-700 transition hover:bg-brand-50 sm:px-3 sm:text-sm"
-          >
-            Crear cuenta
-          </a>
-        }
-      </nav>
-    } @else {
-      <!-- ===================================== -->
-        <!-- NAVEGACIÓN SEGÚN ROL REAL -->
-        <!-- ===================================== -->
-      <nav
-        aria-label="Navegación principal"
-        class="hidden h-full shrink-0 items-center gap-1 lg:flex"
-      >
-        @for (item of items(); track item[1]) {
-          <a
-            [routerLink]="item[1]"
-            routerLinkActive
-            #rla="routerLinkActive"
-            class="relative flex h-full items-center whitespace-nowrap px-4 text-sm font-semibold transition"
-            [class]="rla.isActive ? activeClass : inactiveClass"
-          >
-            {{ item[0] }}
-          </a>
-        }
-      </nav>
-      <!-- ===================================== -->
-        <!-- OPCIONES DERECHAS -->
-        <!-- ===================================== -->
-      <div class="ml-auto flex items-center gap-2">
+    <nav
+      aria-label="Navegación principal"
+      class="h-full min-w-0 items-center gap-1 lg:flex"
+      [class.flex]="!estaAutenticado()"
+      [class.hidden]="estaAutenticado()"
+    >
+      @for (item of items(); track item[1]) {
+        <a
+          [routerLink]="item[1]"
+          routerLinkActive
+          #rla="routerLinkActive"
+          class="relative flex h-full items-center whitespace-nowrap px-2 text-sm font-semibold transition-colors sm:px-3 xl:px-4"
+          [class]="rla.isActive ? activeClass : inactiveClass"
+        >
+          {{ item[0] }}
+        </a>
+      }
+    </nav>
+    <!-- ===================================== -->
+    <!-- CUENTA: SIEMPRE A LA DERECHA -->
+    <!-- ===================================== -->
+    <div class="ml-auto flex shrink-0 items-center gap-2">
         <!-- ===================================== -->
         <!-- USUARIO SIN INICIAR SESIÓN -->
         <!-- ===================================== -->
         @if (!estaAutenticado()) {
           <a
             routerLink="/login"
-            class="whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold text-ink-600 transition hover:bg-ink-100"
+            class="whitespace-nowrap rounded-md px-2 py-2 text-sm font-semibold text-ink-700 transition-colors hover:bg-ink-100 sm:px-3"
           >
             Iniciar sesión
           </a>
           <a
             routerLink="/registro"
-            class="btn btn-primary"
+            class="btn btn-primary hidden sm:inline-flex"
           >
             Crear cuenta
           </a>
@@ -89,16 +59,6 @@
           <!-- ===================================== -->
             <!-- USUARIO AUTENTICADO -->
             <!-- ===================================== -->
-            <!-- PUBLICAR ALOJAMIENTO -->
-            <!-- SOLO ANFITRIÓN -->
-          @if (role() === 'Anfitrión' && rutaDisponible('/host/alojamientos')) {
-            <a
-              routerLink="/host/alojamientos"
-              class="hidden items-center justify-center gap-2 whitespace-nowrap rounded-md px-5 py-3 text-sm font-bold text-ink-600 transition hover:bg-ink-100 lg:flex"
-            >
-              Mis alojamientos
-            </a>
-          }
           <!-- ===================================== -->
             <!-- NOTIFICACIONES (HU-02) -->
             <!-- ===================================== -->
@@ -282,6 +242,5 @@
           </div>
         }
       </div>
-    }
   </div>
 </header>

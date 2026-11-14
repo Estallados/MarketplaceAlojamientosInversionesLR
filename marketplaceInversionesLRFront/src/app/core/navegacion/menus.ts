@@ -11,9 +11,13 @@ export type NavItem = [label: string, path: string];
 // cuando su historia agregue la ruta, sin tocar la barra ni el pie de página.
 // ======================================
 
-export const GUEST_ITEMS: NavItem[] = [
+/** Enlaces públicos: siempre van primero, a la izquierda, con o sin sesión. */
+export const PUBLIC_ITEMS: NavItem[] = [
   ['Inicio', '/home'],
   ['Explorar', '/explorar'],
+];
+
+export const GUEST_ITEMS: NavItem[] = [
   ['Mis favoritos', '/favoritos'],
   ['Mensajes', '/mensajes'],
   ['Mis reservas', '/reservas'],
@@ -38,11 +42,6 @@ export const ADMIN_ITEMS: NavItem[] = [
   ['Auditoría', '/admin/auditoria'],
 ];
 
-export const VISITOR_ITEMS: NavItem[] = [
-  ['Inicio', '/home'],
-  ['Explorar', '/explorar'],
-];
-
 /** Página de inicio de cada rol. */
 export const ROLE_HOME: Record<RolUsuario, string> = {
   Huésped: '/home',
@@ -50,12 +49,13 @@ export const ROLE_HOME: Record<RolUsuario, string> = {
   Administrador: '/admin/dashboard',
 };
 
-/** Menú del rol de la sesión (o del visitante sin sesión). */
+/** Menú de la sesión: los enlaces públicos y, después, los del rol (sin sesión, solo los públicos). */
 export function menuDelRol(rol: RolUsuario | null): NavItem[] {
   if (rol === null) {
-    return VISITOR_ITEMS;
+    return PUBLIC_ITEMS;
   }
-  return rol === 'Anfitrión' ? HOST_ITEMS : rol === 'Administrador' ? ADMIN_ITEMS : GUEST_ITEMS;
+  const delRol = rol === 'Anfitrión' ? HOST_ITEMS : rol === 'Administrador' ? ADMIN_ITEMS : GUEST_ITEMS;
+  return [...PUBLIC_ITEMS, ...delRol];
 }
 
 /** true si alguna ruta del router (sin contar el comodín ni las redirecciones) atiende esa URL. */
