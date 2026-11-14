@@ -1,57 +1,11 @@
 import { Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Route, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 
 import { RolUsuario, SessionService } from '../../services/session.service';
 import { CampanaNotificaciones } from '../../../notificaciones/campana/campana-notificaciones';
-
-type NavItem = [label: string, path: string];
-
-// ======================================
-// MENÚS SEGÚN ROL (los mismos del proyecto base)
-// Solo se muestran los que ya tienen pantalla en el router: los demás aparecen solos
-// cuando su historia agregue la ruta, sin tocar esta barra.
-// ======================================
-
-const GUEST_ITEMS: NavItem[] = [
-  ['Inicio', '/home'],
-  ['Explorar', '/explorar'],
-  ['Mis favoritos', '/favoritos'],
-  ['Mensajes', '/mensajes'],
-  ['Mis reservas', '/reservas'],
-  ['Mis reseñas', '/resenas'],
-];
-
-const HOST_ITEMS: NavItem[] = [
-  ['Resumen', '/host/dashboard'],
-  ['Mis alojamientos', '/host/alojamientos'],
-  ['Reservas', '/host/reservas'],
-  ['Chat', '/host/chat'],
-  ['Reseñas', '/host/resenas'],
-];
-
-const ADMIN_ITEMS: NavItem[] = [
-  ['Dashboard', '/admin/dashboard'],
-  ['Usuarios', '/admin/usuarios'],
-  ['Alojamientos', '/admin/alojamientos'],
-  ['Reservas', '/admin/reservas'],
-  ['Reseñas', '/admin/resenas'],
-  ['Reportes', '/admin/reportes'],
-  ['Auditoría', '/admin/auditoria'],
-];
-
-const VISITOR_ITEMS: NavItem[] = [
-  ['Inicio', '/home'],
-  ['Explorar', '/explorar'],
-];
-
-/** Página de inicio de cada rol. */
-const ROLE_HOME: Record<RolUsuario, string> = {
-  Huésped: '/home',
-  Anfitrión: '/host/dashboard',
-  Administrador: '/admin/dashboard',
-};
+import { NavItem, ROLE_HOME, VISITOR_ITEMS, menuDelRol, rutaDisponible } from '../../navegacion/menus';
 
 /**
  * Barra de navegación superior, copiada del proyecto base (layout/navbar). Muestra el menú del rol
@@ -107,9 +61,7 @@ export class Navbar {
     if (!this.estaAutenticado()) {
       return VISITOR_ITEMS.filter(([, path]) => this.rutaDisponible(path));
     }
-    const lista =
-      this.role() === 'Anfitrión' ? HOST_ITEMS : this.role() === 'Administrador' ? ADMIN_ITEMS : GUEST_ITEMS;
-    return lista.filter(([, path]) => this.rutaDisponible(path));
+    return menuDelRol(this.role()).filter(([, path]) => this.rutaDisponible(path));
   });
 
   /** Inicio del rol; si su pantalla aún no existe, el perfil (o el login sin sesión). */
@@ -130,8 +82,7 @@ export class Navbar {
 
   /** true si alguna ruta del router (sin contar el comodín) atiende esa URL. */
   rutaDisponible(url: string): boolean {
-    const partes = url.split(/[?#]/)[0].split('/').filter(Boolean);
-    return this.router.config.some((ruta) => this.coincide(ruta, partes));
+    return rutaDisponible(this.router.config, url);
   }
 
   cerrarSesion(): void {
@@ -144,14 +95,4 @@ export class Navbar {
     this.roleMenu = false;
   }
 
-  private coincide(ruta: Route, partes: string[]): boolean {
-    if (ruta.path === undefined || ruta.path === '**' || ruta.redirectTo !== undefined) {
-      return false;
-    }
-    const patron = ruta.path.split('/').filter(Boolean);
-    return (
-      patron.length === partes.length &&
-      patron.every((segmento, i) => segmento.startsWith(':') || segmento === partes[i])
-    );
-  }
 }
