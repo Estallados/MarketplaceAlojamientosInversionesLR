@@ -1,0 +1,107 @@
+<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+  <!-- Encabezado -->
+  <div class="flex items-end justify-between">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-700">Inversiones LR</p>
+      <h1 class="font-display mt-2 text-3xl font-bold text-slate-900">Dashboard administrativo</h1>
+      <p class="mt-2 text-sm text-slate-500">Vista general de la actividad en Inversiones LR.</p>
+    </div>
+  </div>
+  @if (loading()) {
+    <p class="mt-8 text-sm text-slate-500">Cargando datos del dashboard...</p>
+  } @else if (errorCarga()) {
+    <div class="mt-8 rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center" role="alert">
+      <p class="text-red-600">{{ errorCarga() }}</p>
+      <button type="button" (click)="cargar()" class="mt-4 rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-800">
+        Reintentar
+      </button>
+    </div>
+  } @else {
+    <!-- Métricas -->
+    <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      @for (m of metrics(); track m.label) {
+        <div class="rounded-2xl border border-slate-200 bg-white p-5">
+          <div class="flex items-start justify-between">
+          <span class="grid size-10 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              @switch (m.icon) {
+                @case ('users') {
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                }
+                @case ('building') {
+                  <rect x="4" y="3" width="16" height="18" rx="2" />
+                  <path d="M9 7h.01M15 7h.01M9 11h.01M15 11h.01M9 15h.01M15 15h.01M9 21v-3h6v3" />
+                }
+                @case ('chart') {
+                  <path d="M3 3v18h18" />
+                  <path d="m7 16 4-5 4 3 5-7" />
+                }
+                @case ('money') {
+                  <rect x="2" y="6" width="20" height="12" rx="2" />
+                  <circle cx="12" cy="12" r="2" />
+                  <path d="M6 12h.01M18 12h.01" />
+                }
+                @case ('shield') {
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" />
+                }
+              }
+            </svg>
+          </span>
+            @if (m.delta) {
+              <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">{{ m.delta }}</span>
+            }
+          </div>
+          <p class="mt-5 text-sm text-slate-500">{{ m.label }}</p>
+          <p class="font-display mt-1 truncate text-3xl font-bold text-slate-900" [attr.title]="m.value">{{ m.value }}</p>
+        </div>
+      }
+    </div>
+    <div class="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.2fr_.8fr]">
+      <!-- Reservas por estado -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-6">
+        <div class="flex items-start justify-between">
+          <div>
+            <h2 class="font-display text-xl font-bold">Reservas por estado</h2>
+            <p class="mt-1 text-sm text-slate-500">{{ totalReservations() }} reservas registradas</p>
+          </div>
+          <span class="inline-flex rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700">Actualizado</span>
+        </div>
+        <div class="mt-7 grid grid-cols-2 gap-4">
+          @for (s of reservationStats(); track s.label) {
+            <div class="rounded-xl bg-slate-50 p-4">
+              <div class="flex items-end justify-between">
+                <span class="text-sm font-semibold text-slate-600">{{ s.label }}</span>
+                <strong class="font-display text-2xl">{{ s.value }}</strong>
+              </div>
+              <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
+                <div class="h-full rounded-full" [class]="barColor[s.label]" [style.width.%]="s.percent"></div>
+              </div>
+            </div>
+          } @empty {
+            <p class="col-span-2 text-sm text-slate-500">Sin datos por mostrar.</p>
+          }
+        </div>
+      </section>
+      <!-- Ciudades con mayor demanda -->
+      <section class="rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 class="font-display text-xl font-bold">Ciudades con mayor demanda</h2>
+        <p class="mt-1 text-sm text-slate-500">Reservas acumuladas</p>
+        <ol class="mt-5 space-y-3">
+          @for (c of topCities(); track c.city; let i = $index) {
+            <li class="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3">
+            <span class="grid size-7 place-items-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800">
+              {{ i + 1 }}
+            </span>
+              <strong class="flex-1 text-sm">{{ c.city }}</strong>
+              <span class="text-sm text-slate-500">{{ c.total }} {{ c.total === 1 ? 'reserva' : 'reservas' }}</span>
+            </li>
+          } @empty {
+            <li class="text-sm text-slate-500">Sin datos por mostrar.</li>
+          }
+        </ol>
+      </section>
+    </div>
+  }
+</main>

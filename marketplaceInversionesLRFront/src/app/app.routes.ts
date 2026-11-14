@@ -119,6 +119,20 @@ export const routes: Routes = [
   },
 
   // ====================================
+  // CONSULTAR DASHBOARD DE INDICADORES (HU-04)
+  // SOLO ADMINISTRADOR: GET /admin/dashboard exige el rol ADMIN.
+  // ====================================
+
+  {
+    path: 'admin/dashboard',
+    loadComponent: () =>
+      import('./administracion/dashboard/dashboard')
+        .then(m => m.DashboardAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+  // ====================================
   // RESTRINGIR CUENTAS DE USUARIOS (HU-12)
   // SOLO ADMINISTRADOR. Carga diferida para no aumentar el bundle inicial.
   // ====================================
