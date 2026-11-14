@@ -34,6 +34,8 @@ export interface UsuarioDTO {
   activo?: boolean;
   /** Rol del usuario. */
   rol?: string;
+  /** Segundo factor habilitado (HU-30); null o ausente equivale a deshabilitado. */
+  totpHabilitado?: boolean | null;
 }
 
 // Respuestas de actualización
