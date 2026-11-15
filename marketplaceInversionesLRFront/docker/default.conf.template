@@ -15,8 +15,15 @@ server {
   location = /config.js  { add_header Cache-Control "no-cache"; }
 
   # Los archivos compilados llevan un hash en el nombre: se pueden guardar un año
-  location ~* \.(?:js|css|woff2?|png|jpg|svg|ico)$ {
+  location ~* \.(?:js|css|woff2?)$ {
     add_header Cache-Control "public, max-age=31536000, immutable";
+    try_files $uri =404;
+  }
+
+  # Los de public/ (íconos, manifest) conservan su nombre: un día, para que un cambio se vea pronto
+  location ~* \.(?:png|jpg|svg|ico|webmanifest)$ {
+    default_type application/manifest+json;  # solo aplica al manifest (extensión sin tipo en nginx)
+    add_header Cache-Control "public, max-age=86400";
     try_files $uri =404;
   }
 }
