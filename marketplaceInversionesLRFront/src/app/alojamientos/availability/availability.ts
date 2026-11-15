@@ -595,7 +595,7 @@ export class Availability implements OnInit {
     if (err instanceof HttpErrorResponse) {
 
       if (err.status === 0) {
-        return 'No se pudo conectar con el backend en localhost:8081.';
+        return 'No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.';
       }
 
       if (err.status === 401) {

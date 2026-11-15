@@ -397,8 +397,7 @@ export class Recover implements OnInit {
     if (err.status === 0) {
 
       return (
-        'No se pudo conectar con Spring Boot. ' +
-        'Verifica el puerto 8081.'
+        'No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.'
       );
 
     }

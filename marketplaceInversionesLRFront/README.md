@@ -145,6 +145,27 @@ npm run api:mock
 
 El cliente generado se revisa y se confirma en el repositorio; no se edita a mano. Para actualizarlo, regenera el contrato y vuelve a ejecutar `npm run api:gen`.
 
+## Contenedor (Docker) y despliegue en Render
+
+La imagen compila el front y lo sirve con nginx. La dirección del backend no queda fija en la
+compilación: al arrancar, el contenedor escribe `config.js` con la variable `API_URL`, así la
+misma imagen sirve para cualquier ambiente. En desarrollo, `public/config.js` apunta a
+`http://localhost:8081`.
+
+```bash
+docker build -t inversioneslr-front .
+docker run -p 8080:80 -e API_URL=https://marketplacealojamientosinversioneslr.onrender.com inversioneslr-front
+```
+
+| Variable | Valor |
+|----------|-------|
+| `API_URL` | Dirección pública del backend, sin `/` al final. Por defecto, `https://marketplacealojamientosinversioneslr.onrender.com` |
+| `PORT` | Puerto de nginx (por defecto 80; Render lo indica solo) |
+
+En Render: **New → Web Service**, el repositorio, runtime **Docker** y **Root Directory**
+`marketplaceInversionesLRFront`. Cada push a `main` lo vuelve a desplegar. En el backend,
+`APP_CORS_ALLOWED_ORIGINS` debe incluir la dirección del front.
+
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.

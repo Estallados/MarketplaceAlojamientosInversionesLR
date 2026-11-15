@@ -940,8 +940,7 @@ export class CrearPublicacion implements OnInit {
       if (err.status === 0) {
 
         return (
-          'No se pudo conectar con Spring Boot ' +
-          'en localhost:8081.'
+          'No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.'
         );
       }
 
