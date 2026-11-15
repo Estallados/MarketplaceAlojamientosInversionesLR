@@ -32,6 +32,8 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
 
   const urlConsulta = `${baseUrl}/alojamientos/41/disponibilidad/consultar`;
 
+  const urlCalendario = `${baseUrl}/alojamientos/41/disponibilidad`;
+
   let http: HttpTestingController;
 
   let harness: RouterTestingHarness;
@@ -50,6 +52,14 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
   const llegada = enDias(10);
 
   const salida = enDias(13);
+
+  /** Período ofrecido del día +10 al +20 y una reserva del +12 al +14. */
+  const calendarioPrueba = {
+    idAlojamiento: 41,
+    estadoAlojamiento: 'ACTIVA',
+    periodos: [{ idPeriodo: 1, idAlojamiento: 41, fechaInicio: enDias(10), fechaFin: enDias(20) }],
+    reservados: [{ fechaEntrada: enDias(12), fechaSalida: enDias(14) }]
+  };
 
   beforeEach(async () => {
 
@@ -70,6 +80,8 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
       '/alojamientos/41/consultar-disponibilidad',
       ConsultarDisponibilidad
     );
+
+    http.expectOne(r => r.url === urlCalendario).flush(calendarioPrueba);
 
     await estable();
   });
@@ -388,5 +400,92 @@ describe('ConsultarDisponibilidad (HU-21)', () => {
       expect(existe('[data-no-disponible]')).toBe(false);
       expect(existe('[data-disponible]')).toBe(false);
     }
+  });
+
+  // ======================================
+  // CALENDARIO DE FECHAS DISPONIBLES Y NO DISPONIBLES
+  // ======================================
+
+  function dia(fecha: string): HTMLButtonElement | null {
+    return elemento().querySelector<HTMLButtonElement>(`[data-dia="${fecha}"]`);
+  }
+
+  /** Avanza de mes hasta que se vea la fecha. */
+  async function irA(fecha: string): Promise<HTMLButtonElement> {
+    for (let i = 0; i < 3 && !dia(fecha); i++) {
+      elemento().querySelector<HTMLButtonElement>('[data-mes-siguiente]')!.click();
+      await estable();
+    }
+    return dia(fecha)!;
+  }
+
+  it('el calendario marca las noches disponibles, reservadas, no ofrecidas y pasadas', async () => {
+
+    expect(existe('[data-calendario]')).toBe(true);
+
+    const estados: [string, string][] = [
+      [enDias(10), 'disponible'],
+      [enDias(12), 'reservado'],
+      [enDias(13), 'reservado'],
+      // La salida de la reserva y la de un período no ocupan noche.
+      [enDias(14), 'disponible'],
+      [enDias(19), 'disponible'],
+      [enDias(20), 'no-disponible'],
+      [enDias(25), 'no-disponible']
+    ];
+
+    for (const [fecha, estado] of estados) {
+      expect((await irA(fecha)).dataset['estado']).toBe(estado);
+    }
+
+    // No se puede volver a meses anteriores al actual.
+    componente.mesActual.set(`${hoyLocal().slice(0, 7)}-01`);
+    await estable();
+    expect(elemento().querySelector<HTMLButtonElement>('[data-mes-anterior]')!.disabled).toBe(true);
+
+    if (hoyLocal().slice(8) !== '01') {
+      const ayer = `${hoyLocal().slice(0, 8)}01`;
+      expect(dia(ayer)!.dataset['estado']).toBe('pasado');
+      expect(dia(ayer)!.disabled).toBe(true);
+    }
+  });
+
+  it('elegir llegada y salida en el calendario llena las fechas sin consultar', async () => {
+
+    // Una noche reservada no sirve como llegada.
+    (await irA(enDias(12))).click();
+    await estable();
+    expect(componente.llegada()).toBe('');
+
+    (await irA(enDias(10))).click();
+    await estable();
+    expect(componente.llegada()).toBe(enDias(10));
+    expect(componente.salida()).toBe('');
+
+    // La salida puede caer en cualquier día posterior; el backend decide.
+    (await irA(enDias(12))).click();
+    await estable();
+    expect(campo('llegada').value).toBe(enDias(10));
+    expect(campo('salida').value).toBe(enDias(12));
+    expect(dia(enDias(11))!.getAttribute('aria-pressed')).toBe('true');
+
+    // Un tercer clic empieza una estadía nueva.
+    (await irA(enDias(15))).click();
+    await estable();
+    expect(componente.llegada()).toBe(enDias(15));
+    expect(componente.salida()).toBe('');
+
+    http.expectNone(r => r.url === urlConsulta);
+  });
+
+  it('si el calendario no carga, avisa y se puede consultar escribiendo las fechas', async () => {
+
+    await harness.navigateByUrl('/alojamientos/42/consultar-disponibilidad', ConsultarDisponibilidad);
+    http.expectOne(`${baseUrl}/alojamientos/42/disponibilidad`)
+      .flush({ message: 'Error' }, { status: 500, statusText: 'Error' });
+    await estable();
+
+    expect(texto('[data-error-calendario]')).toContain('No se pudo cargar el calendario');
+    expect(existe('[data-consultar]')).toBe(true);
   });
 });

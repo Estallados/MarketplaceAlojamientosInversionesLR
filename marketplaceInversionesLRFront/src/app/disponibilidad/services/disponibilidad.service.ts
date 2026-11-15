@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 
 import { API_URL } from '../../core/services/api-url';
 import { ConsultaDisponibilidad } from '../models/consulta-disponibilidad';
+import { CalendarioDisponibilidad } from '../../alojamientos/models/disponibilidad';
 
 // ======================================
 // SERVICIO DE DISPONIBILIDAD (S04)
@@ -48,6 +49,22 @@ export class DisponibilidadService {
     return this.http.get<ConsultaDisponibilidad>(
       `${this.apiUrl}/${idAlojamiento}/disponibilidad/consultar`,
       { params }
+    );
+  }
+
+  // ====================================
+  // CALENDARIO DEL ALOJAMIENTO
+  // GET /alojamientos/{idAlojamiento}/disponibilidad
+  // 200: períodos ofrecidos y rangos reservados · 404: inexistente o no visible
+  // ====================================
+
+  /**
+   * @param idAlojamiento alojamiento
+   */
+  calendario(idAlojamiento: number): Observable<CalendarioDisponibilidad> {
+
+    return this.http.get<CalendarioDisponibilidad>(
+      `${this.apiUrl}/${idAlojamiento}/disponibilidad`
     );
   }
 }
