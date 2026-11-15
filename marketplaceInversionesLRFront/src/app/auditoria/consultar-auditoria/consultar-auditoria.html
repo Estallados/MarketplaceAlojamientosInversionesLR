@@ -65,15 +65,15 @@
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500">Cargando eventos...</td></tr>
+          <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">Cargando eventos...</div></td></tr>
         } @else if (errorCarga()) {
           <tr>
-            <td colspan="7" class="px-5 py-10 text-center">
+            <td colspan="7" class="px-5 py-10 text-center"><div class="estado-tabla">
               <p class="text-red-600" role="alert">{{ errorCarga() }}</p>
               <button type="button" (click)="cargar()" class="btn btn-primary mt-3 text-xs">
                 Reintentar
               </button>
-            </td>
+            </div></td>
           </tr>
         } @else {
           @for (e of auditEvents(); track e.idEvento) {
@@ -94,7 +94,7 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500">No hay eventos para mostrar.</td></tr>
+            <tr><td colspan="7" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">No hay eventos para mostrar.</div></td></tr>
           }
         }
       </tbody>

@@ -1,5 +1,5 @@
 <main class="page">
-  <div class="flex items-end justify-between">
+  <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="page-title">Moderación de reseñas</h1>
       <p class="mt-2 text-sm text-ink-500">Consulta y controla la visibilidad sin modificar el contenido original.</p>
@@ -29,7 +29,8 @@
     <p class="mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700" role="alert">{{ errorFila() }}</p>
   }
   <div class="mt-6 overflow-hidden rounded-lg border border-ink-200 bg-white">
-    <table class="table-base">
+    <div class="overflow-x-auto">
+    <table class="table-base min-w-[960px]">
       <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
       <tr>
         @for (h of headers; track h) {
@@ -39,15 +40,15 @@
       </thead>
       <tbody>
         @if (loading()) {
-          <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">Cargando reseñas...</td></tr>
+          <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">Cargando reseñas...</div></td></tr>
         } @else if (errorCarga()) {
           <tr>
-            <td colspan="8" class="px-5 py-10 text-center">
+            <td colspan="8" class="px-5 py-10 text-center"><div class="estado-tabla">
               <p class="text-red-600" role="alert">No se pudieron cargar las reseñas.</p>
               <button type="button" (click)="cargar()" class="btn btn-primary mt-3 text-xs">
                 Reintentar
               </button>
-            </td>
+            </div></td>
           </tr>
         } @else {
           @for (r of visibles(); track r.idResena) {
@@ -88,11 +89,12 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">No hay reseñas que coincidan.</td></tr>
+            <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">No hay reseñas que coincidan.</div></td></tr>
           }
         }
       </tbody>
     </table>
+    </div>
     <div class="flex items-center justify-between border-t border-ink-100 px-5 py-4 text-xs text-ink-500">
       <span>Mostrando {{ visibles().length }} de {{ filtered().length }} reseñas</span>
       <div class="flex gap-2">

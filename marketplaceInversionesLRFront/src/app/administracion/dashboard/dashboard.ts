@@ -45,7 +45,7 @@ export class DashboardAdmin implements OnInit {
 
   /** Colores de barra por estado (clases completas para que Tailwind las detecte). */
   readonly barColor: Record<ReservationStat['label'], string> = {
-    Confirmadas: 'bg-emerald-600',
+    Confirmadas: 'bg-brand-600',
     Pendientes: 'bg-amber-400',
     Finalizadas: 'bg-sky-500',
     Canceladas: 'bg-red-400',

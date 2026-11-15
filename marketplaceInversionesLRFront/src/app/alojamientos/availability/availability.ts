@@ -323,7 +323,7 @@ export class Availability implements OnInit {
     };
 
     return `
-      min-h-20 rounded-md border p-2
+      min-h-14 rounded-md border p-1.5 sm:min-h-20 sm:p-2
       text-left transition
       ${estados[dia.estado]}
       ${
@@ -332,6 +332,17 @@ export class Availability implements OnInit {
         : ''
     }
     `;
+  }
+
+  /** Símbolo del estado para móvil, donde la etiqueta no cabe en la celda. */
+  simboloDia(estado: EstadoDia): string {
+
+    return {
+      pasado: '',
+      reservado: '✕',
+      disponible: '✓',
+      'no-ofrecido': '–'
+    }[estado];
   }
 
   etiquetaDia(estado: EstadoDia): string {
