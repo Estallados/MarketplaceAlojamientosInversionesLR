@@ -14,6 +14,96 @@
     </p>
   </div>
 
+  <!-- CALENDARIO: FECHAS DISPONIBLES Y NO DISPONIBLES -->
+  @if (idAlojamiento() !== null) {
+    <section
+      data-calendario
+      aria-labelledby="titulo-calendario"
+      class="mt-8 rounded-lg border border-ink-200 bg-white p-5 sm:p-8"
+    >
+      <div class="flex items-center justify-between gap-4">
+        <h2 id="titulo-calendario" class="text-lg font-bold text-ink-900">
+          {{ tituloMes() }}
+        </h2>
+
+        <div class="flex gap-2">
+          <button
+            type="button"
+            data-mes-anterior
+            aria-label="Mes anterior"
+            (click)="cambiarMes(-1)"
+            [disabled]="!puedeRetroceder()"
+            class="rounded-md border border-ink-200 px-3 py-1.5 text-sm hover:bg-ink-50 disabled:opacity-40"
+          >
+            ←
+          </button>
+          <button
+            type="button"
+            data-mes-siguiente
+            aria-label="Mes siguiente"
+            (click)="cambiarMes(1)"
+            class="rounded-md border border-ink-200 px-3 py-1.5 text-sm hover:bg-ink-50"
+          >
+            →
+          </button>
+        </div>
+      </div>
+
+      <!-- LEYENDA: misma muestra, símbolo y patrón que los días -->
+      <ul data-leyenda class="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm text-ink-700">
+        @for (estado of estadosLeyenda; track estado) {
+          <li class="flex items-center gap-2">
+            <span
+              aria-hidden="true"
+              [class]="claseDia({ numero: 0, fecha: '', estado }) + ' !min-h-0 !p-0 h-7 w-7 items-center !justify-center text-base font-bold'"
+            >{{ simboloDia(estado) }}</span>
+            {{ etiquetaDia(estado) }}
+          </li>
+        }
+      </ul>
+
+      @if (calendarioCargando()) {
+        <p role="status" class="mt-6 text-sm text-ink-500">Cargando el calendario...</p>
+      } @else if (calendarioError()) {
+        <p data-error-calendario role="alert" class="mt-6 text-sm text-red-700">
+          {{ calendarioError() }}
+        </p>
+      } @else {
+        <div class="mt-5 grid grid-cols-7 gap-1 sm:gap-2">
+          @for (diaSemana of diasSemana; track diaSemana) {
+            <div class="py-1 text-center text-xs font-bold text-ink-500">{{ diaSemana }}</div>
+          }
+
+          @for (celda of calendario(); track $index) {
+            @if (celda; as dia) {
+              <button
+                type="button"
+                [attr.data-dia]="dia.fecha"
+                [attr.data-estado]="dia.estado"
+                (click)="seleccionarDia(dia)"
+                [disabled]="dia.estado === 'pasado'"
+                [class]="claseDia(dia)"
+                [attr.aria-pressed]="enSeleccion(dia)"
+                [attr.aria-label]="fechaLegible(dia.fecha) + ': ' + etiquetaDia(dia.estado)"
+                [attr.title]="etiquetaDia(dia.estado)"
+              >
+                <span class="block font-bold" [class.line-through]="dia.estado === 'reservado'">{{ dia.numero }}</span>
+                <span aria-hidden="true" class="block self-end text-base font-bold leading-none">{{ simboloDia(dia.estado) }}</span>
+              </button>
+            } @else {
+              <div aria-hidden="true"></div>
+            }
+          }
+        </div>
+
+        <p class="mt-4 text-xs text-ink-500">
+          Toca una fecha disponible para la llegada y luego el día de salida.
+          La salida no ocupa una noche.
+        </p>
+      }
+    </section>
+  }
+
   <!-- SELECTOR DE FECHAS (CA-082) -->
   <form
     data-formulario-fechas
