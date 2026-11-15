@@ -28,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * conversación.
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = { "https://marketplacealojamientosinversioneslr-2.onrender.com", "http://localhost:4200" })
 @RequestMapping("/conversaciones")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Mensajería", description = "Conversaciones entre huésped y anfitrión")
