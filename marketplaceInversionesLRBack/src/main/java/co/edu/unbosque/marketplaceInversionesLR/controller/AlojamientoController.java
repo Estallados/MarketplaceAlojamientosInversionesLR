@@ -55,7 +55,7 @@ import tools.jackson.databind.ObjectMapper;
  * {@code docs/openapi/disponibilidad-busqueda.yaml}.
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/alojamientos")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Alojamientos", description = "Publicaciones de alojamiento")

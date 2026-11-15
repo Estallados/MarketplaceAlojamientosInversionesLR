@@ -28,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * {@code /admin}. Solo para administradores.
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @SecurityRequirement(name = "bearerAuth")

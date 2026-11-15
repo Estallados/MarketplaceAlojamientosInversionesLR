@@ -37,7 +37,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Contrato: {@code docs/openapi/resenas-notificaciones.yaml}.
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Reseñas", description = "Calificaciones de estancias completadas")
 public class ResenaController {

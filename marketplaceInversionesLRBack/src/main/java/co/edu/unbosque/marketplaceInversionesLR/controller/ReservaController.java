@@ -49,7 +49,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * </p>
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @SecurityRequirement(name = "bearerAuth")
 public class ReservaController {
 

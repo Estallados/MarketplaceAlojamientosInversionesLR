@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * consulta cómo cobrar. Contrato: {@code docs/openapi/reservas-pagos.yaml}.
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/pagos")
 @Tag(name = "Pagos", description = "Pagos simulados con Stripe (modo prueba)")
 public class PagoController {

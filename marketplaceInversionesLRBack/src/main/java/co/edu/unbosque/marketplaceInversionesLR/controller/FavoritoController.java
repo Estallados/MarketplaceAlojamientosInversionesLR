@@ -27,7 +27,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * suyos.
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/favoritos")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Favoritos", description = "Alojamientos guardados por el usuario")

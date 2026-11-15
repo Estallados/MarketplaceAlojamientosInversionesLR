@@ -58,7 +58,7 @@ public class SecurityConfig {
 	/** Carga los usuarios por correo para el inicio de sesión. */
 	private final UserDetailsService userDetailsService;
 
-	/** Patrones de orígenes permitidos para CORS; por defecto cualquiera. */
+	/** Patrones de orígenes permitidos para CORS; por defecto el front local. */
 	private final List<String> origenesPermitidos;
 
 	/** Registra en la auditoría los accesos denegados. */
@@ -70,13 +70,13 @@ public class SecurityConfig {
 	 * @param jwtAuthFilter      filtro de autenticación por JWT
 	 * @param userDetailsService servicio que carga los usuarios
 	 * @param origenesPermitidos patrones de orígenes permitidos para CORS; por
-	 *                           defecto {@code *} (cualquier origen). Se puede
-	 *                           restringir con la variable
+	 *                           defecto {@code http://localhost:4200}. Para el
+	 *                           front desplegado se agregan con la variable
 	 *                           {@code APP_CORS_ALLOWED_ORIGINS}
 	 * @param auditoriaService   auditoría de los accesos denegados
 	 */
 	public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService,
-			@Value("${app.cors.allowed-origins:*}") List<String> origenesPermitidos,
+			@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos,
 			AuditoriaService auditoriaService) {
 		this.jwtAuthFilter = jwtAuthFilter;
 		this.userDetailsService = userDetailsService;
@@ -189,7 +189,7 @@ public class SecurityConfig {
 	@Bean
 	public CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		// Patrones (no orígenes exactos) para que "*" acepte cualquier front desplegado
+		// Patrones (no orígenes exactos): admiten comodines como https://*.onrender.com
 		config.setAllowedOriginPatterns(origenesPermitidos.stream().map(String::trim).toList());
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Idempotency-Key"));

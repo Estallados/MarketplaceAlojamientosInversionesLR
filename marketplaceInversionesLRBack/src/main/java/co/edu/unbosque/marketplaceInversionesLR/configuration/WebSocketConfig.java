@@ -36,10 +36,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	 *
 	 * @param authInterceptor    interceptor de seguridad de STOMP
 	 * @param origenesPermitidos patrones de orígenes permitidos; por defecto
-	 *                           {@code *} (cualquier origen)
+	 *                           {@code http://localhost:4200}
 	 */
 	public WebSocketConfig(WebSocketAuthInterceptor authInterceptor,
-			@Value("${app.cors.allowed-origins:*}") List<String> origenesPermitidos) {
+			@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos) {
 		this.authInterceptor = authInterceptor;
 		this.origenesPermitidos = origenesPermitidos;
 	}

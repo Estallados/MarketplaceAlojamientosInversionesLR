@@ -33,7 +33,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * Contrato: {@code docs/openapi/resenas-notificaciones.yaml}.
  */
 @RestController
-@CrossOrigin(origins = "*")
+@CrossOrigin(origins = "http://localhost:4200")
 @RequestMapping("/notificaciones")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Notificaciones", description = "Notificaciones dentro de la plataforma")
