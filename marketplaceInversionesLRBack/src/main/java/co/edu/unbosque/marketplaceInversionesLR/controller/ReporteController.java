@@ -28,7 +28,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * {@code /admin}. Solo para administradores.
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = { "https://marketplacealojamientosinversioneslr-2.onrender.com", "http://localhost:4200" })
 @RequestMapping("/admin")
 @PreAuthorize("hasRole('ADMIN')")
 @SecurityRequirement(name = "bearerAuth")

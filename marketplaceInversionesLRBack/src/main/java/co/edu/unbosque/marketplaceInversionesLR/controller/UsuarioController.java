@@ -38,7 +38,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * {@code docs/openapi/administracion-reportes.yaml}.
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = { "https://marketplacealojamientosinversioneslr-2.onrender.com", "http://localhost:4200" })
 @RequestMapping("/usuarios")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Usuarios", description = "Perfil propio y consulta de usuarios")
