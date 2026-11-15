@@ -3,7 +3,7 @@ import { Register } from './auth/register/register';
 import { Login } from './auth/login/login';
 import { Recover } from './auth/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
-import { roleGuard } from './core/guards/role.guard';
+import { roleGuard, rolesExcluidosGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 import { ProfileView } from './perfil/profile-view/profile-view';
 
@@ -249,11 +249,18 @@ export const routes: Routes = [
         .then(m => m.DetalleAlojamientoPage)
   },
 
+  // ====================================
+  // CONSULTAR DISPONIBILIDAD (HU-21)
+  // Visitantes y huéspedes. El administrador y el anfitrión no pueden entrar.
+  // ====================================
+
   {
     path: 'alojamientos/:id/consultar-disponibilidad',
     loadComponent: () =>
       import('./disponibilidad/consultar-disponibilidad/consultar-disponibilidad')
-        .then(m => m.ConsultarDisponibilidad)
+        .then(m => m.ConsultarDisponibilidad),
+    canActivate: [rolesExcluidosGuard],
+    data: { rolesExcluidos: ['Administrador', 'Anfitrión'] }
   },
 
   // ====================================
