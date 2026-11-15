@@ -264,7 +264,7 @@ describe('Recover (HU-08)', () => {
 
     expect(
       elemento.querySelector('[role="alert"]')?.textContent
-    ).toContain('No se pudo conectar con Spring Boot.');
+    ).toContain('No se pudo conectar con el servidor.');
 
     expect(texto()).toContain('Recuperar contraseña');
 

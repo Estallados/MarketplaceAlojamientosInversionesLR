@@ -5,6 +5,7 @@ import {
   HttpHeaders
 } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL } from '../../core/services/api-url';
 
 // Datos del usuario devueltos por Spring Boot
 /**
@@ -62,8 +63,7 @@ export class User {
   private readonly http = inject(HttpClient);
 
   /** Ruta base de los usuarios en el backend. */
-  private readonly apiUrl =
-    'http://localhost:8081/usuarios';
+  private readonly apiUrl = `${inject(API_URL)}/usuarios`;
 
   // Obtener token JWT
 

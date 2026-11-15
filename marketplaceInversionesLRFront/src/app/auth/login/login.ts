@@ -377,8 +377,7 @@ export class Login implements AfterViewInit {
     } else if (err.status === 0) {
 
       this.error =
-        'No se pudo conectar con Spring Boot. ' +
-        'Comprueba el puerto 8081.';
+        'No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.';
 
     } else {
 

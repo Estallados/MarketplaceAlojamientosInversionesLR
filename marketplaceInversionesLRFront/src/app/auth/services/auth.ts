@@ -193,9 +193,6 @@ export class Auth {
 
   private readonly baseUrl = inject(API_URL);
 
-  // URL BASE:
-  // http://localhost:8081/auth
-
   /** Ruta base de la autenticación. */
   private readonly apiUrl =
     `${this.baseUrl.replace(/\/+$/, '')}/auth`;

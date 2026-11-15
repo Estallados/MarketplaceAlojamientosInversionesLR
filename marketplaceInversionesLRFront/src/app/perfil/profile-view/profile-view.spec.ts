@@ -12,7 +12,7 @@ import { API_URL } from '../../core/services/api-url';
  */
 describe('ProfileView: estado del segundo factor (HU-30)', () => {
   let http: HttpTestingController;
-  const perfil = 'http://localhost:8081/usuarios/perfil';
+  const perfil = 'http://api/usuarios/perfil';
   const usuario = { nombre: 'Ana', correo: 'ana@correo.com', telefono: '3001234567', estado: 'ACTIVO', rol: 'HUESPED' };
 
   function crear() {

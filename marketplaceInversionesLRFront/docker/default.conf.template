@@ -1,0 +1,22 @@
+server {
+  listen ${PORT};
+  root /usr/share/nginx/html;
+
+  gzip on;
+  gzip_types text/css application/javascript application/json image/svg+xml;
+
+  # Las rutas de Angular (/reservas/5, /admin/...) se resuelven en el navegador
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+
+  # Estos cambian en cada despliegue o al arrancar: no se guardan en caché
+  location = /index.html { add_header Cache-Control "no-cache"; }
+  location = /config.js  { add_header Cache-Control "no-cache"; }
+
+  # Los archivos compilados llevan un hash en el nombre: se pueden guardar un año
+  location ~* \.(?:js|css|woff2?|png|jpg|svg|ico)$ {
+    add_header Cache-Control "public, max-age=31536000, immutable";
+    try_files $uri =404;
+  }
+}
