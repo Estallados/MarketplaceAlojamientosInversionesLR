@@ -24,8 +24,16 @@
           [readonly]="requiereSegundoFactor || requiereVerificacion"
           required
           email
+          #correoCtrl="ngModel"
+          [attr.aria-invalid]="correoCtrl.invalid && correoCtrl.touched"
+          aria-describedby="error-correo"
           class="field read-only:bg-ink-50"
         />
+        @if (correoCtrl.invalid && correoCtrl.touched) {
+          <span id="error-correo" data-error="correo" class="mt-2 block text-xs text-red-600">
+            {{ correoCtrl.errors?.['required'] ? 'Ingresa tu correo electrónico.' : 'Ingresa un correo válido, por ejemplo nombre@dominio.com.' }}
+          </span>
+        }
       </div>
 
       <!-- CONTRASEÑA -->
@@ -42,6 +50,9 @@
             (ngModelChange)="cambiarContrasenia($event)"
             [readonly]="requiereSegundoFactor || requiereVerificacion"
             required
+            #contrasenaCtrl="ngModel"
+            [attr.aria-invalid]="contrasenaCtrl.invalid && contrasenaCtrl.touched"
+            aria-describedby="error-contrasena"
             class="field pr-12 read-only:bg-ink-50"
           />
           <button
@@ -73,6 +84,11 @@
             </svg>
           </button>
         </div>
+        @if (contrasenaCtrl.invalid && contrasenaCtrl.touched) {
+          <span id="error-contrasena" data-error="contrasena" class="mt-2 block text-xs text-red-600">
+            Ingresa tu contraseña.
+          </span>
+        }
       </div>
 
       @if (requiereVerificacion || requiereSegundoFactor) {
@@ -107,9 +123,17 @@
             (ngModelChange)="cambiarCodigo($event)"
             [disabled]="cargando"
             required
+            #codigoCtrl="ngModel"
+            [attr.aria-invalid]="codigoCtrl.invalid && codigoCtrl.touched"
+            aria-describedby="error-codigo"
             placeholder="000000"
             class="field text-center font-mono text-xl tracking-[0.45em]"
           />
+          @if (codigoCtrl.invalid && codigoCtrl.touched) {
+            <span id="error-codigo" data-error="codigo" class="block text-xs text-red-600">
+              El código debe tener 6 dígitos.
+            </span>
+          }
 
           @if (requiereSegundoFactor) {
             <p class="text-xs text-ink-600">
