@@ -41,7 +41,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * </p>
  */
 @RestController
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = { "https://marketplacealojamientosinversioneslr-2.onrender.com", "http://localhost:4200" })
 @RequestMapping("/alojamientos/{idAlojamiento}/disponibilidad")
 @SecurityRequirement(name = "bearerAuth")
 @Tag(name = "Disponibilidad", description = "Períodos disponibles y fechas reservadas de un alojamiento")
