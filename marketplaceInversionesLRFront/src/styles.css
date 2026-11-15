@@ -194,6 +194,13 @@
   .table-base {
     @apply w-full text-left text-sm;
   }
+  /* Mensaje de cargando, error o vacío dentro de una tabla con scroll horizontal: se queda a la
+     vista del ancho de la pantalla en móvil en lugar de centrarse en toda la tabla (CA-146). */
+  .estado-tabla {
+    position: sticky;
+    left: 1.25rem;
+    width: min(100%, calc(100vw - 4.75rem));
+  }
   .table-base thead {
     @apply bg-ink-50 text-xs font-semibold text-ink-600;
   }

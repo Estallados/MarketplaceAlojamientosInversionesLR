@@ -170,8 +170,11 @@ export class Login implements AfterViewInit {
 
     if (form.invalid) {
 
+      // Cada campo inválido muestra su propio mensaje (CA-147).
+      form.control.markAllAsTouched();
+
       this.error =
-        'Completa correctamente todos los campos.';
+        'Revisa los campos marcados en rojo.';
 
       this.actualizarVista();
 

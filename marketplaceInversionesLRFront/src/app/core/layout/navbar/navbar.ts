@@ -50,6 +50,12 @@ export class Navbar {
     menuDelRol(this.estaAutenticado() ? this.role() : null).filter(([, path]) => this.rutaDisponible(path)),
   );
 
+  /**
+   * Con muchas secciones (administrador) la barra no cabe entre 1024 y 1279 px: se muestran desde
+   * xl y, mientras tanto, siguen en el menú de usuario (CA-146).
+   */
+  readonly muchasSecciones = computed(() => this.items().length > 7);
+
   /** Inicio del rol; si su pantalla aún no existe, la página de inicio (o el perfil, o el login sin sesión). */
   readonly homePath = computed(() => {
     if (!this.estaAutenticado()) {

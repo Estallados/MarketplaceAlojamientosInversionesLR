@@ -83,7 +83,7 @@ export class MisReservas implements OnInit {
 
   claseTab(tab: PestanaReserva): string {
     return (
-      'px-5 pb-4 text-sm font-bold ' +
+      'shrink-0 whitespace-nowrap px-3 pb-4 text-sm font-bold sm:px-5 ' +
       (this.pestanaActiva() === tab ? 'border-b-2 border-brand-700 text-brand-700' : 'text-ink-500')
     );
   }

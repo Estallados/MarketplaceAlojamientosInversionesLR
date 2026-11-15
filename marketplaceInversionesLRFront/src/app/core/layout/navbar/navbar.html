@@ -19,16 +19,18 @@
     <!-- ===================================== -->
     <nav
       aria-label="Navegación principal"
-      class="h-full min-w-0 items-center gap-1 lg:flex"
+      class="h-full min-w-0 items-center gap-1"
       [class.flex]="!estaAutenticado()"
       [class.hidden]="estaAutenticado()"
+      [class.lg:flex]="!muchasSecciones()"
+      [class.xl:flex]="muchasSecciones()"
     >
       @for (item of items(); track item[1]) {
         <a
           [routerLink]="item[1]"
           routerLinkActive
           #rla="routerLinkActive"
-          class="relative flex h-full items-center whitespace-nowrap px-2 text-sm font-semibold transition-colors sm:px-3 xl:px-4"
+          class="relative flex h-full items-center whitespace-nowrap px-2 text-sm font-semibold transition-colors sm:px-3 2xl:px-4"
           [class]="rla.isActive ? activeClass : inactiveClass"
         >
           {{ item[0] }}
@@ -145,7 +147,11 @@
                 <!-- SECCIONES (SOLO EN PANTALLAS PEQUEÑAS) -->
                 <!-- ===================================== -->
                 @if (items().length) {
-                  <div class="mt-2 border-b border-ink-100 pb-2 lg:hidden">
+                  <div
+                    class="mt-2 border-b border-ink-100 pb-2"
+                    [class.lg:hidden]="!muchasSecciones()"
+                    [class.xl:hidden]="muchasSecciones()"
+                  >
                     @for (item of items(); track item[1]) {
                       <a
                         [routerLink]="item[1]"

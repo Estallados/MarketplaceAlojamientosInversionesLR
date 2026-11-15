@@ -1,3 +1,4 @@
+import { By } from '@angular/platform-browser';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -210,5 +211,66 @@ describe('Login con segundo factor (HU-30)', () => {
     expect(sesion.autenticado()).toBe(true);
     expect(c.googleRequiereCodigo).toBe(false);
     expect(privado.googleIdToken).toBe('');
+  });
+
+  // ======================================
+  // CA-147 VALIDACIÓN POR CAMPO
+  // ======================================
+
+  async function escribirYSalir(f: ReturnType<typeof crear>, id: string, valor: string) {
+    await f.whenStable();
+    const input = f.nativeElement.querySelector(`#${id}`) as HTMLInputElement;
+    input.value = valor;
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new Event('blur'));
+    f.detectChanges();
+    await f.whenStable();
+    f.detectChanges();
+  }
+
+  function errorDe(f: ReturnType<typeof crear>, campo: string): string {
+    return f.nativeElement.querySelector(`[data-error="${campo}"]`)?.textContent?.trim() ?? '';
+  }
+
+  it('CA-147 identifica el campo vacío o inválido y muestra su mensaje', async () => {
+    const f = crear();
+
+    await escribirYSalir(f, 'correo', '');
+    expect(errorDe(f, 'correo')).toBe('Ingresa tu correo electrónico.');
+    expect(f.nativeElement.querySelector('#correo').getAttribute('aria-invalid')).toBe('true');
+
+    await escribirYSalir(f, 'correo', 'ana@');
+    expect(errorDe(f, 'correo')).toContain('Ingresa un correo válido');
+
+    await escribirYSalir(f, 'contrasena', '');
+    expect(errorDe(f, 'contrasena')).toBe('Ingresa tu contraseña.');
+
+    await escribirYSalir(f, 'correo', 'ana@correo.com');
+    await escribirYSalir(f, 'contrasena', 'Clave#2026');
+    expect(errorDe(f, 'correo')).toBe('');
+    expect(errorDe(f, 'contrasena')).toBe('');
+  });
+
+  it('CA-147 al enviar con campos inválidos marca cada campo, no solo un aviso general', async () => {
+    const f = crear();
+    await f.whenStable();
+    const form = f.debugElement.query(By.directive(NgForm)).injector.get(NgForm);
+
+    f.componentInstance.iniciarSesion(form);
+    f.detectChanges();
+    await f.whenStable();
+    f.detectChanges();
+
+    expect(errorDe(f, 'correo')).toBe('Ingresa tu correo electrónico.');
+    expect(errorDe(f, 'contrasena')).toBe('Ingresa tu contraseña.');
+    expect(f.nativeElement.querySelector('[role="alert"]').textContent).toContain('Revisa los campos marcados');
+  });
+
+  it('CA-147 el código del segundo factor exige 6 dígitos', async () => {
+    const f = crear();
+    await hastaElCodigo(f);
+
+    await escribirYSalir(f, 'codigo', '12');
+    expect(errorDe(f, 'codigo')).toBe('El código debe tener 6 dígitos.');
   });
 });

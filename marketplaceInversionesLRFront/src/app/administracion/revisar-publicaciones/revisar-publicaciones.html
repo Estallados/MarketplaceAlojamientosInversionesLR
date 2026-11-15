@@ -64,15 +64,15 @@
       </thead>
       <tbody>
         @if (cargando()) {
-          <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">Cargando publicaciones...</td></tr>
+          <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">Cargando publicaciones...</div></td></tr>
         } @else if (errorCarga()) {
           <tr>
-            <td colspan="8" class="px-5 py-10 text-center">
+            <td colspan="8" class="px-5 py-10 text-center"><div class="estado-tabla">
               <p class="text-red-600" role="alert">No se pudieron cargar las publicaciones.</p>
               <button type="button" (click)="cargar()" class="btn btn-primary mt-3 text-xs">
                 Reintentar
               </button>
-            </td>
+            </div></td>
           </tr>
         } @else {
           @for (p of visibles(); track p.idAlojamiento) {
@@ -109,7 +109,7 @@
               </td>
             </tr>
           } @empty {
-            <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500">No hay publicaciones que coincidan con los filtros.</td></tr>
+            <tr><td colspan="8" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">No hay publicaciones que coincidan con los filtros.</div></td></tr>
           }
         }
       </tbody>
