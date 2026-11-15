@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoUsuario;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Role;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -22,7 +21,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class UsuarioDTO {
 
 	/** Identificador del usuario. */
@@ -66,6 +64,13 @@ public class UsuarioDTO {
 	/** Secreto del segundo factor cifrado; nunca viaja en JSON. */
 	@JsonIgnore
 	private String secretoTotp;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public UsuarioDTO() {
+		// Los valores se asignan con los setters.
+	}
 
 	/**
 	 * Representación sin la contraseña ni datos sensibles, para que no aparezcan

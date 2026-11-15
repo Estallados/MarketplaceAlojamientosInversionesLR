@@ -2,7 +2,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -11,7 +10,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ResumenResenasDTO {
 
 	/** Alojamiento consultado; {@code null} si son todas las de un anfitrión. */
@@ -28,4 +26,11 @@ public class ResumenResenasDTO {
 
 	/** Página de reseñas, de la más reciente a la más antigua. */
 	private PaginaDTO<ResenaDTO> resenas;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ResumenResenasDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

@@ -6,7 +6,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -18,7 +17,6 @@ import lombok.Setter;
 @Table(name = "politicaCancelacion")
 @Getter
 @Setter
-@NoArgsConstructor
 public class PoliticaCancelacion {
 
 	/** Identificador de la política. */
@@ -40,4 +38,11 @@ public class PoliticaCancelacion {
 
 	/** Porcentaje que se devuelve en el reembolso parcial. */
 	private Integer porcentajeParcial;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public PoliticaCancelacion() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

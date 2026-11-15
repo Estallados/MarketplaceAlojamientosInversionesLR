@@ -24,6 +24,11 @@ public final class RespuestaUtil {
 	/** Tamaño máximo de página que acepta la API. */
 	public static final int TAMANIO_MAXIMO = 100;
 
+	/**
+	 * No se instancia: la clase solo ofrece miembros estáticos.
+	 *
+	 * @throws IllegalStateException siempre, si se intenta crear por reflexión
+	 */
 	private RespuestaUtil() {
 		throw new IllegalStateException("Clase utilitaria");
 	}

@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoCancelacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -16,7 +15,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class CancelacionDTO {
 
 	/** Identificador de la cancelación. */
@@ -48,4 +46,11 @@ public class CancelacionDTO {
 
 	/** Reserva cancelada. */
 	private Long idReserva;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public CancelacionDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

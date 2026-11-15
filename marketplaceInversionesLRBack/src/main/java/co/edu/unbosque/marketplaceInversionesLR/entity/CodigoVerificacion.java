@@ -31,6 +31,13 @@ public class CodigoVerificacion {
 	private boolean usado;
 
 	/**
+	 * Crea un código de verificación vacío; el servicio asigna sus datos con los setters.
+	 */
+	public CodigoVerificacion() {
+		// Los datos se asignan con los setters.
+	}
+
+	/**
 	 * Devuelve el usuario dueño del código.
 	 *
 	 * @return id del usuario

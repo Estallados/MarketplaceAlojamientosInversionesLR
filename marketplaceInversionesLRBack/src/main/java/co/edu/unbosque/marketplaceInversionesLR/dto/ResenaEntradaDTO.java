@@ -2,7 +2,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -12,7 +11,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ResenaEntradaDTO {
 
 	/** Reserva propia y completada que se reseña (CA-016). */
@@ -29,4 +27,11 @@ public class ResenaEntradaDTO {
 	@Schema(description = "Comentario del huésped (opcional, hasta 2000 caracteres)", maxLength = 2000,
 			example = "Muy buena ubicación y todo muy limpio.")
 	private String comentario;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ResenaEntradaDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

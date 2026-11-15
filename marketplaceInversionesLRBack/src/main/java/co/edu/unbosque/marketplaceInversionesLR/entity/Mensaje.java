@@ -13,7 +13,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -24,7 +23,6 @@ import lombok.Setter;
 @Table(name = "mensaje")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Mensaje {
 
 	/** Identificador del mensaje. */
@@ -66,4 +64,11 @@ public class Mensaje {
 	@Getter(AccessLevel.NONE)
 	@Setter(AccessLevel.NONE)
 	private Usuario usuario;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public Mensaje() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

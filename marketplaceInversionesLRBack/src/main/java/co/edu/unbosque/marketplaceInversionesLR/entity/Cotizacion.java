@@ -15,7 +15,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -31,7 +30,6 @@ import lombok.Setter;
 @Table(name = "cotizacion")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Cotizacion {
 
 	/** Identificador de la cotización. */
@@ -137,4 +135,11 @@ public class Cotizacion {
 	/** Momento en que la cotización deja de servir para reservar. */
 	@Column(nullable = false)
 	private LocalDateTime fechaExpiracion;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public Cotizacion() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

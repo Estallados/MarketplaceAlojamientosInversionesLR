@@ -2,7 +2,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -11,7 +10,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class SolicitudReservaDTO {
 
 	/** Cotización vigente a reservar (CA-070). */
@@ -27,4 +25,11 @@ public class SolicitudReservaDTO {
 			+ "pm_card_chargeDeclined simula un rechazo (402) y pm_card_error una falla de la pasarela (502).",
 			example = "pm_card_visa", pattern = "^pm_\\w{1,200}$")
 	private String metodoPago;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public SolicitudReservaDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

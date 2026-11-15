@@ -12,6 +12,13 @@ import org.springframework.context.annotation.Configuration;
 public class ModelMapperConfig {
 
 	/**
+	 * Crea la configuración; Spring la instancia al arrancar la aplicación.
+	 */
+	public ModelMapperConfig() {
+		// Spring crea la instancia; no requiere inicialización.
+	}
+
+	/**
 	 * Copiador de entidades a DTO.
 	 *
 	 * @return instancia de ModelMapper

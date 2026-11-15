@@ -13,7 +13,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -25,7 +24,6 @@ import lombok.Setter;
 @Table(name = "registro_exportacion")
 @Getter
 @Setter
-@NoArgsConstructor
 public class RegistroExportacion {
 
 	/** Identificador del registro. */
@@ -62,4 +60,11 @@ public class RegistroExportacion {
 	/** Momento de la exportación. */
 	@Column(nullable = false)
 	private LocalDateTime fecha;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public RegistroExportacion() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

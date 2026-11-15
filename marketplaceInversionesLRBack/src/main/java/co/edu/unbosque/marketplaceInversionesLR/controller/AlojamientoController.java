@@ -96,6 +96,13 @@ public class AlojamientoController {
 		private List<MultipartFile> archivos;
 
 		/**
+		 * Crea el formulario; solo lo usa Swagger para describir la petición.
+		 */
+		FormularioAlojamiento() {
+			// Solo describe el formulario en Swagger.
+		}
+
+		/**
 		 * Devuelve JSON del alojamiento.
 		 *
 		 * @return JSON del alojamiento

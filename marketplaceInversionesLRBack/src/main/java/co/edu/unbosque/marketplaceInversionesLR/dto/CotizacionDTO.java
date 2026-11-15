@@ -7,7 +7,6 @@ import java.util.List;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -17,7 +16,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class CotizacionDTO {
 
 	/** Identificador; se envía en {@code POST /reservas}. */
@@ -106,4 +104,11 @@ public class CotizacionDTO {
 	/** Momento en que deja de servir para reservar. */
 	@Schema(accessMode = Schema.AccessMode.READ_ONLY)
 	private LocalDateTime fechaExpiracion;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public CotizacionDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

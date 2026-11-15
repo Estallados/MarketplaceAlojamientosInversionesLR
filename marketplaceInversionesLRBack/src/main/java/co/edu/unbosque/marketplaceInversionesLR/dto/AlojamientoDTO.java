@@ -11,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -22,7 +21,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class AlojamientoDTO {
 
 	/** Identificador del alojamiento. */
@@ -122,4 +120,11 @@ public class AlojamientoDTO {
 
 	/** Cantidad de reseñas publicadas. Lo calcula el servidor. */
 	private Long cantidadResenas;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public AlojamientoDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

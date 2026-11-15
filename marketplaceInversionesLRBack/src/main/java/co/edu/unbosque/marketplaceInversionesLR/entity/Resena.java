@@ -15,7 +15,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -31,7 +30,6 @@ import lombok.Setter;
 @Table(name = "resena")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Resena {
 
 	/** Identificador de la reseña. */
@@ -97,4 +95,11 @@ public class Resena {
 	@Getter(AccessLevel.NONE)
 	@Setter(AccessLevel.NONE)
 	private Alojamiento alojamiento;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public Resena() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

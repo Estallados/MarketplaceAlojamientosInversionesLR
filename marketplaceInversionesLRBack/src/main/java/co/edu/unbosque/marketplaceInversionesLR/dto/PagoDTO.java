@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoPago;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -14,7 +13,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class PagoDTO {
 
 	/** Identificador del pago. */
@@ -49,4 +47,11 @@ public class PagoDTO {
 
 	/** Reserva pagada. */
 	private Long idReserva;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public PagoDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

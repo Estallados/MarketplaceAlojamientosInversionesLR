@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -13,7 +12,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ConfiguracionPagoDTO {
 
 	/** STRIPE_TEST o SIMULADO. */
@@ -27,4 +25,11 @@ public class ConfiguracionPagoDTO {
 
 	/** Tarjetas de prueba disponibles y qué resultado da cada una. */
 	private List<MetodoPagoPruebaDTO> metodosPrueba;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ConfiguracionPagoDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

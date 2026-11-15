@@ -14,7 +14,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -27,7 +26,6 @@ import lombok.Setter;
 @Table(name = "configuracionTarifa")
 @Getter
 @Setter
-@NoArgsConstructor
 public class ConfiguracionTarifa {
 
 	/** Identificador de la configuración. */
@@ -57,4 +55,11 @@ public class ConfiguracionTarifa {
 
 	/** Momento en que se guardó la configuración. */
 	private LocalDateTime fecha;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public ConfiguracionTarifa() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

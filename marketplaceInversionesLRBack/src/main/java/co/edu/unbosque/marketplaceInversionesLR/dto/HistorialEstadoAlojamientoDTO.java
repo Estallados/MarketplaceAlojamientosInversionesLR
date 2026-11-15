@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -13,7 +12,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class HistorialEstadoAlojamientoDTO {
 
 	/** Identificador del registro. */
@@ -36,4 +34,11 @@ public class HistorialEstadoAlojamientoDTO {
 
 	/** Momento del cambio. */
 	private LocalDateTime fecha;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public HistorialEstadoAlojamientoDTO() {
+		// Los valores se asignan con los setters.
+	}
 }
