@@ -207,7 +207,7 @@ export class FotografiasPublicacion {
       }
 
       if (err.status === 0) {
-        this.error.set('No se pudo conectar con Spring Boot en localhost:8081.');
+        this.error.set('No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.');
         return;
       }
 

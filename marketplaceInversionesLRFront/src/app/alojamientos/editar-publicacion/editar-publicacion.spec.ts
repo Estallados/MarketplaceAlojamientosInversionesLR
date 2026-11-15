@@ -506,8 +506,13 @@ describe('EditarPublicacion (HU-16)', () => {
 
   it('HU-16 el botón Volver regresa a la página anterior', async () => {
 
-    // Página previa dentro de la aplicación (no hace peticiones al abrir).
+    // Página previa dentro de la aplicación (solo pide su calendario).
+    // Se abre como huésped: el anfitrión no puede consultar disponibilidad.
+    rolActual = 'Huésped';
     await harness.navigateByUrl('/alojamientos/41/consultar-disponibilidad');
+    http.expectOne(r => r.url.endsWith('/alojamientos/41/disponibilidad'))
+      .flush({ idAlojamiento: 41, estadoAlojamiento: 'ACTIVA', periodos: [], reservados: [] });
+    rolActual = 'Anfitrión';
 
     await abrirComoPropietario();
 

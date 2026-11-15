@@ -51,6 +51,11 @@ export class DetalleAlojamientoPage implements OnInit {
     (this.stay()?.imagenes ?? []).filter((url) => !!url?.trim()).slice(0, MAX_FOTOS),
   );
   /** Foto grande de la galería; null si el alojamiento no tiene fotos. */
+  /** El administrador y el anfitrión no consultan disponibilidad (HU-21); los visitantes y huéspedes sí. */
+  readonly puedeConsultarDisponibilidad = computed(() =>
+    !this.session.tieneRol('Administrador', 'Anfitrión')
+  );
+
   readonly fotoPrincipal = computed(() => this.fotos()[0] ?? null);
   /** Hasta 4 fotos pequeñas, solo si el alojamiento las tiene. */
   readonly fotosSecundarias = computed(() => this.fotos().slice(1));

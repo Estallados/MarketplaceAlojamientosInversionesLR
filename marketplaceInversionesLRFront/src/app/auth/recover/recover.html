@@ -321,9 +321,8 @@
 
             @if (contrasenia && !contraseniaValida) {
 
-              <p class="text-xs text-amber-700">
-                La contraseña todavía no cumple todos
-                los requisitos.
+              <p data-error="contrasenia" class="text-xs text-red-600">
+                {{ errorContrasenia }}
               </p>
 
             }

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -14,7 +13,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ConfiguracionTarifaDTO {
 
 	/** Identificador de la configuración guardada; null si es la de por defecto. */
@@ -34,4 +32,11 @@ public class ConfiguracionTarifaDTO {
 
 	/** {@code true} si aún no hay configuración guardada y se usan los valores por defecto. */
 	private Boolean porDefecto;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ConfiguracionTarifaDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

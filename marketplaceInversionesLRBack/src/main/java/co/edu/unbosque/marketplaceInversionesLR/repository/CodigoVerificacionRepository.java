@@ -29,6 +29,13 @@ public class CodigoVerificacionRepository {
 	private final Map<Long, CodigoVerificacion> codigos = new ConcurrentHashMap<>();
 
 	/**
+	 * Crea el almacén en memoria con el mapa de códigos vacío.
+	 */
+	public CodigoVerificacionRepository() {
+		// El mapa de códigos se inicializa en su declaración.
+	}
+
+	/**
 	 * Guarda el código como el único del usuario.
 	 *
 	 * @param codigo código a guardar

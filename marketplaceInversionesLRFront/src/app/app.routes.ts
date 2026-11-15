@@ -3,7 +3,7 @@ import { Register } from './auth/register/register';
 import { Login } from './auth/login/login';
 import { Recover } from './auth/recover/recover';
 import { Tarifas } from './cotizacion/tarifas/tarifas';
-import { roleGuard } from './core/guards/role.guard';
+import { roleGuard, rolesExcluidosGuard } from './core/guards/role.guard';
 import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
 import { ProfileView } from './perfil/profile-view/profile-view';
 
@@ -119,6 +119,20 @@ export const routes: Routes = [
   },
 
   // ====================================
+  // CONSULTAR DASHBOARD DE INDICADORES (HU-04)
+  // SOLO ADMINISTRADOR: GET /admin/dashboard exige el rol ADMIN.
+  // ====================================
+
+  {
+    path: 'admin/dashboard',
+    loadComponent: () =>
+      import('./administracion/dashboard/dashboard')
+        .then(m => m.DashboardAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
+  // ====================================
   // RESTRINGIR CUENTAS DE USUARIOS (HU-12)
   // SOLO ADMINISTRADOR. Carga diferida para no aumentar el bundle inicial.
   // ====================================
@@ -183,6 +197,20 @@ export const routes: Routes = [
     data: { roles: ['Administrador'] }
   },
 
+  // ====================================
+  // EXPORTAR REPORTES DE GESTIÓN EN PDF O EXCEL (HU-05)
+  // SOLO ADMINISTRADOR: GET /admin/reportes/** exige el rol ADMIN.
+  // ====================================
+
+  {
+    path: 'admin/reportes',
+    loadComponent: () =>
+      import('./administracion/reportes/reportes')
+        .then(m => m.ReportesAdmin),
+    canActivate: [roleGuard],
+    data: { roles: ['Administrador'] }
+  },
+
 
 
   // ====================================
@@ -221,11 +249,18 @@ export const routes: Routes = [
         .then(m => m.DetalleAlojamientoPage)
   },
 
+  // ====================================
+  // CONSULTAR DISPONIBILIDAD (HU-21)
+  // Visitantes y huéspedes. El administrador y el anfitrión no pueden entrar.
+  // ====================================
+
   {
     path: 'alojamientos/:id/consultar-disponibilidad',
     loadComponent: () =>
       import('./disponibilidad/consultar-disponibilidad/consultar-disponibilidad')
-        .then(m => m.ConsultarDisponibilidad)
+        .then(m => m.ConsultarDisponibilidad),
+    canActivate: [rolesExcluidosGuard],
+    data: { rolesExcluidos: ['Administrador', 'Anfitrión'] }
   },
 
   // ====================================

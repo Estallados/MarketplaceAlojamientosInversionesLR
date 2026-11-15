@@ -17,7 +17,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -30,7 +29,6 @@ import lombok.Setter;
 @Table(name = "historialEstadoAlojamiento")
 @Getter
 @Setter
-@NoArgsConstructor
 public class HistorialEstadoAlojamiento {
 
 	/** Identificador del registro. */
@@ -86,4 +84,11 @@ public class HistorialEstadoAlojamiento {
 	/** Momento del cambio. */
 	@Column(updatable = false)
 	private LocalDateTime fecha;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public HistorialEstadoAlojamiento() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

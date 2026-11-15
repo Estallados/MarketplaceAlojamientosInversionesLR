@@ -1,0 +1,172 @@
+<section class="mt-6 rounded-lg border border-ink-200 bg-white p-5 sm:p-8" aria-labelledby="titulo-segundo-factor">
+  <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div class="min-w-0">
+      <h2 id="titulo-segundo-factor" class="section-title">
+        Verificación en dos pasos
+      </h2>
+      <p class="mt-2 max-w-2xl text-sm leading-6 text-ink-500">
+        Cuando está habilitada, después de escribir tu contraseña te pedimos un código de 6 dígitos que
+        enviamos a tu correo. Así nadie puede entrar a tu cuenta solo con tu contraseña. Para habilitarla
+        o deshabilitarla necesitas una aplicación autenticadora (Google Authenticator, Microsoft
+        Authenticator u otra).
+      </p>
+    </div>
+
+    @if (habilitado() === null) {
+      <span data-estado-2fa class="inline-flex shrink-0 rounded-full bg-ink-100 px-3 py-1 text-xs font-bold text-ink-600">
+        Sin consultar
+      </span>
+    } @else {
+      <span
+        data-estado-2fa
+        class="inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-bold"
+        [class]="habilitado() ? 'bg-brand-50 text-brand-700' : 'bg-ink-100 text-ink-600'"
+      >
+        {{ habilitado() ? 'Habilitada' : 'Deshabilitada' }}
+      </span>
+    }
+  </div>
+
+  @if (error()) {
+    <p role="alert" class="alert alert-danger mt-5">{{ error() }}</p>
+  }
+  @if (mensaje()) {
+    <p role="status" class="alert alert-success mt-5">{{ mensaje() }}</p>
+  }
+
+  @switch (paso()) {
+    @case ('estado') {
+      @if (habilitado() === null) {
+        <p class="mt-5 text-sm text-ink-500">
+          No pudimos consultar el estado de la verificación en dos pasos. Recarga la página para intentarlo de nuevo.
+        </p>
+      } @else if (habilitado()) {
+        <button
+          type="button"
+          data-desactivar-2fa
+          (click)="iniciarDesactivacion()"
+          [disabled]="procesando()"
+          class="mt-6 rounded-md bg-red-50 px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+        >
+          Deshabilitar verificación en dos pasos
+        </button>
+      } @else {
+        <button
+          type="button"
+          data-activar-2fa
+          (click)="iniciarActivacion()"
+          [disabled]="procesando()"
+          class="btn btn-primary mt-6"
+        >
+          {{ procesando() ? 'Preparando...' : 'Habilitar verificación en dos pasos' }}
+        </button>
+      }
+    }
+
+    @case ('configurar') {
+      <div class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div class="flex justify-center md:block">
+          @if (qr()) {
+            <img
+              [src]="qr()"
+              width="200"
+              height="200"
+              alt="Código QR para agregar la cuenta a tu aplicación autenticadora"
+              class="rounded-md border border-ink-200 bg-white p-2"
+            />
+          } @else {
+            <div class="grid size-[200px] place-items-center rounded-md border border-ink-200 bg-ink-50 p-4 text-center text-xs text-ink-500">
+              No se pudo dibujar el QR. Usa la clave de configuración.
+            </div>
+          }
+        </div>
+
+        <div class="min-w-0">
+          <ol class="list-decimal space-y-2 pl-5 text-sm leading-6 text-ink-700">
+            <li>Abre tu aplicación autenticadora y escanea el código QR.</li>
+            <li>Si no puedes escanearlo, agrega la cuenta escribiendo la clave de configuración.</li>
+            <li>Escribe el código de 6 dígitos que muestra la aplicación para confirmar.</li>
+          </ol>
+
+          <p class="mt-5 text-xs font-semibold text-ink-500">Clave de configuración</p>
+          <div class="mt-2 flex flex-wrap items-center gap-3">
+            <code data-secreto-2fa class="break-all rounded-md border border-ink-200 bg-ink-50 px-3 py-2 font-mono text-sm text-ink-900">
+              {{ secretoAgrupado() }}
+            </code>
+            <button type="button" (click)="copiarSecreto()" class="text-xs font-semibold text-brand-700 hover:underline">
+              {{ copiado() ? 'Copiada' : 'Copiar clave' }}
+            </button>
+          </div>
+
+          <label for="codigo-activar-2fa" class="field-label mt-5">Código de la aplicación</label>
+          <input
+            id="codigo-activar-2fa"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            [value]="codigo()"
+            (input)="cambiarCodigo($any($event.target).value)"
+            [disabled]="procesando()"
+            class="field max-w-[220px] text-center font-mono text-xl tracking-[0.45em]"
+          />
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button type="button" (click)="cancelar()" [disabled]="procesando()" class="btn btn-secondary">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              data-confirmar-2fa
+              (click)="confirmarActivacion()"
+              [disabled]="procesando() || !codigoValido()"
+              class="btn btn-primary"
+            >
+              {{ procesando() ? 'Confirmando...' : 'Confirmar y habilitar' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    @case ('desactivar') {
+      <div class="mt-6 rounded-md border border-red-200 bg-red-50 p-5">
+        <p class="text-sm font-semibold text-red-800">¿Deshabilitar la verificación en dos pasos?</p>
+        <p class="mt-1 text-sm leading-6 text-red-700">
+          Tu cuenta quedará protegida solo con tu contraseña. Para confirmar, escribe el código actual de tu
+          aplicación autenticadora.
+        </p>
+
+        <label for="codigo-desactivar-2fa" class="field-label mt-4">Código de la aplicación</label>
+        <input
+          id="codigo-desactivar-2fa"
+          type="text"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          maxlength="6"
+          placeholder="000000"
+          [value]="codigo()"
+          (input)="cambiarCodigo($any($event.target).value)"
+          [disabled]="procesando()"
+          class="field max-w-[220px] bg-white text-center font-mono text-xl tracking-[0.45em]"
+        />
+
+        <div class="mt-5 flex flex-wrap gap-3">
+          <button type="button" (click)="cancelar()" [disabled]="procesando()" class="btn btn-secondary">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            data-confirmar-desactivar-2fa
+            (click)="confirmarDesactivacion()"
+            [disabled]="procesando() || !codigoValido()"
+            class="btn btn-danger"
+          >
+            {{ procesando() ? 'Deshabilitando...' : 'Deshabilitar' }}
+          </button>
+        </div>
+      </div>
+    }
+  }
+</section>

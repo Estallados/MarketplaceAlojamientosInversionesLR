@@ -1,7 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.dto;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -10,7 +9,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class PoliticaCancelacionDTO {
 
 	/** Identificador de la política. */
@@ -30,4 +28,11 @@ public class PoliticaCancelacionDTO {
 
 	/** Porcentaje que se devuelve en el reembolso parcial. */
 	private Integer porcentajeParcial;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public PoliticaCancelacionDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

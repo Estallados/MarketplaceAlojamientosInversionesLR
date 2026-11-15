@@ -136,7 +136,7 @@ class RecuperacionContraseniaTest {
 	}
 
 	@Test
-	@DisplayName("Un token inválido, una contraseña débil o datos faltantes no cambian la contraseña")
+	@DisplayName("CA-135 Un token inválido, una contraseña débil o datos faltantes no cambian la contraseña")
 	void datosInvalidos() throws Exception {
 		crearCuenta();
 

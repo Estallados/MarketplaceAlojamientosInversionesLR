@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailAuthenticationException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
@@ -36,6 +37,15 @@ class CorreoUtilTest {
 		assertThat(mensaje.getTo()).containsExactly("ana@correo.com");
 		assertThat(mensaje.getSubject()).isEqualTo("Asunto");
 		assertThat(mensaje.getText()).isEqualTo("Texto");
+	}
+
+	@Test
+	@DisplayName("El remitente se lee de correo.remitente (MAIL_FROM) y no del usuario SMTP")
+	void remitenteDeCorreoRemitente() throws Exception {
+		Value valor = CorreoUtil.class.getConstructor(JavaMailSender.class, String.class).getParameters()[1]
+				.getAnnotation(Value.class);
+
+		assertThat(valor.value()).isEqualTo("${correo.remitente:}").doesNotContain("spring.mail.username");
 	}
 
 	@Test

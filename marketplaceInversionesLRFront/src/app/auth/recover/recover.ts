@@ -31,6 +31,7 @@ import {
 } from 'rxjs';
 
 import { Auth } from '../services/auth';
+import { contrasenaValida, mensajeContrasena } from '../validaciones/contrasena';
 
 // ======================================
 // PASOS DE LA RECUPERACIÓN
@@ -136,29 +137,12 @@ export class Recover implements OnInit {
   // ======================================
 
   get contraseniaValida(): boolean {
+    return contrasenaValida(this.contrasenia);
+  }
 
-    const valor = this.contrasenia;
-
-    return (
-      valor.length >= 8 &&
-      valor.length <= 64 &&
-
-      // Límite de BCrypt del backend
-      new TextEncoder().encode(valor).length <= 72 &&
-
-      // Mayúscula
-      /[A-ZÁÉÍÓÚÜÑ]/.test(valor) &&
-
-      // Minúscula
-      /[a-záéíóúüñ]/.test(valor) &&
-
-      // Número
-      /\d/.test(valor) &&
-
-      // Símbolo
-      /[^A-Za-z0-9]/.test(valor)
-    );
-
+  /** Qué le falta a la contraseña nueva, con las mismas reglas del backend (CA-135). */
+  get errorContrasenia(): string {
+    return mensajeContrasena(this.contrasenia);
   }
 
   // ======================================
@@ -271,11 +255,7 @@ export class Recover implements OnInit {
 
     if (!this.contraseniaValida) {
 
-      this.error.set(
-        'La contraseña debe tener entre 8 y 64 ' +
-        'caracteres, mayúscula, minúscula, ' +
-        'número y símbolo.'
-      );
+      this.error.set(this.errorContrasenia);
 
       return;
     }
@@ -417,8 +397,7 @@ export class Recover implements OnInit {
     if (err.status === 0) {
 
       return (
-        'No se pudo conectar con Spring Boot. ' +
-        'Verifica el puerto 8081.'
+        'No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.'
       );
 
     }

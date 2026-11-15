@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoResena;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -14,7 +13,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ResenaDTO {
 
 	/** Identificador de la reseña. */
@@ -54,4 +52,11 @@ public class ResenaDTO {
 	/** Título del alojamiento reseñado. */
 	@Schema(example = "Apartamento en Chapinero")
 	private String tituloAlojamiento;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ResenaDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

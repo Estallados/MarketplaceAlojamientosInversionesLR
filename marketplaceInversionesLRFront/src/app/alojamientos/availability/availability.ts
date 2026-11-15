@@ -323,7 +323,7 @@ export class Availability implements OnInit {
     };
 
     return `
-      min-h-20 rounded-md border p-2
+      min-h-14 rounded-md border p-1.5 sm:min-h-20 sm:p-2
       text-left transition
       ${estados[dia.estado]}
       ${
@@ -332,6 +332,17 @@ export class Availability implements OnInit {
         : ''
     }
     `;
+  }
+
+  /** Símbolo del estado para móvil, donde la etiqueta no cabe en la celda. */
+  simboloDia(estado: EstadoDia): string {
+
+    return {
+      pasado: '',
+      reservado: '✕',
+      disponible: '✓',
+      'no-ofrecido': '–'
+    }[estado];
   }
 
   etiquetaDia(estado: EstadoDia): string {
@@ -584,7 +595,7 @@ export class Availability implements OnInit {
     if (err instanceof HttpErrorResponse) {
 
       if (err.status === 0) {
-        return 'No se pudo conectar con el backend en localhost:8081.';
+        return 'No se pudo conectar con el servidor. Intenta de nuevo en unos minutos.';
       }
 
       if (err.status === 401) {

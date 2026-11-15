@@ -29,6 +29,7 @@ import {
   RegistroRequest,
   RegistroRol
 } from '../services/auth';
+import { AYUDA_CONTRASENA, mensajeContrasena } from '../validaciones/contrasena';
 
 // ======================================
 // COMPONENTE DE REGISTRO
@@ -96,13 +97,12 @@ export class Register {
   // 1. VALIDAR CONTRASEÑA
   // ======================================
 
-  private contrasenaValida(): boolean {
-
-    const expresion =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
-
-    return expresion.test(this.contrasena);
+  /** Qué le falta a la contraseña, con las mismas reglas del backend (CA-135). */
+  get errorContrasena(): string {
+    return mensajeContrasena(this.contrasena);
   }
+
+  readonly ayudaContrasena = AYUDA_CONTRASENA;
 
   // ======================================
   // 2. REGISTRAR USUARIO
@@ -142,12 +142,9 @@ export class Register {
     // VALIDAR CONTRASEÑA
     // ====================================
 
-    if (!this.contrasenaValida()) {
+    if (this.errorContrasena) {
 
-      this.error =
-        'La contraseña debe tener al menos ' +
-        '8 caracteres, una mayúscula, ' +
-        'una minúscula, un número y un símbolo.';
+      this.error = this.errorContrasena;
 
       return;
     }

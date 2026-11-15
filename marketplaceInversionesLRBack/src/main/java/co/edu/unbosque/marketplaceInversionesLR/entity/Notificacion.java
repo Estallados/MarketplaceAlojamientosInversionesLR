@@ -13,7 +13,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -25,7 +24,6 @@ import lombok.Setter;
 @Table(name = "notificacion")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Notificacion {
 
 	/** Identificador de la notificación. */
@@ -62,4 +60,11 @@ public class Notificacion {
 	@Getter(AccessLevel.NONE)
 	@Setter(AccessLevel.NONE)
 	private Usuario usuario;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public Notificacion() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

@@ -61,6 +61,13 @@ public class GoogleClavesService {
 
 		/** Momento de la última descarga. */
 		private Instant ultimaDescarga = Instant.EPOCH;
+
+		/**
+		 * Crea la caché vacía, sin claves descargadas.
+		 */
+		Cache() {
+			// Los valores iniciales se asignan en la declaración de cada campo.
+		}
 	}
 
 	/** Cliente HTTP para descargar las claves. */

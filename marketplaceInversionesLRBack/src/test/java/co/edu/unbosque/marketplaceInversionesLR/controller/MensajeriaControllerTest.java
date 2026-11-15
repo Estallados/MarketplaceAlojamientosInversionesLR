@@ -93,7 +93,7 @@ class MensajeriaControllerTest {
 	}
 
 	@Test
-	@DisplayName("CA-167 Leer mensajes de una conversación ajena responde 403; los propios en orden de envío")
+	@DisplayName("CA-167 CA-133 Leer mensajes de una conversación ajena responde 403; los propios en orden de envío")
 	void mensajes_CA167() {
 		ArgumentCaptor<Pageable> pagina = ArgumentCaptor.forClass(Pageable.class);
 		when(mensajeriaService.mensajes(eq(3L), eq(USUARIO), pagina.capture()))

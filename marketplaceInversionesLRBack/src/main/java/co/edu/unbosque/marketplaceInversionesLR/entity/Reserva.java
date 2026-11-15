@@ -17,7 +17,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -33,7 +32,6 @@ import lombok.Setter;
 @Table(name = "reserva")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Reserva {
 
 	/** Identificador de la reserva. */
@@ -109,4 +107,11 @@ public class Reserva {
 	/** Momento en que se creó la reserva. */
 	@Column(nullable = false)
 	private LocalDateTime fechaCreacion;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public Reserva() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

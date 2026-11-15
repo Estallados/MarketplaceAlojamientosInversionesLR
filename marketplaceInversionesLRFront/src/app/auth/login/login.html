@@ -24,8 +24,16 @@
           [readonly]="requiereSegundoFactor || requiereVerificacion"
           required
           email
+          #correoCtrl="ngModel"
+          [attr.aria-invalid]="correoCtrl.invalid && correoCtrl.touched"
+          aria-describedby="error-correo"
           class="field read-only:bg-ink-50"
         />
+        @if (correoCtrl.invalid && correoCtrl.touched) {
+          <span id="error-correo" data-error="correo" class="mt-2 block text-xs text-red-600">
+            {{ correoCtrl.errors?.['required'] ? 'Ingresa tu correo electrónico.' : 'Ingresa un correo válido, por ejemplo nombre@dominio.com.' }}
+          </span>
+        }
       </div>
 
       <!-- CONTRASEÑA -->
@@ -42,6 +50,9 @@
             (ngModelChange)="cambiarContrasenia($event)"
             [readonly]="requiereSegundoFactor || requiereVerificacion"
             required
+            #contrasenaCtrl="ngModel"
+            [attr.aria-invalid]="contrasenaCtrl.invalid && contrasenaCtrl.touched"
+            aria-describedby="error-contrasena"
             class="field pr-12 read-only:bg-ink-50"
           />
           <button
@@ -73,6 +84,11 @@
             </svg>
           </button>
         </div>
+        @if (contrasenaCtrl.invalid && contrasenaCtrl.touched) {
+          <span id="error-contrasena" data-error="contrasena" class="mt-2 block text-xs text-red-600">
+            Ingresa tu contraseña.
+          </span>
+        }
       </div>
 
       @if (requiereVerificacion || requiereSegundoFactor) {
@@ -107,22 +123,41 @@
             (ngModelChange)="cambiarCodigo($event)"
             [disabled]="cargando"
             required
+            #codigoCtrl="ngModel"
+            [attr.aria-invalid]="codigoCtrl.invalid && codigoCtrl.touched"
+            aria-describedby="error-codigo"
             placeholder="000000"
             class="field text-center font-mono text-xl tracking-[0.45em]"
           />
+          @if (codigoCtrl.invalid && codigoCtrl.touched) {
+            <span id="error-codigo" data-error="codigo" class="block text-xs text-red-600">
+              El código debe tener 6 dígitos.
+            </span>
+          }
 
           @if (requiereSegundoFactor) {
             <p class="text-xs text-ink-600">
               Revisa tu bandeja de entrada y la carpeta de spam.
             </p>
-            <button
-              type="button"
-              (click)="cancelarSegundoFactor()"
-              [disabled]="cargando"
-              class="text-xs font-semibold text-brand-800 hover:underline disabled:opacity-50"
-            >
-              Volver a las credenciales
-            </button>
+            <div class="flex flex-wrap gap-x-5 gap-y-2">
+              <button
+                type="button"
+                data-reenviar-codigo-inicio
+                (click)="reenviarCodigoInicio()"
+                [disabled]="cargando"
+                class="text-xs font-semibold text-brand-800 hover:underline disabled:opacity-50"
+              >
+                Enviar un código nuevo
+              </button>
+              <button
+                type="button"
+                (click)="cancelarSegundoFactor()"
+                [disabled]="cargando"
+                class="text-xs font-semibold text-brand-800 hover:underline disabled:opacity-50"
+              >
+                Volver a las credenciales
+              </button>
+            </div>
           }
         </div>
       }
@@ -207,6 +242,46 @@
       }
       @if (googleCargando) {
         <p class="mt-3 text-center text-xs text-brand-700">Validando tu cuenta de Google...</p>
+      }
+      @if (googleRequiereCodigo) {
+        <div data-codigo-google class="mt-4 space-y-3 rounded-md border border-brand-200 bg-brand-50 p-4">
+          <p class="text-sm font-semibold text-ink-900">Verificación en dos pasos</p>
+          <p class="text-xs leading-5 text-ink-600">
+            Tu cuenta tiene la verificación en dos pasos habilitada. Para entrar con Google, escribe el código
+            de 6 dígitos de tu aplicación autenticadora.
+          </p>
+          <label for="codigo-google" class="field-label mb-0">Código de la aplicación</label>
+          <input
+            id="codigo-google"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            placeholder="000000"
+            [value]="codigoGoogle"
+            (input)="cambiarCodigoGoogle($any($event.target).value)"
+            [disabled]="googleCargando"
+            class="field text-center font-mono text-xl tracking-[0.45em]"
+          />
+          <div class="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              (click)="confirmarCodigoGoogle()"
+              [disabled]="googleCargando || codigoGoogle.length !== 6"
+              class="btn btn-primary"
+            >
+              {{ googleCargando ? 'Verificando...' : 'Confirmar código' }}
+            </button>
+            <button
+              type="button"
+              (click)="cancelarCodigoGoogle()"
+              [disabled]="googleCargando"
+              class="text-xs font-semibold text-brand-800 hover:underline disabled:opacity-50"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       }
       @if (googleError) {
         <p role="alert" class="alert alert-warning mt-3 text-xs">{{ googleError }}</p>

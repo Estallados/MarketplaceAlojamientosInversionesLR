@@ -10,4 +10,10 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configuration
 @EnableScheduling
 public class ProgramacionConfig {
+	/**
+	 * Crea la configuración; Spring la instancia al arrancar la aplicación.
+	 */
+	public ProgramacionConfig() {
+		// Spring crea la instancia; no requiere inicialización.
+	}
 }

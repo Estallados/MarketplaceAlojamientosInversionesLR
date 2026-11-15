@@ -5,6 +5,7 @@ import {
   HttpHeaders
 } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { API_URL } from '../../core/services/api-url';
 
 // Datos del usuario devueltos por Spring Boot
 /**
@@ -34,6 +35,8 @@ export interface UsuarioDTO {
   activo?: boolean;
   /** Rol del usuario. */
   rol?: string;
+  /** Segundo factor habilitado (HU-30); null o ausente equivale a deshabilitado. */
+  totpHabilitado?: boolean | null;
 }
 
 // Respuestas de actualización
@@ -60,8 +63,7 @@ export class User {
   private readonly http = inject(HttpClient);
 
   /** Ruta base de los usuarios en el backend. */
-  private readonly apiUrl =
-    'http://localhost:8081/usuarios';
+  private readonly apiUrl = `${inject(API_URL)}/usuarios`;
 
   // Obtener token JWT
 

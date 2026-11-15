@@ -69,6 +69,13 @@ public class OpenApiConfig {
 	private static final String ERROR_INTERNO = "Ocurrió un error inesperado. Intenta de nuevo.";
 
 	/**
+	 * Crea la configuración; Spring la instancia al arrancar la aplicación.
+	 */
+	public OpenApiConfig() {
+		// Spring crea la instancia; no requiere inicialización.
+	}
+
+	/**
 	 * Agrega a los componentes el esquema del cuerpo de error.
 	 *
 	 * @return personalización del documento

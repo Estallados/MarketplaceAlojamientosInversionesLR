@@ -45,3 +45,30 @@ export const roleGuard: CanActivateFn = (route) => {
   // Si no tiene permisos, regresar al inicio.
   return router.createUrlTree(['/home']);
 };
+
+/**
+ * Guarda de las rutas públicas que algunos roles no deben usar. Deja pasar a los visitantes sin
+ * sesión y a los usuarios cuyo rol no esté en {@code data.rolesExcluidos}; a los demás los devuelve
+ * al inicio.
+ *
+ * @param route ruta a la que se quiere entrar
+ * @returns true si puede entrar, o la redirección
+ */
+export const rolesExcluidosGuard: CanActivateFn = (route) => {
+
+  const sessionService = inject(SessionService);
+  const router = inject(Router);
+
+  const rolesExcluidos =
+    route.data['rolesExcluidos'] as RolUsuario[] | undefined;
+
+  if (
+    sessionService.autenticado() &&
+    rolesExcluidos &&
+    sessionService.tieneRol(...rolesExcluidos)
+  ) {
+    return router.createUrlTree(['/home']);
+  }
+
+  return true;
+};

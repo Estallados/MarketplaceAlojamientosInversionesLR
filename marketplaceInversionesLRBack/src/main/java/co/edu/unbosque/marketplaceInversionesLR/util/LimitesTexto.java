@@ -24,6 +24,11 @@ public final class LimitesTexto {
 	/** Texto de una notificación o de un motivo guardado con su prefijo. */
 	public static final int MEDIO = 1000;
 
+	/**
+	 * No se instancia: la clase solo ofrece miembros estáticos.
+	 *
+	 * @throws IllegalStateException siempre, si se intenta crear por reflexión
+	 */
 	private LimitesTexto() {
 		throw new IllegalStateException("Clase utilitaria");
 	}

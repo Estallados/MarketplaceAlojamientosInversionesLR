@@ -44,6 +44,11 @@ public final class AESUtil {
 	/** Generador de IV aleatorios. */
 	private static final SecureRandom RANDOM = new SecureRandom();
 
+	/**
+	 * No se instancia: la clase solo ofrece miembros estáticos.
+	 *
+	 * @throws IllegalStateException siempre, si se intenta crear por reflexión
+	 */
 	private AESUtil() {
 		throw new IllegalStateException("Clase utilitaria");
 	}

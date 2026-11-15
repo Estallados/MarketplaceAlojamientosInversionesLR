@@ -1,0 +1,18 @@
+# Lo que no debe entrar al contexto de la imagen: compilados, documentación,
+# configuración del IDE y, sobre todo, archivos con claves
+target/
+docs/
+.git/
+.gitignore
+.idea/
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+*.iml
+HELP.md
+*.env
+.env
+Dockerfile
+.dockerignore

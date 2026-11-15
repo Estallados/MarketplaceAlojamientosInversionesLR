@@ -16,7 +16,6 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -31,7 +30,6 @@ import lombok.Setter;
 				"clave" }))
 @Getter
 @Setter
-@NoArgsConstructor
 public class RegistroIdempotencia {
 
 	/** Identificador del registro. */
@@ -80,4 +78,11 @@ public class RegistroIdempotencia {
 	/** Momento del primer uso de la clave. */
 	@Column(nullable = false)
 	private LocalDateTime fechaCreacion;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public RegistroIdempotencia() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

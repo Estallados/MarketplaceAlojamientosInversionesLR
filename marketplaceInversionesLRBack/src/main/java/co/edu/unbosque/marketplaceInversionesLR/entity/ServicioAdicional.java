@@ -13,7 +13,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -25,7 +24,6 @@ import lombok.Setter;
 @Table(name = "servicioAdicional")
 @Getter
 @Setter
-@NoArgsConstructor
 public class ServicioAdicional {
 
 	/** Identificador del servicio. */
@@ -52,4 +50,11 @@ public class ServicioAdicional {
 	@Getter(AccessLevel.NONE)
 	@Setter(AccessLevel.NONE)
 	private Alojamiento alojamiento;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public ServicioAdicional() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

@@ -1,7 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.dto;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -10,9 +9,15 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class MotivoDTO {
 
 	/** Motivo; obligatorio, de máximo 500 caracteres. */
 	private String motivo;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public MotivoDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

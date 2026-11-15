@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -14,7 +13,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ConsultaDisponibilidadDTO {
 
 	/** Alojamiento consultado. */
@@ -33,4 +31,11 @@ public class ConsultaDisponibilidadDTO {
 	/** Motivo cuando no está disponible; {@code null} si lo está. */
 	@Schema(description = "Motivo cuando no está disponible")
 	private String motivo;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ConsultaDisponibilidadDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

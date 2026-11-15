@@ -157,8 +157,11 @@ describe('Recover (HU-08)', () => {
 
     await escribir('#nueva-clave', 'debil');
 
-    expect(texto()).toContain(
-      'La contraseña todavía no cumple todos'
+    // CA-135: dice exactamente qué le falta
+    expect(
+      elemento.querySelector('[data-error="contrasenia"]')?.textContent?.trim()
+    ).toBe(
+      'La contraseña debe tener entre 8 y 64 caracteres, una mayúscula, un número y un símbolo.'
     );
 
     expect(boton().disabled).toBe(true);
@@ -261,7 +264,7 @@ describe('Recover (HU-08)', () => {
 
     expect(
       elemento.querySelector('[role="alert"]')?.textContent
-    ).toContain('No se pudo conectar con Spring Boot.');
+    ).toContain('No se pudo conectar con el servidor.');
 
     expect(texto()).toContain('Recuperar contraseña');
 

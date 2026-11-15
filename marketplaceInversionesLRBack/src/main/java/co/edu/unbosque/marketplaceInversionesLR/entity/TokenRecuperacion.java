@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplaceInversionesLR.entity;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -13,7 +12,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class TokenRecuperacion {
 
 	/** Usuario dueño del token. */
@@ -27,4 +25,11 @@ public class TokenRecuperacion {
 
 	/** {@code true} si el token ya se usó o fue reemplazado por uno nuevo. */
 	private Boolean usado;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public TokenRecuperacion() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

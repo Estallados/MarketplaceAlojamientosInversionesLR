@@ -6,6 +6,7 @@ package co.edu.unbosque.marketplaceInversionesLR.exception;
  */
 public class AlmacenamientoNoDisponibleException extends RuntimeException {
 
+	/** Versión de la clase para la serialización. */
 	private static final long serialVersionUID = 1L;
 
 	/**

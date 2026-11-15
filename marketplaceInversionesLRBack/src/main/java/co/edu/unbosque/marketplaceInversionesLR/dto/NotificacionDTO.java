@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -12,7 +11,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class NotificacionDTO {
 
 	/** Identificador de la notificación. */
@@ -37,4 +35,11 @@ public class NotificacionDTO {
 
 	/** Usuario que la recibe. */
 	private Long idUsuario;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public NotificacionDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

@@ -117,7 +117,7 @@ class FavoritosTest {
 	}
 
 	@Test
-	@DisplayName("CA-170 El huésped ve solo sus favoritos, con los datos del alojamiento")
+	@DisplayName("CA-170 CA-133 El huésped ve solo sus favoritos, con los datos del alojamiento")
 	void soloLosPropios_CA170() throws Exception {
 		Long otro = crearAlojamiento(EstadoAlojamiento.ACTIVA);
 		agregar(idAlojamiento, tokenAna).andExpect(status().isCreated());
@@ -144,7 +144,7 @@ class FavoritosTest {
 	}
 
 	@Test
-	@DisplayName("CA-171 Un huésped no puede eliminar el favorito de otro")
+	@DisplayName("CA-171 CA-133 Un huésped no puede eliminar el favorito de otro")
 	void noEliminaElDeOtro_CA171() throws Exception {
 		agregar(idAlojamiento, tokenAna).andExpect(status().isCreated());
 

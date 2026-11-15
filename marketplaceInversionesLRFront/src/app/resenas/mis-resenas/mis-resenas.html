@@ -30,9 +30,9 @@
         </button>
       </div>
     } @else {
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         @for (r of reviews(); track r.idResena) {
-          <article class="flex flex-col rounded-lg border border-ink-200 bg-white p-6 transition-colors">
+          <article class="flex min-w-0 flex-col rounded-lg border border-ink-200 bg-white p-6 transition-colors">
             @if (tituloAlojamiento(r)) {
               <p class="mb-3 truncate text-sm font-bold text-brand-700">{{ tituloAlojamiento(r) }}</p>
             }

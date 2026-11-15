@@ -1,0 +1,128 @@
+<main class="mx-auto max-w-[1200px] px-4 py-10 sm:px-8">
+  <div class="flex items-end justify-between">
+    <div>
+      <p class="text-xs font-bold uppercase tracking-[0.22em] text-brand-700">Inversiones LR</p>
+      <h1 class="font-display mt-2 text-3xl font-bold text-ink-900">Reportes de gestión</h1>
+      <p class="mt-2 text-sm text-ink-500">Genera consultas administrativas y registra cada exportación solicitada.</p>
+    </div>
+  </div>
+  <!-- Exportar -->
+  <section class="mt-8 rounded-2xl border border-ink-200 bg-white p-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between sm:gap-6">
+      <label class="block w-full max-w-sm">
+        <span class="text-sm font-bold">Tipo de reporte</span>
+        <select
+          (change)="elegirTipo($any($event.target).value)"
+          class="mt-2 w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm"
+        >
+          @for (item of reportTypes; track item.valor) {
+            <option [value]="item.valor" [selected]="item.valor === report()">{{ item.texto }}</option>
+          }
+        </select>
+      </label>
+      <div class="flex gap-3">
+        <button
+          type="button"
+          (click)="exportReport('pdf')"
+          [disabled]="exportando() !== null"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition-all hover:border-brand-300 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ exportando() === 'pdf' ? 'Generando PDF...' : 'Exportar PDF' }}
+        </button>
+        <button
+          type="button"
+          (click)="exportReport('excel')"
+          [disabled]="exportando() !== null"
+          class="inline-flex items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-5 py-3 text-sm font-bold text-ink-800 transition-all hover:border-brand-300 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {{ exportando() === 'excel' ? 'Generando Excel...' : 'Exportar Excel' }}
+        </button>
+      </div>
+    </div>
+    @if (mensaje(); as m) {
+      <p
+        class="mt-5 rounded-xl border p-3 text-sm"
+        [class]="m.ok ? 'border-brand-200 bg-brand-50 text-brand-700' : 'border-red-200 bg-red-50 text-red-700'"
+        [attr.role]="m.ok ? 'status' : 'alert'"
+      >
+        {{ m.texto }}
+      </p>
+    }
+  </section>
+  <!-- Historial de exportaciones -->
+  <section class="mt-10">
+    <div class="flex items-end justify-between">
+      <div>
+        <h2 class="font-display text-xl font-bold">Historial de exportaciones</h2>
+        <p class="mt-1 text-sm text-ink-500">Trazabilidad de reportes solicitados por el administrador.</p>
+      </div>
+      <span class="inline-flex rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700">{{ totalElementos() }} registros</span>
+    </div>
+    <div class="mt-8 overflow-x-auto rounded-2xl border border-ink-200 bg-white">
+      <table class="w-full min-w-[720px] text-left text-sm">
+        <thead class="bg-ink-50 text-xs uppercase tracking-wider text-ink-500">
+        <tr>
+          @for (h of historyHeaders; track h) {
+            <th class="px-5 py-4 font-bold">{{ h }}</th>
+          }
+        </tr>
+        </thead>
+        <tbody>
+          @if (loadingHistory()) {
+            <tr><td colspan="5" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">Cargando historial...</div></td></tr>
+          } @else if (errorHistory()) {
+            <tr>
+              <td colspan="5" class="px-5 py-10 text-center"><div class="estado-tabla">
+                <p class="text-red-600" role="alert">No se pudo cargar el historial.</p>
+                <button type="button" (click)="cargarHistorial()" class="mt-3 rounded-lg bg-brand-700 px-4 py-2 text-xs font-bold text-white hover:bg-brand-800">
+                  Reintentar
+                </button>
+              </div></td>
+            </tr>
+          } @else {
+            @for (item of history(); track item.idRegistro) {
+              <tr class="border-t border-ink-100 hover:bg-ink-50">
+                <td class="px-5 py-5"><strong>Reporte de {{ reporteDe(item).toLowerCase() }}</strong></td>
+                <td class="px-5 py-5">
+                <span
+                  class="inline-flex rounded-full px-3 py-1 text-xs font-bold"
+                  [class]="formatoDe(item) === 'PDF' ? 'bg-red-50 text-red-700' : 'bg-brand-50 text-brand-700'"
+                >
+                  {{ formatoDe(item) }}
+                </span>
+                </td>
+                <td class="px-5 py-5">{{ item.cantidadRegistros ?? '—' }}</td>
+                <td class="px-5 py-5">{{ usuarioDe(item) }}</td>
+                <td class="px-5 py-5 whitespace-nowrap">{{ item.fecha | date: 'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="px-5 py-10 text-center text-ink-500"><div class="estado-tabla">Aún no hay exportaciones registradas.</div></td></tr>
+            }
+          }
+        </tbody>
+      </table>
+      <div class="flex items-center justify-between border-t border-ink-100 px-5 py-4 text-xs text-ink-500">
+        <span>Mostrando {{ history().length }} de {{ totalElementos() }} registros</span>
+        <div class="flex gap-2">
+          <button type="button" (click)="irAPagina(pagina() - 1)" [disabled]="pagina() === 0 || loadingHistory()" class="rounded-lg border px-3 py-2 disabled:text-ink-300">
+            Anterior
+          </button>
+          @for (p of paginasVisibles(); track p) {
+            <button
+              type="button"
+              (click)="irAPagina(p)"
+              [disabled]="loadingHistory()"
+              [class]="p === pagina() ? 'rounded-lg bg-brand-700 px-3 py-2 text-white' : 'rounded-lg border px-3 py-2 hover:bg-ink-50'"
+              [attr.aria-current]="p === pagina() ? 'page' : null"
+            >
+              {{ p + 1 }}
+            </button>
+          }
+          <button type="button" (click)="irAPagina(pagina() + 1)" [disabled]="pagina() >= totalPaginas() - 1 || loadingHistory()" class="rounded-lg border px-3 py-2 disabled:text-ink-300">
+            Siguiente
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
