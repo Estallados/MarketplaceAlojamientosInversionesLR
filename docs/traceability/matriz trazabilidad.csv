@@ -532,24 +532,38 @@ consultar-disponibilidad.spec.ts#CA-120 permite elegir otras fechas y volver a c
 consultar-disponibilidad.spec.ts#CA-120 distingue la indisponibilidad de un error de conexión, del servidor o de un alojamiento inexistente";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
 feat/SCRUM-116-fe-consultar-disponibilidad";;;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-131;RNF-003;Control de acceso por autenticación y roles;Acceso según rol;Dado un usuario con un rol determinado, cuando intente acceder a una funcionalidad, entonces el sistema debe permitir o rechazar el acceso según los permisos definidos para dicho rol.;;CU-002;"CP-074 Acceso según rol
-CP-005 Protección de funcionalidad sin autenticación";"DashboardReportesTest#soloElAdministradorConsultaElDashboard_CA131
-PublicacionesTest#unHuespedNoPuedeCrearPublicaciones_CA131
-ReservasPagosTest#unAnfitrionNoPuedeCrearReservas_CA131
-SeguridadRolesYCorsTest#soloAdminPuedeListarUsuarios_CA131";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CP-005 Protección de funcionalidad sin autenticación";"SeguridadRutasTest#laMatrizCubreTodosLosEndpoints_CA131
+SeguridadRutasTest#rolIncorrectoResponde403_CA131
+SeguridadRutasTest#rutasPublicasSinSesion_CA131
+ReservaTest#permisos_CA131
+RestriccionUsuariosTest#permisos_CA131
+rutas-protegidas.spec.ts#CA-131 (todas las rutas del front)";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-133;RNF-004;Protección de operaciones e información de usuarios;Aislamiento de información de usuarios;Dado un usuario autenticado, cuando intente consultar o modificar información privada de otro usuario sin autorización, entonces el sistema debe impedir la operación.;;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
-CP-011 Acceso o modificación de información de otro usuario";"IdentidadPerfilTest#unUsuarioNoPuedeConsultarNiModificarOtraCuenta_CA049_CA053_CA133
-ReservasPagosTest#elHuespedVeSuHistorialYElAnfitrionSoloLasDeSusAlojamientos_CA078_CA079_CA133";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CP-011 Acceso o modificación de información de otro usuario";"SeguridadRutasTest#unUsuarioNoConsultaOtraCuenta_CA133
+PerfilUsuarioTest (CA-049 CA-133)
+EstadoCuentaTest (CA-053 CA-133)
+FavoritosTest (CA-170, CA-171 CA-133)
+NotificacionesTest (CA-013 CA-133)
+HistorialReservasTest (CA-079 CA-133)
+MensajeriaControllerTest (CA-167 CA-133)";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-134;RNF-003;Control de acceso por autenticación y roles;Exigir autenticación;Dado un usuario sin una sesión válida, cuando intente ejecutar una operación protegida, entonces el sistema debe rechazar la solicitud y no ejecutar la operación.;;CU-002;"CP-074 Acceso según rol
-CP-005 Protección de funcionalidad sin autenticación";"AdministracionTest#unUsuarioSinPermisosNoPuedeConsultarLaAuditoria_CA065_CA134
-AuthFlowTest#sinSesionNoSePuedeAccederAFuncionesRestringidas_CA037_CA044_CA134";;38a9302;main;;;Ninguna HU lo lista en sus criterios de aceptación
+CP-005 Protección de funcionalidad sin autenticación";"SeguridadRutasTest#sinSesionResponde401_CA134
+SeguridadRutasTest#tokenDeCuentaInexistente_CA134
+RegistroUsuarioTest#rutaProtegidaSinTokenResponde401_CA134
+rutas-protegidas.spec.ts#CA-134 sin sesión, cada ruta protegida manda al inicio de sesión";Probado (JUnit y Vitest);38a9302;"main
+test/SCRUM-208-rnf-seguridad";;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-135;RNF-005;Validación de contraseñas;Contraseña con condiciones mínimas;Dado un usuario que registre o actualice su contraseña, cuando la contraseña no cumpla las condiciones mínimas establecidas, entonces el sistema debe rechazarla e informar la validación correspondiente.;;"CU-001
 CU-003
-CU-005";CP-075 Contraseña que no cumple condiciones mínimas;"AuthFlowTest#rechazaDatosFaltantesOInvalidos_CA031_CA135
-ExceptionChekerTest#debeRechazarContraseniaSinMayuscula_CA135
-ExceptionChekerTest#debeRechazarContraseniaSinMinuscula_CA135
-ExceptionChekerTest#debeAceptarContraseniaQueCumpleTodasLasReglas_CA135";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CU-005";CP-075 Contraseña que no cumple condiciones mínimas;"ExceptionChekerTest (CA-135)
+UsuarioServiceTest#contraseniaDebilNoRegistra_CA135
+RegistroUsuarioTest#contraseniaDebilSeRechaza_CA135
+RecuperacionContraseniaTest (CA-135)
+AuthServiceTest (CA-135)
+contrasena.spec.ts (CA-135)
+register.spec.ts (CA-135)
+recover.spec.ts#CA-038";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-136;RNF-006;Registro de operaciones relevantes;Registro de operaciones relevantes;Dado una operación considerada relevante, cuando esta sea ejecutada, entonces el sistema debe generar un registro asociado a dicha operación.;HU-26;CU-011;CP-076 Registro de operación relevante;"ManejadorGlobalExcepcionesTest#errorInesperadoAuditado_CA136
 TarifaServiceTest#rechazoAuditado_CA136
 AlojamientoControllerAuditoriaTest#publicacionCreadaAuditada_CA136
