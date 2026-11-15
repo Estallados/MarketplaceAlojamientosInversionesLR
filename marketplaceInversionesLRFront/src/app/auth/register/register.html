@@ -369,8 +369,10 @@
                 placeholder="Crea tu contraseña"
                 autocomplete="new-password"
                 required
-                minlength="8"
                 [disabled]="guardando"
+                #contrasenaCtrl="ngModel"
+                [attr.aria-invalid]="contrasenaCtrl.touched && !!errorContrasena"
+                aria-describedby="ayuda-contrasena"
                 class="field pl-10 pr-11"
               />
 
@@ -416,10 +418,15 @@
 
             </div>
 
-            <p class="mt-2 text-xs leading-5 text-ink-500">
-              Al menos 8 caracteres, mayúscula, minúscula,
-              número y símbolo.
-            </p>
+            @if ((contrasenaCtrl.touched || contrasena) && errorContrasena) {
+              <p id="ayuda-contrasena" data-error="contrasena" class="mt-2 text-xs leading-5 text-red-600">
+                {{ errorContrasena }}
+              </p>
+            } @else {
+              <p id="ayuda-contrasena" class="mt-2 text-xs leading-5 text-ink-500">
+                {{ ayudaContrasena }}
+              </p>
+            }
 
           </div>
 
