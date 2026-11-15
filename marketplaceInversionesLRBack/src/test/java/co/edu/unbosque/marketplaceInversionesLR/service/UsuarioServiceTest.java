@@ -192,7 +192,7 @@ class UsuarioServiceTest {
 	}
 
 	@Test
-	@DisplayName("Crear un administrador valida igual que el registro: datos, contraseña y correo repetido")
+	@DisplayName("CA-135 Crear un administrador valida igual que el registro: datos, contraseña y correo repetido")
 	void crearAdministradorValida() {
 		when(usuarioRepo.existsByCorreoHash(UsuarioService.hashCorreo("ana@correo.com"))).thenReturn(true);
 

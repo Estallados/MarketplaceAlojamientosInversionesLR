@@ -198,7 +198,7 @@ class HistorialReservasTest {
 	}
 
 	@Test
-	@DisplayName("CA-079 El anfitrión ve solo las reservas de sus alojamientos, nunca las de otros")
+	@DisplayName("CA-079 CA-133 El anfitrión ve solo las reservas de sus alojamientos, nunca las de otros")
 	void reservasDelAnfitrion_CA079() throws Exception {
 		como(carlos, get("/reservas/anfitrion"))
 				.andExpect(status().isOk())

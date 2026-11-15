@@ -153,7 +153,7 @@ class PerfilUsuarioTest {
 	}
 
 	@Test
-	@DisplayName("CA-049 Un usuario autenticado no puede modificar otra cuenta: solo cambia la suya")
+	@DisplayName("CA-049 CA-133 Un usuario autenticado no puede modificar otra cuenta: solo cambia la suya")
 	void noModificaOtraCuenta_CA049() throws Exception {
 		Usuario luis = crear("luis@correo.com", "Luis", Role.HUESPED);
 

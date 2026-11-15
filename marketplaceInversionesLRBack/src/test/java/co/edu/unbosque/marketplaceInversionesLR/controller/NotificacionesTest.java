@@ -126,7 +126,7 @@ class NotificacionesTest {
 	}
 
 	@Test
-	@DisplayName("CA-013 Cada usuario ve solo las suyas, de la más reciente a la más antigua")
+	@DisplayName("CA-013 CA-133 Cada usuario ve solo las suyas, de la más reciente a la más antigua")
 	void soloLasPropias_CA013() throws Exception {
 		comoAna(get("/notificaciones"))
 				.andExpect(status().isOk())
@@ -150,7 +150,7 @@ class NotificacionesTest {
 	}
 
 	@Test
-	@DisplayName("CA-013 Se marca como leída una propia; la de otro usuario responde 404 y no cambia")
+	@DisplayName("CA-013 CA-133 Se marca como leída una propia; la de otro usuario responde 404 y no cambia")
 	void marcarUna_CA013() throws Exception {
 		comoAna(patch("/notificaciones/" + reciente + "/leida"))
 				.andExpect(status().isOk())

@@ -121,7 +121,7 @@ class EstadoCuentaTest {
 	}
 
 	@Test
-	@DisplayName("CA-053 Un usuario autenticado no puede cambiar el estado de otra cuenta: solo cambia la suya")
+	@DisplayName("CA-053 CA-133 Un usuario autenticado no puede cambiar el estado de otra cuenta: solo cambia la suya")
 	void noCambiaOtraCuenta_CA053() throws Exception {
 		Usuario luis = crear("luis@correo.com", "Luis", Role.HUESPED);
 
