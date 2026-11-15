@@ -10,7 +10,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
 /**
- * Envío de correos de texto plano con Spring Mail.
+ * Envío de correos de texto plano con Spring Mail, por el SMTP de Brevo. Todos
+ * los correos de la plataforma pasan por {@link #enviarCorreo}, así que todos
+ * salen con el mismo remitente ({@code correo.remitente}).
  */
 @Service
 public class CorreoUtil {
@@ -21,16 +23,22 @@ public class CorreoUtil {
 	/** Servicio de Spring para enviar correos. */
 	private final JavaMailSender mailSender;
 
-	/** Cuenta que envía los correos; Gmail exige que coincida con la autenticada. */
+	/**
+	 * Dirección que aparece como remitente ("From"). Sale de
+	 * {@code correo.remitente} (variable {@code MAIL_FROM}) y no de
+	 * {@code spring.mail.username}: en Brevo ese usuario es un login SMTP del
+	 * tipo {@code xxx@smtp-brevo.com}, que no sirve como remitente. Debe ser un
+	 * remitente verificado en Brevo.
+	 */
 	private final String remitente;
 
 	/**
 	 * Crea la utilidad.
 	 *
 	 * @param mailSender servicio de envío de correos
-	 * @param remitente  cuenta remitente ({@code spring.mail.username})
+	 * @param remitente  dirección remitente ({@code correo.remitente})
 	 */
-	public CorreoUtil(JavaMailSender mailSender, @Value("${spring.mail.username:}") String remitente) {
+	public CorreoUtil(JavaMailSender mailSender, @Value("${correo.remitente:}") String remitente) {
 		this.mailSender = mailSender;
 		this.remitente = remitente;
 	}
@@ -57,8 +65,8 @@ public class CorreoUtil {
 			mailSender.send(message);
 			return true;
 		} catch (MailAuthenticationException e) {
-			LOG.error("El servidor de correo rechazó el usuario o la contraseña. Revisa la variable de entorno "
-					+ "MAIL_PASSWORD (debe ser una contraseña de aplicación de Gmail): {}", e.getMessage());
+			LOG.error("El servidor de correo rechazó el usuario o la contraseña. Revisa las variables de entorno "
+					+ "MAIL_USERNAME y MAIL_PASSWORD (login y clave SMTP de Brevo): {}", e.getMessage());
 			return false;
 		} catch (MailException e) {
 			LOG.error("Error enviando correo: {}", e.getMessage());

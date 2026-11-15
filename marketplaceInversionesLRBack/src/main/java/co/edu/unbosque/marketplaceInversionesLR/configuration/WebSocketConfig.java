@@ -35,11 +35,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	 * Crea la configuración.
 	 *
 	 * @param authInterceptor    interceptor de seguridad de STOMP
-	 * @param origenesPermitidos orígenes permitidos; por defecto
-	 *                           {@code http://localhost:4200}
+	 * @param origenesPermitidos patrones de orígenes permitidos; por defecto
+	 *                           {@code *} (cualquier origen)
 	 */
 	public WebSocketConfig(WebSocketAuthInterceptor authInterceptor,
-			@Value("${app.cors.allowed-origins:http://localhost:4200}") List<String> origenesPermitidos) {
+			@Value("${app.cors.allowed-origins:*}") List<String> origenesPermitidos) {
 		this.authInterceptor = authInterceptor;
 		this.origenesPermitidos = origenesPermitidos;
 	}
@@ -52,7 +52,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
 		// Mismos orígenes que CORS (SecurityConfig)
-		registry.addEndpoint("/ws").setAllowedOrigins(origenesPermitidos.stream().map(String::trim)
+		registry.addEndpoint("/ws").setAllowedOriginPatterns(origenesPermitidos.stream().map(String::trim)
 				.toArray(String[]::new));
 	}
 
