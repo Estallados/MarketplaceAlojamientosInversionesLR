@@ -9,4 +9,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @Schema(name = "PaginaReservasAdmin", description = "Página de reservas resumidas, las más recientes primero")
 public class PaginaReservasAdminDTO extends PaginaDTO<ReservaAdminDTO> {
+	/**
+	 * Crea una página vacía; solo se usa para documentar la respuesta en Swagger.
+	 */
+	public PaginaReservasAdminDTO() {
+		// Solo describe la forma de la respuesta en Swagger.
+	}
 }

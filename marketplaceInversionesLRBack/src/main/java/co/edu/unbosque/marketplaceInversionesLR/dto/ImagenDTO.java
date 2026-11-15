@@ -1,7 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.dto;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -10,7 +9,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class ImagenDTO {
 
 	/** Identificador de la imagen. */
@@ -27,4 +25,11 @@ public class ImagenDTO {
 
 	/** Id del archivo en Cloudinary. */
 	private String rutaArchivo;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public ImagenDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

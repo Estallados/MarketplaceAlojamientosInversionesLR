@@ -33,6 +33,11 @@ public final class ExceptionCheker {
 	/** Bytes que usa BCrypt; lo que pase de aquí se ignoraría. */
 	private static final int MAXIMO_BYTES = 72;
 
+	/**
+	 * No se instancia: la clase solo ofrece miembros estáticos.
+	 *
+	 * @throws IllegalStateException siempre, si se intenta crear por reflexión
+	 */
 	private ExceptionCheker() {
 		throw new IllegalStateException("Clase utilitaria");
 	}

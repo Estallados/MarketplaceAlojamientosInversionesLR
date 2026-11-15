@@ -4,7 +4,6 @@ import java.time.LocalDate;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -15,7 +14,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class PeriodoDisponibilidadDTO {
 
 	/** Identificador del período. */
@@ -33,4 +31,11 @@ public class PeriodoDisponibilidadDTO {
 	/** Último día disponible (AAAA-MM-DD), posterior al inicio. */
 	@Schema(example = "2026-12-20")
 	private LocalDate fechaFin;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public PeriodoDisponibilidadDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

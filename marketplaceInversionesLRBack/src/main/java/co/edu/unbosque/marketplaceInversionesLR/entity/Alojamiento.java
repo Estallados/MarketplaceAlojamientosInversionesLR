@@ -21,7 +21,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -37,7 +36,6 @@ import lombok.Setter;
 @Table(name = "alojamiento")
 @Getter
 @Setter
-@NoArgsConstructor
 public class Alojamiento {
 
 	/** Identificador del alojamiento. */
@@ -149,4 +147,11 @@ public class Alojamiento {
 	@CollectionTable(name = "alojamientoAmenidad", joinColumns = @JoinColumn(name = "id_alojamiento"))
 	@Column(name = "amenidad")
 	private Set<String> amenidades = new HashSet<>();
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public Alojamiento() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

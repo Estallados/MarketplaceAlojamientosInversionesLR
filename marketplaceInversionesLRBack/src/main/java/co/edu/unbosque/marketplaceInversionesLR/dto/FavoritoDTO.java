@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -12,7 +11,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class FavoritoDTO {
 
 	/** Identificador del favorito. */
@@ -29,4 +27,11 @@ public class FavoritoDTO {
 
 	/** Datos del alojamiento para mostrar la tarjeta. */
 	private AlojamientoDTO alojamiento;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public FavoritoDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -12,7 +11,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class RegistroExportacionDTO {
 
 	/** Identificador del registro. */
@@ -35,4 +33,11 @@ public class RegistroExportacionDTO {
 
 	/** Momento de la exportación. */
 	private LocalDateTime fecha;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public RegistroExportacionDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

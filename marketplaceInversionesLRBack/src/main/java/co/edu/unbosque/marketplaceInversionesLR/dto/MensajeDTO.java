@@ -3,7 +3,6 @@ package co.edu.unbosque.marketplaceInversionesLR.dto;
 import java.time.LocalDateTime;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -11,7 +10,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class MensajeDTO {
 
 	/** Identificador del mensaje. */
@@ -31,4 +29,11 @@ public class MensajeDTO {
 
 	/** Nombre de quien envió el mensaje. */
 	private String nombreUsuario;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public MensajeDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

@@ -4,7 +4,6 @@ import java.util.List;
 
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -13,7 +12,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class DisponibilidadDTO {
 
 	/** Alojamiento consultado. */
@@ -27,4 +25,11 @@ public class DisponibilidadDTO {
 
 	/** Rangos reservados desde hoy, por fecha de entrada. */
 	private List<RangoReservadoDTO> reservados;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public DisponibilidadDTO() {
+		// Los valores se asignan con los setters.
+	}
 }

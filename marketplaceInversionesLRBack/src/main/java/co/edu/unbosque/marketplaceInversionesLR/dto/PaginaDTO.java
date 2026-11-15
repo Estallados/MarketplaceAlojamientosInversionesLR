@@ -6,7 +6,6 @@ import java.util.function.Function;
 import org.springframework.data.domain.Page;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -17,7 +16,6 @@ import lombok.Setter;
  */
 @Getter
 @Setter
-@NoArgsConstructor
 public class PaginaDTO<T> {
 
 	/** Elementos de la página. */
@@ -34,6 +32,13 @@ public class PaginaDTO<T> {
 
 	/** Total de páginas. */
 	private int totalPaginas;
+
+	/**
+	 * Crea el DTO vacío; Jackson y ModelMapper lo llenan campo por campo.
+	 */
+	public PaginaDTO() {
+		// Los valores se asignan con los setters.
+	}
 
 	/**
 	 * Convierte una página de Spring Data a este formato.

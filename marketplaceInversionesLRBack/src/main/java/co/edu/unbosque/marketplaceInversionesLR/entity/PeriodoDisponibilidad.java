@@ -13,7 +13,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
@@ -27,7 +26,6 @@ import lombok.Setter;
 @Table(name = "periodoDisponibilidad")
 @Getter
 @Setter
-@NoArgsConstructor
 public class PeriodoDisponibilidad {
 
 	/** Identificador del período. */
@@ -56,4 +54,11 @@ public class PeriodoDisponibilidad {
 	/** Último día disponible; posterior a {@code fechaInicio}. */
 	@Column(nullable = false)
 	private LocalDate fechaFin;
+
+	/**
+	 * Crea la entidad vacía; JPA la usa al cargar registros de la base de datos.
+	 */
+	public PeriodoDisponibilidad() {
+		// JPA asigna los valores al leer el registro.
+	}
 }

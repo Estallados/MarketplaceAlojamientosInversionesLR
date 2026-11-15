@@ -229,6 +229,13 @@ public final class ExportadorUtil {
 	private static final class PiePagina extends PdfPageEventHelper {
 
 		/**
+		 * Crea el manejador del pie de página del PDF.
+		 */
+		PiePagina() {
+			// No requiere inicialización; solo responde a eventos del PDF.
+		}
+
+		/**
 		 * Dibuja el pie al terminar cada página.
 		 *
 		 * @param writer   escritor del PDF

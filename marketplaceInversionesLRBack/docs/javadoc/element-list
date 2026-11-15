@@ -1,0 +1,10 @@
+co.edu.unbosque.marketplaceInversionesLR
+co.edu.unbosque.marketplaceInversionesLR.configuration
+co.edu.unbosque.marketplaceInversionesLR.controller
+co.edu.unbosque.marketplaceInversionesLR.dto
+co.edu.unbosque.marketplaceInversionesLR.entity
+co.edu.unbosque.marketplaceInversionesLR.exception
+co.edu.unbosque.marketplaceInversionesLR.repository
+co.edu.unbosque.marketplaceInversionesLR.security
+co.edu.unbosque.marketplaceInversionesLR.service
+co.edu.unbosque.marketplaceInversionesLR.util
