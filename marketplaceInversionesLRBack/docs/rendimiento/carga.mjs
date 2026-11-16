@@ -144,18 +144,19 @@ const telemetria = setInterval(async () => {
 }, 5000); telemetria.unref();
 
 // ---- Mezclas de tráfico (viaje del usuario en el marketplace) ---------------------------
-// frontend: lo que pide el frontend. Inicio, Explorar y Buscar piden siempre la página 0 con tamanio=100 y
-//           filtran por tipo, precio, amenidades y orden en el navegador; Mis reservas pide tamanio=100.
+// frontend: lo que pide el frontend. Explorar pide las opciones de los filtros (/alojamientos/filtros) y páginas
+//           de 9 con los filtros resueltos en el servidor; Mis reservas pide tamanio=100.
 // paginada: el mismo recorrido con páginas pequeñas (12 y 20) y filtros y orden en el servidor. Muestra cuánto
 //           cuesta el backend cuando el cliente pide solo lo que muestra.
 // Cada proceso empieza en un bloque de alojamientos al azar: así el calentamiento, la validación y el escenario
 // (que comparten base) no piden las mismas fechas del mismo alojamiento.
 let ranura = azar(3700) * 150;
 const frontend = [
-  [22, () => op('buscar_ciudad', 'GET', `/alojamientos?pagina=0&tamanio=100&ciudad=${encodeURIComponent(de(CIUDADES))}`, {}, [200], VALIDA.pagina)],
-  [13, () => { const d = 20 + azar(200); return op('buscar_fechas', 'GET', `/alojamientos?pagina=0&tamanio=100&ciudad=${encodeURIComponent(de(CIUDADES))}&llegada=${fecha(d)}&salida=${fecha(d + 3)}&huespedes=2`, {}, [200], VALIDA.pagina); }],
-  [5, () => op('buscar_huespedes', 'GET', `/alojamientos?pagina=0&tamanio=100&ciudad=${encodeURIComponent(de(CIUDADES))}&huespedes=${2 + azar(5)}`, {}, [200], VALIDA.pagina)],
-  [15, () => op('disponibles', 'GET', '/alojamientos/disponibles?pagina=0&tamanio=100', {}, [200], VALIDA.pagina)],
+  [22, () => op('buscar_ciudad', 'GET', `/alojamientos?pagina=${azar(3)}&tamanio=9&ciudad=${encodeURIComponent(de(CIUDADES))}`, {}, [200], VALIDA.pagina)],
+  [13, () => { const d = 20 + azar(200); return op('buscar_fechas', 'GET', `/alojamientos?pagina=0&tamanio=9&ciudad=${encodeURIComponent(de(CIUDADES))}&llegada=${fecha(d)}&salida=${fecha(d + 3)}&huespedes=2`, {}, [200], VALIDA.pagina); }],
+  [5, () => op('buscar_filtros', 'GET', `/alojamientos/disponibles?pagina=0&tamanio=9&tipo=${encodeURIComponent(de(TIPOS))}&precioMinimo=100000&precioMaximo=400000&amenidades=wifi`, {}, [200], VALIDA.pagina)],
+  [15, () => op('disponibles', 'GET', `/alojamientos/disponibles?pagina=${azar(3)}&tamanio=9`, {}, [200], VALIDA.pagina)],
+  [10, () => op('opciones_filtros', 'GET', Math.random() < .5 ? '/alojamientos/filtros' : `/alojamientos/filtros?ciudad=${encodeURIComponent(de(CIUDADES))}`, {}, [200], c => c.includes('"tipos"'))],
   [18, () => op('detalle', 'GET', `/alojamientos/${1 + azar(4000)}`, {}, [200], VALIDA.alojamiento)],
   [7, () => op('disponibilidad', 'GET', `/alojamientos/${1 + azar(4000)}/disponibilidad`, {}, [200], VALIDA.calendario)],
   [5, () => op('resenas', 'GET', `/alojamientos/${1 + azar(4000)}/resenas`, {}, [200], VALIDA.resenas)],
@@ -172,9 +173,9 @@ const paginada = [
   [5, () => op('buscar_filtros', 'GET', `/alojamientos?tipo=${encodeURIComponent(de(TIPOS))}&precioMinimo=100000&precioMaximo=400000&amenidades=wifi&orden=precio_menor&tamanio=12`, {}, [200], VALIDA.pagina)],
   [12, () => op('disponibles', 'GET', `/alojamientos/disponibles?pagina=${azar(5)}&tamanio=20`, {}, [200], VALIDA.pagina)],
   [3, () => op('mejor_calificados', 'GET', '/alojamientos/disponibles?orden=mejor_calificados&tamanio=20', {}, [200], VALIDA.pagina)],
-  ...frontend.slice(4, 10),
+  ...frontend.slice(5, 11),
   [3, () => op('mis_reservas', 'GET', '/reservas/mias?tamanio=10', { token: de(huespedes).token }, [200], VALIDA.pagina)],
-  ...frontend.slice(11),
+  ...frontend.slice(12),
 ];
 const planes = MEZCLA === 'paginada' ? paginada : frontend;
 const totalPeso = planes.reduce((s, p) => s + p[0], 0);

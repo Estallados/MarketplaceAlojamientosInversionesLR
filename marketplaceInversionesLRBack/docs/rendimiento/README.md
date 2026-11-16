@@ -73,28 +73,29 @@ Todos los usuarios tienen la contraseña `Carga#2026` y ningún dato es real. El
 
 ## Qué tráfico se simula
 
-Cada petición del generador elige una acción al azar, con estos pesos, que imitan un uso real del marketplace:
+Cada petición del generador elige una acción al azar, con estos pesos relativos, que imitan un uso real del marketplace:
 
-| Peso | Acción | Petición |
+| Peso | Acción | Petición (mezcla `frontend`) |
 |---|---|---|
-| 22 % | Buscar por ciudad | `GET /alojamientos?ciudad=…` |
-| 13 % | Buscar por ciudad y fechas | `GET /alojamientos?ciudad=…&llegada=…&salida=…&huespedes=2` |
-| 5 % | Buscar por ciudad y huéspedes | `GET /alojamientos?ciudad=…&huespedes=…` |
-| 15 % | Ver el catálogo | `GET /alojamientos/disponibles` |
-| 18 % | Ver un alojamiento | `GET /alojamientos/{id}` |
-| 7 % | Ver su calendario | `GET /alojamientos/{id}/disponibilidad` |
-| 5 % | Ver sus reseñas | `GET /alojamientos/{id}/resenas` |
-| 3 % | Contar alojamientos por tipo | `GET /alojamientos/tipos` |
-| 3 % | Ver el perfil | `GET /usuarios/perfil` |
-| 3 % | Contador de notificaciones | `GET /notificaciones/noleidas` |
-| 3 % | Mis reservas | `GET /reservas/mias` |
-| 2 % | Cotizar | `POST /cotizaciones` |
-| 1 % | Cotizar y reservar | `POST /cotizaciones` + `POST /reservas` |
+| 22 | Buscar por ciudad | `GET /alojamientos?ciudad=…&tamanio=9` |
+| 13 | Buscar por ciudad y fechas | `GET /alojamientos?ciudad=…&llegada=…&salida=…&huespedes=2&tamanio=9` |
+| 5 | Filtrar el catálogo | `GET /alojamientos/disponibles?tipo=…&precioMinimo=…&precioMaximo=…&amenidades=wifi&tamanio=9` |
+| 15 | Ver el catálogo | `GET /alojamientos/disponibles?tamanio=9` |
+| 10 | Opciones de los filtros de Explorar (solo en `frontend`) | `GET /alojamientos/filtros` |
+| 18 | Ver un alojamiento | `GET /alojamientos/{id}` |
+| 7 | Ver su calendario | `GET /alojamientos/{id}/disponibilidad` |
+| 5 | Ver sus reseñas | `GET /alojamientos/{id}/resenas` |
+| 3 | Contar alojamientos por tipo | `GET /alojamientos/tipos` |
+| 3 | Ver el perfil | `GET /usuarios/perfil` |
+| 3 | Contador de notificaciones | `GET /notificaciones/noleidas` |
+| 3 | Mis reservas | `GET /reservas/mias` |
+| 2 | Cotizar | `POST /cotizaciones` |
+| 1 | Cotizar y reservar | `POST /cotizaciones` + `POST /reservas` |
 
 Hay dos versiones de esta mezcla, que se eligen con la variable `MEZCLA`:
 
-- **`frontend`** (por defecto): pide lo mismo que el frontend, que siempre pide páginas de 100 alojamientos (`tamanio=100`) y filtra y ordena en el navegador.
-- **`paginada`**: el mismo recorrido con páginas pequeñas (12 y 20) y filtros y orden en el servidor. Muestra cuánto cuesta el backend cuando el cliente pide solo lo que muestra.
+- **`frontend`** (por defecto): pide lo mismo que el frontend: Explorar carga las opciones de los filtros y páginas de 9 con los filtros resueltos en el servidor, y Mis reservas pide `tamanio=100`.
+- **`paginada`**: el mismo recorrido con páginas de 12 y 20, ordenadas en el servidor y sin la consulta de opciones de filtro. Sirve para comparar con mediciones anteriores.
 
 Cada reserva usa fechas y alojamientos distintos, para medir el camino normal y no choques de fechas. Los choques se prueban aparte, en `concurrencia`.
 

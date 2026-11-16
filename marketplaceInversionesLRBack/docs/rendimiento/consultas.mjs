@@ -1,6 +1,6 @@
 // Cuenta las consultas SQL que lanza cada endpoint del backend. Requiere: ./entorno.sh iniciar --sql
 //   node consultas.mjs <usuarios.json> <app-sql.log> <salida.json>
-// Incluye los tamaños de página que pide el frontend (tamanio=100) y páginas pequeñas para comparar.
+// Incluye páginas de 9 (Explorar), de 12 y 20, y de 100 para comparar.
 import http from 'node:http';
 import { readFileSync, writeFileSync } from 'node:fs';
 const [archivo, log, salida] = process.argv.slice(2);
@@ -12,15 +12,18 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
 const llegada = new Date(Date.now() + 100 * 864e5).toISOString().slice(0, 10), salidaF = new Date(Date.now() + 103 * 864e5).toISOString().slice(0, 10);
 const casos = [
   ['Búsqueda por ciudad (12)', '/alojamientos?ciudad=Cali&tamanio=12'],
-  ['Búsqueda por ciudad (100, front)', '/alojamientos?pagina=0&tamanio=100&ciudad=Cali'],
+  ['Búsqueda por ciudad (100)', '/alojamientos?pagina=0&tamanio=100&ciudad=Cali'],
   ['Búsqueda con fechas (12)', `/alojamientos?ciudad=Cali&llegada=${llegada}&salida=${salidaF}&huespedes=2&tamanio=12`],
-  ['Búsqueda con fechas (100, front)', `/alojamientos?pagina=0&tamanio=100&ciudad=Cali&llegada=${llegada}&salida=${salidaF}&huespedes=2`],
+  ['Búsqueda con fechas (100)', `/alojamientos?pagina=0&tamanio=100&ciudad=Cali&llegada=${llegada}&salida=${salidaF}&huespedes=2`],
   ['Catálogo /disponibles (20)', '/alojamientos/disponibles?tamanio=20'],
-  ['Catálogo /disponibles (100, front)', '/alojamientos/disponibles?pagina=0&tamanio=100'],
+  ['Catálogo /disponibles (100)', '/alojamientos/disponibles?pagina=0&tamanio=100'],
+  ['Catálogo filtrado (9, Explorar)', '/alojamientos/disponibles?pagina=0&tamanio=9&tipo=casa&amenidades=wifi'],
+  ['Opciones de filtros (catálogo)', '/alojamientos/filtros'],
+  ['Opciones de filtros (búsqueda)', '/alojamientos/filtros?ciudad=Cali&huespedes=2'],
   ['Detalle de alojamiento', '/alojamientos/10'], ['Disponibilidad', '/alojamientos/10/disponibilidad'], ['Reseñas', '/alojamientos/10/resenas'],
   ['Tipos', '/alojamientos/tipos'],
   ['Perfil (token)', '/usuarios/perfil', h], ['Notificaciones no leídas', '/notificaciones/noleidas', h],
-  ['Mis reservas (10)', '/reservas/mias?tamanio=10', h], ['Mis reservas (100, front)', '/reservas/mias?pagina=0&tamanio=100', h]];
+  ['Mis reservas (10)', '/reservas/mias?tamanio=10', h], ['Mis reservas (100)', '/reservas/mias?pagina=0&tamanio=100', h]];
 // Solo contra el entorno de prueba: el alojamiento 1 sembrado se llama «Alojamiento de prueba 1».
 if (!String(await pedir('/alojamientos/1', null, true)).includes('"Alojamiento de prueba 1"')) {
   console.error(`El backend de localhost:${PUERTO} no es el entorno de prueba (./entorno.sh iniciar --sql): no se envía nada más`);
