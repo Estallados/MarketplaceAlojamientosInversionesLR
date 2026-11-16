@@ -15,6 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -71,6 +72,12 @@ public class IdempotenciaService {
 	/** Log de la clase. */
 	private static final Logger LOG = LoggerFactory.getLogger(IdempotenciaService.class);
 
+	/**
+	 * Horas que se conserva un registro. Una clave solo debe servir mientras el
+	 * cliente puede reintentar la misma petición (segundos o minutos).
+	 */
+	public static final long HORAS_RETENCION = 24;
+
 	/** Repositorio de los registros de idempotencia. */
 	private final RegistroIdempotenciaRepository registroRepo;
 
@@ -93,6 +100,31 @@ public class IdempotenciaService {
 		this.objectMapper = objectMapper;
 		this.transaccionPropia = new TransactionTemplate(transactionManager);
 		this.transaccionPropia.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+	}
+
+	/**
+	 * Borra cada hora los registros de más de {@value #HORAS_RETENCION} horas.
+	 * Sin esta limpieza la tabla crece con cada reserva y cada cancelación, y
+	 * un registro que quedó EN_PROCESO por una caída bloquearía su clave para
+	 * siempre. Si la base no responde, se reintenta en la siguiente hora.
+	 *
+	 * @return cantidad de registros borrados (0 si falló)
+	 */
+	@Scheduled(initialDelayString = "PT10M", fixedDelayString = "PT1H")
+	public int limpiarVencidos() {
+		LocalDateTime limite = LocalDateTime.now().minusHours(HORAS_RETENCION);
+		try {
+			int[] borrados = { 0 };
+			transaccionPropia.executeWithoutResult(estado -> borrados[0] = registroRepo.borrarAnteriores(limite));
+			int total = borrados[0];
+			if (total > 0) {
+				LOG.info("Se borraron {} registros de idempotencia anteriores a {}", total, limite);
+			}
+			return total;
+		} catch (DataAccessException e) {
+			LOG.warn("No se pudieron borrar los registros de idempotencia vencidos: {}", e.getMessage());
+			return 0;
+		}
 	}
 
 	/**

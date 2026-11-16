@@ -3,7 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 
 import { API_URL } from '../../core/services/api-url';
-import { AlojamientoResultado, CamposBusqueda, PaginaResultados } from '../models/busqueda';
+import {
+  AlojamientoResultado,
+  CamposBusqueda,
+  ConsultaExplorar,
+  FiltrosExplorar,
+  PaginaResultados,
+} from '../models/busqueda';
 
 
 @Injectable({ providedIn: 'root' })
@@ -33,6 +39,37 @@ export class BusquedaService {
     return this.http
       .get<PaginaResultados>(this.base, { params })
       .pipe(map((r) => r?.contenido ?? r?.content ?? []));
+  }
+
+  /**
+   * Una página de Explorar paginada en el servidor: el catálogo (GET /alojamientos/disponibles) si no hay campos
+   * de búsqueda, o la búsqueda (GET /alojamientos) si los hay, con tipo, precio, amenidades y orden.
+   */
+  pagina(
+    busqueda: Record<string, string | number>,
+    consulta: ConsultaExplorar,
+    pagina: number,
+    tamanio: number,
+  ): Observable<PaginaResultados> {
+    let params = new HttpParams().set('pagina', pagina).set('tamanio', tamanio);
+    for (const [clave, valor] of Object.entries({ ...busqueda, ...consulta })) {
+      if (Array.isArray(valor)) {
+        valor.forEach((v) => (params = params.append(clave, v)));
+      } else if (valor !== undefined && valor !== null && valor !== '') {
+        params = params.set(clave, String(valor));
+      }
+    }
+    const url = Object.keys(busqueda).length > 0 ? this.base : `${this.base}/disponibles`;
+    return this.http.get<PaginaResultados>(url, { params });
+  }
+
+  /** Tipos, amenidades y rango de precio del catálogo o de la búsqueda (GET /alojamientos/filtros). */
+  filtros(busqueda: Record<string, string | number>): Observable<FiltrosExplorar> {
+    let params = new HttpParams();
+    for (const [clave, valor] of Object.entries(busqueda)) {
+      params = params.set(clave, String(valor));
+    }
+    return this.http.get<FiltrosExplorar>(`${this.base}/filtros`, { params });
   }
 
   /** Fecha de hoy (local) como YYYY-MM-DD. */

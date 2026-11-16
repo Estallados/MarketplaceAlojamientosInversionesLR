@@ -1,23 +1,28 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { BuscarAlojamientos } from './buscar-alojamientos';
 import { BusquedaService } from '../services/busqueda.service';
-import { AlojamientoResultado } from '../models/busqueda';
-
+import { AlojamientoResultado, FiltrosExplorar, PaginaResultados } from '../models/busqueda';
 
 describe('BuscarAlojamientos (HU-23)', () => {
   let servicio: BusquedaService;
-  let disponibles: ReturnType<typeof vi.fn>;
-  let buscar: ReturnType<typeof vi.fn>;
+  let filtros: ReturnType<typeof vi.fn>;
+  let pagina: ReturnType<typeof vi.fn>;
 
   const lista: AlojamientoResultado[] = [
-    { idAlojamiento: 1, titulo: 'Casa', ciudad: 'Bogotá', tipo: 'Casa', capacidad: 4, precioNoche: 200000, amenidades: ['Wifi', 'Piscina'], promedioCalificacion: 4.2 },
-    { idAlojamiento: 2, titulo: 'Loft', ciudad: 'Bogotá', tipo: 'Apartamento', capacidad: 2, precioNoche: 100000, amenidades: ['Wifi'], promedioCalificacion: 4.9 },
-    { idAlojamiento: 3, titulo: 'Cabaña', ciudad: 'Guatavita', tipo: 'Cabaña', capacidad: 6, precioNoche: 300000, amenidades: ['Chimenea'], promedioCalificacion: 3.5 },
+    { idAlojamiento: 1, titulo: 'Casa', ciudad: 'Bogotá', tipo: 'Casa', capacidad: 4, precioNoche: 200000, amenidades: ['Wifi', 'Piscina'] },
+    { idAlojamiento: 2, titulo: 'Loft', ciudad: 'Bogotá', tipo: 'Apartamento', capacidad: 2, precioNoche: 100000, amenidades: ['Wifi'] },
   ];
+  const opciones: FiltrosExplorar = {
+    tipos: ['Apartamento', 'Cabaña', 'Casa'],
+    amenidades: ['Chimenea', 'Piscina', 'Wifi'],
+    precioMinimo: 100000,
+    precioMaximo: 300000,
+  };
+  const respuesta: PaginaResultados = { contenido: lista, pagina: 0, totalElementos: 20, totalPaginas: 3 };
 
   function crear(query: Record<string, string> = {}) {
     TestBed.configureTestingModule({
@@ -28,18 +33,35 @@ describe('BuscarAlojamientos (HU-23)', () => {
       ],
     });
     servicio = TestBed.inject(BusquedaService);
-    disponibles = vi.spyOn(servicio, 'disponibles').mockReturnValue(of(lista)) as unknown as ReturnType<typeof vi.fn>;
-    buscar = vi.spyOn(servicio, 'buscar').mockReturnValue(of([lista[0]])) as unknown as ReturnType<typeof vi.fn>;
+    filtros = vi.spyOn(servicio, 'filtros').mockReturnValue(of(opciones)) as unknown as ReturnType<typeof vi.fn>;
+    pagina = vi.spyOn(servicio, 'pagina').mockReturnValue(of(respuesta)) as unknown as ReturnType<typeof vi.fn>;
     vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
-    const c = TestBed.createComponent(BuscarAlojamientos).componentInstance;
-    c.ngOnInit();
-    return c;
+    // Como en la aplicación: la primera detección de cambios ejecuta ngOnInit una sola vez
+    const fixture = TestBed.createComponent(BuscarAlojamientos);
+    fixture.detectChanges();
+    return fixture.componentInstance;
   }
+
+  /** Argumentos de la última página pedida: [búsqueda, filtros, página, tamaño]. */
+  const ultimaPagina = () => pagina.mock.calls.at(-1);
+
+  afterEach(() => vi.useRealTimers());
+
+  it('pide solo la página que muestra y arma los filtros con las opciones del servidor', () => {
+    const c = crear();
+
+    expect(filtros).toHaveBeenCalledWith({});
+    expect(ultimaPagina()).toEqual([{}, { orden: undefined }, 0, 9]);
+    expect(c.paginados().map((a) => a.idAlojamiento)).toEqual([1, 2]);
+    expect(c.total()).toBe(20);
+    expect(c.totalPaginas()).toBe(3);
+    expect(c.types()).toEqual(['Todos', 'Apartamento', 'Cabaña', 'Casa']);
+    expect(c.services()).toEqual(['Chimenea', 'Piscina', 'Wifi']);
+    expect([c.precioMin(), c.precioMax()]).toEqual([100000, 300000]);
+  });
 
   it('CA-087: busca por ciudad, fechas y huéspedes en el backend', () => {
     const c = crear();
-    expect(disponibles).toHaveBeenCalled();
-
     const manana = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
     const pasado = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
     c.ciudad.set(' Bogotá ');
@@ -48,60 +70,78 @@ describe('BuscarAlojamientos (HU-23)', () => {
     c.huespedes.set('2');
     c.buscar();
 
-    expect(buscar).toHaveBeenCalledWith({ ciudad: 'Bogotá', llegada: manana, salida: pasado, huespedes: 2 }, 100);
+    const busqueda = { ciudad: 'Bogotá', llegada: manana, salida: pasado, huespedes: 2 };
+    expect(filtros).toHaveBeenLastCalledWith(busqueda);
+    expect(ultimaPagina()).toEqual([busqueda, { orden: undefined }, 0, 9]);
     expect(c.busquedaAplicada()).toBe(true);
-    expect(c.visible().map((a) => a.idAlojamiento)).toEqual([1]);
   });
 
-  it('CA-087: filtra por tipo, precio y servicios y ordena', () => {
+  it('CA-087: el tipo, los servicios y el orden se filtran en el servidor', () => {
     const c = crear();
 
     c.elegirTipo('Casa');
-    expect(c.visible().map((a) => a.idAlojamiento)).toEqual([1]);
+    expect(ultimaPagina()?.[1]).toEqual({ orden: undefined, tipo: 'Casa' });
 
-    c.elegirTipo('Todos');
     c.toggleServicio('Wifi', true);
-    expect(c.visible().map((a) => a.idAlojamiento)).toEqual([1, 2]);
-
-    c.precioMax.set(150000);
-    expect(c.visible().map((a) => a.idAlojamiento)).toEqual([2]);
+    c.onSortChange({ target: { value: 'Precio menor' } } as unknown as Event);
+    expect(ultimaPagina()?.[1]).toEqual({ orden: 'precio_menor', tipo: 'Casa', amenidades: ['Wifi'] });
 
     c.limpiarFiltros();
-    c.sortBy.set('Precio menor');
-    expect(c.visible().map((a) => a.idAlojamiento)).toEqual([2, 1, 3]);
+    expect(ultimaPagina()?.[1]).toEqual({ orden: undefined });
+  });
+
+  it('el precio se envía solo si se acota y espera a que el usuario suelte el control', () => {
+    vi.useFakeTimers();
+    const c = crear();
+    const llamadas = pagina.mock.calls.length;
+
+    c.actualizarPrecioMax({ target: { value: '250000' } } as unknown as Event);
+    c.actualizarPrecioMax({ target: { value: '150000' } } as unknown as Event);
+    expect(pagina.mock.calls.length).toBe(llamadas);
+
+    vi.advanceTimersByTime(300);
+    expect(pagina.mock.calls.length).toBe(llamadas + 1);
+    expect(ultimaPagina()?.[1]).toEqual({ orden: undefined, precioMaximo: 150000 });
   });
 
   it('valida las fechas antes de buscar', () => {
     const c = crear();
+    const llamadas = filtros.mock.calls.length;
     c.entrada.set('2020-01-01');
     c.salida.set('2020-01-05');
     c.buscar();
 
     expect(c.errorBusqueda()).toContain('pasado');
-    expect(buscar).not.toHaveBeenCalled();
+    expect(filtros.mock.calls.length).toBe(llamadas);
   });
 
-  it('pagina los resultados y muestra el estado de error', () => {
+  it('pagina en el servidor y muestra el estado de error', () => {
     const c = crear();
-    const muchos = Array.from({ length: 20 }, (_, i) => ({ ...lista[0], idAlojamiento: i + 1 }));
-    c.stays.set(muchos);
-    c.precioMin.set(0);
-    c.precioMax.set(1000000);
 
-    expect(c.totalPaginas()).toBe(3);
-    expect(c.paginados().length).toBe(9);
     c.irAPagina(2);
-    expect(c.paginados().length).toBe(2);
+    expect(ultimaPagina()?.[2]).toBe(2);
+    expect(c.paginaActual()).toBe(2);
 
-    disponibles.mockReturnValue(throwError(() => new Error('500')));
+    filtros.mockReturnValue(throwError(() => new Error('500')));
     c.reintentar();
     expect(c.errorCarga()).toBe(true);
     expect(c.stays()).toEqual([]);
   });
 
-  it('desde el inicio con ?tipo= muestra solo los alojamientos de ese tipo', () => {
+  it('descarta la respuesta de una petición anterior que llega tarde', () => {
+    const c = crear();
+    const lenta = new Subject<PaginaResultados>();
+    pagina.mockReturnValueOnce(lenta);
+    c.elegirTipo('Casa');
+    c.elegirTipo('Cabaña');
+
+    lenta.next({ contenido: [lista[1]], totalElementos: 1, totalPaginas: 1 });
+    expect(c.paginados().map((a) => a.idAlojamiento)).toEqual([1, 2]);
+  });
+
+  it('desde el inicio con ?tipo= pide solo los alojamientos de ese tipo', () => {
     const c = crear({ tipo: 'Cabaña' });
     expect(c.filterType()).toBe('Cabaña');
-    expect(c.visible().map((a) => a.titulo)).toEqual(['Cabaña']);
+    expect(ultimaPagina()?.[1]).toEqual({ orden: undefined, tipo: 'Cabaña' });
   });
 });

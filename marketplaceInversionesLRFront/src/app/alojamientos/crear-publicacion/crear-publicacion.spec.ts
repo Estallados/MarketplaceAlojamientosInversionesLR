@@ -208,7 +208,7 @@ describe('CrearPublicacion (HU-15)', () => {
 
     const ruta = routes.find(r => r.path === 'host/alojamientos/crear')!;
 
-    expect(ruta.component).toBe(CrearPublicacion);
+    expect(await ruta.loadComponent!()).toBe(CrearPublicacion);
 
     expect(ejecutarGuard()).toBe(true);
 

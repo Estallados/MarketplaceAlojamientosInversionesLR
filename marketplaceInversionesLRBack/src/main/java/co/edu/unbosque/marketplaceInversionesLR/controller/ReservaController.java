@@ -44,8 +44,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * El huésped cotiza ({@code POST /cotizaciones}) y con la cotización vigente
  * reserva y paga en una sola petición ({@code POST /reservas}). Con el pago
  * aprobado la reserva bloquea las fechas de inmediato. Después puede simular y
- * cancelar la reserva según la política del alojamiento; cancelar es
- * idempotente con la cabecera {@code Idempotency-Key}.
+ * cancelar la reserva según la política del alojamiento; crear y cancelar son
+ * idempotentes con la cabecera {@code Idempotency-Key}.
  * </p>
  */
 @RestController
@@ -78,6 +78,9 @@ public class ReservaController {
 
 	/** Operación protegida con Idempotency-Key. */
 	public static final String OPERACION_CANCELAR = "CANCELAR_RESERVA";
+
+	/** Operación protegida con Idempotency-Key al crear una reserva. */
+	public static final String OPERACION_CREAR = "CREAR_RESERVA";
 
 	/** Servicio de cotizaciones. */
 	private final CotizacionService cotizacionService;
@@ -152,13 +155,14 @@ public class ReservaController {
 			+ "se aprueba, queda CONFIRMADA con el monto exacto de la cotización y sus fechas dejan de estar "
 			+ "disponibles. Si el pago se rechaza o falla queda CANCELADA y la cotización se puede usar con otro "
 			+ "método. metodoPago es opcional (por defecto pm_card_visa); pm_card_chargeDeclined simula un rechazo "
-			+ "y pm_card_error una falla de la pasarela.")
+			+ "y pm_card_error una falla de la pasarela. Repetir la petición con la misma Idempotency-Key no reserva "
+			+ "ni cobra otra vez: devuelve la respuesta original (Idempotent-Replayed: true).")
 	@PreAuthorize("hasRole('HUESPED')")
 	@ApiResponse(responseCode = "201", description = "Reserva CONFIRMADA y pagada, con su pago (CA-070, CA-075)",
 			content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
 					schema = @Schema(implementation = ReservaDTO.class)))
 	@ApiResponse(responseCode = "400", description = ReservaService.FALTA_COTIZACION + " | "
-			+ PagoService.METODO_INVALIDO + " | " + FECHAS_INVALIDAS)
+			+ PagoService.METODO_INVALIDO + " | " + FECHAS_INVALIDAS + " | " + IdempotenciaService.CLAVE_INVALIDA)
 	@ApiResponse(responseCode = "402", description = "El pago fue rechazado: La tarjeta fue rechazada por el banco. "
 			+ "La reserva no quedó pagada. (con la reserva CANCELADA en \"dato\")")
 	@ApiResponse(responseCode = "502", description = "No se pudo confirmar el pago: "
@@ -168,11 +172,19 @@ public class ReservaController {
 	@ApiResponse(responseCode = "404", description = ReservaService.COTIZACION_NO_EXISTE + " | "
 			+ CalendarioService.NO_EXISTE)
 	@ApiResponse(responseCode = "409", description = ReservaService.COTIZACION_NO_VIGENTE + " | " + NO_ACTIVA + " | "
-			+ ReservaService.PERIODO_TOMADO)
+			+ ReservaService.PERIODO_TOMADO + " | " + IdempotenciaService.EN_PROCESO)
+	@ApiResponse(responseCode = "422", description = IdempotenciaService.CLAVE_REUTILIZADA)
 	@PostMapping("/reservas")
-	public ResponseEntity<Object> crear(@RequestBody SolicitudReservaDTO solicitud, Authentication authentication) {
-		return RespuestaUtil.desde(reservaService.crear(solicitud, RespuestaUtil.idUsuario(authentication)),
-				HttpStatus.CREATED);
+	public ResponseEntity<Object> crear(@RequestBody SolicitudReservaDTO solicitud,
+			@Parameter(in = ParameterIn.HEADER, name = IdempotenciaService.CABECERA, required = true,
+					description = "Clave única por intento (1 a 100 caracteres); repítela solo al reintentar la misma "
+							+ "petición", example = "3f2b8c1e-7a44-4d0b-9e21-6c1f0a7d5e10")
+			@RequestHeader(value = IdempotenciaService.CABECERA, required = false) String clave,
+			Authentication authentication) {
+		Long idHuesped = RespuestaUtil.idUsuario(authentication);
+		return idempotenciaService.ejecutar(idHuesped, OPERACION_CREAR, clave,
+				new Object[] { solicitud.getIdCotizacion(), solicitud.getMetodoPago() },
+				() -> RespuestaUtil.desde(reservaService.crear(solicitud, idHuesped), HttpStatus.CREATED));
 	}
 
 	/**

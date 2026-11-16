@@ -205,20 +205,46 @@ public class AlojamientoController {
 	 * @return 200 con la página de alojamientos; 400 si el orden no existe
 	 */
 	@Operation(summary = "Catálogo: alojamientos disponibles para reservar (público)", description = "Publicaciones "
-			+ "ACTIVA con fechas abiertas desde hoy, para la página Explorar o el inicio. orden: recomendados (por "
-			+ "defecto), precio_menor, precio_mayor o mejor_calificados.")
+			+ "ACTIVA con fechas abiertas desde hoy, para la página Explorar o el inicio. Filtros opcionales de tipo, "
+			+ "precio por noche y amenidades (con varias, debe tenerlas todas). orden: recomendados (por defecto), "
+			+ "precio_menor, precio_mayor o mejor_calificados.")
 	@SecurityRequirements
 	@ApiResponse(responseCode = "200", description = "Página de alojamientos que se pueden reservar")
-	@ApiResponse(responseCode = "400", description = PublicacionService.ORDEN_INVALIDO)
+	@ApiResponse(responseCode = "400", description = PublicacionService.ORDEN_INVALIDO + " | "
+			+ PublicacionService.PRECIO_NEGATIVO + " | " + PublicacionService.PRECIOS_INVERTIDOS)
 	@GetMapping("/disponibles")
 	public ResponseEntity<Object> disponibles(
+			@Parameter(description = "Tipo de alojamiento, sin distinguir mayúsculas") @RequestParam(required = false) String tipo,
+			@Parameter(description = "Precio mínimo por noche") @RequestParam(required = false) BigDecimal precioMinimo,
+			@Parameter(description = "Precio máximo por noche; no puede ser menor que el mínimo") @RequestParam(required = false) BigDecimal precioMaximo,
+			@Parameter(description = "Amenidades que debe tener todas") @RequestParam(required = false) List<String> amenidades,
 			@Parameter(description = "recomendados (por defecto), precio_menor, precio_mayor o mejor_calificados", schema = @Schema(allowableValues = {
 					PublicacionService.ORDEN_RECOMENDADOS, PublicacionService.ORDEN_PRECIO_MENOR,
 					PublicacionService.ORDEN_PRECIO_MAYOR, PublicacionService.ORDEN_MEJOR_CALIFICADOS })) @RequestParam(required = false) String orden,
 			@Parameter(description = "Número de página, desde 0") @RequestParam(defaultValue = "0") int pagina,
 			@Parameter(description = "Elementos por página, de 1 a 100") @RequestParam(defaultValue = "20") int tamanio) {
-		return RespuestaUtil.desde(publicacionService.disponibles(orden,
+		PublicacionService.FiltrosBusqueda filtros = new PublicacionService.FiltrosBusqueda(null, null, null, null,
+				tipo, precioMinimo, precioMaximo, amenidades);
+		return RespuestaUtil.desde(publicacionService.disponibles(filtros, orden,
 				RespuestaUtil.pagina(pagina, tamanio, Sort.unsorted())));
+	}
+
+	@Operation(summary = "Opciones de los filtros de Explorar (público)", description = "Tipos, amenidades y rango "
+			+ "de precio por noche del conjunto que se está explorando: el catálogo si no se envía ciudad, fechas ni "
+			+ "huéspedes, o el resultado de esa búsqueda. Permite armar los filtros y paginar en el servidor sin "
+			+ "descargar todos los alojamientos.")
+	@SecurityRequirements
+	@ApiResponse(responseCode = "200", description = "{tipos, amenidades, precioMinimo, precioMaximo}")
+	@ApiResponse(responseCode = "400", description = CalendarioService.FECHAS_FALTANTES + " | "
+			+ CalendarioService.SALIDA_NO_POSTERIOR + " | " + CalendarioService.LLEGADA_EN_EL_PASADO + " | "
+			+ PublicacionService.HUESPEDES_INVALIDOS)
+	@GetMapping("/filtros")
+	public ResponseEntity<Object> filtros(
+			@Parameter(description = "Ciudad de la búsqueda") @RequestParam(required = false) String ciudad,
+			@Parameter(description = "Día de llegada (AAAA-MM-DD); va junto con la salida") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate llegada,
+			@Parameter(description = "Día de salida (AAAA-MM-DD)") @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate salida,
+			@Parameter(description = "Cantidad de huéspedes") @RequestParam(required = false) Integer huespedes) {
+		return RespuestaUtil.desde(publicacionService.filtrosExplorar(ciudad, llegada, salida, huespedes));
 	}
 
 	/**

@@ -1,5 +1,6 @@
 package co.edu.unbosque.marketplaceInversionesLR.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,15 @@ public interface ServicioAdicionalRepository extends JpaRepository<ServicioAdici
 	 * @return lista de servicios
 	 */
 	List<ServicioAdicional> findByIdAlojamientoOrderByIdServicio(Long idAlojamiento);
+
+	/**
+	 * Servicios de varios alojamientos en una sola consulta, en el orden en que
+	 * se crearon.
+	 *
+	 * @param idsAlojamiento alojamientos a consultar
+	 * @return lista de servicios de todos ellos
+	 */
+	List<ServicioAdicional> findByIdAlojamientoInOrderByIdServicio(Collection<Long> idsAlojamiento);
 
 	/**
 	 * Busca un servicio verificando que sea del alojamiento indicado.

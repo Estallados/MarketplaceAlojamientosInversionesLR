@@ -7,6 +7,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -15,9 +19,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.QueryTimeoutException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -57,6 +63,21 @@ class IdempotenciaServiceTest {
 	@BeforeEach
 	void preparar() {
 		servicio = new IdempotenciaService(registroRepo, transactionManager, JsonMapper.builder().build());
+	}
+
+	@Test
+	@DisplayName("La limpieza borra los registros de más de 24 horas y tolera que la base no responda")
+	void limpiaRegistrosVencidos() {
+		ArgumentCaptor<LocalDateTime> limite = ArgumentCaptor.forClass(LocalDateTime.class);
+		when(registroRepo.borrarAnteriores(limite.capture())).thenReturn(7)
+				.thenThrow(new QueryTimeoutException("sin conexión"));
+
+		assertThat(servicio.limpiarVencidos()).isEqualTo(7);
+		ZoneId zona = ZoneId.systemDefault();
+		assertThat(Duration.between(limite.getValue().atZone(zona), ZonedDateTime.now(zona)))
+				.isBetween(Duration.ofHours(IdempotenciaService.HORAS_RETENCION).minusMinutes(1),
+						Duration.ofHours(IdempotenciaService.HORAS_RETENCION).plusMinutes(1));
+		assertThat(servicio.limpiarVencidos()).isZero();
 	}
 
 	@Test

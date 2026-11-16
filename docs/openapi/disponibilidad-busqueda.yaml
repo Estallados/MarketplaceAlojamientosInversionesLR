@@ -299,9 +299,38 @@ paths:
       tags: [Búsqueda]
       operationId: catalogo
       summary: 'Catálogo: alojamientos disponibles para reservar (público)'
-      description: Publicaciones ACTIVA con fechas abiertas desde hoy, para la página Explorar o el inicio.
+      description: Publicaciones ACTIVA con fechas abiertas desde hoy, para la página Explorar o el inicio. Acepta los mismos filtros de tipo, precio y amenidades que la búsqueda, para paginar en el servidor.
       security: []
       parameters:
+        - name: tipo
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: precioMinimo
+          in: query
+          required: false
+          description: Precio mínimo por noche
+          schema:
+            type: number
+            minimum: 0
+        - name: precioMaximo
+          in: query
+          required: false
+          description: Precio máximo por noche; no puede ser menor que el mínimo
+          schema:
+            type: number
+            minimum: 0
+        - name: amenidades
+          in: query
+          required: false
+          description: Amenidades que debe tener, por ejemplo wifi y parqueadero (CP-030)
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
         - $ref: '#/components/parameters/Orden'
         - $ref: '#/components/parameters/Pagina'
         - name: tamanio
@@ -321,7 +350,67 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginaResultados'
         '400':
-          description: 'El orden debe ser uno de: recomendados, precio_menor, precio_mayor, mejor_calificados.'
+          description: 'El orden no existe, un precio es negativo o el mínimo es mayor que el máximo.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mensaje'
+  /alojamientos/filtros:
+    get:
+      tags: [Búsqueda]
+      operationId: filtrosExplorar
+      summary: Opciones de los filtros de Explorar (público)
+      description: Tipos, amenidades y rango de precio por noche del conjunto que se explora (el catálogo si no se envía ciudad, fechas ni huéspedes; si se envían, el resultado de esa búsqueda). Permite armar los filtros y paginar en el servidor sin descargar todos los alojamientos.
+      security: []
+      parameters:
+        - name: ciudad
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: llegada
+          in: query
+          required: false
+          description: Día de llegada; va junto con la salida
+          schema:
+            type: string
+            format: date
+        - name: salida
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: huespedes
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Opciones de los filtros
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tipos:
+                    type: array
+                    items:
+                      type: string
+                  amenidades:
+                    type: array
+                    items:
+                      type: string
+                  precioMinimo:
+                    type: number
+                    nullable: true
+                  precioMaximo:
+                    type: number
+                    nullable: true
+        '400':
+          description: Fechas o cantidad de huéspedes inválidas
           content:
             application/json:
               schema:

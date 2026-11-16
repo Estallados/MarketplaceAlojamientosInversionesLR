@@ -25,8 +25,9 @@ describe('Home (página de inicio)', () => {
 
   let disponibles: ReturnType<typeof vi.fn>;
   let tipos: ReturnType<typeof vi.fn>;
+  let buscar: ReturnType<typeof vi.fn>;
 
-  function crear(opciones: { alojamientos?: unknown; tipos?: unknown } = {}) {
+  function crear(opciones: { alojamientos?: unknown; tipos?: unknown; porTipo?: Record<string, AlojamientoResultado[]> } = {}) {
     TestBed.configureTestingModule({
       imports: [Home],
       providers: [
@@ -54,6 +55,10 @@ describe('Home (página de inicio)', () => {
     tipos = vi
       .spyOn(servicio, 'cantidadPorTipo')
       .mockReturnValue((opciones.tipos ?? of({ Casa: 3, Apartamento: 5, Finca: 0, Cabaña: 3 })) as never) as unknown as ReturnType<typeof vi.fn>;
+    buscar = vi
+      .spyOn(servicio, 'buscar')
+      .mockImplementation(((filtros: Record<string, string | number>) =>
+        of(opciones.porTipo?.[String(filtros['tipo'])] ?? [])) as never) as unknown as ReturnType<typeof vi.fn>;
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     return fixture;
@@ -69,7 +74,8 @@ describe('Home (página de inicio)', () => {
 
   it('muestra los alojamientos disponibles con enlace a su detalle', () => {
     const f = crear();
-    expect(disponibles).toHaveBeenCalledWith(100);
+    // Solo los destacados que se muestran, no una página grande
+    expect(disponibles).toHaveBeenCalledWith(4);
     const tarjetas = el(f).querySelectorAll('[data-alojamiento]');
     expect(tarjetas.length).toBe(2);
     expect(tarjetas[0].textContent).toContain('Casa del lago');
@@ -94,6 +100,18 @@ describe('Home (página de inicio)', () => {
     expect(porNombre['Cabaña']).toContain('images.unsplash.com');
     expect(porNombre['Apartamento']).toContain('images.unsplash.com');
     expect(porNombre['Cabaña']).not.toBe(porNombre['Apartamento']);
+  });
+
+  it('pide un solo alojamiento por cada tipo sin foto y usa su foto real', () => {
+    const cabana: AlojamientoResultado = { idAlojamiento: 7, titulo: 'Cabaña del bosque', tipo: 'Cabaña', imagenes: ['https://ejemplo.com/cabana.jpg'] };
+    const f = crear({ porTipo: { Cabaña: [cabana] } });
+    // Casa ya tiene foto por los destacados: solo se piden los tipos que faltan, de a un alojamiento
+    expect(buscar).toHaveBeenCalledTimes(2);
+    expect(buscar).toHaveBeenCalledWith({ tipo: 'Apartamento' }, 1);
+    expect(buscar).toHaveBeenCalledWith({ tipo: 'Cabaña' }, 1);
+    const porNombre = Object.fromEntries(f.componentInstance.tipos().map((t) => [t.nombre, t.foto]));
+    expect(porNombre['Cabaña']).toBe('https://ejemplo.com/cabana.jpg');
+    expect(porNombre['Apartamento']).toContain('images.unsplash.com');
   });
 
   it('si fallan las consultas muestra el error y permite reintentar', () => {

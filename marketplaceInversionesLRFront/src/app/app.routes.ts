@@ -1,30 +1,31 @@
 import { Routes } from '@angular/router';
-import { Register } from './auth/register/register';
-import { Login } from './auth/login/login';
-import { Recover } from './auth/recover/recover';
-import { Tarifas } from './cotizacion/tarifas/tarifas';
 import { roleGuard, rolesExcluidosGuard } from './core/guards/role.guard';
-import { CrearPublicacion } from './alojamientos/crear-publicacion/crear-publicacion';
-import { ProfileView } from './perfil/profile-view/profile-view';
+
+// Todas las páginas se cargan de forma diferida: el bundle inicial solo trae el layout y el router.
+const login = () => import('./auth/login/login').then((m) => m.Login);
+const registro = () => import('./auth/register/register').then((m) => m.Register);
+const recuperar = () => import('./auth/recover/recover').then((m) => m.Recover);
+const tarifas = () => import('./cotizacion/tarifas/tarifas').then((m) => m.Tarifas);
+const perfil = () => import('./perfil/profile-view/profile-view').then((m) => m.ProfileView);
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'login', component: Login },
-  { path: 'registro', component: Register },
+  { path: 'login', loadComponent: login },
+  { path: 'registro', loadComponent: registro },
 
 
 
-  { path: 'recuperar-contrasena', component: Recover },
+  { path: 'recuperar-contrasena', loadComponent: recuperar },
 
 
 
-  { path: 'restablecer-contrasena', component: Recover },
+  { path: 'restablecer-contrasena', loadComponent: recuperar },
 
 
 
   {
     path: 'perfil',
-    component: ProfileView,
+    loadComponent: perfil,
     canActivate: [roleGuard]
   },
 
@@ -32,14 +33,14 @@ export const routes: Routes = [
 
   {
     path: 'host/tarifas',
-    component: Tarifas,
+    loadComponent: tarifas,
     canActivate: [roleGuard],
     data: { roles: ['Anfitrión'] }
   },
 
   {
     path: 'admin/tarifas',
-    component: Tarifas,
+    loadComponent: tarifas,
     canActivate: [roleGuard],
     data: { roles: ['Administrador'] }
   },
@@ -62,7 +63,9 @@ export const routes: Routes = [
 
   {
     path: 'host/alojamientos/crear',
-    component: CrearPublicacion,
+    loadComponent: () =>
+      import('./alojamientos/crear-publicacion/crear-publicacion')
+        .then(m => m.CrearPublicacion),
     canActivate: [roleGuard],
     data: { roles: ['Anfitrión'] }
   },

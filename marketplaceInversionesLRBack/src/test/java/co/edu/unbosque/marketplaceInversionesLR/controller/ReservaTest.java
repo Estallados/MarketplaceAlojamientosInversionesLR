@@ -3,6 +3,7 @@ package co.edu.unbosque.marketplaceInversionesLR.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -11,6 +12,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +54,7 @@ import co.edu.unbosque.marketplaceInversionesLR.repository.UsuarioRepository;
 import co.edu.unbosque.marketplaceInversionesLR.security.JwtUtil;
 import co.edu.unbosque.marketplaceInversionesLR.service.AuditoriaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.CalendarioService;
+import co.edu.unbosque.marketplaceInversionesLR.service.IdempotenciaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.PagoService;
 import co.edu.unbosque.marketplaceInversionesLR.service.ReservaService;
 import co.edu.unbosque.marketplaceInversionesLR.service.UsuarioService;
@@ -139,6 +142,7 @@ class ReservaTest {
 		jdbc.update("DELETE FROM historial_estado_alojamiento");
 		jdbc.update("DELETE FROM alojamiento_amenidad");
 		jdbc.update("DELETE FROM alojamiento");
+		jdbc.update("DELETE FROM registro_idempotencia");
 		usuarioRepository.deleteAll();
 	}
 
@@ -326,6 +330,26 @@ class ReservaTest {
 	}
 
 	@Test
+	@DisplayName("CA-140 CA-141 Reintentar la reserva con la misma Idempotency-Key devuelve la misma reserva sin cobrar otra vez")
+	void reservaIdempotente_CA140_CA141() throws Exception {
+		Long idCotizacion = idCotizacion(cotizar(tokenHuesped, BASE, BASE.plusDays(2), 1)
+				.andReturn().getResponse().getContentAsString());
+
+		reservarConClave(tokenHuesped, idCotizacion, null).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(IdempotenciaService.CLAVE_INVALIDA));
+		String primera = reservarConClave(tokenHuesped, idCotizacion, "clave-reserva").andExpect(status().isCreated())
+				.andExpect(header().doesNotExist(IdempotenciaService.CABECERA_REPETIDA))
+				.andReturn().getResponse().getContentAsString();
+		Number idReserva = JsonPath.read(primera, "$.idReserva");
+
+		reservarConClave(tokenHuesped, idCotizacion, "clave-reserva").andExpect(status().isCreated())
+				.andExpect(header().string(IdempotenciaService.CABECERA_REPETIDA, "true"))
+				.andExpect(jsonPath("$.idReserva").value(idReserva.longValue()));
+		assertThat(reservaRepository.count()).isEqualTo(1);
+		assertThat(jdbc.queryForObject("SELECT count(*) FROM pago", Integer.class)).isEqualTo(1);
+	}
+
+	@Test
 	@DisplayName("CA-131 Solo los huéspedes reservan; la cotización de otro usuario no existe para él")
 	void permisos_CA131() throws Exception {
 		Long idCotizacion = idCotizacion(cotizar(tokenHuesped, BASE, BASE.plusDays(2), 1)
@@ -366,6 +390,7 @@ class ReservaTest {
 						+ BASE + "\", \"fechaSalida\": \"" + BASE.plusDays(1) + "\"}"))
 				.andExpect(status().isNotFound());
 		mockMvc.perform(post("/reservas").header("Authorization", "Bearer " + tokenHuesped)
+				.header(IdempotenciaService.CABECERA, UUID.randomUUID().toString())
 				.contentType(MediaType.APPLICATION_JSON).content("{}"))
 				.andExpect(status().isBadRequest())
 				.andExpect(jsonPath("$.message").value(ReservaService.FALTA_COTIZACION));
@@ -381,12 +406,21 @@ class ReservaTest {
 	}
 
 	private ResultActions reservar(String token, Long idCotizacion) throws Exception {
-		return mockMvc.perform(post("/reservas").header("Authorization", "Bearer " + token)
-				.contentType(MediaType.APPLICATION_JSON).content("{\"idCotizacion\": " + idCotizacion + "}"));
+		return reservarConClave(token, idCotizacion, UUID.randomUUID().toString());
+	}
+
+	private ResultActions reservarConClave(String token, Long idCotizacion, String clave) throws Exception {
+		var peticion = post("/reservas").header("Authorization", "Bearer " + token)
+				.contentType(MediaType.APPLICATION_JSON).content("{\"idCotizacion\": " + idCotizacion + "}");
+		if (clave != null) {
+			peticion.header(IdempotenciaService.CABECERA, clave);
+		}
+		return mockMvc.perform(peticion);
 	}
 
 	private ResultActions reservar(String token, Long idCotizacion, String metodoPago) throws Exception {
 		return mockMvc.perform(post("/reservas").header("Authorization", "Bearer " + token)
+				.header(IdempotenciaService.CABECERA, UUID.randomUUID().toString())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"idCotizacion\": " + idCotizacion + ", \"metodoPago\": \"" + metodoPago + "\"}"));
 	}

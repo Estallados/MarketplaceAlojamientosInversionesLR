@@ -121,7 +121,7 @@ public class SecurityConfig {
 						.requestMatchers(HttpMethod.GET, "/alojamientos/politicas").permitAll()
 						// HU-23: la búsqueda y el catálogo (solo publicaciones ACTIVA) y el conteo por tipo son públicos
 						.requestMatchers(HttpMethod.GET, "/alojamientos", "/alojamientos/disponibles",
-								"/alojamientos/tipos").permitAll()
+								"/alojamientos/tipos", "/alojamientos/filtros").permitAll()
 						// HU-18: el detalle es público; el de una publicación no ACTIVA lo filtra PublicacionService
 						.requestMatchers(HttpMethod.GET, "/alojamientos/{id}").permitAll()
 						// HU-20: el calendario es público; el servicio solo lo muestra si la publicación está

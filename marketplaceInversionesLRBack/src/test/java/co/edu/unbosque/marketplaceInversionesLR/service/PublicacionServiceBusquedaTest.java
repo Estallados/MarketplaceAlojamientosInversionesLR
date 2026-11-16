@@ -4,15 +4,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +33,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.FiltrosExplorarDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Alojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoAlojamiento;
@@ -275,6 +279,61 @@ class PublicacionServiceBusquedaTest {
 	}
 
 	@Test
+	@DisplayName("El catálogo acepta filtros de tipo, precio y amenidades, y valida los precios")
+	@SuppressWarnings("unchecked")
+	void catalogoConFiltros() {
+		Pageable sinOrden = PageRequest.of(0, 9);
+		when(alojamientoRepo.findAll(any(Specification.class), any(Specification.class), eq(sinOrden)))
+				.thenReturn(pagina(sinOrden));
+		resenas(null, 0L);
+
+		Resultado<PaginaDTO<AlojamientoDTO>> resultado = servicio.disponibles(new FiltrosBusqueda(null, null, null,
+				null, "Cabaña", new BigDecimal("100000"), new BigDecimal("400000"), List.of("wifi")), null, sinOrden);
+
+		assertThat(resultado.esExito()).isTrue();
+		assertThat(resultado.getDato().getContenido()).singleElement()
+				.satisfies(d -> assertThat(d.getIdAlojamiento()).isEqualTo(ID));
+		Resultado<PaginaDTO<AlojamientoDTO>> invertidos = servicio.disponibles(new FiltrosBusqueda(null, null, null,
+				null, null, new BigDecimal("400000"), new BigDecimal("100000"), null), null, sinOrden);
+		assertThat(invertidos.getCodigo()).isEqualTo(Resultado.DATOS_INVALIDOS);
+		assertThat(invertidos.getMensaje()).isEqualTo(PublicacionService.PRECIOS_INVERTIDOS);
+	}
+
+	@Test
+	@DisplayName("Las opciones de los filtros salen del conjunto consultado, ordenadas y sin vacíos")
+	@SuppressWarnings("unchecked")
+	void opcionesDeFiltros() {
+		when(alojamientoRepo.tiposDe(any(Specification.class))).thenReturn(List.of("Casa", " ", "Apartamento", "Cabaña"));
+		when(alojamientoRepo.amenidadesDe(any(Specification.class)))
+				.thenReturn(Arrays.asList("wifi", " piscina ", null, "", "piscina"));
+		when(alojamientoRepo.rangoPrecioDe(any(Specification.class)))
+				.thenReturn(new BigDecimal[] { new BigDecimal("80000"), new BigDecimal("650000") });
+
+		Resultado<FiltrosExplorarDTO> catalogo = servicio.filtrosExplorar(null, null, null, null);
+		Resultado<FiltrosExplorarDTO> busqueda = servicio.filtrosExplorar("Cali", BASE, BASE.plusDays(2), 2);
+
+		for (Resultado<FiltrosExplorarDTO> resultado : List.of(catalogo, busqueda)) {
+			assertThat(resultado.esExito()).isTrue();
+			assertThat(resultado.getDato().getTipos()).containsExactly("Apartamento", "Cabaña", "Casa");
+			assertThat(resultado.getDato().getAmenidades()).containsExactly("piscina", "wifi");
+			assertThat(resultado.getDato().getPrecioMinimo()).isEqualByComparingTo("80000");
+			assertThat(resultado.getDato().getPrecioMaximo()).isEqualByComparingTo("650000");
+		}
+		ArgumentCaptor<Specification<Alojamiento>> conjuntos = ArgumentCaptor.forClass(Specification.class);
+		verify(alojamientoRepo, times(2)).rangoPrecioDe(conjuntos.capture());
+		assertThat(conjuntos.getAllValues().get(0)).isNotSameAs(conjuntos.getAllValues().get(1));
+	}
+
+	@Test
+	@DisplayName("Las opciones de los filtros rechazan fechas o huéspedes inválidos sin consultar la base")
+	void opcionesDeFiltrosInvalidas() {
+		assertThat(servicio.filtrosExplorar(null, BASE, null, null).getCodigo()).isEqualTo(Resultado.DATOS_INVALIDOS);
+		assertThat(servicio.filtrosExplorar(null, null, null, 0).getMensaje())
+				.isEqualTo(PublicacionService.HUESPEDES_INVALIDOS);
+		verifyNoInteractions(alojamientoRepo);
+	}
+
+	@Test
 	@DisplayName("Los tipos se devuelven en el orden de la consulta con su cantidad")
 	void cantidadPorTipo() {
 		when(alojamientoRepo.contarPorTipo()).thenReturn(List.of(new Object[] { "Apartamento", 2L },
@@ -309,16 +368,18 @@ class PublicacionServiceBusquedaTest {
 	}
 
 	/**
-	 * Simula las reseñas publicadas y el anfitrión de la publicación.
+	 * Simula las reseñas publicadas y el anfitrión de la publicación. La página
+	 * se arma con una consulta por tabla para todos sus alojamientos.
 	 *
 	 * @param promedio promedio de calificaciones; {@code null} si no tiene
 	 * @param cantidad cantidad de reseñas
 	 */
 	private void resenas(Double promedio, long cantidad) {
-		when(resenaRepo.promedio(ID, EstadoResena.PUBLICADA)).thenReturn(promedio);
-		when(resenaRepo.countByIdAlojamientoAndEstado(ID, EstadoResena.PUBLICADA)).thenReturn(cantidad);
+		List<Object[]> filas = promedio == null ? List.of() : List.<Object[]>of(new Object[] { ID, promedio, cantidad });
+		when(resenaRepo.resumenPorAlojamiento(Set.of(ID), EstadoResena.PUBLICADA)).thenReturn(filas);
 		Usuario ana = new Usuario();
+		ana.setIdUsuario(ANFITRION);
 		ana.setNombre("Ana");
-		when(usuarioRepo.findById(ANFITRION)).thenReturn(Optional.of(ana));
+		when(usuarioRepo.findAllById(Set.of(ANFITRION))).thenReturn(List.of(ana));
 	}
 }

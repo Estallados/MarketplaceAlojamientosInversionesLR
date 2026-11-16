@@ -11,7 +11,9 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.sql.SQLException;
+import java.sql.SQLTransientConnectionException;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +23,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.transaction.CannotCreateTransactionException;
 import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -163,6 +167,29 @@ class ManejadorGlobalExcepcionesTest {
 		verify(auditoriaService, never()).registrar(any(), anyString(), any(), any(), any(), any());
 		assertThat(manejador.errorInesperado(new HttpMediaTypeNotAcceptableException("xml"),
 				new MockHttpServletRequest("GET", "/alojamientos")).getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
+	}
+
+	@Test
+	@DisplayName("Si el cliente cerró la conexión al escribir el JSON, no se responde ni se audita como error")
+	void clienteDesconectadoAlEscribir() {
+		HttpMessageNotWritableException e = new HttpMessageNotWritableException("Could not write JSON",
+				new AsyncRequestNotUsableException("ServletOutputStream failed to write", new IOException("Broken pipe")));
+
+		assertThat(manejador.errorInesperado(e, new MockHttpServletRequest("GET", "/alojamientos"))).isNull();
+		verify(auditoriaService, never()).registrar(any(), anyString(), any(), any(), any(), any());
+	}
+
+	@Test
+	@DisplayName("Sin conexiones libres a la base de datos responde 503 para que el cliente reintente, sin auditarse")
+	void sinConexionesResponde503() {
+		CannotCreateTransactionException e = new CannotCreateTransactionException("Could not open JPA EntityManager",
+				new SQLTransientConnectionException("HikariPool-1 - Connection is not available, request timed out"));
+
+		ResponseEntity<Object> respuesta = manejador.errorInesperado(e, new MockHttpServletRequest("GET", "/alojamientos"));
+
+		assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+		assertThat(respuesta.getBody()).isEqualTo(Map.of("message", ManejadorGlobalExcepciones.SERVICIO_OCUPADO));
+		verify(auditoriaService, never()).registrar(any(), anyString(), any(), any(), any(), any());
 	}
 
 	/**

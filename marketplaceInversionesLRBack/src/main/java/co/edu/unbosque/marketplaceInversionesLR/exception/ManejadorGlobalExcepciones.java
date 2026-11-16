@@ -1,6 +1,7 @@
 package co.edu.unbosque.marketplaceInversionesLR.exception;
 
 import java.sql.SQLException;
+import java.sql.SQLTransientConnectionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,8 @@ public class ManejadorGlobalExcepciones {
 	public static final String ERROR_INESPERADO = "Ocurrió un error inesperado. Intenta de nuevo.";
 
 	/** Mensaje del 409 por un registro duplicado. */
+	public static final String SERVICIO_OCUPADO = "El servicio está ocupado en este momento. Intenta de nuevo en unos segundos.";
+
 	public static final String REGISTRO_EXISTE = "El registro ya existe. Actualiza la página e intenta de nuevo.";
 
 	/** SQLState de PostgreSQL para un valor duplicado (unique_violation). */
@@ -271,11 +274,38 @@ public class ManejadorGlobalExcepciones {
 			return RespuestaUtil.mensaje(HttpStatus.valueOf(respuesta.getStatusCode().value()),
 					"La petición no es válida para esta ruta.");
 		}
+		// El cliente se fue mientras se escribía la respuesta (Spring la envuelve al serializar el JSON). No es un
+		// error del servidor: sin traza, sin auditoría (que gastaría otra conexión) y sin escribir otra respuesta.
+		if (tieneCausa(e, AsyncRequestNotUsableException.class)) {
+			LOG.debug("El cliente cerró la conexión en {} {}", request.getMethod(), request.getRequestURI());
+			return null;
+		}
+		// No hubo conexión libre a tiempo: el servidor está saturado y conviene que el cliente reintente.
+		if (tieneCausa(e, SQLTransientConnectionException.class)) {
+			LOG.warn("Sin conexiones libres a la base de datos en {} {}", request.getMethod(), request.getRequestURI());
+			return RespuestaUtil.mensaje(HttpStatus.SERVICE_UNAVAILABLE, SERVICIO_OCUPADO);
+		}
 		LOG.error("Error inesperado en {} {}", request.getMethod(), request.getRequestURI(), e);
 		auditoriaService.registrar(idActorActual(), AuditoriaService.ERROR_INTERNO, null, null,
 				ResultadoAuditoria.ERROR,
 				request.getMethod() + " " + request.getRequestURI() + ": " + e.getClass().getSimpleName());
 		return RespuestaUtil.mensaje(HttpStatus.INTERNAL_SERVER_ERROR, ERROR_INESPERADO);
+	}
+
+	/**
+	 * Indica si la excepción o alguna de sus causas es del tipo indicado.
+	 *
+	 * @param e    excepción
+	 * @param tipo tipo buscado
+	 * @return {@code true} si aparece en la cadena de causas
+	 */
+	private static boolean tieneCausa(Throwable e, Class<? extends Throwable> tipo) {
+		for (Throwable actual = e; actual != null; actual = actual.getCause() == actual ? null : actual.getCause()) {
+			if (tipo.isInstance(actual)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
