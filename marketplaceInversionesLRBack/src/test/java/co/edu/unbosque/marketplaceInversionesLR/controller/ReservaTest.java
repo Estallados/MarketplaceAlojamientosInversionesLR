@@ -142,6 +142,7 @@ class ReservaTest {
 		jdbc.update("DELETE FROM historial_estado_alojamiento");
 		jdbc.update("DELETE FROM alojamiento_amenidad");
 		jdbc.update("DELETE FROM alojamiento");
+		jdbc.update("DELETE FROM registro_idempotencia");
 		usuarioRepository.deleteAll();
 	}
 
