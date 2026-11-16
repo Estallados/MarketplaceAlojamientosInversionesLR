@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -135,13 +136,18 @@ class HistorialReservasServiceTest {
 			+ "los nombres")
 	void historialDelHuesped_CA078() {
 		when(reservaRepo.findByIdHuesped(ID_HUESPED, PAGINA)).thenReturn(new PageImpl<>(List.of(reserva), PAGINA, 1));
-		conAlojamiento(ID_POLITICA);
-		when(politicaRepo.findById(ID_POLITICA)).thenReturn(Optional.of(politica("MODERADA")));
-		when(pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(ID_RESERVA)).thenReturn(Optional.of(pago()));
+		// La página se arma con una consulta por tabla para todas sus reservas
+		when(alojamientoRepo.findAllById(Set.of(ID_ALOJAMIENTO))).thenReturn(List.of(alojamiento(ID_POLITICA)));
+		when(politicaRepo.findAllById(Set.of(ID_POLITICA))).thenReturn(List.of(politica("MODERADA")));
+		Pago anterior = pago();
+		anterior.setIdPago(0L);
+		anterior.setEstado(EstadoPago.RECHAZADO);
+		anterior.setFecha(LocalDateTime.now().minusHours(1));
+		when(pagoRepo.findByIdReservaIn(Set.of(ID_RESERVA))).thenReturn(List.of(pago(), anterior));
 		when(publicacionService.imagenesDTO(ID_ALOJAMIENTO))
 				.thenReturn(List.of(imagen("https://img/principal.jpg"), imagen("https://img/otra.jpg")));
-		when(usuarioRepo.findById(ID_HUESPED)).thenReturn(Optional.of(usuario("Ana Huésped")));
-		when(usuarioRepo.findById(ID_ANFITRION)).thenReturn(Optional.of(usuario("Beto Anfitrión")));
+		when(usuarioRepo.findAllById(Set.of(ID_HUESPED, ID_ANFITRION)))
+				.thenReturn(List.of(usuario(ID_HUESPED, "Ana Huésped"), usuario(ID_ANFITRION, "Beto Anfitrión")));
 
 		PaginaDTO<ReservaDTO> pagina = servicio.listarMias(ID_HUESPED, PAGINA);
 
@@ -181,7 +187,7 @@ class HistorialReservasServiceTest {
 	@DisplayName("CA-079 El anfitrión consulta solo las reservas de sus alojamientos")
 	void reservasDelAnfitrion_CA079() {
 		when(reservaRepo.buscarDeAnfitrion(ID_ANFITRION, PAGINA)).thenReturn(new PageImpl<>(List.of(reserva), PAGINA, 1));
-		conAlojamiento(null);
+		when(alojamientoRepo.findAllById(Set.of(ID_ALOJAMIENTO))).thenReturn(List.of(alojamiento(null)));
 
 		PaginaDTO<ReservaDTO> pagina = servicio.listarDeAnfitrion(ID_ANFITRION, PAGINA);
 
@@ -307,6 +313,16 @@ class HistorialReservasServiceTest {
 	 * @param idPolitica política asignada; {@code null} si no tiene
 	 */
 	private void conAlojamiento(Long idPolitica) {
+		when(alojamientoRepo.findById(ID_ALOJAMIENTO)).thenReturn(Optional.of(alojamiento(idPolitica)));
+	}
+
+	/**
+	 * Alojamiento de las reservas de prueba.
+	 *
+	 * @param idPolitica política del alojamiento; {@code null} si no tiene
+	 * @return el alojamiento
+	 */
+	private static Alojamiento alojamiento(Long idPolitica) {
 		Alojamiento alojamiento = new Alojamiento();
 		alojamiento.setIdAlojamiento(ID_ALOJAMIENTO);
 		alojamiento.setIdAnfitrion(ID_ANFITRION);
@@ -316,7 +332,7 @@ class HistorialReservasServiceTest {
 		alojamiento.setTipo("Casa");
 		alojamiento.setCapacidad(4);
 		alojamiento.setIdPolitica(idPolitica);
-		when(alojamientoRepo.findById(ID_ALOJAMIENTO)).thenReturn(Optional.of(alojamiento));
+		return alojamiento;
 	}
 
 	/**
@@ -390,6 +406,19 @@ class HistorialReservasServiceTest {
 	private static Usuario usuario(String nombre) {
 		Usuario usuario = new Usuario();
 		usuario.setNombre(nombre);
+		return usuario;
+	}
+
+	/**
+	 * Usuario con id y nombre.
+	 *
+	 * @param id     id del usuario
+	 * @param nombre nombre
+	 * @return el usuario
+	 */
+	private static Usuario usuario(Long id, String nombre) {
+		Usuario usuario = usuario(nombre);
+		usuario.setIdUsuario(id);
 		return usuario;
 	}
 }

@@ -2,10 +2,16 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -259,6 +265,20 @@ public class PagoService {
 	 */
 	public Optional<Pago> ultimo(Long idReserva) {
 		return pagoRepo.findTopByIdReservaOrderByFechaDescIdPagoDesc(idReserva);
+	}
+
+	/**
+	 * Último pago de cada una de varias reservas, con el mismo criterio que
+	 * {@link #ultimo(Long)} (el más reciente y, si empatan, el de mayor id),
+	 * en una sola consulta.
+	 *
+	 * @param idsReserva reservas a consultar
+	 * @return el último pago por reserva; las reservas sin pagos no aparecen
+	 */
+	public Map<Long, Pago> ultimos(Collection<Long> idsReserva) {
+		Comparator<Pago> masReciente = Comparator.comparing(Pago::getFecha).thenComparing(Pago::getIdPago);
+		return pagoRepo.findByIdReservaIn(idsReserva).stream().collect(Collectors.toMap(Pago::getIdReserva,
+				Function.identity(), BinaryOperator.maxBy(masReciente)));
 	}
 
 	/**

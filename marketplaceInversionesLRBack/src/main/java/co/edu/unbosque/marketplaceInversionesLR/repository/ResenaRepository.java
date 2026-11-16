@@ -1,5 +1,8 @@
 package co.edu.unbosque.marketplaceInversionesLR.repository;
 
+import java.util.Collection;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,12 +45,34 @@ public interface ResenaRepository extends JpaRepository<Resena, Long> {
 	long countByIdAlojamientoAndEstado(Long idAlojamiento, EstadoResena estado);
 
 	/**
+	 * Promedio y cantidad de reseñas de varios alojamientos en una sola consulta,
+	 * para armar una página de resultados sin consultar alojamiento por
+	 * alojamiento. Los alojamientos sin reseñas en ese estado no aparecen.
+	 *
+	 * @param ids    alojamientos a consultar
+	 * @param estado estado de las reseñas que cuentan
+	 * @return filas {idAlojamiento, promedio, cantidad}
+	 */
+	@Query("select r.idAlojamiento, avg(r.calificacion), count(r) from Resena r "
+			+ "where r.idAlojamiento in :ids and r.estado = :estado group by r.idAlojamiento")
+	List<Object[]> resumenPorAlojamiento(@Param("ids") Collection<Long> ids, @Param("estado") EstadoResena estado);
+
+	/**
 	 * Indica si una reserva ya tiene reseña (hay una por reserva).
 	 *
 	 * @param idReserva reserva
 	 * @return {@code true} si el huésped ya la reseñó
 	 */
 	boolean existsByIdReserva(Long idReserva);
+
+	/**
+	 * De varias reservas, las que ya tienen reseña, en una sola consulta.
+	 *
+	 * @param idsReserva reservas a consultar
+	 * @return identificadores de las reservas reseñadas
+	 */
+	@Query("select r.idReserva from Resena r where r.idReserva in :ids")
+	List<Long> reservasConResena(@Param("ids") Collection<Long> idsReserva);
 
 	/**
 	 * Reseñas de un alojamiento en un estado (HU-03, CA-019).

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -309,16 +310,18 @@ class PublicacionServiceBusquedaTest {
 	}
 
 	/**
-	 * Simula las reseñas publicadas y el anfitrión de la publicación.
+	 * Simula las reseñas publicadas y el anfitrión de la publicación. La página
+	 * se arma con una consulta por tabla para todos sus alojamientos.
 	 *
 	 * @param promedio promedio de calificaciones; {@code null} si no tiene
 	 * @param cantidad cantidad de reseñas
 	 */
 	private void resenas(Double promedio, long cantidad) {
-		when(resenaRepo.promedio(ID, EstadoResena.PUBLICADA)).thenReturn(promedio);
-		when(resenaRepo.countByIdAlojamientoAndEstado(ID, EstadoResena.PUBLICADA)).thenReturn(cantidad);
+		List<Object[]> filas = promedio == null ? List.of() : List.<Object[]>of(new Object[] { ID, promedio, cantidad });
+		when(resenaRepo.resumenPorAlojamiento(Set.of(ID), EstadoResena.PUBLICADA)).thenReturn(filas);
 		Usuario ana = new Usuario();
+		ana.setIdUsuario(ANFITRION);
 		ana.setNombre("Ana");
-		when(usuarioRepo.findById(ANFITRION)).thenReturn(Optional.of(ana));
+		when(usuarioRepo.findAllById(Set.of(ANFITRION))).thenReturn(List.of(ana));
 	}
 }

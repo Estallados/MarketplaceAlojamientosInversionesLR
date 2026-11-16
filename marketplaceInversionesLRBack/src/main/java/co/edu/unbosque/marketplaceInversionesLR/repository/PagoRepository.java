@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplaceInversionesLR.repository;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,14 @@ public interface PagoRepository extends JpaRepository<Pago, Long> {
 	 * @return el pago más reciente, si lo hay
 	 */
 	Optional<Pago> findTopByIdReservaOrderByFechaDescIdPagoDesc(Long idReserva);
+
+	/**
+	 * Pagos de varias reservas en una sola consulta.
+	 *
+	 * @param idsReserva reservas a consultar
+	 * @return todos sus pagos
+	 */
+	List<Pago> findByIdReservaIn(Collection<Long> idsReserva);
 
 	/**
 	 * Suma de los pagos que están en alguno de los estados indicados, para los

@@ -50,8 +50,23 @@ public class PaginaDTO<T> {
 	 * @return la página convertida
 	 */
 	public static <E, T> PaginaDTO<T> de(Page<E> page, Function<E, T> conversor) {
+		return deLista(page, elementos -> elementos.stream().map(conversor).toList());
+	}
+
+	/**
+	 * Crea la página convirtiendo todos sus elementos de una vez. Sirve cuando
+	 * la conversión necesita datos de otras tablas: se pueden consultar para
+	 * toda la página en lugar de elemento por elemento.
+	 *
+	 * @param <E>       tipo de las entidades
+	 * @param <T>       tipo de los elementos de la página
+	 * @param page      página de entidades
+	 * @param conversor convierte la lista completa, en el mismo orden
+	 * @return la página convertida
+	 */
+	public static <E, T> PaginaDTO<T> deLista(Page<E> page, Function<List<E>, List<T>> conversor) {
 		PaginaDTO<T> resultado = new PaginaDTO<>();
-		resultado.setContenido(page.getContent().stream().map(conversor).toList());
+		resultado.setContenido(conversor.apply(page.getContent()));
 		resultado.setPagina(page.getNumber());
 		resultado.setTamanio(page.getSize());
 		resultado.setTotalElementos(page.getTotalElements());

@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -38,9 +40,11 @@ import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoResena;
 import co.edu.unbosque.marketplaceInversionesLR.entity.EstadoReserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.HistorialEstadoAlojamiento;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Imagen;
+import co.edu.unbosque.marketplaceInversionesLR.entity.PoliticaCancelacion;
 import co.edu.unbosque.marketplaceInversionesLR.entity.Reserva;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ResultadoAuditoria;
 import co.edu.unbosque.marketplaceInversionesLR.entity.ServicioAdicional;
+import co.edu.unbosque.marketplaceInversionesLR.entity.Usuario;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoEspecificacion;
 import co.edu.unbosque.marketplaceInversionesLR.repository.AlojamientoRepository;
 import co.edu.unbosque.marketplaceInversionesLR.repository.HistorialEstadoAlojamientoRepository;
@@ -358,7 +362,7 @@ public class PublicacionService {
 	 * @return página de alojamientos
 	 */
 	public PaginaDTO<AlojamientoDTO> mios(Long idAnfitrion, Pageable pagina) {
-		return PaginaDTO.de(alojamientoRepo.findByIdAnfitrion(idAnfitrion, pagina), this::convertirDTO);
+		return PaginaDTO.deLista(alojamientoRepo.findByIdAnfitrion(idAnfitrion, pagina), this::convertirDTOs);
 	}
 
 	/**
@@ -373,7 +377,7 @@ public class PublicacionService {
 	public PaginaDTO<AlojamientoDTO> listarPorEstado(EstadoAlojamiento estado, Pageable pagina) {
 		Page<Alojamiento> encontrados = estado == null ? alojamientoRepo.findAll(pagina)
 				: alojamientoRepo.findByEstado(estado, pagina);
-		return PaginaDTO.de(encontrados, this::convertirDTO);
+		return PaginaDTO.deLista(encontrados, this::convertirDTOs);
 	}
 
 	/**
@@ -386,7 +390,7 @@ public class PublicacionService {
 	 */
 	@Transactional(readOnly = true)
 	public PaginaDTO<AlojamientoDTO> listarDeAnfitrion(Long idAnfitrion, Pageable pagina) {
-		return PaginaDTO.de(alojamientoRepo.findByIdAnfitrion(idAnfitrion, pagina), this::convertirDTO);
+		return PaginaDTO.deLista(alojamientoRepo.findByIdAnfitrion(idAnfitrion, pagina), this::convertirDTOs);
 	}
 
 	/**
@@ -441,7 +445,7 @@ public class PublicacionService {
 		if (orden != null && !orden.isBlank()) {
 			return listarOrdenado(filtro, orden, pagina);
 		}
-		return Resultado.exito(PaginaDTO.de(alojamientoRepo.findAll(filtro, pagina), this::convertirDTO));
+		return Resultado.exito(PaginaDTO.deLista(alojamientoRepo.findAll(filtro, pagina), this::convertirDTOs));
 	}
 
 	/**
@@ -524,7 +528,7 @@ public class PublicacionService {
 		if (encontrados == null) {
 			return Resultado.error(Resultado.DATOS_INVALIDOS, ORDEN_INVALIDO);
 		}
-		return Resultado.exito(PaginaDTO.de(encontrados, this::convertirDTO));
+		return Resultado.exito(PaginaDTO.deLista(encontrados, this::convertirDTOs));
 	}
 
 	/**
@@ -1008,21 +1012,73 @@ public class PublicacionService {
 	 */
 	public AlojamientoDTO convertirDTO(Alojamiento alojamiento) {
 		Long id = alojamiento.getIdAlojamiento();
+		String politica = alojamiento.getIdPolitica() == null ? null
+				: politicaRepo.findById(alojamiento.getIdPolitica()).map(PoliticaCancelacion::getNombre).orElse(null);
+		String anfitrion = usuarioRepo.findById(alojamiento.getIdAnfitrion()).map(Usuario::getNombre).orElse(null);
+		return armarDTO(alojamiento, servicioRepo.findByIdAlojamientoOrderByIdServicio(id), politica,
+				resenaRepo.promedio(id, EstadoResena.PUBLICADA),
+				resenaRepo.countByIdAlojamientoAndEstado(id, EstadoResena.PUBLICADA), anfitrion);
+	}
+
+	/**
+	 * Convierte una página de alojamientos con el mismo resultado que
+	 * {@link #convertirDTO(Alojamiento)}, pero consulta servicios, políticas,
+	 * reseñas y anfitriones una sola vez para toda la página (5 consultas en
+	 * total) en lugar de 5 por alojamiento.
+	 *
+	 * @param alojamientos alojamientos de la página
+	 * @return alojamientos para la API, en el mismo orden
+	 */
+	public List<AlojamientoDTO> convertirDTOs(List<Alojamiento> alojamientos) {
+		if (alojamientos.isEmpty()) {
+			return List.of();
+		}
+		Set<Long> ids = alojamientos.stream().map(Alojamiento::getIdAlojamiento).collect(Collectors.toSet());
+		Map<Long, List<ServicioAdicional>> servicios = servicioRepo.findByIdAlojamientoInOrderByIdServicio(ids)
+				.stream().collect(Collectors.groupingBy(ServicioAdicional::getIdAlojamiento));
+		Map<Long, String> politicas = politicaRepo.findAllById(alojamientos.stream().map(Alojamiento::getIdPolitica)
+				.filter(Objects::nonNull).collect(Collectors.toSet())).stream()
+				.collect(Collectors.toMap(PoliticaCancelacion::getIdPolitica, PoliticaCancelacion::getNombre));
+		Map<Long, Object[]> resenas = new HashMap<>();
+		for (Object[] fila : resenaRepo.resumenPorAlojamiento(ids, EstadoResena.PUBLICADA)) {
+			resenas.put((Long) fila[0], fila);
+		}
+		Map<Long, String> anfitriones = new HashMap<>();
+		usuarioRepo.findAllById(alojamientos.stream().map(Alojamiento::getIdAnfitrion).filter(Objects::nonNull)
+				.collect(Collectors.toSet())).forEach(u -> anfitriones.put(u.getIdUsuario(), u.getNombre()));
+		return alojamientos.stream().map(a -> {
+			Object[] resumen = resenas.get(a.getIdAlojamiento());
+			return armarDTO(a, servicios.getOrDefault(a.getIdAlojamiento(), List.of()),
+					politicas.get(a.getIdPolitica()), resumen == null ? null : ((Number) resumen[1]).doubleValue(),
+					resumen == null ? 0 : ((Number) resumen[2]).longValue(), anfitriones.get(a.getIdAnfitrion()));
+		}).toList();
+	}
+
+	/**
+	 * Arma el DTO con los datos ya consultados.
+	 *
+	 * @param alojamiento alojamiento
+	 * @param servicios   sus servicios adicionales, en orden de creación
+	 * @param politica    nombre de su política de cancelación, o {@code null}
+	 * @param promedio    promedio de las reseñas publicadas, o {@code null} si no tiene
+	 * @param cantidad    cantidad de reseñas publicadas
+	 * @param anfitrion   nombre del anfitrión, o {@code null}
+	 * @return alojamiento para la API
+	 */
+	private AlojamientoDTO armarDTO(Alojamiento alojamiento, List<ServicioAdicional> servicios, String politica,
+			Double promedio, long cantidad, String anfitrion) {
 		AlojamientoDTO dto = modelMapper.map(alojamiento, AlojamientoDTO.class);
 		dto.setAmenidades(new HashSet<>(alojamiento.getAmenidades()));
-		List<ImagenDTO> imagenes = imagenesDTO(id);
+		List<ImagenDTO> imagenes = imagenesDTO(alojamiento.getIdAlojamiento());
 		dto.setDetalleImagenes(imagenes);
 		dto.setImagenes(imagenes.stream().map(ImagenDTO::getUrl).toList());
-		dto.setServiciosAdicionales(servicioRepo.findByIdAlojamientoOrderByIdServicio(id)
-				.stream().map(s -> modelMapper.map(s, ServicioAdicionalDTO.class)).toList());
-		if (alojamiento.getIdPolitica() != null) {
-			politicaRepo.findById(alojamiento.getIdPolitica()).ifPresent(p -> dto.setNombrePolitica(p.getNombre()));
-		}
-		Double promedio = resenaRepo.promedio(id, EstadoResena.PUBLICADA);
+		dto.setServiciosAdicionales(
+				servicios.stream().map(s -> modelMapper.map(s, ServicioAdicionalDTO.class)).toList());
+		dto.setNombrePolitica(politica);
 		dto.setPromedioCalificacion(promedio == null ? null
 				: BigDecimal.valueOf(promedio).setScale(1, RoundingMode.HALF_UP).doubleValue());
-		dto.setCantidadResenas(resenaRepo.countByIdAlojamientoAndEstado(id, EstadoResena.PUBLICADA));
-		usuarioRepo.findById(alojamiento.getIdAnfitrion()).ifPresent(u -> dto.setNombreAnfitrion(u.getNombre()));
+		dto.setCantidadResenas(cantidad);
+		dto.setNombreAnfitrion(anfitrion);
 		return dto;
 	}
 
