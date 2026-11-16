@@ -2,6 +2,7 @@ package co.edu.unbosque.marketplaceInversionesLR.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.Collator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import co.edu.unbosque.marketplaceInversionesLR.dto.AlojamientoDTO;
+import co.edu.unbosque.marketplaceInversionesLR.dto.FiltrosExplorarDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.HistorialEstadoAlojamientoDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.ImagenDTO;
 import co.edu.unbosque.marketplaceInversionesLR.dto.PaginaDTO;
@@ -396,8 +398,7 @@ public class PublicacionService {
 	/**
 	 * Catálogo público (HU-23): todos los alojamientos que un visitante puede
 	 * reservar, es decir, las publicaciones ACTIVA con al menos una noche
-	 * ofrecida desde hoy. No tiene filtros; para filtrar se usa
-	 * {@link #buscar}.
+	 * ofrecida desde hoy, sin filtros.
 	 *
 	 * @param orden  {@link #ORDEN_RECOMENDADOS} (por defecto),
 	 *               {@link #ORDEN_PRECIO_MENOR}, {@link #ORDEN_PRECIO_MAYOR} o
@@ -408,9 +409,81 @@ public class PublicacionService {
 	 */
 	@Transactional(readOnly = true)
 	public Resultado<PaginaDTO<AlojamientoDTO>> disponibles(String orden, Pageable pagina) {
-		Specification<Alojamiento> filtro = AlojamientoEspecificacion.conEstado(EstadoAlojamiento.ACTIVA)
-				.and(AlojamientoEspecificacion.conFechasDesde(LocalDate.now()));
+		return disponibles(SIN_FILTROS, orden, pagina);
+	}
+
+	/**
+	 * Catálogo público con los filtros de Explorar: tipo, rango de precio y
+	 * amenidades (la ciudad, las fechas y los huéspedes no aplican al catálogo;
+	 * para eso se usa {@link #buscar}). Permite paginar en el servidor sin
+	 * descargar el catálogo completo.
+	 *
+	 * @param filtros filtros; los vacíos no filtran
+	 * @param orden   como en {@link #disponibles(String, Pageable)}
+	 * @param pagina  página
+	 * @return la página de alojamientos; o DATOS_INVALIDOS si un filtro o el
+	 *         orden no son válidos
+	 */
+	@Transactional(readOnly = true)
+	public Resultado<PaginaDTO<AlojamientoDTO>> disponibles(FiltrosBusqueda filtros, String orden, Pageable pagina) {
+		String error = validarFiltros(filtros);
+		if (error != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, error);
+		}
+		Specification<Alojamiento> filtro = catalogo()
+				.and(AlojamientoEspecificacion.deTipo(filtros.tipo()))
+				.and(AlojamientoEspecificacion.precioDesde(filtros.precioMinimo()))
+				.and(AlojamientoEspecificacion.precioHasta(filtros.precioMaximo()))
+				.and(AlojamientoEspecificacion.conAmenidades(filtros.amenidades()));
 		return listarOrdenado(filtro, orden == null || orden.isBlank() ? ORDEN_RECOMENDADOS : orden, pagina);
+	}
+
+	/**
+	 * Opciones de los filtros de Explorar (tipos, amenidades y rango de precio)
+	 * para el mismo conjunto que se lista: el catálogo si no se envía ciudad,
+	 * fechas ni huéspedes, o el resultado de esa búsqueda si se envían. Así el
+	 * frontend arma los filtros sin descargar todos los alojamientos.
+	 *
+	 * @param ciudad    ciudad de la búsqueda, o {@code null}
+	 * @param llegada   día de llegada, o {@code null}
+	 * @param salida    día de salida, o {@code null}
+	 * @param huespedes cantidad de huéspedes, o {@code null}
+	 * @return las opciones; o DATOS_INVALIDOS si las fechas o los huéspedes no
+	 *         son válidos
+	 */
+	@Transactional(readOnly = true)
+	public Resultado<FiltrosExplorarDTO> filtrosExplorar(String ciudad, LocalDate llegada, LocalDate salida,
+			Integer huespedes) {
+		FiltrosBusqueda busqueda = new FiltrosBusqueda(ciudad, llegada, salida, huespedes, null, null, null, null);
+		String error = validarFiltros(busqueda);
+		if (error != null) {
+			return Resultado.error(Resultado.DATOS_INVALIDOS, error);
+		}
+		boolean esBusqueda = !(ciudad == null || ciudad.isBlank()) || llegada != null || salida != null
+				|| huespedes != null;
+		Specification<Alojamiento> conjunto = esBusqueda ? AlojamientoEspecificacion
+				.conEstado(EstadoAlojamiento.ACTIVA).and(AlojamientoEspecificacion.enCiudad(ciudad))
+				.and(AlojamientoEspecificacion.conCapacidadPara(huespedes))
+				.and(AlojamientoEspecificacion.libreEntre(llegada, salida, CalendarioService.ESTADOS_OCUPAN,
+						CalendarioService.limitePendiente()))
+				: catalogo();
+		Collator espaniol = Collator.getInstance(Locale.forLanguageTag("es"));
+		List<String> tipos = alojamientoRepo.tiposDe(conjunto).stream().filter(t -> !t.isBlank()).sorted(espaniol)
+				.toList();
+		List<String> amenidades = alojamientoRepo.amenidadesDe(conjunto).stream().filter(Objects::nonNull)
+				.map(String::trim).filter(a -> !a.isEmpty()).distinct().sorted(espaniol).toList();
+		BigDecimal[] rango = alojamientoRepo.rangoPrecioDe(conjunto);
+		return Resultado.exito(new FiltrosExplorarDTO(tipos, amenidades, rango[0], rango[1]));
+	}
+
+	/**
+	 * Publicaciones del catálogo: ACTIVA con al menos una noche ofrecida desde hoy.
+	 *
+	 * @return la condición
+	 */
+	private static Specification<Alojamiento> catalogo() {
+		return AlojamientoEspecificacion.conEstado(EstadoAlojamiento.ACTIVA)
+				.and(AlojamientoEspecificacion.conFechasDesde(LocalDate.now()));
 	}
 
 	/**
@@ -447,6 +520,9 @@ public class PublicacionService {
 		}
 		return Resultado.exito(PaginaDTO.deLista(alojamientoRepo.findAll(filtro, pagina), this::convertirDTOs));
 	}
+
+	/** Filtros vacíos: no filtran nada. */
+	private static final FiltrosBusqueda SIN_FILTROS = new FiltrosBusqueda(null, null, null, null, null, null, null, null);
 
 	/**
 	 * Filtros de la búsqueda pública. Cualquiera puede ser {@code null}.

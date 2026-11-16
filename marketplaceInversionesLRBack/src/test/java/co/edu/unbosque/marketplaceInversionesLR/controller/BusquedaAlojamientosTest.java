@@ -316,6 +316,38 @@ class BusquedaAlojamientosTest {
 	}
 
 	@Test
+	@DisplayName("El catálogo filtra por tipo, precio y amenidades para paginar en el servidor")
+	void catalogoConFiltros() throws Exception {
+		// Bogotá también es Casa, pero no tiene fechas desde hoy: no está en el catálogo
+		mockMvc.perform(get("/alojamientos/disponibles").param("tipo", "casa")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.contenido[*].idAlojamiento").value(contains(id(medellin))));
+		mockMvc.perform(get("/alojamientos/disponibles").param("precioMinimo", "200000")
+				.param("precioMaximo", "350000").param("amenidades", "piscina"))
+				.andExpect(jsonPath("$.contenido[*].idAlojamiento").value(contains(id(guatape))))
+				.andExpect(jsonPath("$.totalElementos").value(1));
+		mockMvc.perform(get("/alojamientos/disponibles").param("precioMinimo", "400000").param("precioMaximo", "1"))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.message").value(PublicacionService.PRECIOS_INVERTIDOS));
+	}
+
+	@Test
+	@DisplayName("Las opciones de los filtros salen del catálogo o de la búsqueda, sin pedir sesión")
+	void opcionesDeFiltros() throws Exception {
+		mockMvc.perform(get("/alojamientos/filtros")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.tipos").value(contains("Apartamento", "Cabaña", "Casa")))
+				.andExpect(jsonPath("$.amenidades").value(contains("parqueadero", "piscina", "wifi")))
+				.andExpect(jsonPath("$.precioMinimo").value(200000))
+				.andExpect(jsonPath("$.precioMaximo").value(420000));
+		// La búsqueda por ciudad solo cuenta las ACTIVA de Medellín (la pausada y el borrador no)
+		mockMvc.perform(get("/alojamientos/filtros").param("ciudad", "MEDELLÍN")).andExpect(status().isOk())
+				.andExpect(jsonPath("$.tipos").value(contains("Casa")))
+				.andExpect(jsonPath("$.amenidades").value(contains("parqueadero", "wifi")))
+				.andExpect(jsonPath("$.precioMinimo").value(350000))
+				.andExpect(jsonPath("$.precioMaximo").value(350000));
+		mockMvc.perform(get("/alojamientos/filtros").param("huespedes", "0")).andExpect(status().isBadRequest());
+	}
+
+	@Test
 	@DisplayName("Los tipos se cuentan en cualquier estado, en orden alfabético")
 	void tipos() throws Exception {
 		mockMvc.perform(get("/alojamientos/tipos")).andExpect(status().isOk())

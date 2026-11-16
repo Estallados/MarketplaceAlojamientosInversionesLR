@@ -121,6 +121,7 @@ class SeguridadRutasTest {
 			Map.entry("GET /alojamientos", PUBLICA),
 			Map.entry("GET /alojamientos/disponibles", PUBLICA),
 			Map.entry("GET /alojamientos/tipos", PUBLICA),
+			Map.entry("GET /alojamientos/filtros", PUBLICA),
 			Map.entry("GET /alojamientos/politicas", PUBLICA),
 			Map.entry("GET /alojamientos/{id}", PUBLICA),
 			Map.entry("GET /alojamientos/{idAlojamiento}/disponibilidad", PUBLICA),

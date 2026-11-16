@@ -20,7 +20,7 @@ import jakarta.persistence.LockModeType;
  * de {@link AlojamientoEspecificacion}.
  */
 public interface AlojamientoRepository extends JpaRepository<Alojamiento, Long>,
-		JpaSpecificationExecutor<Alojamiento> {
+		JpaSpecificationExecutor<Alojamiento>, AlojamientoFiltrosRepository {
 
 	/**
 	 * Lee el alojamiento con bloqueo de escritura (HU-22, CA-072). Así dos
