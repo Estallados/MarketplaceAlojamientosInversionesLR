@@ -1,0 +1,33 @@
+Verificación T18 - 2026-11-16T14:45 - backend http://localhost:8081
+
+1) Un usuario por rol (login con Demo#2026):
+   ADMIN     andrescastillo@gmail.com   -> 200 rol=ADMIN
+   ANFITRION lauragomez@gmail.com       -> 200 rol=ANFITRION
+   ANFITRION carlosruiz@gmail.com       -> 200 rol=ANFITRION
+   HUESPED   anatorres@gmail.com        -> 200 rol=HUESPED
+   HUESPED   diegomora@gmail.com        -> 200 rol=HUESPED
+   HUESPED   sofiaperez@gmail.com       -> 200 rol=HUESPED
+   HUESPED   pedrodiaz@gmail.com        -> 200 rol=HUESPED
+   HUESPED   camilaherrera@gmail.com    -> 200 rol=HUESPED
+
+2) Publicaciones ACTIVAS por ciudad (catálogo público):
+   total 13 {'Medellín': 3, 'Bogotá': 10}
+   búsqueda ciudad=Medellín: 3
+   búsqueda ciudad=Bogotá: 10
+
+3) Detalle por alojamiento:
+    1 Bogotá    ACTIVA img=4 reseñas=2 prom=4.5 lat=4.60498 lon=-74.07072 Habitación doble en Hotel Dann Avenida 19
+    2 Bogotá    ACTIVA img=4 reseñas=2 prom=4.5 lat=4.61464 lon=-74.06882 Habitación doble en ibis Bogotá Museo
+    3 Bogotá    ACTIVA img=4 reseñas=2 prom=3.5 lat=4.59433 lon=-74.07163 Habitación privada en hostal en Botánico Hostel
+    4 Bogotá    ACTIVA img=4 reseñas=2 prom=5.0 lat=4.59672 lon=-74.07478 Habitación doble en Hotel de la Ópera
+    5 Bogotá    ACTIVA img=4 reseñas=2 prom=4.5 lat=4.65246 lon=-74.05656 Habitación doble en Four Seasons Hotel Casa Medina Bogo
+    6 Bogotá    ACTIVA img=4 reseñas=2 prom=5.0 lat=4.65348 lon=-74.05468 Habitación doble en The Artisan D.C. Hotel
+    7 Bogotá    ACTIVA img=4 reseñas=2 prom=4.5 lat=4.63041 lon=-74.06198 Apartaestudio amoblado en Viaggio Urbano
+    8 Bogotá    ACTIVA img=4 reseñas=2 prom=4.0 lat=4.70443 lon=-74.04375 Habitación doble en Hotel Estelar La Fontana
+    9 Bogotá    ACTIVA img=4 reseñas=2 prom=4.0 lat=4.64140 lon=-74.10514 Habitación doble en DoubleTree by Hilton Bogotá Salitre
+   10 Bogotá    ACTIVA img=4 reseñas=2 prom=4.5 lat=4.67912 lon=-74.12195 Habitación doble en City Express Plus by Marriott Bogot
+   11 Medellín  ACTIVA img=4 reseñas=2 prom=5.0 lat=6.25240 lon=-75.56727 Habitación doble en Hotel Nutibara
+   12 Medellín  ACTIVA img=4 reseñas=2 prom=4.5 lat=6.20728 lon=-75.57073 Habitación doble en Hotel Dann Carlton Medellín
+   13 Medellín  ACTIVA img=4 reseñas=2 prom=4.0 lat=6.19935 lon=-75.57606 Habitación doble en Four Points by Sheraton Medellín
+
+4) Moderación (admin): pendientes de revisión: 0
