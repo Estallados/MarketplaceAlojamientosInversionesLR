@@ -1,0 +1,104 @@
+[
+ {
+  "nombre": "Búsqueda por ciudad (12)",
+  "ruta": "/alojamientos?ciudad=Cali&tamanio=12",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Búsqueda por ciudad (100)",
+  "ruta": "/alojamientos?pagina=0&tamanio=100&ciudad=Cali",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Búsqueda con fechas (12)",
+  "ruta": "/alojamientos?ciudad=Cali&llegada=2027-02-24&salida=2027-02-27&huespedes=2&tamanio=12",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Búsqueda con fechas (100)",
+  "ruta": "/alojamientos?pagina=0&tamanio=100&ciudad=Cali&llegada=2027-02-24&salida=2027-02-27&huespedes=2",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Catálogo /disponibles (20)",
+  "ruta": "/alojamientos/disponibles?tamanio=20",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Catálogo /disponibles (100)",
+  "ruta": "/alojamientos/disponibles?pagina=0&tamanio=100",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Catálogo filtrado (9, Explorar)",
+  "ruta": "/alojamientos/disponibles?pagina=0&tamanio=9&tipo=casa&amenidades=wifi",
+  "estado": 200,
+  "consultas": 7
+ },
+ {
+  "nombre": "Opciones de filtros (catálogo)",
+  "ruta": "/alojamientos/filtros",
+  "estado": 200,
+  "consultas": 3
+ },
+ {
+  "nombre": "Opciones de filtros (búsqueda)",
+  "ruta": "/alojamientos/filtros?ciudad=Cali&huespedes=2",
+  "estado": 200,
+  "consultas": 3
+ },
+ {
+  "nombre": "Detalle de alojamiento",
+  "ruta": "/alojamientos/10",
+  "estado": 200,
+  "consultas": 6
+ },
+ {
+  "nombre": "Disponibilidad",
+  "ruta": "/alojamientos/10/disponibilidad",
+  "estado": 200,
+  "consultas": 3
+ },
+ {
+  "nombre": "Reseñas",
+  "ruta": "/alojamientos/10/resenas",
+  "estado": 200,
+  "consultas": 6
+ },
+ {
+  "nombre": "Tipos",
+  "ruta": "/alojamientos/tipos",
+  "estado": 200,
+  "consultas": 1
+ },
+ {
+  "nombre": "Perfil (token)",
+  "ruta": "/usuarios/perfil",
+  "estado": 200,
+  "consultas": 2
+ },
+ {
+  "nombre": "Notificaciones no leídas",
+  "ruta": "/notificaciones/noleidas",
+  "estado": 200,
+  "consultas": 2
+ },
+ {
+  "nombre": "Mis reservas (10)",
+  "ruta": "/reservas/mias?tamanio=10",
+  "estado": 200,
+  "consultas": 10
+ },
+ {
+  "nombre": "Mis reservas (100)",
+  "ruta": "/reservas/mias?pagina=0&tamanio=100",
+  "estado": 200,
+  "consultas": 9
+ }
+]

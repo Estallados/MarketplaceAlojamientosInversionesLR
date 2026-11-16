@@ -11,6 +11,10 @@ BASE="http://localhost:${CARGA_PUERTO:-8081}"
 trap '"$AQUI/entorno.sh" detener; exit 130' INT TERM
 [[ -f "$TRABAJO/run.txt" ]] || "$AQUI/entorno.sh" compilar || exit 1
 mkdir -p "$AQUI/resultados"
+# Cómo sabe qué prueba correr: "$@" son las palabras escritas después de ./ejecutar.sh. Con
+# "./ejecutar.sh estres pico", el ciclo da dos vueltas: primero e=estres y luego e=pico. ejecutar.sh no sabe
+# qué hace cada prueba: le pasa el nombre a carga.mjs, que lo busca en su objeto "escenarios" (estres, pico,
+# carga, login…) y ejecuta esa función. Si el nombre no existe, carga.mjs responde "Escenario desconocido".
 for e in "$@"; do
   "$AQUI/entorno.sh" detener
   if ! "$AQUI/entorno.sh" iniciar > "$TRABAJO/inicio_$e.txt" 2>&1; then
@@ -22,6 +26,7 @@ for e in "$@"; do
   fi
   echo "$e: validación de 1 usuario correcta ($(grep -c '^OK' "$TRABAJO/validacion_$e.txt") comprobaciones)"
   node "$AQUI/carga.mjs" humo "$BASE" "$TRABAJO/usuarios.json" "$TRABAJO/calentamiento" > /dev/null
+  # La prueba pedida: el primer argumento ("$e", por ejemplo estres) es el escenario que corre carga.mjs.
   node "$AQUI/carga.mjs" "$e" "$BASE" "$TRABAJO/usuarios.json" "$AQUI/resultados"
   # Todo lo que sale del escenario queda en un solo archivo: resultados/<escenario><SUFIJO>.json
   SQL=""
