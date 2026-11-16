@@ -7,21 +7,26 @@ set -uo pipefail
 AQUI="$(cd "$(dirname "$0")" && pwd)"; export TRABAJO="${TRABAJO:-${TMPDIR:-/tmp}/marketplace-alojamientos-carga}"
 H2_JAR="$HOME/.m2/repository/com/h2database/h2/${H2_VERSION:-2.4.240}/h2-${H2_VERSION:-2.4.240}.jar"
 JAVA="${JAVA_HOME_PRUEBAS:-$HOME/Prog/JDK}/bin/java"
+BASE="http://localhost:${CARGA_PUERTO:-8081}"
 trap '"$AQUI/entorno.sh" detener; exit 130' INT TERM
 [[ -f "$TRABAJO/run.txt" ]] || "$AQUI/entorno.sh" compilar || exit 1
 mkdir -p "$AQUI/resultados"
 for e in "$@"; do
-  "$AQUI/entorno.sh" detener; "$AQUI/entorno.sh" iniciar | tail -1
-  if ! node "$AQUI/carga.mjs" validacion http://localhost:8081 "$TRABAJO/usuarios.json" "$TRABAJO/validacion" > "$TRABAJO/validacion_$e.txt"; then
+  "$AQUI/entorno.sh" detener
+  if ! "$AQUI/entorno.sh" iniciar > "$TRABAJO/inicio_$e.txt" 2>&1; then
+    cat "$TRABAJO/inicio_$e.txt"; echo "$e: el entorno de prueba no arrancó; no se ejecuta nada"; exit 1
+  fi
+  tail -1 "$TRABAJO/inicio_$e.txt"
+  if ! node "$AQUI/carga.mjs" validacion "$BASE" "$TRABAJO/usuarios.json" "$TRABAJO/validacion" > "$TRABAJO/validacion_$e.txt"; then
     cat "$TRABAJO/validacion_$e.txt"; echo "$e: la validación funcional falló; no se ejecuta la prueba"; continue
   fi
   echo "$e: validación de 1 usuario correcta ($(grep -c '^OK' "$TRABAJO/validacion_$e.txt") comprobaciones)"
-  node "$AQUI/carga.mjs" humo http://localhost:8081 "$TRABAJO/usuarios.json" "$TRABAJO/calentamiento" > /dev/null
-  node "$AQUI/carga.mjs" "$e" http://localhost:8081 "$TRABAJO/usuarios.json" "$AQUI/resultados"
+  node "$AQUI/carga.mjs" humo "$BASE" "$TRABAJO/usuarios.json" "$TRABAJO/calentamiento" > /dev/null
+  node "$AQUI/carga.mjs" "$e" "$BASE" "$TRABAJO/usuarios.json" "$AQUI/resultados"
   # Todo lo que sale del escenario queda en un solo archivo: resultados/<escenario><SUFIJO>.json
   SQL=""
   if [[ "$e" == concurrencia ]]; then
-    SQL=$("$JAVA" -cp "$H2_JAR" org.h2.tools.Shell -url "jdbc:h2:tcp://localhost:9092/mem:carga" -user sa -password "" -sql \
+    SQL=$("$JAVA" -cp "$H2_JAR" org.h2.tools.Shell -url "jdbc:h2:tcp://localhost:${CARGA_PUERTO_H2:-9092}/mem:carga" -user sa -password "" -sql \
       "select count(*) as cruces_confirmados from reserva a join reserva b on a.id_alojamiento=b.id_alojamiento and a.id_reserva<b.id_reserva and a.fecha_entrada<b.fecha_salida and b.fecha_entrada<a.fecha_salida where a.estado='CONFIRMADA' and b.estado='CONFIRMADA';
        select count(*) as cotizaciones_con_mas_de_una_reserva from (select id_cotizacion from reserva where id_reserva>=100000 group by id_cotizacion having count(*)>1);
        select count(*) as reservas_con_mas_de_un_pago from (select id_reserva from pago where id_pago>=100000 group by id_reserva having count(*)>1);

@@ -96,6 +96,17 @@ function cerrarEtapa() {
   etapa = null; return r;
 }
 
+// ---- Comprobación de que el destino es el entorno de prueba ------------------------------------
+// Un backend de desarrollo en el mismo puerto (conectado a una base real) no debe recibir carga: antes de
+// cualquier otra petición se comprueba que tenga los datos sembrados por SembrarDatos.java.
+{
+  const r = await pedir('GET', '/alojamientos/1', { timeout: 5000 });
+  if (r.estado !== 200 || !String(r.cuerpo).includes('"Alojamiento de prueba 1"')) {
+    console.error(`${BASE} no es el entorno de prueba (./entorno.sh iniciar): no se envía ninguna otra petición`);
+    process.exit(3);
+  }
+}
+
 // ---- Telemetría del backend y corte por indisponibilidad -------------------------------
 const admin = await iniciarAdmin();
 const serie = []; const lazo = monitorEventLoopDelay({ resolution: 20 }); lazo.enable();
@@ -173,7 +184,7 @@ async function cotizarYReservar(reservar) {
   const n = ranura++; const u = de(huespedes); const dia = 20 + (n % 150) * 4;
   const c = await op('cotizar', 'POST', '/cotizaciones', { token: u.token, cuerpo: { idAlojamiento: 1 + (Math.floor(n / 150) % 4000), fechaEntrada: fecha(dia), fechaSalida: fecha(dia + 3), huespedes: 2 } }, [201], VALIDA.cotizacion);
   if (!reservar || c.estado !== 201) return;
-  // El frontend envía Idempotency-Key al reservar (reserva.service.ts), aunque el backend no la usa en esta ruta.
+  // El frontend envía una Idempotency-Key nueva en cada intento de reserva (reserva.service.ts).
   await op('reservar', 'POST', '/reservas', { token: u.token, cabeceras: { 'Idempotency-Key': randomUUID() }, cuerpo: { idCotizacion: JSON.parse(c.cuerpo).idCotizacion, metodoPago: 'pm_card_visa' } }, [201], VALIDA.reserva);
 }
 
@@ -227,7 +238,8 @@ async function validacion() {
   const c = await revisar('cotizar', pedir('POST', '/cotizaciones', { token: h.token, cuerpo: { idAlojamiento: 3999, fechaEntrada: fecha(d), fechaSalida: fecha(d + 3), huespedes: 2 } }), (r, j) => r.estado === 201 && j.noches === 3 && j.total > 0);
   const idc = c.estado === 201 ? JSON.parse(c.cuerpo).idCotizacion : -1;
   const rv = await revisar('reservar', pedir('POST', '/reservas', { token: h.token, cabeceras: { 'Idempotency-Key': randomUUID() }, cuerpo: { idCotizacion: idc, metodoPago: 'pm_card_visa' } }), (r, j) => r.estado === 201 && j.estado === 'CONFIRMADA');
-  await revisar('cotizacion_reusada_409', pedir('POST', '/reservas', { token: h.token, cuerpo: { idCotizacion: idc, metodoPago: 'pm_card_visa' } }), r => r.estado === 409);
+  await revisar('cotizacion_reusada_409', pedir('POST', '/reservas', { token: h.token, cabeceras: { 'Idempotency-Key': randomUUID() }, cuerpo: { idCotizacion: idc, metodoPago: 'pm_card_visa' } }), r => r.estado === 409);
+  await revisar('reservar_sin_clave_400', pedir('POST', '/reservas', { token: h.token, cuerpo: { idCotizacion: idc, metodoPago: 'pm_card_visa' } }), r => r.estado === 400);
   await revisar('fechas_ocupadas_409', pedir('POST', '/cotizaciones', { token: huespedes[8].token, cuerpo: { idAlojamiento: 3999, fechaEntrada: fecha(d), fechaSalida: fecha(d + 3), huespedes: 2 } }), r => r.estado === 409);
   const idr = rv.estado === 201 ? JSON.parse(rv.cuerpo).idReserva : -1; const clave = randomUUID();
   await revisar('cancelar', pedir('POST', `/reservas/${idr}/cancelar`, { token: h.token, cabeceras: { 'Idempotency-Key': clave }, cuerpo: { motivo: 'Validación de la prueba de carga' } }), r => r.estado === 200);
@@ -275,7 +287,8 @@ const escenarios = {
   },
   async login_fallido() {
     // Fuerza bruta distribuida: mide si una contraseña mala cuesta CPU y si algo la frena.
-    const f = () => op('login_fallido', 'POST', '/auth/login', { cuerpo: { correo: de(huespedes).correo, contrasenia: 'Mala#' + azar(1e6) } }, [401]);
+    // 429: el límite de intentos fallidos frenó el ataque antes de verificar la contraseña.
+    const f = () => op('login_fallido', 'POST', '/auth/login', { cuerpo: { correo: de(huespedes).correo, contrasenia: 'Mala#' + azar(1e6) } }, [401, 429]);
     const p = () => op('busqueda_victima', 'GET', `/alojamientos/${1 + azar(4000)}`, {}, [200], VALIDA.alojamiento);
     await abierto('solo_lecturas', 100, 30, p);
     for (const rps of [50, 100, 200]) { if (abortado) break; await abierto(`ataque_${rps}`, rps + 100, 30, () => Math.random() < 100 / (100 + rps) ? p() : f()); }
@@ -297,9 +310,8 @@ const escenarios = {
       for (const [k, v] of Object.entries(conteo)) rep[k] = (rep[k] || 0) + v;
     }
     const r1 = cerrarEtapa();
-    // 2. POST /reservas no aplica Idempotency-Key; lo que impide el doble cobro es que la
-    //    cotización es de un solo uso. Se envía la MISMA cotización 30 veces a la vez (con la misma clave, como un
-    //    reintento del frontend): debe crearse una sola reserva y un solo pago.
+    // 2. Se envía la MISMA cotización 30 veces a la vez con la misma Idempotency-Key, como un reintento del
+    //    frontend: debe crearse una sola reserva y un solo pago (las demás reciben la respuesta guardada o 409).
     nuevaEtapa('misma_cotizacion', '30 x 20 rondas'); const misma = []; const paraCancelar = [];
     for (let ronda = 0; ronda < 20; ronda++) {
       const u = huespedes[1000 + ronda]; const dia = 200 + ronda * 5;

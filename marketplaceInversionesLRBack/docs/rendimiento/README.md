@@ -30,6 +30,7 @@ ejecutar.sh ──► entorno.sh ──► H2 (base en memoria, puerto 9092)
 | `SembrarDatos.java` | Llena la base con datos de prueba y genera el token de cada usuario virtual |
 | `carga.mjs` | El generador de tráfico: lanza las peticiones, mide los tiempos y guarda los resultados |
 | `consultas.mjs` | Cuenta cuántas consultas SQL hace cada endpoint |
+| `verificar_esquema.sql` | Consultas de solo lectura para revisar en Neon las restricciones, los índices y los planes de las consultas más usadas |
 | `resultados/` | Un JSON por escenario |
 
 Ninguna pieza necesita instalar nada: usan el JDK, Node 22 y las dependencias de Maven que ya están en `~/.m2`.
@@ -42,7 +43,7 @@ Ninguna pieza necesita instalar nada: usan el JDK, Node 22 y las dependencias de
 2. **Apaga** cualquier entorno de prueba anterior.
 3. **Levanta H2** en memoria y **arranca el backend** contra ella. Hibernate crea las tablas a partir de las entidades.
 4. **Siembra los datos** de prueba (abajo).
-5. **Valida con un solo usuario** que todo funciona: 26 comprobaciones, desde buscar y ver un detalle hasta reservar, cancelar y repetir la cancelación. **Si alguna falla, el escenario no se ejecuta**: no tiene sentido medir el rendimiento de algo que no funciona.
+5. **Valida con un solo usuario** que todo funciona: 27 comprobaciones, desde buscar y ver un detalle hasta reservar, cancelar y repetir la cancelación. **Si alguna falla, el escenario no se ejecuta**: no tiene sentido medir el rendimiento de algo que no funciona.
 6. **Calienta** la JVM con 5 usuarios durante 30 s, para que lo medido no sea el arranque en frío.
 7. **Ejecuta el escenario** y muestra una línea por etapa.
 8. **Guarda** las métricas, la telemetría, los errores del log y, en concurrencia, la comprobación en la base, todo en `resultados/<escenario>.json`.
@@ -108,14 +109,14 @@ En ambos, una petición que tarda más de **10 s** se cuenta como `TIMEOUT`. Si 
 
 | Escenario | Qué hace | Qué pregunta responde | Duración |
 |---|---|---|---|
-| `validacion` | 1 usuario recorre todas las acciones y 12 reglas (404, 401, 409, cancelar, repetir la cancelación…) | ¿Funciona todo antes de cargarlo? | ~5 s |
+| `validacion` | 1 usuario recorre todas las acciones y 13 reglas (404, 401, 409, reservar sin `Idempotency-Key`, cancelar, repetir la cancelación…) | ¿Funciona todo antes de cargarlo? | ~5 s |
 | `humo` | 5 usuarios durante 30 s | Calentamiento; lo usa `ejecutar.sh` | 30 s |
 | `carga` | 50, luego 200 y luego 400 usuarios virtuales; cada nivel sube en 30 s y se mantiene 3 min | ¿Cómo responde con un número normal, alto y muy alto de usuarios? | 13 min |
 | `estres` | Sube la tasa por escalones de 60 s (10, 25, 50, 75, 100 … rps) hasta que se rompe; después, 2 min a 25 rps | ¿Dónde está el límite y se recupera solo? | 10–20 min |
 | `pico` | 1 min a 25 rps, **salto a 400 rps durante 30 s**, y vuelta a 25 rps | ¿Qué pasa con una avalancha repentina y cuánto tarda en recuperarse? | ~5–7 min |
 | `resistencia` | Una tasa fija durante 15 min, por defecto de golpe tras el arranque. Con `RESISTENCIA_RAMPA=1`, sube primero en 4 min. | ¿Se degrada con el tiempo? ¿Fugas de memoria o conexiones? | 15–19 min |
 | `login` | Solo inicios de sesión, de 5 a 240 por segundo | ¿Cuántos logins por segundo aguanta? | ~4 min |
-| `login_fallido` | 100 lecturas/s normales y, encima, 50, 100 y 200 intentos con contraseña incorrecta | ¿Un ataque de fuerza bruta afecta a los demás usuarios? | ~2 min |
+| `login_fallido` | 100 lecturas/s normales y, encima, 50, 100 y 200 intentos con contraseña incorrecta. Los intentos que frena el límite de fallos responden 429. | ¿Un ataque de fuerza bruta afecta a los demás usuarios? | ~2 min |
 | `concurrencia` | 3 pruebas de choque: 100 huéspedes reservan las mismas fechas a la vez; la misma cotización se envía 30 veces a la vez; la misma cancelación con la misma `Idempotency-Key` se envía 30 veces a la vez. Al final revisa la base. | ¿Puede haber dobles reservas, cobros o cancelaciones duplicadas? | ~1 min |
 
 Variables útiles:
@@ -224,6 +225,8 @@ Si `en_cola` se dispara y `hilos` llega a 200, las peticiones esperan conexión 
 ## Cómo correrlas
 
 **Requisitos:** JDK 17 o superior en `~/Prog/JDK` (o indícalo con `JAVA_HOME_PRUEBAS=/ruta`), Node 22 y las dependencias de Maven en `~/.m2`, incluido `com/h2database/h2/2.4.240`.
+
+**Puertos:** el backend de prueba usa 8081 y H2 el 9092. Si tienes el backend de desarrollo corriendo en 8081, usa otros: `CARGA_PUERTO=8091 CARGA_PUERTO_H2=9093 ./ejecutar.sh estres`. Los scripts comprueban que el destino tenga los datos sembrados antes de enviar nada, así que nunca cargan un backend conectado a una base real.
 
 **Antes de empezar:** cierra programas pesados (juegos, compilaciones, llamadas con video). Generador, backend y base comparten la CPU de tu máquina, y cualquier otro programa altera las mediciones.
 
