@@ -11,8 +11,8 @@ import { FOTOS, fotoDeReferencia } from './fotos';
 /** Cantidad de alojamientos destacados en la página de inicio. */
 const DESTACADOS = 4;
 
-/** Alojamientos que se consultan para elegir la foto real de cada tipo. */
-const CONSULTADOS = 100;
+/** Alojamientos que se piden por tipo para ilustrarlo con una foto real. */
+const POR_TIPO = 1;
 
 /** Tipo de alojamiento con su cantidad, tal como lo devuelve GET /alojamientos/tipos. */
 export interface TipoConCantidad {
@@ -81,17 +81,13 @@ export class Home implements OnInit {
   cargarAlojamientos(): void {
     this.cargando.set(true);
     this.errorCarga.set(false);
-    this.busquedaService.disponibles(CONSULTADOS).subscribe({
+    // Solo se piden los que se muestran: cada alojamiento de la respuesta cuesta varias consultas en el backend.
+    this.busquedaService.disponibles(DESTACADOS).subscribe({
       next: (lista) => {
         this.alojamientos.set(lista.slice(0, DESTACADOS));
-        const fotos: Record<string, string> = {};
         for (const a of lista) {
-          const foto = a.imagenes?.at(0);
-          if (a.tipo && foto && !fotos[a.tipo]) {
-            fotos[a.tipo] = foto;
-          }
+          this.guardarFoto(a);
         }
-        this.fotosPorTipo.set(fotos);
         this.cargando.set(false);
       },
       error: () => {
@@ -115,6 +111,7 @@ export class Home implements OnInit {
             .sort((a, b) => b.cantidad - a.cantidad || a.nombre.localeCompare(b.nombre, 'es')),
         );
         this.cargandoTipos.set(false);
+        this.cargarFotosDeTipos();
       },
       error: () => {
         this.cantidades.set([]);
@@ -122,6 +119,31 @@ export class Home implements OnInit {
         this.cargandoTipos.set(false);
       },
     });
+  }
+
+  /**
+   * Busca una foto real para cada tipo que aún no la tenga, pidiendo un solo alojamiento de ese tipo.
+   * Si la consulta falla o el tipo no tiene alojamientos activos, se queda la foto de referencia.
+   */
+  private cargarFotosDeTipos(): void {
+    for (const { nombre } of this.cantidades()) {
+      if (this.fotosPorTipo()[nombre]) {
+        continue;
+      }
+      this.busquedaService.buscar({ tipo: nombre }, POR_TIPO).subscribe({
+        next: (lista) => lista.forEach((a) => this.guardarFoto(a)),
+        error: () => undefined,
+      });
+    }
+  }
+
+  /** Guarda la primera foto del alojamiento como la de su tipo, si ese tipo aún no tiene una. */
+  private guardarFoto(alojamiento: AlojamientoResultado): void {
+    const foto = alojamiento.imagenes?.at(0);
+    const tipo = alojamiento.tipo;
+    if (tipo && foto && !this.fotosPorTipo()[tipo]) {
+      this.fotosPorTipo.update((fotos) => ({ ...fotos, [tipo]: foto }));
+    }
   }
 
   /** Valida la barra y abre Explorar con los filtros en la URL. */
