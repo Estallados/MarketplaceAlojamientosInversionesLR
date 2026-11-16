@@ -82,10 +82,10 @@ public class LimitadorIntentosLogin extends OncePerRequestFilter {
 	private final ObjectMapper json = JsonMapper.builder().build();
 
 	/** Fallos recientes por hash del correo. */
-	private final Map<String, Deque<Instant>> porCuenta = new ConcurrentHashMap<>();
+	private final Map<String, Fallos> porCuenta = new ConcurrentHashMap<>();
 
 	/** Fallos recientes por IP. */
-	private final Map<String, Deque<Instant>> porIp = new ConcurrentHashMap<>();
+	private final Map<String, Fallos> porIp = new ConcurrentHashMap<>();
 
 	/**
 	 * Crea el limitador con la configuración de la aplicación.
@@ -170,17 +170,8 @@ public class LimitadorIntentosLogin extends OncePerRequestFilter {
 	 * @param ahora   instante actual
 	 * @return 0 si se puede intentar; si no, los segundos de espera
 	 */
-	private static long espera(Deque<Instant> fallos, int maximo, Duration ventana, Instant ahora) {
-		if (fallos == null) {
-			return 0;
-		}
-		synchronized (fallos) {
-			descartarVencidos(fallos, ventana, ahora);
-			if (fallos.size() < maximo) {
-				return 0;
-			}
-			return Math.max(1, Duration.between(ahora, fallos.peekFirst().plus(ventana)).toSeconds());
-		}
+	private static long espera(Fallos fallos, int maximo, Duration ventana, Instant ahora) {
+		return fallos == null ? 0 : fallos.espera(maximo, ventana, ahora);
 	}
 
 	/**
@@ -190,32 +181,71 @@ public class LimitadorIntentosLogin extends OncePerRequestFilter {
 	 * @param clave  cuenta o IP
 	 * @param ahora  instante del intento
 	 */
-	private void registrarFallo(Map<String, Deque<Instant>> fallos, String clave, Instant ahora) {
+	private void registrarFallo(Map<String, Fallos> fallos, String clave, Instant ahora) {
 		if (fallos.size() > LIMPIAR_DESDE) {
 			Duration ventana = fallos == porCuenta ? ventanaCuenta : ventanaIp;
-			fallos.values().removeIf(d -> {
-				synchronized (d) {
-					descartarVencidos(d, ventana, ahora);
-					return d.isEmpty();
-				}
-			});
+			fallos.values().removeIf(f -> f.vencidos(ventana, ahora));
 		}
-		Deque<Instant> registro = fallos.computeIfAbsent(clave, k -> new ArrayDeque<>());
-		synchronized (registro) {
-			registro.addLast(ahora);
-		}
+		fallos.computeIfAbsent(clave, k -> new Fallos()).registrar(ahora);
 	}
 
 	/**
-	 * Quita los fallos que ya salieron de la ventana.
-	 *
-	 * @param fallos  fallos, del más antiguo al más reciente
-	 * @param ventana ventana de tiempo
-	 * @param ahora   instante actual
+	 * Fallos de una cuenta o una IP, del más antiguo al más reciente. Cada
+	 * instancia se sincroniza sobre sí misma.
 	 */
-	private static void descartarVencidos(Deque<Instant> fallos, Duration ventana, Instant ahora) {
-		while (!fallos.isEmpty() && !fallos.peekFirst().plus(ventana).isAfter(ahora)) {
-			fallos.pollFirst();
+	private static final class Fallos {
+
+		/** Instantes de los fallos. */
+		private final Deque<Instant> instantes = new ArrayDeque<>();
+
+		/**
+		 * Registra un fallo.
+		 *
+		 * @param ahora instante del fallo
+		 */
+		synchronized void registrar(Instant ahora) {
+			instantes.addLast(ahora);
+		}
+
+		/**
+		 * Segundos que faltan para que los fallos bajen del máximo.
+		 *
+		 * @param maximo  fallos permitidos
+		 * @param ventana ventana de tiempo
+		 * @param ahora   instante actual
+		 * @return 0 si se puede intentar; si no, los segundos de espera
+		 */
+		synchronized long espera(int maximo, Duration ventana, Instant ahora) {
+			descartarVencidos(ventana, ahora);
+			if (instantes.size() < maximo) {
+				return 0;
+			}
+			return Math.max(1, Duration.between(ahora, instantes.peekFirst().plus(ventana)).toSeconds());
+		}
+
+		/**
+		 * Quita los fallos vencidos e indica si ya no queda ninguno.
+		 *
+		 * @param ventana ventana de tiempo
+		 * @param ahora   instante actual
+		 * @return {@code true} si no quedan fallos en la ventana
+		 */
+		synchronized boolean vencidos(Duration ventana, Instant ahora) {
+			descartarVencidos(ventana, ahora);
+			return instantes.isEmpty();
+		}
+
+		/**
+		 * Quita los fallos que ya salieron de la ventana. Se llama con el
+		 * monitor tomado.
+		 *
+		 * @param ventana ventana de tiempo
+		 * @param ahora   instante actual
+		 */
+		private void descartarVencidos(Duration ventana, Instant ahora) {
+			while (!instantes.isEmpty() && !instantes.peekFirst().plus(ventana).isAfter(ahora)) {
+				instantes.pollFirst();
+			}
 		}
 	}
 

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -71,7 +73,8 @@ class IdempotenciaServiceTest {
 				.thenThrow(new QueryTimeoutException("sin conexión"));
 
 		assertThat(servicio.limpiarVencidos()).isEqualTo(7);
-		assertThat(Duration.between(limite.getValue(), LocalDateTime.now()))
+		ZoneId zona = ZoneId.systemDefault();
+		assertThat(Duration.between(limite.getValue().atZone(zona), ZonedDateTime.now(zona)))
 				.isBetween(Duration.ofHours(IdempotenciaService.HORAS_RETENCION).minusMinutes(1),
 						Duration.ofHours(IdempotenciaService.HORAS_RETENCION).plusMinutes(1));
 		assertThat(servicio.limpiarVencidos()).isZero();

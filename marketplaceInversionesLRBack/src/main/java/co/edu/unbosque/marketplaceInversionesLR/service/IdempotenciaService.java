@@ -114,8 +114,9 @@ public class IdempotenciaService {
 	public int limpiarVencidos() {
 		LocalDateTime limite = LocalDateTime.now().minusHours(HORAS_RETENCION);
 		try {
-			Integer borrados = transaccionPropia.execute(estado -> registroRepo.borrarAnteriores(limite));
-			int total = borrados == null ? 0 : borrados;
+			int[] borrados = { 0 };
+			transaccionPropia.executeWithoutResult(estado -> borrados[0] = registroRepo.borrarAnteriores(limite));
+			int total = borrados[0];
 			if (total > 0) {
 				LOG.info("Se borraron {} registros de idempotencia anteriores a {}", total, limite);
 			}
