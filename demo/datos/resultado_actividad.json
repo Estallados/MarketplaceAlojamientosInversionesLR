@@ -1,0 +1,154 @@
+{
+  "api": "http://localhost:8081",
+  "fecha": "2026-11-16T14:45:16",
+  "resenas": [
+    {
+      "huesped": "anatorres@gmail.com",
+      "id_reserva": 27,
+      "alojamiento": 11,
+      "calificacion": 5
+    },
+    {
+      "huesped": "anatorres@gmail.com",
+      "id_reserva": 32,
+      "alojamiento": 13,
+      "calificacion": 5
+    },
+    {
+      "huesped": "camilaherrera@gmail.com",
+      "id_reserva": 31,
+      "alojamiento": 13,
+      "calificacion": 3
+    },
+    {
+      "huesped": "diegomora@gmail.com",
+      "id_reserva": 28,
+      "alojamiento": 11,
+      "calificacion": 5
+    },
+    {
+      "huesped": "pedrodiaz@gmail.com",
+      "id_reserva": 30,
+      "alojamiento": 12,
+      "calificacion": 5
+    },
+    {
+      "huesped": "sofiaperez@gmail.com",
+      "id_reserva": 29,
+      "alojamiento": 12,
+      "calificacion": 4
+    }
+  ],
+  "reservas": [
+    {
+      "huesped": "anatorres@gmail.com",
+      "alojamiento": 1,
+      "id_reserva": 21,
+      "llegada": "2026-12-06",
+      "metodo": "pm_card_visa",
+      "estado": "CONFIRMADA"
+    },
+    {
+      "huesped": "diegomora@gmail.com",
+      "alojamiento": 5,
+      "id_reserva": 22,
+      "llegada": "2026-12-16",
+      "metodo": "pm_card_mastercard",
+      "estado": "CONFIRMADA"
+    },
+    {
+      "huesped": "camilaherrera@gmail.com",
+      "alojamiento": 8,
+      "id_reserva": 23,
+      "llegada": "2026-12-31",
+      "metodo": "pm_card_amex",
+      "estado": "CONFIRMADA"
+    },
+    {
+      "huesped": "sofiaperez@gmail.com",
+      "alojamiento": 4,
+      "id_reserva": 24,
+      "llegada": "2026-12-11",
+      "metodo": "pm_card_visa",
+      "estado": "CANCELADA"
+    },
+    {
+      "huesped": "camilaherrera@gmail.com",
+      "alojamiento": 7,
+      "id_reserva": 25,
+      "llegada": "2026-11-19",
+      "metodo": "pm_card_visa_debit",
+      "estado": "CANCELADA"
+    },
+    {
+      "huesped": "pedrodiaz@gmail.com",
+      "alojamiento": 3,
+      "id_reserva": 26,
+      "llegada": "2026-12-01",
+      "metodo": "pm_card_chargeDeclined",
+      "estado": "CANCELADA"
+    }
+  ],
+  "cancelaciones": [],
+  "cotizaciones": [
+    {
+      "huesped": "camilaherrera@gmail.com",
+      "alojamiento": 6,
+      "id_cotizacion": 36,
+      "total": 1725000.0
+    },
+    {
+      "huesped": "anatorres@gmail.com",
+      "alojamiento": 10,
+      "id_cotizacion": 37,
+      "total": 253000.0
+    },
+    {
+      "huesped": "pedrodiaz@gmail.com",
+      "alojamiento": 2,
+      "id_cotizacion": 38,
+      "total": 759000.0
+    }
+  ],
+  "favoritos": [
+    {
+      "huesped": "anatorres@gmail.com",
+      "alojamiento": 5
+    },
+    {
+      "huesped": "anatorres@gmail.com",
+      "alojamiento": 6
+    },
+    {
+      "huesped": "anatorres@gmail.com",
+      "alojamiento": 4
+    },
+    {
+      "huesped": "diegomora@gmail.com",
+      "alojamiento": 8
+    },
+    {
+      "huesped": "diegomora@gmail.com",
+      "alojamiento": 3
+    },
+    {
+      "huesped": "sofiaperez@gmail.com",
+      "alojamiento": 7
+    },
+    {
+      "huesped": "sofiaperez@gmail.com",
+      "alojamiento": 1
+    }
+  ],
+  "conversaciones": [
+    {
+      "huesped": "anatorres@gmail.com",
+      "id_conversacion": 1
+    },
+    {
+      "huesped": "pedrodiaz@gmail.com",
+      "id_conversacion": 2
+    }
+  ],
+  "errores": []
+}

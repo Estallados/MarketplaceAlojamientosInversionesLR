@@ -1,0 +1,636 @@
+{
+  "api": "http://localhost:8081",
+  "fecha": "2026-11-16T14:39:32",
+  "alojamientos": [
+    {
+      "id_demo": "hotel-dann-avenida-19",
+      "id_alojamiento": 1,
+      "estado": "ACTIVA",
+      "latitud": 4.6049812,
+      "longitud": -74.0707214,
+      "imagenes": [
+        {
+          "local": "hotel-dann-avenida-19/01-real-dann.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Dann_Centro.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855824/marketplace/alojamientos/1/f57eb9e0-31e8-479d-b453-47ce21f86331.jpg",
+          "public_id": "marketplace/alojamientos/1/f57eb9e0-31e8-479d-b453-47ce21f86331"
+        },
+        {
+          "local": "hotel-dann-avenida-19/02-ilustrativa-cuarto_a.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Cozy_hotel_room_with_warm_lighting_and_refreshments_on_a_small_table.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855826/marketplace/alojamientos/1/b9a2ffd7-39cb-4cc1-8dce-cc6db6200aad.jpg",
+          "public_id": "marketplace/alojamientos/1/b9a2ffd7-39cb-4cc1-8dce-cc6db6200aad"
+        },
+        {
+          "local": "hotel-dann-avenida-19/03-ilustrativa-bacata.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 2.0",
+          "autor": "Edgar Jiménez from Milton Keynes, UK",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Edificio_Bacatá_(20796357625).jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857499/marketplace/alojamientos/1/a8d33889-e59e-4daf-a571-d2d61847ccbc.jpg",
+          "public_id": "marketplace/alojamientos/1/a8d33889-e59e-4daf-a571-d2d61847ccbc"
+        },
+        {
+          "local": "hotel-dann-avenida-19/04-ilustrativa-cuarto_c.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "PaulPMoroney",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Deluxe_Suite_bedroom.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857501/marketplace/alojamientos/1/378a0e4f-3008-497b-8dc4-e3e36609214c.jpg",
+          "public_id": "marketplace/alojamientos/1/378a0e4f-3008-497b-8dc4-e3e36609214c"
+        }
+      ]
+    },
+    {
+      "id_demo": "ibis-bogota-museo",
+      "id_alojamiento": 2,
+      "estado": "ACTIVA",
+      "latitud": 4.6146442,
+      "longitud": -74.0688176,
+      "imagenes": [
+        {
+          "local": "ibis-bogota-museo/01-real-ibis_1.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Ibis_Bogotá.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855835/marketplace/alojamientos/2/e185f6f0-5616-4631-a329-3c7f91de4df5.jpg",
+          "public_id": "marketplace/alojamientos/2/e185f6f0-5616-4631-a329-3c7f91de4df5"
+        },
+        {
+          "local": "ibis-bogota-museo/02-real-ibis_2.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bogotá_entrada_hotel_Ibis_centro_internacional.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855837/marketplace/alojamientos/2/61ee2eb2-42e5-43cb-9bf9-3a2f7043630d.jpg",
+          "public_id": "marketplace/alojamientos/2/61ee2eb2-42e5-43cb-9bf9-3a2f7043630d"
+        },
+        {
+          "local": "ibis-bogota-museo/03-ilustrativa-cuarto_a.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Cozy_hotel_room_with_warm_lighting_and_refreshments_on_a_small_table.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855838/marketplace/alojamientos/2/5bef3a31-f201-4d0e-83f4-489ec1098172.jpg",
+          "public_id": "marketplace/alojamientos/2/5bef3a31-f201-4d0e-83f4-489ec1098172"
+        },
+        {
+          "local": "ibis-bogota-museo/04-real-ibis_3.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bogotá_Hotel_IBIS_San_Diego_cl_27_bis_tr_6.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857507/marketplace/alojamientos/2/d1c29c8f-6441-4345-9e95-079120568bd1.jpg",
+          "public_id": "marketplace/alojamientos/2/d1c29c8f-6441-4345-9e95-079120568bd1"
+        }
+      ]
+    },
+    {
+      "id_demo": "botanico-hostel",
+      "id_alojamiento": 3,
+      "estado": "ACTIVA",
+      "latitud": 4.5943302,
+      "longitud": -74.0716257,
+      "imagenes": [
+        {
+          "local": "botanico-hostel/01-ilustrativa-candelaria_cl11.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bogotá_calle_11_carrera_2.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855847/marketplace/alojamientos/3/9af33867-5f20-45f2-be43-c0f0fd9d5be6.jpg",
+          "public_id": "marketplace/alojamientos/3/9af33867-5f20-45f2-be43-c0f0fd9d5be6"
+        },
+        {
+          "local": "botanico-hostel/02-ilustrativa-cuarto_b.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Coffee_and_infused_water_on_a_table_near_a_bed_in_a_hotel_room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855849/marketplace/alojamientos/3/1b572fe1-531f-4b8e-8af4-7b0c2d95de15.jpg",
+          "public_id": "marketplace/alojamientos/3/1b572fe1-531f-4b8e-8af4-7b0c2d95de15"
+        },
+        {
+          "local": "botanico-hostel/03-ilustrativa-candelaria_cr4.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bog_La_Candelaria.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857512/marketplace/alojamientos/3/2451df4f-75f1-4af5-895a-9637c9eebdcf.jpg",
+          "public_id": "marketplace/alojamientos/3/2451df4f-75f1-4af5-895a-9637c9eebdcf"
+        },
+        {
+          "local": "botanico-hostel/04-ilustrativa-cuarto_e.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Coocentral",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Kahve1.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857514/marketplace/alojamientos/3/03935d14-5c42-4fee-83c5-0f74b42e68e1.jpg",
+          "public_id": "marketplace/alojamientos/3/03935d14-5c42-4fee-83c5-0f74b42e68e1"
+        }
+      ]
+    },
+    {
+      "id_demo": "hotel-de-la-opera",
+      "id_alojamiento": 4,
+      "estado": "ACTIVA",
+      "latitud": 4.5967207,
+      "longitud": -74.0747761,
+      "imagenes": [
+        {
+          "local": "hotel-de-la-opera/01-ilustrativa-candelaria_cr4.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bog_La_Candelaria.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855857/marketplace/alojamientos/4/550a1a07-72c8-460c-9ac2-dd5a158bf434.jpg",
+          "public_id": "marketplace/alojamientos/4/550a1a07-72c8-460c-9ac2-dd5a158bf434"
+        },
+        {
+          "local": "hotel-de-la-opera/02-ilustrativa-cuarto_c.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "PaulPMoroney",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Deluxe_Suite_bedroom.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855859/marketplace/alojamientos/4/16eca2f5-2c56-40f2-b755-bf26b2f438b1.jpg",
+          "public_id": "marketplace/alojamientos/4/16eca2f5-2c56-40f2-b755-bf26b2f438b1"
+        },
+        {
+          "local": "hotel-de-la-opera/03-ilustrativa-candelaria_cl12.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bogota_calle_12_con_carrera_7_-_La_Candelaria.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857519/marketplace/alojamientos/4/3e052c12-99d2-4b6b-9243-4741c477fd6e.jpg",
+          "public_id": "marketplace/alojamientos/4/3e052c12-99d2-4b6b-9243-4741c477fd6e"
+        },
+        {
+          "local": "hotel-de-la-opera/04-ilustrativa-bano.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 2.0",
+          "autor": "Artur Bergman",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bathrobes!.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857521/marketplace/alojamientos/4/659d3aef-f3c2-4325-94f5-fa54aad357dc.jpg",
+          "public_id": "marketplace/alojamientos/4/659d3aef-f3c2-4325-94f5-fa54aad357dc"
+        }
+      ]
+    },
+    {
+      "id_demo": "four-seasons-casa-medina",
+      "id_alojamiento": 5,
+      "estado": "ACTIVA",
+      "latitud": 4.6524579,
+      "longitud": -74.0565634,
+      "imagenes": [
+        {
+          "local": "four-seasons-casa-medina/01-real-casamedina_1.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Casa_Medina.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855867/marketplace/alojamientos/5/2eef693a-0ff1-40ea-81d0-9d88c4313e9b.jpg",
+          "public_id": "marketplace/alojamientos/5/2eef693a-0ff1-40ea-81d0-9d88c4313e9b"
+        },
+        {
+          "local": "four-seasons-casa-medina/02-real-casamedina_2.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Casa_Medina.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855869/marketplace/alojamientos/5/ada03989-3c8d-4b90-b6db-e937a9d209c0.jpg",
+          "public_id": "marketplace/alojamientos/5/ada03989-3c8d-4b90-b6db-e937a9d209c0"
+        },
+        {
+          "local": "four-seasons-casa-medina/03-ilustrativa-cuarto_c.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "PaulPMoroney",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Deluxe_Suite_bedroom.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855871/marketplace/alojamientos/5/73f31315-a3d5-4345-9703-474fe1c57115.jpg",
+          "public_id": "marketplace/alojamientos/5/73f31315-a3d5-4345-9703-474fe1c57115"
+        },
+        {
+          "local": "four-seasons-casa-medina/04-real-casamedina_3.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Cuauhtemoc sanchez fernandez",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_casa_medina-norte.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857527/marketplace/alojamientos/5/0b3c893e-cc1c-4493-9d4e-44f4549724d8.jpg",
+          "public_id": "marketplace/alojamientos/5/0b3c893e-cc1c-4493-9d4e-44f4549724d8"
+        }
+      ]
+    },
+    {
+      "id_demo": "the-artisan-dc",
+      "id_alojamiento": 6,
+      "estado": "ACTIVA",
+      "latitud": 4.6534769,
+      "longitud": -74.0546833,
+      "imagenes": [
+        {
+          "local": "the-artisan-dc/01-real-artisan.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bogota_Artisan_D._C._Hotel.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855879/marketplace/alojamientos/6/c0bb994b-30e3-4d1c-acfb-7af02c88b111.jpg",
+          "public_id": "marketplace/alojamientos/6/c0bb994b-30e3-4d1c-acfb-7af02c88b111"
+        },
+        {
+          "local": "the-artisan-dc/02-ilustrativa-cuarto_b.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Coffee_and_infused_water_on_a_table_near_a_bed_in_a_hotel_room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855882/marketplace/alojamientos/6/4c6b01dc-c908-44a9-94f0-dcfba21b2f00.jpg",
+          "public_id": "marketplace/alojamientos/6/4c6b01dc-c908-44a9-94f0-dcfba21b2f00"
+        },
+        {
+          "local": "the-artisan-dc/03-ilustrativa-chapinero_cr7.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Felipe Restrpo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:2021_Bogotá_-_Balcón_en_carrera_7_con_calle_65.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857533/marketplace/alojamientos/6/1af65909-9bdc-44c7-a975-1a907512154c.jpg",
+          "public_id": "marketplace/alojamientos/6/1af65909-9bdc-44c7-a975-1a907512154c"
+        },
+        {
+          "local": "the-artisan-dc/04-ilustrativa-cuarto_d.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "BaonguyenCaravelas",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Caravelle_Saigon_-_Signature_Studio_Room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857534/marketplace/alojamientos/6/c5adb235-0d43-4de5-b82a-02175b4c27b2.jpg",
+          "public_id": "marketplace/alojamientos/6/c5adb235-0d43-4de5-b82a-02175b4c27b2"
+        }
+      ]
+    },
+    {
+      "id_demo": "viaggio-urbano",
+      "id_alojamiento": 7,
+      "estado": "ACTIVA",
+      "latitud": 4.6304137,
+      "longitud": -74.0619821,
+      "imagenes": [
+        {
+          "local": "viaggio-urbano/01-ilustrativa-estudio.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Aaaatu",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Studio_apartment_in_Finland.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855889/marketplace/alojamientos/7/cb822241-a9fd-4d43-8244-0cd8c3c53fe0.jpg",
+          "public_id": "marketplace/alojamientos/7/cb822241-a9fd-4d43-8244-0cd8c3c53fe0"
+        },
+        {
+          "local": "viaggio-urbano/02-ilustrativa-cuarto_b.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Coffee_and_infused_water_on_a_table_near_a_bed_in_a_hotel_room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855891/marketplace/alojamientos/7/c9f2178c-bb67-46e2-abb5-2d0f3a12eb33.jpg",
+          "public_id": "marketplace/alojamientos/7/c9f2178c-bb67-46e2-abb5-2d0f3a12eb33"
+        },
+        {
+          "local": "viaggio-urbano/03-ilustrativa-estudio_2.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Centre for Digital Media",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Studio_Apartment.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857541/marketplace/alojamientos/7/1f4c9b11-7ffa-47aa-92d2-dca9bbb8475a.jpg",
+          "public_id": "marketplace/alojamientos/7/1f4c9b11-7ffa-47aa-92d2-dca9bbb8475a"
+        },
+        {
+          "local": "viaggio-urbano/04-ilustrativa-cuarto_a.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Cozy_hotel_room_with_warm_lighting_and_refreshments_on_a_small_table.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857542/marketplace/alojamientos/7/145a3abf-cb77-4321-99dc-f90afe20be6e.jpg",
+          "public_id": "marketplace/alojamientos/7/145a3abf-cb77-4321-99dc-f90afe20be6e"
+        }
+      ]
+    },
+    {
+      "id_demo": "estelar-la-fontana",
+      "id_alojamiento": 8,
+      "estado": "ACTIVA",
+      "latitud": 4.7044288,
+      "longitud": -74.043754,
+      "imagenes": [
+        {
+          "local": "estelar-la-fontana/01-real-estelar_1.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "VivianaGarcia010",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Estelar_La_Fontana.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855899/marketplace/alojamientos/8/fb6c4e7a-d639-4ef4-b21d-ad47d6c3e9e0.jpg",
+          "public_id": "marketplace/alojamientos/8/fb6c4e7a-d639-4ef4-b21d-ad47d6c3e9e0"
+        },
+        {
+          "local": "estelar-la-fontana/02-real-estelar_2.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY 3.0",
+          "autor": "Yuriy Shapiro",
+          "url_original": "https://commons.wikimedia.org/wiki/File:HOTEL_ESTELAR_LA_FONTANA_-_panoramio.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855900/marketplace/alojamientos/8/7e3b7ee8-6b8e-46b2-a968-e20fc1347c9b.jpg",
+          "public_id": "marketplace/alojamientos/8/7e3b7ee8-6b8e-46b2-a968-e20fc1347c9b"
+        },
+        {
+          "local": "estelar-la-fontana/03-ilustrativa-cuarto_a.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Cozy_hotel_room_with_warm_lighting_and_refreshments_on_a_small_table.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855902/marketplace/alojamientos/8/39e38ef3-3985-4dbb-bacc-3cea4b974705.jpg",
+          "public_id": "marketplace/alojamientos/8/39e38ef3-3985-4dbb-bacc-3cea4b974705"
+        },
+        {
+          "local": "estelar-la-fontana/04-ilustrativa-usaquen_cl127.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Felipe Restrepo Acosta",
+          "url_original": "https://commons.wikimedia.org/wiki/File:BOG_calle_127_con_carrera_19_Bogota.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857547/marketplace/alojamientos/8/e239bb1a-de05-453b-864d-c3837a219532.jpg",
+          "public_id": "marketplace/alojamientos/8/e239bb1a-de05-453b-864d-c3837a219532"
+        }
+      ]
+    },
+    {
+      "id_demo": "doubletree-salitre-ar",
+      "id_alojamiento": 9,
+      "estado": "ACTIVA",
+      "latitud": 4.6413965,
+      "longitud": -74.1051431,
+      "imagenes": [
+        {
+          "local": "doubletree-salitre-ar/01-real-arsalitre.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "Hotel ar salitre Bogotá",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Ar_hotel_Salitre_Hotel_Bogota_Ar_Salitre.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855910/marketplace/alojamientos/9/dbe57177-470f-412b-a5f1-52954fb9bfb8.jpg",
+          "public_id": "marketplace/alojamientos/9/dbe57177-470f-412b-a5f1-52954fb9bfb8"
+        },
+        {
+          "local": "doubletree-salitre-ar/02-ilustrativa-cuarto_c.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "PaulPMoroney",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Deluxe_Suite_bedroom.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855912/marketplace/alojamientos/9/8aa53e24-fd47-47bb-b082-f68121722507.jpg",
+          "public_id": "marketplace/alojamientos/9/8aa53e24-fd47-47bb-b082-f68121722507"
+        },
+        {
+          "local": "doubletree-salitre-ar/03-ilustrativa-cuarto_d.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "BaonguyenCaravelas",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Caravelle_Saigon_-_Signature_Studio_Room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857552/marketplace/alojamientos/9/41425821-1004-4274-9ba3-42149452f697.jpg",
+          "public_id": "marketplace/alojamientos/9/41425821-1004-4274-9ba3-42149452f697"
+        },
+        {
+          "local": "doubletree-salitre-ar/04-ilustrativa-bano.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 2.0",
+          "autor": "Artur Bergman",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bathrobes!.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857554/marketplace/alojamientos/9/83d5134a-0231-44d3-8ac0-3b5e65088cc5.jpg",
+          "public_id": "marketplace/alojamientos/9/83d5134a-0231-44d3-8ac0-3b5e65088cc5"
+        }
+      ]
+    },
+    {
+      "id_demo": "city-express-plus-aeropuerto",
+      "id_alojamiento": 10,
+      "estado": "ACTIVA",
+      "latitud": 4.6791181,
+      "longitud": -74.1219528,
+      "imagenes": [
+        {
+          "local": "city-express-plus-aeropuerto/01-ilustrativa-cuarto_a.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Cozy_hotel_room_with_warm_lighting_and_refreshments_on_a_small_table.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855920/marketplace/alojamientos/10/87e4f88a-14b8-40c2-a285-52023e3f539e.jpg",
+          "public_id": "marketplace/alojamientos/10/87e4f88a-14b8-40c2-a285-52023e3f539e"
+        },
+        {
+          "local": "city-express-plus-aeropuerto/02-ilustrativa-cuarto_b.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Coffee_and_infused_water_on_a_table_near_a_bed_in_a_hotel_room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794855921/marketplace/alojamientos/10/51a4be42-4b68-4ce2-a411-e2efb8db485c.jpg",
+          "public_id": "marketplace/alojamientos/10/51a4be42-4b68-4ce2-a411-e2efb8db485c"
+        },
+        {
+          "local": "city-express-plus-aeropuerto/03-ilustrativa-cuarto_e.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Coocentral",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Kahve1.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857560/marketplace/alojamientos/10/1ac7ec4b-eff0-46aa-bcb9-de54d4e97d8e.jpg",
+          "public_id": "marketplace/alojamientos/10/1ac7ec4b-eff0-46aa-bcb9-de54d4e97d8e"
+        },
+        {
+          "local": "city-express-plus-aeropuerto/04-ilustrativa-cuarto_c.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "PaulPMoroney",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Deluxe_Suite_bedroom.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857562/marketplace/alojamientos/10/8f4744ce-ccad-4364-ae26-b6feded9a777.jpg",
+          "public_id": "marketplace/alojamientos/10/8f4744ce-ccad-4364-ae26-b6feded9a777"
+        }
+      ]
+    },
+    {
+      "id_demo": "hotel-nutibara-medellin",
+      "id_alojamiento": 11,
+      "estado": "ACTIVA",
+      "latitud": 6.2523954,
+      "longitud": -75.5672716,
+      "imagenes": [
+        {
+          "local": "hotel-nutibara-medellin/01-real-nutibara_1.jpg",
+          "clasificacion": "real",
+          "licencia": "Public domain",
+          "autor": "SajoR",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Nutibara-Fachada-Medellin.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857821/marketplace/alojamientos/11/57813f62-5473-48f2-b2c5-b0581ae7f510.jpg",
+          "public_id": "marketplace/alojamientos/11/57813f62-5473-48f2-b2c5-b0581ae7f510"
+        },
+        {
+          "local": "hotel-nutibara-medellin/02-real-nutibara_2.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 2.0",
+          "autor": "einalem",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Nutibara-entrada.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857822/marketplace/alojamientos/11/320f181b-d162-4456-ab1b-620c438555d6.jpg",
+          "public_id": "marketplace/alojamientos/11/320f181b-d162-4456-ab1b-620c438555d6"
+        },
+        {
+          "local": "hotel-nutibara-medellin/03-real-nutibara_3.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY 2.0",
+          "autor": "Luis Perez",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Nutibara.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857824/marketplace/alojamientos/11/d3f0ffd8-e30a-458d-911b-056cb3209d09.jpg",
+          "public_id": "marketplace/alojamientos/11/d3f0ffd8-e30a-458d-911b-056cb3209d09"
+        },
+        {
+          "local": "hotel-nutibara-medellin/04-ilustrativa-cuarto_e.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "Coocentral",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Kahve1.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857825/marketplace/alojamientos/11/c80576a5-a923-4686-8cc3-dd198ddfbea8.jpg",
+          "public_id": "marketplace/alojamientos/11/c80576a5-a923-4686-8cc3-dd198ddfbea8"
+        }
+      ]
+    },
+    {
+      "id_demo": "dann-carlton-medellin",
+      "id_alojamiento": 12,
+      "estado": "ACTIVA",
+      "latitud": 6.2072796,
+      "longitud": -75.5707251,
+      "imagenes": [
+        {
+          "local": "dann-carlton-medellin/01-real-danncarlton_med.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 2.5",
+          "autor": "SajoR",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Hotel_Dann_Carlton-Medellin.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857833/marketplace/alojamientos/12/903d5e08-b9e3-4ed9-acba-b2e45e433f11.jpg",
+          "public_id": "marketplace/alojamientos/12/903d5e08-b9e3-4ed9-acba-b2e45e433f11"
+        },
+        {
+          "local": "dann-carlton-medellin/02-ilustrativa-cuarto_a.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Cozy_hotel_room_with_warm_lighting_and_refreshments_on_a_small_table.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857834/marketplace/alojamientos/12/51663801-a517-48ff-bbdb-d697901e8fd6.jpg",
+          "public_id": "marketplace/alojamientos/12/51663801-a517-48ff-bbdb-d697901e8fd6"
+        },
+        {
+          "local": "dann-carlton-medellin/03-ilustrativa-bano.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 2.0",
+          "autor": "Artur Bergman",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bathrobes!.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857836/marketplace/alojamientos/12/97931916-58f0-4219-b572-4d5a87b74c0e.jpg",
+          "public_id": "marketplace/alojamientos/12/97931916-58f0-4219-b572-4d5a87b74c0e"
+        },
+        {
+          "local": "dann-carlton-medellin/04-ilustrativa-cuarto_d.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 4.0",
+          "autor": "BaonguyenCaravelas",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Caravelle_Saigon_-_Signature_Studio_Room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857838/marketplace/alojamientos/12/4d84ca7c-6334-4bc3-9f34-30551624a91c.jpg",
+          "public_id": "marketplace/alojamientos/12/4d84ca7c-6334-4bc3-9f34-30551624a91c"
+        }
+      ]
+    },
+    {
+      "id_demo": "four-points-medellin",
+      "id_alojamiento": 13,
+      "estado": "ACTIVA",
+      "latitud": 6.1993474,
+      "longitud": -75.576058,
+      "imagenes": [
+        {
+          "local": "four-points-medellin/01-real-fourpoints_med_1.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "XalD",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Four_Points_Medellín_1.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857847/marketplace/alojamientos/13/cb9079a4-c4c5-45bc-ba68-c2414841e2a9.jpg",
+          "public_id": "marketplace/alojamientos/13/cb9079a4-c4c5-45bc-ba68-c2414841e2a9"
+        },
+        {
+          "local": "four-points-medellin/02-real-fourpoints_med_2.jpg",
+          "clasificacion": "real",
+          "licencia": "CC BY-SA 3.0",
+          "autor": "XalD",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Four_Points_Medellín_2.JPG",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857849/marketplace/alojamientos/13/dadabe98-ff3b-4a48-bba4-778ca85d89fa.jpg",
+          "public_id": "marketplace/alojamientos/13/dadabe98-ff3b-4a48-bba4-778ca85d89fa"
+        },
+        {
+          "local": "four-points-medellin/03-ilustrativa-cuarto_b.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY 2.0",
+          "autor": "Shixart1985",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Coffee_and_infused_water_on_a_table_near_a_bed_in_a_hotel_room.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857850/marketplace/alojamientos/13/87618a25-03fa-49db-9d9a-ced57758a890.jpg",
+          "public_id": "marketplace/alojamientos/13/87618a25-03fa-49db-9d9a-ced57758a890"
+        },
+        {
+          "local": "four-points-medellin/04-ilustrativa-bano.jpg",
+          "clasificacion": "ilustrativa",
+          "licencia": "CC BY-SA 2.0",
+          "autor": "Artur Bergman",
+          "url_original": "https://commons.wikimedia.org/wiki/File:Bathrobes!.jpg",
+          "url_cloudinary": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794857852/marketplace/alojamientos/13/e47eaf9c-9d4d-43be-8c31-b8e81092b467.jpg",
+          "public_id": "marketplace/alojamientos/13/e47eaf9c-9d4d-43be-8c31-b8e81092b467"
+        }
+      ]
+    }
+  ],
+  "errores": [],
+  "imagenes_huerfanas_previas_borradas": [
+    {
+      "id_alojamiento": 8,
+      "public_id": "marketplace/alojamientos/8/ba6a7307-e86f-4457-bfa5-806a5810d9c4",
+      "url": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794104394/marketplace/alojamientos/8/ba6a7307-e86f-4457-bfa5-806a5810d9c4.jpg",
+      "http": "404",
+      "nota": "Imagen de un alojamiento anterior con el mismo id que quedó en Cloudinary; no es de esta carga"
+    },
+    {
+      "id_alojamiento": 8,
+      "public_id": "marketplace/alojamientos/8/541d5bbe-9bbd-4603-a3f9-f0f10ceb8c74",
+      "url": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794117403/marketplace/alojamientos/8/541d5bbe-9bbd-4603-a3f9-f0f10ceb8c74.jpg",
+      "http": "404",
+      "nota": "Imagen de un alojamiento anterior con el mismo id que quedó en Cloudinary; no es de esta carga"
+    },
+    {
+      "id_alojamiento": 10,
+      "public_id": "marketplace/alojamientos/10/d9dd35a8-bc26-4563-81e4-afe7cfae4cff",
+      "url": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794110710/marketplace/alojamientos/10/d9dd35a8-bc26-4563-81e4-afe7cfae4cff.png",
+      "http": "404",
+      "nota": "Imagen de un alojamiento anterior con el mismo id que quedó en Cloudinary; no es de esta carga"
+    },
+    {
+      "id_alojamiento": 10,
+      "public_id": "marketplace/alojamientos/10/bd62fb2c-9e2a-4b07-909a-57bbaca0ab57",
+      "url": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794110711/marketplace/alojamientos/10/bd62fb2c-9e2a-4b07-909a-57bbaca0ab57.png",
+      "http": "404",
+      "nota": "Imagen de un alojamiento anterior con el mismo id que quedó en Cloudinary; no es de esta carga"
+    },
+    {
+      "id_alojamiento": 9,
+      "public_id": "marketplace/alojamientos/9/a4a9a095-e111-4f96-ba29-557ed9efefb8",
+      "url": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794110171/marketplace/alojamientos/9/a4a9a095-e111-4f96-ba29-557ed9efefb8.png",
+      "http": "404",
+      "nota": "Imagen de un alojamiento anterior con el mismo id que quedó en Cloudinary; no es de esta carga"
+    },
+    {
+      "id_alojamiento": 11,
+      "public_id": "marketplace/alojamientos/11/043007df-b8d7-4c5a-82b5-a69ff036513a",
+      "url": "https://res.cloudinary.com/fkiaqjaa/image/upload/f_auto,q_auto/v1794801724/marketplace/alojamientos/11/043007df-b8d7-4c5a-82b5-a69ff036513a.webp",
+      "http": "404",
+      "nota": "Imagen de un alojamiento anterior con el mismo id que quedó en Cloudinary; no es de esta carga"
+    }
+  ]
+}
