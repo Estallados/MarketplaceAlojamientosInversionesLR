@@ -72,9 +72,9 @@
         } @else if (errorCarga()) {
           No se pudo obtener la lista
         } @else {
-          {{ visible().length }}
+          {{ total() }}
           {{
-            visible().length === 1
+            total() === 1
               ? 'alojamiento disponible'
               : 'alojamientos disponibles'
           }}
@@ -447,11 +447,11 @@
         </div>
 
 
-        @if (visible().length > 0) {
+        @if (total() > 0) {
           <div class="mt-10 flex flex-col items-center justify-between gap-4 border-t border-ink-200 pt-6 text-sm text-ink-500 sm:flex-row">
             <span>
-              Mostrando {{ paginados().length }} de {{ visible().length }}
-              {{ visible().length === 1 ? 'alojamiento' : 'alojamientos' }}
+              Mostrando {{ paginados().length }} de {{ total() }}
+              {{ total() === 1 ? 'alojamiento' : 'alojamientos' }}
             </span>
             <div class="flex items-center gap-2">
               <button

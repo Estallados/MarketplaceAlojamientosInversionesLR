@@ -1,21 +1,33 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { CurrencyPipe, DecimalPipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Observable } from 'rxjs';
 
-import { AlojamientoResultado, CamposBusqueda } from '../models/busqueda';
+import { AlojamientoResultado, CamposBusqueda, ConsultaExplorar, FiltrosExplorar } from '../models/busqueda';
 import { BusquedaService } from '../services/busqueda.service';
 
 type SortOption = 'Recomendados' | 'Precio menor' | 'Precio mayor' | 'Mejor calificados';
 
-/** Foto de ejemplo cuando el alojamiento no tiene imágenes. */
-
 /** Alojamientos por página en los resultados. */
 const POR_PAGINA = 9;
 
+/** Espera tras mover el control de precio antes de pedir la página (evita una petición por cada paso). */
+const ESPERA_PRECIO_MS = 300;
+
+/** Orden que entiende el backend para cada opción; "Recomendados" usa el orden por defecto de cada endpoint. */
+const ORDEN: Record<SortOption, string | undefined> = {
+  Recomendados: undefined,
+  'Precio menor': 'precio_menor',
+  'Precio mayor': 'precio_mayor',
+  'Mejor calificados': 'mejor_calificados',
+};
+
+/** Sin opciones de filtro (antes de cargarlas o si fallan). */
+const SIN_FILTROS: FiltrosExplorar = { tipos: [], amenidades: [], precioMinimo: null, precioMaximo: null };
+
 /**
  * Buscar alojamientos con filtros (HU-23): ciudad, fechas, huéspedes, tipo, precio y servicios,
- * con listado paginado y estados de carga, vacío y error.
+ * con listado paginado y estados de carga, vacío y error. La paginación y los filtros se resuelven
+ * en el servidor: solo se descargan los alojamientos de la página que se muestra.
  */
 @Component({
   selector: 'app-buscar-alojamientos',
@@ -23,16 +35,21 @@ const POR_PAGINA = 9;
   templateUrl: './buscar-alojamientos.html',
   imports: [CurrencyPipe, DecimalPipe],
 })
-export class BuscarAlojamientos implements OnInit {
+export class BuscarAlojamientos implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   protected readonly busquedaService = inject(BusquedaService);
 
-
+  /** Alojamientos de la página actual. */
   readonly stays = signal<AlojamientoResultado[]>([]);
+  /** Total de alojamientos que cumplen los filtros (todas las páginas). */
+  readonly total = signal(0);
+  private readonly paginas = signal(1);
   readonly loading = signal(true);
   readonly errorCarga = signal(false);
 
+  /** Opciones de los filtros para el conjunto que se explora. */
+  private readonly opciones = signal<FiltrosExplorar>(SIN_FILTROS);
 
   readonly filterType = signal('Todos');
   readonly sortBy = signal<SortOption>('Recomendados');
@@ -41,7 +58,6 @@ export class BuscarAlojamientos implements OnInit {
   readonly serviciosSeleccionados = signal<string[]>([]);
 
   readonly sortOptions: SortOption[] = ['Recomendados', 'Precio menor', 'Precio mayor', 'Mejor calificados'];
-
 
   readonly hoy = this.busquedaService.fechaHoy();
   readonly ciudad = signal('');
@@ -52,23 +68,14 @@ export class BuscarAlojamientos implements OnInit {
   /** true cuando los resultados vienen de una búsqueda (y no del catálogo completo). */
   readonly busquedaAplicada = signal(false);
 
-
   readonly pagina = signal(0);
 
+  /** Identifica la última petición: las respuestas de peticiones anteriores se descartan. */
+  private ultimaPeticion = 0;
+  private esperaPrecio: ReturnType<typeof setTimeout> | undefined;
 
-  readonly preciosDisponibles = computed(() =>
-    this.stays()
-      .map((a) => a.precioNoche)
-      .filter((p): p is number => typeof p === 'number' && Number.isFinite(p) && p >= 0),
-  );
-  readonly precioMinimoDisponible = computed(() => {
-    const precios = this.preciosDisponibles();
-    return precios.length > 0 ? Math.min(...precios) : 0;
-  });
-  readonly precioMaximoDisponible = computed(() => {
-    const precios = this.preciosDisponibles();
-    return precios.length > 0 ? Math.max(...precios) : 0;
-  });
+  readonly precioMinimoDisponible = computed(() => this.opciones().precioMinimo ?? 0);
+  readonly precioMaximoDisponible = computed(() => this.opciones().precioMaximo ?? 0);
   /** Paso del slider: ~100 posiciones, redondeado a 1, 10, 100, 1.000... */
   readonly paso = computed(() => {
     const rango = this.precioMaximoDisponible() - this.precioMinimoDisponible();
@@ -81,70 +88,14 @@ export class BuscarAlojamientos implements OnInit {
   readonly porcentajeMin = computed(() => this.aPorcentaje(this.precioMin()));
   readonly porcentajeMax = computed(() => this.aPorcentaje(this.precioMax()));
 
+  readonly types = computed(() => ['Todos', ...this.opciones().tipos]);
+  readonly services = computed(() => this.opciones().amenidades);
 
-  readonly types = computed(() => {
-    const tipos = [
-      ...new Set(
-        this.stays()
-          .map((a) => a.tipo)
-          .filter((t): t is string => typeof t === 'string' && t.trim().length > 0),
-      ),
-    ].sort((a, b) => a.localeCompare(b, 'es'));
-    return ['Todos', ...tipos];
-  });
-
-  readonly services = computed(() =>
-    [
-      ...new Set(
-        this.stays()
-          .flatMap((a) => a.amenidades ?? [])
-          .filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
-          .map((s) => s.trim()),
-      ),
-    ].sort((a, b) => a.localeCompare(b, 'es')),
-  );
-
-
-  readonly visible = computed(() => {
-    let resultado = [...this.stays()];
-
-    const tipo = this.filterType();
-    if (tipo !== 'Todos') {
-      resultado = resultado.filter((a) => a.tipo === tipo);
-    }
-
-    const minimo = this.precioMin();
-    const maximo = this.precioMax();
-    resultado = resultado.filter((a) => {
-      const precio = a.precioNoche;
-      return typeof precio === 'number' && Number.isFinite(precio) && precio >= minimo && precio <= maximo;
-    });
-
-    resultado = resultado.filter((a) => this.tieneServiciosSeleccionados(a));
-
-    switch (this.sortBy()) {
-      case 'Precio menor':
-        resultado.sort((a, b) => (a.precioNoche ?? 0) - (b.precioNoche ?? 0));
-        break;
-      case 'Precio mayor':
-        resultado.sort((a, b) => (b.precioNoche ?? 0) - (a.precioNoche ?? 0));
-        break;
-      case 'Mejor calificados':
-        resultado.sort((a, b) => (b.promedioCalificacion ?? 0) - (a.promedioCalificacion ?? 0));
-        break;
-      default:
-        break;
-    }
-    return resultado;
-  });
-
-  readonly totalPaginas = computed(() => Math.max(1, Math.ceil(this.visible().length / POR_PAGINA)));
+  /** Alojamientos que se muestran (la página actual, ya filtrada y ordenada por el servidor). */
+  readonly visible = computed(() => this.stays());
+  readonly totalPaginas = computed(() => Math.max(1, this.paginas()));
   readonly paginaActual = computed(() => Math.min(this.pagina(), this.totalPaginas() - 1));
-  readonly paginados = computed(() => {
-    const inicio = this.paginaActual() * POR_PAGINA;
-    return this.visible().slice(inicio, inicio + POR_PAGINA);
-  });
-
+  readonly paginados = computed(() => this.stays());
 
   ngOnInit(): void {
     // Puede venir de otra pantalla con ?ciudad=&llegada=&salida=&huespedes=
@@ -166,6 +117,10 @@ export class BuscarAlojamientos implements OnInit {
     }
     this.busquedaAplicada.set(this.hayFiltrosDeBusqueda());
     this.cargarAlojamientos();
+  }
+
+  ngOnDestroy(): void {
+    clearTimeout(this.esperaPrecio);
   }
 
   /** Aplica la barra de búsqueda: actualiza la URL y vuelve a pedir los alojamientos. */
@@ -199,7 +154,6 @@ export class BuscarAlojamientos implements OnInit {
     this.cargarAlojamientos();
   }
 
-
   toggleServicio(servicio: string, seleccionado: boolean): void {
     this.serviciosSeleccionados.update((actuales) => {
       if (seleccionado) {
@@ -207,7 +161,7 @@ export class BuscarAlojamientos implements OnInit {
       }
       return actuales.filter((actual) => actual !== servicio);
     });
-    this.pagina.set(0);
+    this.cargarPagina(0);
   }
 
   servicioSeleccionado(servicio: string): boolean {
@@ -216,18 +170,16 @@ export class BuscarAlojamientos implements OnInit {
 
   elegirTipo(tipo: string): void {
     this.filterType.set(tipo);
-    this.pagina.set(0);
+    this.cargarPagina(0);
   }
-
 
   onSortChange(event: Event): void {
     const valor = (event.target as HTMLSelectElement).value as SortOption;
     if (this.sortOptions.includes(valor)) {
       this.sortBy.set(valor);
-      this.pagina.set(0);
+      this.cargarPagina(0);
     }
   }
-
 
   actualizarPrecioMin(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -238,7 +190,7 @@ export class BuscarAlojamientos implements OnInit {
         : this.precioMin();
     this.precioMin.set(nuevo);
     input.value = String(nuevo);
-    this.pagina.set(0);
+    this.programarCargaPorPrecio();
   }
 
   actualizarPrecioMax(event: Event): void {
@@ -250,17 +202,15 @@ export class BuscarAlojamientos implements OnInit {
         : this.precioMax();
     this.precioMax.set(nuevo);
     input.value = String(nuevo);
-    this.pagina.set(0);
+    this.programarCargaPorPrecio();
   }
 
-
   irAPagina(pagina: number): void {
-    if (pagina >= 0 && pagina < this.totalPaginas()) {
-      this.pagina.set(pagina);
+    if (pagina >= 0 && pagina < this.totalPaginas() && pagina !== this.pagina()) {
+      this.cargarPagina(pagina);
       window.scrollTo?.({ top: 0, behavior: 'smooth' });
     }
   }
-
 
   openStay(id: number | undefined): void {
     if (id != null) {
@@ -268,59 +218,100 @@ export class BuscarAlojamientos implements OnInit {
     }
   }
 
-
   limpiarFiltros(): void {
     this.filterType.set('Todos');
     this.serviciosSeleccionados.set([]);
     this.sortBy.set('Recomendados');
     this.precioMin.set(this.precioMinimoDisponible());
     this.precioMax.set(this.precioMaximoDisponible());
-    this.pagina.set(0);
+    this.cargarPagina(0);
   }
-
 
   private camposBusqueda(): CamposBusqueda {
     return { ciudad: this.ciudad(), entrada: this.entrada(), salida: this.salida(), huespedes: this.huespedes() };
   }
 
+  private paramsBusqueda(): Record<string, string | number> {
+    return this.busquedaService.paramsBusqueda(this.camposBusqueda());
+  }
+
   private hayFiltrosDeBusqueda(): boolean {
-    return Object.keys(this.busquedaService.paramsBusqueda(this.camposBusqueda())).length > 0;
+    return Object.keys(this.paramsBusqueda()).length > 0;
   }
 
-  /** Sin filtros de búsqueda: catálogo completo. Con filtros: búsqueda del backend (incluye disponibilidad por fechas). */
-  private pedirAlojamientos(): Observable<AlojamientoResultado[]> {
-    if (!this.hayFiltrosDeBusqueda()) {
-      return this.busquedaService.disponibles(100);
+  /** Filtros del panel y orden, sin los que no filtran (precio en sus extremos, tipo "Todos"). */
+  private consulta(): ConsultaExplorar {
+    const consulta: ConsultaExplorar = { orden: ORDEN[this.sortBy()] };
+    if (this.filterType() !== 'Todos') {
+      consulta.tipo = this.filterType();
     }
-    return this.busquedaService.buscar(this.busquedaService.paramsBusqueda(this.camposBusqueda()), 100);
+    if (this.precioMin() > this.precioMinimoDisponible()) {
+      consulta.precioMinimo = this.precioMin();
+    }
+    if (this.precioMax() < this.precioMaximoDisponible()) {
+      consulta.precioMaximo = this.precioMax();
+    }
+    if (this.serviciosSeleccionados().length > 0) {
+      consulta.amenidades = this.serviciosSeleccionados();
+    }
+    return consulta;
   }
 
+  /** Pide las opciones de los filtros del catálogo o de la búsqueda y después la primera página. */
   private cargarAlojamientos(): void {
     this.loading.set(true);
     this.errorCarga.set(false);
-    this.pagina.set(0);
-    this.pedirAlojamientos().subscribe({
-      next: (respuesta) => {
-        this.stays.set(respuesta ?? []);
+    const peticion = ++this.ultimaPeticion;
+    this.busquedaService.filtros(this.paramsBusqueda()).subscribe({
+      next: (opciones) => {
+        if (peticion !== this.ultimaPeticion) {
+          return;
+        }
+        this.opciones.set({ ...SIN_FILTROS, ...opciones });
         this.precioMin.set(this.precioMinimoDisponible());
         this.precioMax.set(this.precioMaximoDisponible());
-        this.loading.set(false);
+        this.serviciosSeleccionados.update((s) => s.filter((servicio) => this.services().includes(servicio)));
+        this.cargarPagina(0);
       },
-      error: () => {
-        this.stays.set([]);
-        this.errorCarga.set(true);
-        this.loading.set(false);
-      },
+      error: () => this.mostrarError(peticion),
     });
   }
 
-  private tieneServiciosSeleccionados(alojamiento: AlojamientoResultado): boolean {
-    const seleccionados = this.serviciosSeleccionados();
-    if (seleccionados.length === 0) {
-      return true;
+  /** Pide una página con los filtros actuales; las respuestas de peticiones anteriores se descartan. */
+  private cargarPagina(pagina: number): void {
+    clearTimeout(this.esperaPrecio);
+    this.loading.set(true);
+    this.errorCarga.set(false);
+    this.pagina.set(pagina);
+    const peticion = ++this.ultimaPeticion;
+    this.busquedaService.pagina(this.paramsBusqueda(), this.consulta(), pagina, POR_PAGINA).subscribe({
+      next: (respuesta) => {
+        if (peticion !== this.ultimaPeticion) {
+          return;
+        }
+        this.stays.set(respuesta?.contenido ?? respuesta?.content ?? []);
+        this.total.set(respuesta?.totalElementos ?? this.stays().length);
+        this.paginas.set(respuesta?.totalPaginas ?? 1);
+        this.loading.set(false);
+      },
+      error: () => this.mostrarError(peticion),
+    });
+  }
+
+  private programarCargaPorPrecio(): void {
+    clearTimeout(this.esperaPrecio);
+    this.esperaPrecio = setTimeout(() => this.cargarPagina(0), ESPERA_PRECIO_MS);
+  }
+
+  private mostrarError(peticion: number): void {
+    if (peticion !== this.ultimaPeticion) {
+      return;
     }
-    const amenidades = (alojamiento.amenidades ?? []).map((a) => a.trim().toLocaleLowerCase('es'));
-    return seleccionados.every((s) => amenidades.includes(s.toLocaleLowerCase('es')));
+    this.stays.set([]);
+    this.total.set(0);
+    this.paginas.set(1);
+    this.errorCarga.set(true);
+    this.loading.set(false);
   }
 
   private aPorcentaje(valor: number): number {
