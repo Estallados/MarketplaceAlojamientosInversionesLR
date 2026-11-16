@@ -1,0 +1,92 @@
+name: API
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # SCRUM-204: el contrato OpenAPI debe coincidir con los controladores y la colección
+  # Postman se ejecuta con Newman contra el backend real
+  contrato-y-newman:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: marketplace
+          POSTGRES_USER: marketplace
+          POSTGRES_PASSWORD: marketplace
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U marketplace"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: marketplace
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Contrato OpenAPI contra los controladores
+        run: |
+          pip install --quiet pyyaml
+          python3 docs/api-tests/verificar_contrato.py
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Compilar el backend
+        working-directory: marketplaceInversionesLRBack
+        run: mvn -B -q package -Dmaven.test.skip=true
+
+      - name: Arrancar el backend
+        working-directory: marketplaceInversionesLRBack
+        env:
+          DB_URL: jdbc:postgresql://localhost:5432/marketplace
+          DB_USERNAME: marketplace
+          DB_PASSWORD: marketplace
+          # Base vacía: Hibernate crea las tablas; DEMO_POBLAR crea las políticas y un usuario por rol
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create
+          DEMO_POBLAR: 'true'
+          GEOCODING_HABILITADO: 'false'
+        run: |
+          export AES_SECRET_KEY=$(openssl rand -base64 32)
+          nohup java -jar target/marketplaceInversionesLR-*.jar > backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf http://localhost:8081/actuator/health && exit 0
+            sleep 3
+          done
+          echo "El backend no arrancó"; tail -100 backend.log; exit 1
+
+      - name: Datos de prueba
+        run: psql -h localhost -U marketplace -d marketplace -v ON_ERROR_STOP=1 -f docs/api-tests/semilla-ci.sql
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Colección Postman con Newman
+        run: >
+          npx --yes newman@6.2.1 run docs/api-tests/marketplace-e2e.postman_collection.json
+          -e docs/api-tests/local.postman_environment.json
+          --reporters cli,junit --reporter-junit-export newman/resultado.xml
+
+      - name: Guardar resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-newman
+          path: |
+            newman/
+            marketplaceInversionesLRBack/backend.log
