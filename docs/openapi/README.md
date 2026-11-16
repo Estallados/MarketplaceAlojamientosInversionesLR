@@ -4,7 +4,7 @@ Contrato de la API REST del Marketplace. Lo usan el frontend para generar su cli
 
 | Archivo | Contenido |
 |---|---|
-| [openapi.yaml](openapi.yaml) | Contrato OpenAPI 3.0.3: 86 operaciones en 13 etiquetas (un controlador por etiqueta) y 19 esquemas de DTO |
+| [openapi.yaml](openapi.yaml) | Contrato OpenAPI 3.0.3: 87 operaciones en 13 etiquetas (un controlador por etiqueta) y 19 esquemas de DTO |
 
 ## Origen del contrato
 
@@ -27,5 +27,5 @@ npm run api:mock  # sirve el contrato como mock en http://localhost:4010
 
 ## Procedimiento
 
-1. Si cambia un endpoint o un DTO del backend, regenera `openapi.yaml` en el mismo PR.
+1. Si cambia un endpoint, un DTO o un `@ApiResponse` del backend, actualiza `openapi.yaml` en el mismo PR. El job `contrato-y-newman` del CI ejecuta `docs/api-tests/verificar_contrato.py` y falla si el contrato y los controladores no coinciden (ver [api-tests](../api-tests/README.md)).
 2. Vuelve a ejecutar `npm run api:gen` y confirma el cliente generado junto con el contrato.

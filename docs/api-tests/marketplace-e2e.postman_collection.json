@@ -1,0 +1,2208 @@
+{
+  "info": {
+    "_postman_id": "732aabe1-0055-5403-a320-92a68122e6c2",
+    "name": "Marketplace Inversiones LR — E2E y contrato",
+    "description": "Flujo E2E de la API y validación de cada respuesta contra los códigos documentados en docs/openapi/openapi.yaml (SCRUM-204). Ver docs/api-tests/README.md.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Registro",
+      "item": [
+        {
+          "name": "Registrar anfitrión",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const sufijo = Date.now();",
+                  "pm.environment.set('correoNuevoAnfitrion', `anfitrion.${sufijo}@newman.test`);",
+                  "pm.environment.set('correoNuevoHuesped', `huesped.${sufijo}@newman.test`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contrato: POST /auth/register documenta [200, 201, 400, 403, 409, 500]",
+                  "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                  "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 403, 409, 500]).to.include(pm.response.code));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                  "pm.test('Pide verificar el correo', () => pm.expect(pm.response.json().requiereVerificacion).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Anfitrion Newman\",\n  \"correo\": \"{{correoNuevoAnfitrion}}\",\n  \"contrasenia\": \"{{password}}\",\n  \"rol\": \"ANFITRION\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registrar huésped",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contrato: POST /auth/register documenta [200, 201, 400, 403, 409, 500]",
+                  "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                  "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 403, 409, 500]).to.include(pm.response.code));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Huesped Newman\",\n  \"correo\": \"{{correoNuevoHuesped}}\",\n  \"contrasenia\": \"{{password}}\",\n  \"rol\": \"HUESPED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registro con correo duplicado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contrato: POST /auth/register documenta [200, 201, 400, 403, 409, 500]",
+                  "pm.test('409: código esperado', () => pm.response.to.have.status(409));",
+                  "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 403, 409, 500]).to.include(pm.response.code));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Huesped Newman\",\n  \"correo\": \"{{correoNuevoHuesped}}\",\n  \"contrasenia\": \"{{password}}\",\n  \"rol\": \"HUESPED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registro con rol ADMIN no permitido",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contrato: POST /auth/register documenta [200, 201, 400, 403, 409, 500]",
+                  "pm.test('403: código esperado', () => pm.response.to.have.status(403));",
+                  "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 403, 409, 500]).to.include(pm.response.code));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Intruso Newman\",\n  \"correo\": \"intruso.{{$timestamp}}@newman.test\",\n  \"contrasenia\": \"{{password}}\",\n  \"rol\": \"ADMIN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Registro con contraseña débil",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contrato: POST /auth/register documenta [200, 201, 400, 403, 409, 500]",
+                  "pm.test('400: código esperado', () => pm.response.to.have.status(400));",
+                  "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 403, 409, 500]).to.include(pm.response.code));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Debil Newman\",\n  \"correo\": \"debil.{{$timestamp}}@newman.test\",\n  \"contrasenia\": \"abc\",\n  \"rol\": \"HUESPED\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Login sin verificar el correo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Contrato: POST /auth/login documenta [200, 400, 401, 403, 429]",
+                  "pm.test('403: código esperado', () => pm.response.to.have.status(403));",
+                  "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 429]).to.include(pm.response.code));",
+                  "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                  "pm.test('Indica que falta verificar', () => pm.expect(pm.response.json().requiereVerificacion).to.eql(true));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"correo\": \"{{correoNuevoHuesped}}\",\n  \"contrasenia\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Flujo E2E",
+      "item": [
+        {
+          "name": "2.1 Acceso y roles",
+          "item": [
+            {
+              "name": "Login anfitrion",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /auth/login documenta [200, 400, 401, 403, 429]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 429]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "const r = pm.response.json();",
+                      "pm.test('Entrega token y rol ANFITRION', () => { pm.expect(r.token).to.be.a('string'); pm.expect(r.rol).to.eql('ANFITRION'); });",
+                      "pm.environment.set('tokenAnfitrion', r.token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correo\": \"{{correoAnfitrion}}\",\n  \"contrasenia\": \"{{passwordDemo}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Login huesped",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /auth/login documenta [200, 400, 401, 403, 429]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 429]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "const r = pm.response.json();",
+                      "pm.test('Entrega token y rol HUESPED', () => { pm.expect(r.token).to.be.a('string'); pm.expect(r.rol).to.eql('HUESPED'); });",
+                      "pm.environment.set('tokenHuesped', r.token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correo\": \"{{correoHuesped}}\",\n  \"contrasenia\": \"{{passwordDemo}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Login admin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /auth/login documenta [200, 400, 401, 403, 429]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 429]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "const r = pm.response.json();",
+                      "pm.test('Entrega token y rol ADMIN', () => { pm.expect(r.token).to.be.a('string'); pm.expect(r.rol).to.eql('ADMIN'); });",
+                      "pm.environment.set('tokenAdmin', r.token);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correo\": \"{{correoAdmin}}\",\n  \"contrasenia\": \"{{passwordDemo}}\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Login con contraseña incorrecta",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /auth/login documenta [200, 400, 401, 403, 429]",
+                      "pm.test('401: código esperado', () => pm.response.to.have.status(401));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 429]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"correo\": \"{{correoHuesped}}\",\n  \"contrasenia\": \"Incorrecta#1\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Admin sin token",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/dashboard documenta [200, 400, 401, 403]",
+                      "pm.test('401: código esperado', () => pm.response.to.have.status(401));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "dashboard"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Admin con rol huésped",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/dashboard documenta [200, 400, 401, 403]",
+                      "pm.test('403: código esperado', () => pm.response.to.have.status(403));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "dashboard"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Perfil del huésped",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /usuarios/perfil documenta [200, 400, 401, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/usuarios/perfil",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "usuarios",
+                    "perfil"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.2 Catálogo público",
+          "item": [
+            {
+              "name": "Políticas de cancelación",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/politicas documenta [200, 400]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Hay al menos una política', () => pm.expect(pm.response.json()).to.have.length.above(0));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/politicas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "politicas"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cantidad por tipo",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/tipos documenta [200, 400]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/tipos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "tipos"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Opciones de filtros",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/filtros documenta [200, 400]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/filtros",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "filtros"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Configuración de pagos",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /pagos/configuracion documenta [200, 400]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/pagos/configuracion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "pagos",
+                    "configuracion"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Búsqueda con fechas invertidas",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos documenta [200, 400]",
+                      "pm.test('400: código esperado', () => pm.response.to.have.status(400));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos?llegada=2030-01-10&salida=2030-01-05",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos"
+                  ],
+                  "query": [
+                    {
+                      "key": "llegada",
+                      "value": "2030-01-10"
+                    },
+                    {
+                      "key": "salida",
+                      "value": "2030-01-05"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.3 Publicación y revisión",
+          "item": [
+            {
+              "name": "Mis alojamientos (anfitrión)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/mios documenta [200, 400, 401]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "const lista = (pm.response.json().contenido) || [];",
+                      "const pendiente = lista.find(a => a.titulo === 'Apartamento Newman' && a.estado === 'PENDIENTE_REVISION');",
+                      "const borrador = lista.find(a => a.titulo === 'Borrador Newman' && a.estado === 'BORRADOR');",
+                      "pm.test('Tiene la publicación pendiente y el borrador sembrados', () => { pm.expect(pendiente).to.be.an('object'); pm.expect(borrador).to.be.an('object'); });",
+                      "if (pendiente) pm.environment.set('idAlojamiento', pendiente.idAlojamiento);",
+                      "if (borrador) pm.environment.set('idBorrador', borrador.idAlojamiento);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/mios?tamanio=100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "mios"
+                  ],
+                  "query": [
+                    {
+                      "key": "tamanio",
+                      "value": "100"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Agregar servicio adicional",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /alojamientos/{{idAlojamiento}}/servicios documenta [200, 201, 400, 401, 403, 404]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 403, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idAlojamiento}}/servicios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idAlojamiento}}",
+                    "servicios"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"nombre\": \"Desayuno\",\n  \"costo\": 20000\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Enviar a revisión un borrador incompleto",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /alojamientos/{{idBorrador}}/enviarrevision documenta [200, 400, 401, 403, 404, 409]",
+                      "pm.test('409: código esperado', () => pm.response.to.have.status(409));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 404, 409]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Explica qué falta', () => pm.expect(pm.response.json().message).to.include('Falta'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idBorrador}}/enviarrevision",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idBorrador}}",
+                    "enviarrevision"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Pendientes de revisión (admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/alojamientos documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/alojamientos?estado=PENDIENTE_REVISION",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "alojamientos"
+                  ],
+                  "query": [
+                    {
+                      "key": "estado",
+                      "value": "PENDIENTE_REVISION"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Aprobar publicación",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /admin/alojamientos/{{idAlojamiento}}/aprobar documenta [200, 400, 401, 403, 404, 409]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 404, 409]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Queda ACTIVA', () => pm.expect(pm.response.json().estado).to.eql('ACTIVA'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/alojamientos/{{idAlojamiento}}/aprobar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "alojamientos",
+                    "{{idAlojamiento}}",
+                    "aprobar"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Historial de estados",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/{{idAlojamiento}}/historial documenta [200, 400, 401, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idAlojamiento}}/historial",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idAlojamiento}}",
+                    "historial"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.4 Disponibilidad, cotización y reserva",
+          "item": [
+            {
+              "name": "Buscar alojamientos",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "const d = n => { const f = new Date(); f.setDate(f.getDate() + n); return f.toISOString().slice(0, 10); };",
+                      "pm.environment.set('llegada', d(30));",
+                      "pm.environment.set('salida', d(33));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos documenta [200, 400]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Aparece la publicación aprobada', () => pm.expect((pm.response.json().contenido || []).map(a => a.idAlojamiento)).to.include(Number(pm.environment.get('idAlojamiento'))));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos?ciudad=Cali&tamanio=100",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos"
+                  ],
+                  "query": [
+                    {
+                      "key": "ciudad",
+                      "value": "Cali"
+                    },
+                    {
+                      "key": "tamanio",
+                      "value": "100"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Detalle del alojamiento",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/{{idAlojamiento}} documenta [200, 400, 401, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idAlojamiento}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idAlojamiento}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Calendario de disponibilidad",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/{{idAlojamiento}}/disponibilidad documenta [200, 400, 401, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idAlojamiento}}/disponibilidad",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idAlojamiento}}",
+                    "disponibilidad"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Consultar disponibilidad",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/{{idAlojamiento}}/disponibilidad/consultar documenta [200, 400, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idAlojamiento}}/disponibilidad/consultar?llegada={{llegada}}&salida={{salida}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idAlojamiento}}",
+                    "disponibilidad",
+                    "consultar"
+                  ],
+                  "query": [
+                    {
+                      "key": "llegada",
+                      "value": "{{llegada}}"
+                    },
+                    {
+                      "key": "salida",
+                      "value": "{{salida}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cotizar",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /cotizaciones documenta [200, 201, 400, 401, 404, 409]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 404, 409]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "const c = pm.response.json();",
+                      "pm.test('3 noches a 150.000', () => { pm.expect(c.noches).to.eql(3); pm.expect(Number(c.precioBase)).to.eql(450000); });",
+                      "pm.environment.set('idCotizacion', c.idCotizacion);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/cotizaciones",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "cotizaciones"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idAlojamiento\": \"{{idAlojamiento}}\",\n  \"fechaEntrada\": \"{{llegada}}\",\n  \"fechaSalida\": \"{{salida}}\",\n  \"huespedes\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Reservar sin Idempotency-Key",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /reservas documenta [200, 201, 400, 401, 402, 403, 404, 409, 422, 502]",
+                      "pm.test('400: código esperado', () => pm.response.to.have.status(400));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 402, 403, 404, 409, 422, 502]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idCotizacion\": \"{{idCotizacion}}\",\n  \"metodoPago\": \"pm_card_visa\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Reservar y pagar (simulado)",
+              "event": [
+                {
+                  "listen": "prerequest",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.environment.set('claveReserva', pm.variables.replaceIn('{{$guid}}'));"
+                    ]
+                  }
+                },
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /reservas documenta [200, 201, 400, 401, 402, 403, 404, 409, 422, 502]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 402, 403, 404, 409, 422, 502]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "const r = pm.response.json();",
+                      "pm.test('Reserva CONFIRMADA', () => pm.expect(r.estado).to.eql('CONFIRMADA'));",
+                      "pm.environment.set('idReserva', r.idReserva);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{claveReserva}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idCotizacion\": \"{{idCotizacion}}\",\n  \"metodoPago\": \"pm_card_visa\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Repetir la misma reserva (idempotencia)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /reservas documenta [200, 201, 400, 401, 402, 403, 404, 409, 422, 502]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 402, 403, 404, 409, 422, 502]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Devuelve la misma reserva', () => pm.expect(pm.response.json().idReserva).to.eql(Number(pm.environment.get('idReserva'))));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{claveReserva}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idCotizacion\": \"{{idCotizacion}}\",\n  \"metodoPago\": \"pm_card_visa\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Fechas ya reservadas",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /alojamientos/{{idAlojamiento}}/disponibilidad/consultar documenta [200, 400, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Ya no está disponible', () => pm.expect(pm.response.json().disponible).to.eql(false));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/alojamientos/{{idAlojamiento}}/disponibilidad/consultar?llegada={{llegada}}&salida={{salida}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "alojamientos",
+                    "{{idAlojamiento}}",
+                    "disponibilidad",
+                    "consultar"
+                  ],
+                  "query": [
+                    {
+                      "key": "llegada",
+                      "value": "{{llegada}}"
+                    },
+                    {
+                      "key": "salida",
+                      "value": "{{salida}}"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Mis reservas",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /reservas/mias documenta [200, 400, 401]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas/mias",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas",
+                    "mias"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Detalle de la reserva",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /reservas/{{idReserva}} documenta [200, 400, 401, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas/{{idReserva}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas",
+                    "{{idReserva}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Reservas del anfitrión",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /reservas/anfitrion documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas/anfitrion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas",
+                    "anfitrion"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Simular cancelación",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /reservas/{{idReserva}}/simularcancelacion documenta [200, 400, 401, 403, 404, 409]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 404, 409]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas/{{idReserva}}/simularcancelacion",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas",
+                    "{{idReserva}}",
+                    "simularcancelacion"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cancelar reserva",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /reservas/{{idReserva}}/cancelar documenta [200, 400, 401, 403, 404, 409, 422]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 404, 409, 422]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Idempotency-Key",
+                    "value": "{{$guid}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/reservas/{{idReserva}}/cancelar",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "reservas",
+                    "{{idReserva}}",
+                    "cancelar"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"motivo\": \"Prueba automatizada con Newman\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.5 Mensajería, notificaciones y favoritos",
+          "item": [
+            {
+              "name": "Contactar al anfitrión",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /conversaciones documenta [200, 201, 400, 401, 403, 404]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 403, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.environment.set('idConversacion', pm.response.json().idConversacion);"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/conversaciones",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "conversaciones"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"idAlojamiento\": \"{{idAlojamiento}}\",\n  \"mensaje\": \"Hola, ¿tiene parqueadero?\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Responder (anfitrión)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /conversaciones/{{idConversacion}}/mensajes documenta [200, 201, 400, 401, 403, 404]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 403, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/conversaciones/{{idConversacion}}/mensajes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "conversaciones",
+                    "{{idConversacion}}",
+                    "mensajes"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"contenido\": \"Sí, hay un cupo.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Mensajes de la conversación",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /conversaciones/{{idConversacion}}/mensajes documenta [200, 400, 401, 403, 404]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/conversaciones/{{idConversacion}}/mensajes",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "conversaciones",
+                    "{{idConversacion}}",
+                    "mensajes"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Notificaciones del anfitrión",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /notificaciones documenta [200, 400, 401]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/notificaciones",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "notificaciones"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Notificaciones sin leer",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /notificaciones/noleidas documenta [200, 400, 401]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAnfitrion}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/notificaciones/noleidas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "notificaciones",
+                    "noleidas"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Agregar a favoritos",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: POST /favoritos/{{idAlojamiento}} documenta [200, 201, 400, 401, 404]",
+                      "pm.test('201: código esperado', () => pm.response.to.have.status(201));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 201, 400, 401, 404]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/favoritos/{{idAlojamiento}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "favoritos",
+                    "{{idAlojamiento}}"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Mis favoritos",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /favoritos documenta [200, 400, 401]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenHuesped}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/favoritos",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "favoritos"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "2.6 Administración y reportes",
+          "item": [
+            {
+              "name": "Dashboard",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/dashboard documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/dashboard",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "dashboard"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Usuarios",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/usuarios documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/usuarios",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "usuarios"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Reservas (admin)",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/reservas documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/reservas",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "reservas"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Auditoría",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/auditoria documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));",
+                      "pm.test('Registró eventos', () => pm.expect(pm.response.json().contenido || []).to.have.length.above(0));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/auditoria",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "auditoria"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Exportar reporte PDF",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/reportes/reservas documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Es un PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/reportes/reservas?formato=pdf",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "reportes",
+                    "reservas"
+                  ],
+                  "query": [
+                    {
+                      "key": "formato",
+                      "value": "pdf"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Reporte con tipo inválido",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/reportes/inexistente documenta [200, 400, 401, 403]",
+                      "pm.test('400: código esperado', () => pm.response.to.have.status(400));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/reportes/inexistente?formato=pdf",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "reportes",
+                    "inexistente"
+                  ],
+                  "query": [
+                    {
+                      "key": "formato",
+                      "value": "pdf"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Historial de exportaciones",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "// Contrato: GET /admin/reportes/historial documenta [200, 400, 401, 403]",
+                      "pm.test('200: código esperado', () => pm.response.to.have.status(200));",
+                      "pm.test('El código está documentado en openapi.yaml', () => pm.expect([200, 400, 401, 403]).to.include(pm.response.code));",
+                      "pm.test('Responde JSON', () => pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json'));"
+                    ]
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{tokenAdmin}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/admin/reportes/historial",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "reportes",
+                    "historial"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": []
+}
