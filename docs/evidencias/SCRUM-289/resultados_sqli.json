@@ -1,0 +1,1433 @@
+{
+  "objetivo": "http://localhost:8081",
+  "fecha_utc": "2026-11-17T04:23:33.557504+00:00",
+  "tiempo_base_seg": 0.861,
+  "sesion_admin": true,
+  "total_pruebas": 93,
+  "por_veredicto": {
+    "SEGURO": 86,
+    "VULNERABLE": 0,
+    "INFO": 7,
+    "BLOQUEADO": 0,
+    "ERROR_RED": 0
+  },
+  "veredicto_global": "NO VULNERABLE A SQLi",
+  "resultados": [
+    {
+      "categoria": "0-linea-base",
+      "caso": "catálogo completo",
+      "endpoint": "GET /alojamientos",
+      "vector": "-",
+      "payload": "-",
+      "status": 200,
+      "tiempo_seg": 0.861,
+      "respuesta": {
+        "totalElementos": 13
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "13 publicaciones; tiempo normal 0.86s"
+    },
+    {
+      "categoria": "0-linea-base",
+      "caso": "catálogo filtrado ciudad=Bogotá",
+      "endpoint": "GET /alojamientos",
+      "vector": "ciudad",
+      "payload": "Bogotá",
+      "status": 200,
+      "tiempo_seg": 0.753,
+      "respuesta": {
+        "totalElementos": 10
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "10 publicaciones"
+    },
+    {
+      "categoria": "0-linea-base",
+      "caso": "catálogo filtrado por tipo",
+      "endpoint": "GET /alojamientos",
+      "vector": "tipo",
+      "payload": "Hotel",
+      "status": 200,
+      "tiempo_seg": 0.755,
+      "respuesta": {
+        "totalElementos": 11
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "11 publicaciones"
+    },
+    {
+      "categoria": "0-linea-base",
+      "caso": "usuarios registrados (admin)",
+      "endpoint": "GET /admin/usuarios",
+      "vector": "-",
+      "payload": "-",
+      "status": 200,
+      "tiempo_seg": 0.383,
+      "respuesta": {
+        "totalElementos": 11
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "11 usuarios"
+    },
+    {
+      "categoria": "0-linea-base",
+      "caso": "auditoría accion=LOGIN (admin)",
+      "endpoint": "GET /admin/auditoria",
+      "vector": "accion",
+      "payload": "LOGIN",
+      "status": 200,
+      "tiempo_seg": 0.291,
+      "respuesta": {
+        "totalElementos": 87
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "87 eventos"
+    },
+    {
+      "categoria": "0-linea-base",
+      "caso": "login con una cuenta que no existe",
+      "endpoint": "POST /auth/login",
+      "vector": "-",
+      "payload": "(control)",
+      "status": 401,
+      "tiempo_seg": 0.37,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "control negativo"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ' OR '1'='1",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "' OR '1'='1",
+      "status": 401,
+      "tiempo_seg": 0.453,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ' OR '1'='1'-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "' OR '1'='1'-- ",
+      "status": 401,
+      "tiempo_seg": 0.45,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ' OR 1=1-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "' OR 1=1-- ",
+      "status": 401,
+      "tiempo_seg": 0.46,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: admin'-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "admin'-- ",
+      "status": 401,
+      "tiempo_seg": 0.457,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ' OR ''='",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "' OR ''='",
+      "status": 401,
+      "tiempo_seg": 0.449,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ') OR ('1'='1",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "') OR ('1'='1",
+      "status": 401,
+      "tiempo_seg": 0.455,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ' UNION SELECT NULL-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "' UNION SELECT NULL-- ",
+      "status": 401,
+      "tiempo_seg": 0.461,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: ' OR 1=1#",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "' OR 1=1#",
+      "status": 401,
+      "tiempo_seg": 0.452,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: \" OR \"1\"=\"1",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "\" OR \"1\"=\"1",
+      "status": 401,
+      "tiempo_seg": 0.448,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/correo: '; SELECT 1-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "correo",
+      "payload": "'; SELECT 1-- ",
+      "status": 401,
+      "tiempo_seg": 0.464,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 1): ' OR '1'='1",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "' OR '1'='1",
+      "status": 401,
+      "tiempo_seg": 0.44,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 2): ' OR '1'='1'-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "' OR '1'='1'-- ",
+      "status": 401,
+      "tiempo_seg": 0.468,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 3): ' OR 1=1-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "' OR 1=1-- ",
+      "status": 401,
+      "tiempo_seg": 0.45,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 4): admin'-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "admin'-- ",
+      "status": 401,
+      "tiempo_seg": 0.468,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 5): ' OR ''='",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "' OR ''='",
+      "status": 401,
+      "tiempo_seg": 0.461,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 6): ') OR ('1'='1",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "') OR ('1'='1",
+      "status": 401,
+      "tiempo_seg": 0.465,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 7): ' UNION SELECT NULL-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "' UNION SELECT NULL-- ",
+      "status": 401,
+      "tiempo_seg": 0.454,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 1): ' OR 1=1#",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "' OR 1=1#",
+      "status": 401,
+      "tiempo_seg": 0.457,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 2): \" OR \"1\"=\"1",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "\" OR \"1\"=\"1",
+      "status": 401,
+      "tiempo_seg": 0.469,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "1-login",
+      "caso": "login/contrasenia (cuenta semilla 3): '; SELECT 1-- ",
+      "endpoint": "POST /auth/login",
+      "vector": "contrasenia",
+      "payload": "'; SELECT 1-- ",
+      "status": 401,
+      "tiempo_seg": 0.451,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "401: el valor se trató como texto, sin sesión"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/ciudad: Bogotá' OR '1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "ciudad",
+      "payload": "Bogotá' OR '1'='1",
+      "status": 200,
+      "tiempo_seg": 0.3,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/ciudad: Bogotá' OR 1=1-- ",
+      "endpoint": "GET /alojamientos",
+      "vector": "ciudad",
+      "payload": "Bogotá' OR 1=1-- ",
+      "status": 200,
+      "tiempo_seg": 0.189,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/ciudad: Bogotá') OR ('1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "ciudad",
+      "payload": "Bogotá') OR ('1'='1",
+      "status": 200,
+      "tiempo_seg": 0.193,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/ciudad: Bogotá' UNION SELECT NULL,NULL,NULL-- ",
+      "endpoint": "GET /alojamientos",
+      "vector": "ciudad",
+      "payload": "Bogotá' UNION SELECT NULL,NULL,NULL-- ",
+      "status": 200,
+      "tiempo_seg": 0.188,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/ciudad: Bogotá' AND '1'='2",
+      "endpoint": "GET /alojamientos",
+      "vector": "ciudad",
+      "payload": "Bogotá' AND '1'='2",
+      "status": 200,
+      "tiempo_seg": 0.188,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/tipo: Hotel' OR '1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "tipo",
+      "payload": "Hotel' OR '1'='1",
+      "status": 200,
+      "tiempo_seg": 0.191,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/tipo: Hotel' OR 1=1-- ",
+      "endpoint": "GET /alojamientos",
+      "vector": "tipo",
+      "payload": "Hotel' OR 1=1-- ",
+      "status": 200,
+      "tiempo_seg": 0.198,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/tipo: Hotel') OR ('1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "tipo",
+      "payload": "Hotel') OR ('1'='1",
+      "status": 200,
+      "tiempo_seg": 0.189,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/tipo: Hotel' UNION SELECT NULL,NULL,NULL-- ",
+      "endpoint": "GET /alojamientos",
+      "vector": "tipo",
+      "payload": "Hotel' UNION SELECT NULL,NULL,NULL-- ",
+      "status": 200,
+      "tiempo_seg": 0.188,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/tipo: Hotel' AND '1'='2",
+      "endpoint": "GET /alojamientos",
+      "vector": "tipo",
+      "payload": "Hotel' AND '1'='2",
+      "status": 200,
+      "tiempo_seg": 0.188,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/amenidades: wifi' OR '1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "amenidades",
+      "payload": "wifi' OR '1'='1",
+      "status": 200,
+      "tiempo_seg": 0.19,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/amenidades: wifi') OR ('1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "amenidades",
+      "payload": "wifi') OR ('1'='1",
+      "status": 200,
+      "tiempo_seg": 0.189,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/amenidades: x' UNION SELECT NULL-- ",
+      "endpoint": "GET /alojamientos",
+      "vector": "amenidades",
+      "payload": "x' UNION SELECT NULL-- ",
+      "status": 200,
+      "tiempo_seg": 0.2,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/orden: precio_menor; SELECT 1",
+      "endpoint": "GET /alojamientos",
+      "vector": "orden",
+      "payload": "precio_menor; SELECT 1",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "El orden debe ser uno de: recomendados, precio_menor, precio_mayor, mejor_calificados."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: el orden solo acepta valores de una lista fija"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/orden: precio_menor' OR '1'='1",
+      "endpoint": "GET /alojamientos",
+      "vector": "orden",
+      "payload": "precio_menor' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "El orden debe ser uno de: recomendados, precio_menor, precio_mayor, mejor_calificados."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: el orden solo acepta valores de una lista fija"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/orden: idAlojamiento DESC",
+      "endpoint": "GET /alojamientos",
+      "vector": "orden",
+      "payload": "idAlojamiento DESC",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "El orden debe ser uno de: recomendados, precio_menor, precio_mayor, mejor_calificados."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: el orden solo acepta valores de una lista fija"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "buscar/orden: (SELECT 1)",
+      "endpoint": "GET /alojamientos",
+      "vector": "orden",
+      "payload": "(SELECT 1)",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "El orden debe ser uno de: recomendados, precio_menor, precio_mayor, mejor_calificados."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: el orden solo acepta valores de una lista fija"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "disponibles/tipo: Hotel' OR '1'='1",
+      "endpoint": "GET /alojamientos/disponibles",
+      "vector": "tipo",
+      "payload": "Hotel' OR '1'='1",
+      "status": 200,
+      "tiempo_seg": 0.192,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "disponibles/tipo: Hotel' OR 1=1-- ",
+      "endpoint": "GET /alojamientos/disponibles",
+      "vector": "tipo",
+      "payload": "Hotel' OR 1=1-- ",
+      "status": 200,
+      "tiempo_seg": 0.197,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "disponibles/tipo: Hotel') OR ('1'='1",
+      "endpoint": "GET /alojamientos/disponibles",
+      "vector": "tipo",
+      "payload": "Hotel') OR ('1'='1",
+      "status": 200,
+      "tiempo_seg": 0.215,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "filtros/ciudad: Bogotá' OR '1'='1",
+      "endpoint": "GET /alojamientos/filtros",
+      "vector": "ciudad",
+      "payload": "Bogotá' OR '1'='1",
+      "status": 200,
+      "tiempo_seg": 0.387,
+      "respuesta": {
+        "campos": [
+          "amenidades",
+          "precioMaximo",
+          "precioMinimo",
+          "tipos"
+        ]
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200: filtros calculados sin ejecutar el texto"
+    },
+    {
+      "categoria": "2-busqueda",
+      "caso": "filtros/ciudad: x' UNION SELECT NULL-- ",
+      "endpoint": "GET /alojamientos/filtros",
+      "vector": "ciudad",
+      "payload": "x' UNION SELECT NULL-- ",
+      "status": 200,
+      "tiempo_seg": 0.392,
+      "respuesta": {
+        "campos": [
+          "amenidades",
+          "precioMaximo",
+          "precioMinimo",
+          "tipos"
+        ]
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200: filtros calculados sin ejecutar el texto"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}: 1 OR 1=1",
+      "endpoint": "GET /alojamientos/{id}",
+      "vector": "id (ruta)",
+      "payload": "1 OR 1=1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}: 1;SELECT 1",
+      "endpoint": "GET /alojamientos/{id}",
+      "vector": "id (ruta)",
+      "payload": "1;SELECT 1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "No message available"
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}: 1' OR '1'='1",
+      "endpoint": "GET /alojamientos/{id}",
+      "vector": "id (ruta)",
+      "payload": "1' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}: 0 UNION SELECT NULL",
+      "endpoint": "GET /alojamientos/{id}",
+      "vector": "id (ruta)",
+      "payload": "0 UNION SELECT NULL",
+      "status": 400,
+      "tiempo_seg": 0.006,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}: 1)) OR ((1=1",
+      "endpoint": "GET /alojamientos/{id}",
+      "vector": "id (ruta)",
+      "payload": "1)) OR ((1=1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}/resenas: 1 OR 1=1",
+      "endpoint": "GET /alojamientos/{id}/resenas",
+      "vector": "id (ruta)",
+      "payload": "1 OR 1=1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "El valor de idAlojamiento no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}/resenas: 1;SELECT 1",
+      "endpoint": "GET /alojamientos/{id}/resenas",
+      "vector": "id (ruta)",
+      "payload": "1;SELECT 1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "No message available"
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}/resenas: 1' OR '1'='1",
+      "endpoint": "GET /alojamientos/{id}/resenas",
+      "vector": "id (ruta)",
+      "payload": "1' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "El valor de idAlojamiento no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}/resenas: 0 UNION SELECT NULL",
+      "endpoint": "GET /alojamientos/{id}/resenas",
+      "vector": "id (ruta)",
+      "payload": "0 UNION SELECT NULL",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "El valor de idAlojamiento no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/alojamientos/{id}/resenas: 1)) OR ((1=1",
+      "endpoint": "GET /alojamientos/{id}/resenas",
+      "vector": "id (ruta)",
+      "payload": "1)) OR ((1=1",
+      "status": 400,
+      "tiempo_seg": 0.005,
+      "respuesta": {
+        "message": "El valor de idAlojamiento no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/reservas/{id}: 1 OR 1=1",
+      "endpoint": "GET /reservas/{id}",
+      "vector": "id (ruta)",
+      "payload": "1 OR 1=1",
+      "status": 400,
+      "tiempo_seg": 0.098,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/reservas/{id}: 1;SELECT 1",
+      "endpoint": "GET /reservas/{id}",
+      "vector": "id (ruta)",
+      "payload": "1;SELECT 1",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "No message available"
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/reservas/{id}: 1' OR '1'='1",
+      "endpoint": "GET /reservas/{id}",
+      "vector": "id (ruta)",
+      "payload": "1' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.099,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/reservas/{id}: 0 UNION SELECT NULL",
+      "endpoint": "GET /reservas/{id}",
+      "vector": "id (ruta)",
+      "payload": "0 UNION SELECT NULL",
+      "status": 400,
+      "tiempo_seg": 0.097,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/reservas/{id}: 1)) OR ((1=1",
+      "endpoint": "GET /reservas/{id}",
+      "vector": "id (ruta)",
+      "payload": "1)) OR ((1=1",
+      "status": 400,
+      "tiempo_seg": 0.1,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/admin/auditoria/{id}: 1 OR 1=1",
+      "endpoint": "GET /admin/auditoria/{id}",
+      "vector": "id (ruta)",
+      "payload": "1 OR 1=1",
+      "status": 400,
+      "tiempo_seg": 0.098,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/admin/auditoria/{id}: 1;SELECT 1",
+      "endpoint": "GET /admin/auditoria/{id}",
+      "vector": "id (ruta)",
+      "payload": "1;SELECT 1",
+      "status": 400,
+      "tiempo_seg": 0.004,
+      "respuesta": {
+        "message": "No message available"
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/admin/auditoria/{id}: 1' OR '1'='1",
+      "endpoint": "GET /admin/auditoria/{id}",
+      "vector": "id (ruta)",
+      "payload": "1' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.097,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/admin/auditoria/{id}: 0 UNION SELECT NULL",
+      "endpoint": "GET /admin/auditoria/{id}",
+      "vector": "id (ruta)",
+      "payload": "0 UNION SELECT NULL",
+      "status": 400,
+      "tiempo_seg": 0.102,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "3-ruta-id",
+      "caso": "/admin/auditoria/{id}: 1)) OR ((1=1",
+      "endpoint": "GET /admin/auditoria/{id}",
+      "vector": "id (ruta)",
+      "payload": "1)) OR ((1=1",
+      "status": 400,
+      "tiempo_seg": 0.097,
+      "respuesta": {
+        "message": "El valor de id no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: Spring rechaza el valor no numérico antes de consultar"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "auditoria/accion: LOGIN' OR '1'='1",
+      "endpoint": "GET /admin/auditoria",
+      "vector": "accion",
+      "payload": "LOGIN' OR '1'='1",
+      "status": 200,
+      "tiempo_seg": 0.188,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "auditoria/accion: LOGIN' OR 1=1-- ",
+      "endpoint": "GET /admin/auditoria",
+      "vector": "accion",
+      "payload": "LOGIN' OR 1=1-- ",
+      "status": 200,
+      "tiempo_seg": 0.189,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "auditoria/accion: x' UNION SELECT NULL-- ",
+      "endpoint": "GET /admin/auditoria",
+      "vector": "accion",
+      "payload": "x' UNION SELECT NULL-- ",
+      "status": 200,
+      "tiempo_seg": 0.189,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "auditoria/accion: LOGIN') OR ('1'='1",
+      "endpoint": "GET /admin/auditoria",
+      "vector": "accion",
+      "payload": "LOGIN') OR ('1'='1",
+      "status": 200,
+      "tiempo_seg": 0.191,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "200 con 0 resultados: el filtro comparó el texto completo"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "obtenercorreo/correo: ' OR '1'='1",
+      "endpoint": "GET /usuarios/obtenercorreo",
+      "vector": "correo",
+      "payload": "' OR '1'='1",
+      "status": 404,
+      "tiempo_seg": 0.193,
+      "respuesta": {
+        "message": "Usuario no encontrado."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "404: el correo se convierte en un hash antes de consultar"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "obtenercorreo/correo: x@x.com' OR 1=1-- ",
+      "endpoint": "GET /usuarios/obtenercorreo",
+      "vector": "correo",
+      "payload": "x@x.com' OR 1=1-- ",
+      "status": 404,
+      "tiempo_seg": 0.19,
+      "respuesta": {
+        "message": "Usuario no encontrado."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "404: el correo se convierte en un hash antes de consultar"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "obtenercorreo/correo: ' UNION SELECT NULL-- ",
+      "endpoint": "GET /usuarios/obtenercorreo",
+      "vector": "correo",
+      "payload": "' UNION SELECT NULL-- ",
+      "status": 404,
+      "tiempo_seg": 0.19,
+      "respuesta": {
+        "message": "Usuario no encontrado."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "404: el correo se convierte en un hash antes de consultar"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "/admin/reportes/{tipo} tipo (ruta): usuarios' OR '1'='1",
+      "endpoint": "GET /admin/reportes/{tipo}",
+      "vector": "tipo (ruta)",
+      "payload": "usuarios' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.098,
+      "respuesta": {
+        "message": "Reporte no válido. Tipos: usuarios, alojamientos, reservas, ingresos, demanda; formatos: pdf, excel."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: solo se aceptan valores de una lista fija"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "/admin/reportes/{tipo} formato: pdf' OR '1'='1",
+      "endpoint": "GET /admin/reportes/{tipo}",
+      "vector": "formato",
+      "payload": "pdf' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.097,
+      "respuesta": {
+        "message": "Reporte no válido. Tipos: usuarios, alojamientos, reservas, ingresos, demanda; formatos: pdf, excel."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: solo se aceptan valores de una lista fija"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "/admin/alojamientos estado: ACTIVA' OR '1'='1",
+      "endpoint": "GET /admin/alojamientos",
+      "vector": "estado",
+      "payload": "ACTIVA' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.097,
+      "respuesta": {
+        "message": "El valor de estado no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: solo se aceptan valores de una lista fija"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "/admin/reservas estado: CONFIRMADA' OR '1'='1",
+      "endpoint": "GET /admin/reservas",
+      "vector": "estado",
+      "payload": "CONFIRMADA' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.097,
+      "respuesta": {
+        "message": "El valor de estado no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: solo se aceptan valores de una lista fija"
+    },
+    {
+      "categoria": "4-admin",
+      "caso": "/admin/resenas estado: PUBLICADA' OR '1'='1",
+      "endpoint": "GET /admin/resenas",
+      "vector": "estado",
+      "payload": "PUBLICADA' OR '1'='1",
+      "status": 400,
+      "tiempo_seg": 0.098,
+      "respuesta": {
+        "message": "El valor de estado no es válido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: solo se aceptan valores de una lista fija"
+    },
+    {
+      "categoria": "5-json",
+      "caso": "cotizaciones: {\"idAlojamiento\": \"1 OR 1=1\", \"fechaEntrada\": ",
+      "endpoint": "POST /cotizaciones",
+      "vector": "cuerpo JSON",
+      "payload": "{\"idAlojamiento\": \"1 OR 1=1\", \"fechaEntrada\": \"2027-01-10\", \"fechaSalida\": \"2027-01-12\", \"huespedes\": 1}",
+      "status": 400,
+      "tiempo_seg": 0.098,
+      "respuesta": {
+        "message": "El cuerpo de la petición no es un JSON válido o tiene un valor no permitido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: el JSON no se convierte al tipo esperado y se rechaza"
+    },
+    {
+      "categoria": "5-json",
+      "caso": "cotizaciones: {\"idAlojamiento\": 1, \"fechaEntrada\": \"2027-01-",
+      "endpoint": "POST /cotizaciones",
+      "vector": "cuerpo JSON",
+      "payload": "{\"idAlojamiento\": 1, \"fechaEntrada\": \"2027-01-10' OR '1'='1\", \"fechaSalida\": \"2027-01-12\", \"huespedes\": \"1; SELECT 1\"}",
+      "status": 400,
+      "tiempo_seg": 0.11,
+      "respuesta": {
+        "message": "El cuerpo de la petición no es un JSON válido o tiene un valor no permitido."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "400: el JSON no se convierte al tipo esperado y se rechaza"
+    },
+    {
+      "categoria": "6-segundo-orden",
+      "caso": "perfil/nombre guardado y releído",
+      "endpoint": "PUT + GET /usuarios/perfil",
+      "vector": "nombre",
+      "payload": "Prueba'); SELECT pg_sleep(5);--",
+      "status": 200,
+      "tiempo_seg": 0.771,
+      "respuesta": {
+        "campos": [
+          "correo",
+          "correoVerificado",
+          "estado",
+          "fechaRegistro",
+          "idUsuario",
+          "motivoRestriccion",
+          "nombre",
+          "rol",
+          "telefono",
+          "totpHabilitado"
+        ]
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "el texto se guardó y se leyó literal, sin ejecutarse"
+    },
+    {
+      "categoria": "6-segundo-orden",
+      "caso": "perfil/nombre restaurado",
+      "endpoint": "PUT /usuarios/perfil",
+      "vector": "nombre",
+      "payload": "(nombre original)",
+      "status": 200,
+      "tiempo_seg": 0.567,
+      "respuesta": {
+        "message": "Perfil actualizado correctamente."
+      },
+      "error_red": null,
+      "veredicto": "INFO",
+      "nota": "se restauró el nombre original"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based login/correo apilada",
+      "endpoint": "POST /auth/login",
+      "vector": "varios",
+      "payload": "{\"correo\": \"x'; SELECT pg_sleep(5)-- \", \"contrasenia\": \"x\"}",
+      "status": 401,
+      "tiempo_seg": 0.371,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.37s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based login/correo subconsulta",
+      "endpoint": "POST /auth/login",
+      "vector": "varios",
+      "payload": "{\"correo\": \"x' OR (SELECT 1 FROM pg_sleep(5))='1\", \"contrasenia\": \"x\"}",
+      "status": 401,
+      "tiempo_seg": 0.471,
+      "respuesta": {
+        "message": "Correo o contraseña inválidos."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.47s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based buscar/ciudad apilada",
+      "endpoint": "GET /alojamientos",
+      "vector": "varios",
+      "payload": "{\"ciudad\": \"x'; SELECT pg_sleep(5)-- \"}",
+      "status": 200,
+      "tiempo_seg": 0.317,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.32s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based buscar/tipo condicional",
+      "endpoint": "GET /alojamientos",
+      "vector": "varios",
+      "payload": "{\"tipo\": \"x' AND 1=(SELECT 1 FROM pg_sleep(5))-- \"}",
+      "status": 200,
+      "tiempo_seg": 0.192,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.19s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based buscar/amenidades",
+      "endpoint": "GET /alojamientos",
+      "vector": "varios",
+      "payload": "{\"amenidades\": \"x' OR pg_sleep(5) IS NULL-- \"}",
+      "status": 200,
+      "tiempo_seg": 0.2,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.20s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based auditoria/accion",
+      "endpoint": "GET /admin/auditoria",
+      "vector": "varios",
+      "payload": "{\"accion\": \"x'; SELECT pg_sleep(5)-- \"}",
+      "status": 200,
+      "tiempo_seg": 0.192,
+      "respuesta": {
+        "totalElementos": 0
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.19s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "7-tiempo",
+      "caso": "time-based obtenercorreo/correo",
+      "endpoint": "GET /usuarios/obtenercorreo",
+      "vector": "varios",
+      "payload": "{\"correo\": \"x' OR pg_sleep(5) IS NULL-- \"}",
+      "status": 404,
+      "tiempo_seg": 0.189,
+      "respuesta": {
+        "message": "Usuario no encontrado."
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "respondió en 0.19s: pg_sleep no se ejecutó"
+    },
+    {
+      "categoria": "8-integridad",
+      "caso": "catálogo después de la batería",
+      "endpoint": "GET /alojamientos",
+      "vector": "-",
+      "payload": "-",
+      "status": 200,
+      "tiempo_seg": 0.76,
+      "respuesta": {
+        "totalElementos": 13
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "antes 13, después 13"
+    },
+    {
+      "categoria": "8-integridad",
+      "caso": "usuarios después de la batería",
+      "endpoint": "GET /admin/usuarios",
+      "vector": "-",
+      "payload": "-",
+      "status": 200,
+      "tiempo_seg": 0.396,
+      "respuesta": {
+        "totalElementos": 11
+      },
+      "error_red": null,
+      "veredicto": "SEGURO",
+      "nota": "antes 11, después 11"
+    }
+  ]
+}

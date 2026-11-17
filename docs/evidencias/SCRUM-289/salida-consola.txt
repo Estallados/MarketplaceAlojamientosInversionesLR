@@ -1,0 +1,101 @@
+================================================================================================
+Objetivo: http://localhost:8081   (2026-11-17T04:22:18.430293+00:00)
+================================================================================================
+[..] catálogo completo                                    status=200 t= 0.86s 13 publicaciones; tiempo normal 0.86s
+[..] catálogo filtrado ciudad=Bogotá                      status=200 t= 0.75s 10 publicaciones
+[..] catálogo filtrado por tipo                           status=200 t= 0.76s 11 publicaciones
+[..] usuarios registrados (admin)                         status=200 t= 0.38s 11 usuarios
+[..] auditoría accion=LOGIN (admin)                       status=200 t= 0.29s 87 eventos
+[..] login con una cuenta que no existe                   status=401 t= 0.37s control negativo
+[OK] login/correo: ' OR '1'='1                            status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: ' OR '1'='1'--                         status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: ' OR 1=1--                             status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: admin'--                               status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: ' OR ''='                              status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: ') OR ('1'='1                          status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: ' UNION SELECT NULL--                  status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: ' OR 1=1#                              status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: " OR "1"="1                            status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/correo: '; SELECT 1--                          status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 1): ' OR '1'='1    status=401 t= 0.44s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 2): ' OR '1'='1'-- status=401 t= 0.47s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 3): ' OR 1=1--     status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 4): admin'--       status=401 t= 0.47s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 5): ' OR ''='      status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 6): ') OR ('1'='1  status=401 t= 0.47s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 7): ' UNION SELECT status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 1): ' OR 1=1#      status=401 t= 0.46s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 2): " OR "1"="1    status=401 t= 0.47s 401: el valor se trató como texto, sin sesión
+[OK] login/contrasenia (cuenta semilla 3): '; SELECT 1--  status=401 t= 0.45s 401: el valor se trató como texto, sin sesión
+[OK] buscar/ciudad: Bogotá' OR '1'='1                     status=200 t= 0.30s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/ciudad: Bogotá' OR 1=1--                      status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/ciudad: Bogotá') OR ('1'='1                   status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/ciudad: Bogotá' UNION SELECT NULL,NULL,NULL-- status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/ciudad: Bogotá' AND '1'='2                    status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/tipo: Hotel' OR '1'='1                        status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/tipo: Hotel' OR 1=1--                         status=200 t= 0.20s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/tipo: Hotel') OR ('1'='1                      status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/tipo: Hotel' UNION SELECT NULL,NULL,NULL--    status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/tipo: Hotel' AND '1'='2                       status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/amenidades: wifi' OR '1'='1                   status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/amenidades: wifi') OR ('1'='1                 status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/amenidades: x' UNION SELECT NULL--            status=200 t= 0.20s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] buscar/orden: precio_menor; SELECT 1                 status=400 t= 0.00s 400: el orden solo acepta valores de una lista fija
+[OK] buscar/orden: precio_menor' OR '1'='1                status=400 t= 0.00s 400: el orden solo acepta valores de una lista fija
+[OK] buscar/orden: idAlojamiento DESC                     status=400 t= 0.00s 400: el orden solo acepta valores de una lista fija
+[OK] buscar/orden: (SELECT 1)                             status=400 t= 0.00s 400: el orden solo acepta valores de una lista fija
+[OK] disponibles/tipo: Hotel' OR '1'='1                   status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] disponibles/tipo: Hotel' OR 1=1--                    status=200 t= 0.20s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] disponibles/tipo: Hotel') OR ('1'='1                 status=200 t= 0.21s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] filtros/ciudad: Bogotá' OR '1'='1                    status=200 t= 0.39s 200: filtros calculados sin ejecutar el texto
+[OK] filtros/ciudad: x' UNION SELECT NULL--               status=200 t= 0.39s 200: filtros calculados sin ejecutar el texto
+[OK] /alojamientos/{id}: 1 OR 1=1                         status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}: 1;SELECT 1                       status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}: 1' OR '1'='1                     status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}: 0 UNION SELECT NULL              status=400 t= 0.01s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}: 1)) OR ((1=1                     status=400 t= 0.01s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}/resenas: 1 OR 1=1                 status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}/resenas: 1;SELECT 1               status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}/resenas: 1' OR '1'='1             status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}/resenas: 0 UNION SELECT NULL      status=400 t= 0.01s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /alojamientos/{id}/resenas: 1)) OR ((1=1             status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /reservas/{id}: 1 OR 1=1                             status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /reservas/{id}: 1;SELECT 1                           status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /reservas/{id}: 1' OR '1'='1                         status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /reservas/{id}: 0 UNION SELECT NULL                  status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /reservas/{id}: 1)) OR ((1=1                         status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /admin/auditoria/{id}: 1 OR 1=1                      status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /admin/auditoria/{id}: 1;SELECT 1                    status=400 t= 0.00s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /admin/auditoria/{id}: 1' OR '1'='1                  status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /admin/auditoria/{id}: 0 UNION SELECT NULL           status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] /admin/auditoria/{id}: 1)) OR ((1=1                  status=400 t= 0.10s 400: Spring rechaza el valor no numérico antes de consultar
+[OK] auditoria/accion: LOGIN' OR '1'='1                   status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] auditoria/accion: LOGIN' OR 1=1--                    status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] auditoria/accion: x' UNION SELECT NULL--             status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] auditoria/accion: LOGIN') OR ('1'='1                 status=200 t= 0.19s 200 con 0 resultados: el filtro comparó el texto completo
+[OK] obtenercorreo/correo: ' OR '1'='1                    status=404 t= 0.19s 404: el correo se convierte en un hash antes de consultar
+[OK] obtenercorreo/correo: x@x.com' OR 1=1--              status=404 t= 0.19s 404: el correo se convierte en un hash antes de consultar
+[OK] obtenercorreo/correo: ' UNION SELECT NULL--          status=404 t= 0.19s 404: el correo se convierte en un hash antes de consultar
+[OK] /admin/reportes/{tipo} tipo (ruta): usuarios' OR '1' status=400 t= 0.10s 400: solo se aceptan valores de una lista fija
+[OK] /admin/reportes/{tipo} formato: pdf' OR '1'='1       status=400 t= 0.10s 400: solo se aceptan valores de una lista fija
+[OK] /admin/alojamientos estado: ACTIVA' OR '1'='1        status=400 t= 0.10s 400: solo se aceptan valores de una lista fija
+[OK] /admin/reservas estado: CONFIRMADA' OR '1'='1        status=400 t= 0.10s 400: solo se aceptan valores de una lista fija
+[OK] /admin/resenas estado: PUBLICADA' OR '1'='1          status=400 t= 0.10s 400: solo se aceptan valores de una lista fija
+[OK] cotizaciones: {"idAlojamiento": "1 OR 1=1", "fechaEn status=400 t= 0.10s 400: el JSON no se convierte al tipo esperado y se rechaza
+[OK] cotizaciones: {"idAlojamiento": 1, "fechaEntrada": " status=400 t= 0.11s 400: el JSON no se convierte al tipo esperado y se rechaza
+[OK] perfil/nombre guardado y releído                     status=200 t= 0.77s el texto se guardó y se leyó literal, sin ejecutarse
+[..] perfil/nombre restaurado                             status=200 t= 0.57s se restauró el nombre original
+[OK] time-based login/correo apilada                      status=401 t= 0.37s respondió en 0.37s: pg_sleep no se ejecutó
+[OK] time-based login/correo subconsulta                  status=401 t= 0.47s respondió en 0.47s: pg_sleep no se ejecutó
+[OK] time-based buscar/ciudad apilada                     status=200 t= 0.32s respondió en 0.32s: pg_sleep no se ejecutó
+[OK] time-based buscar/tipo condicional                   status=200 t= 0.19s respondió en 0.19s: pg_sleep no se ejecutó
+[OK] time-based buscar/amenidades                         status=200 t= 0.20s respondió en 0.20s: pg_sleep no se ejecutó
+[OK] time-based auditoria/accion                          status=200 t= 0.19s respondió en 0.19s: pg_sleep no se ejecutó
+[OK] time-based obtenercorreo/correo                      status=404 t= 0.19s respondió en 0.19s: pg_sleep no se ejecutó
+[OK] catálogo después de la batería                       status=200 t= 0.76s antes 13, después 13
+[OK] usuarios después de la batería                       status=200 t= 0.40s antes 11, después 11
+================================================================================================
+TOTAL: 93 | SEGURO: 86 | VULNERABLE: 0 | INFO: 7 | BLOQUEADO: 0 | ERROR_RED: 0
+VEREDICTO GLOBAL: NO VULNERABLE A SQLi
+Resultados guardados en resultados_sqli.json
+================================================================================================
