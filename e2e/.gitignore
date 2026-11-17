@@ -1,0 +1,7 @@
+# Se instalan con npm install --no-save; no se versionan
+node_modules/
+package.json
+package-lock.json
+# Resultados de cada corrida
+test-results/
+playwright-report/
