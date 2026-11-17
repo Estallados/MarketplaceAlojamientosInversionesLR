@@ -14,21 +14,21 @@ PagoServiceTest#reembolsa_CA001
 detalle-reserva.spec.ts#CA-001 antes de confirmar muestra la política y la devolución que calcula el backend
 detalle-reserva.spec.ts#CA-001 si la reserva no se puede cancelar muestra el motivo del backend y no deja confirmar
 mis-reservas.spec.ts#CA-001 ""Cancelar reserva"" aparece solo en las cancelables y abre el detalle con ?accion=cancelar";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
-feat/SCRUM-252-fe-cancelar-reserva-politica";;;"POST /reservas/{id}/cancelar y GET /reservas/{id}/simularcancelacion. FLEXIBLE 100 % con 1 o más días; MODERADA 100 % con 5 o más y 50 % con 1 a 4; ESTRICTA 50 % con 7 o más y nada después. Devolución simulada; Neon valida que sea ROUND(total × % / 100, 2).
+feat/SCRUM-252-fe-cancelar-reserva-politica";;v1.0.0;"POST /reservas/{id}/cancelar y GET /reservas/{id}/simularcancelacion. FLEXIBLE 100 % con 1 o más días; MODERADA 100 % con 5 o más y 50 % con 1 a 4; ESTRICTA 50 % con 7 o más y nada después. Devolución simulada; Neon valida que sea ROUND(total × % / 100, 2).
 Front-end (SCRUM-252): en Detalle de la reserva (/reservas/:id) el botón ""Cancelar reserva"" (también en Mis reservas, que abre el detalle con ?accion=cancelar) abre el modal del proyecto base; antes de confirmar muestra la política, los días de anticipación, el total pagado y la devolución de GET /reservas/{id}/simularcancelacion, y no deja confirmar si el backend la rechaza (409). Se ofrece en reservas CONFIRMADA o EN_REVISION que aún no empiezan. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-004;RF-002;Registro de cancelación;Registro de la cancelación;Dado que se procesa la cancelación de una reserva, cuando finaliza la operación, entonces el sistema debe registrar usuario, fecha, motivo, devolución aplicable y estado final de la reserva.;HU-01;CU-027;"CP-042 Cancelación con política y registro
 CP-043 Liberación de período después de cancelar
 CP-044 Conservación de período después de cancelar";"CancelacionReservaTest#cancelaYLiberaLasFechas_CA001_CA004_CA007
 CancelacionServiceTest#cancela_CA001_CA004_CA007
 detalle-reserva.spec.ts#CA-004 envía el motivo con Idempotency-Key y muestra el estado final registrado";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
-feat/SCRUM-252-fe-cancelar-reserva-politica";;;"Tabla cancelacion: usuario, fecha, motivo, política, porcentaje, devolución, estado COMPLETADA y estado final CANCELADA. Se avisa al huésped y al anfitrión y queda en la auditoría.
+feat/SCRUM-252-fe-cancelar-reserva-politica";;v1.0.0;"Tabla cancelacion: usuario, fecha, motivo, política, porcentaje, devolución, estado COMPLETADA y estado final CANCELADA. Se avisa al huésped y al anfitrión y queda en la auditoría.
 Front-end (SCRUM-252): POST /reservas/{id}/cancelar con el motivo (obligatorio, máximo 500 caracteres) y la cabecera Idempotency-Key, que solo se reutiliza al reintentar tras un error de red; al terminar recarga la reserva y muestra el estado final, la fecha, el motivo y la devolución registrados. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-007;RF-002;Registro de cancelación;Liberación y actualización del período;Dado que una reserva fue cancelada y corresponde liberar el período, cuando se procesa la cancelación, entonces el sistema debe actualizar su disponibilidad y mostrarlo nuevamente como disponible en las consultas.;HU-01;CU-027;"CP-042 Cancelación con política y registro
 CP-043 Liberación de período después de cancelar
 CP-044 Conservación de período después de cancelar";"CancelacionReservaTest#cancelaYLiberaLasFechas_CA001_CA004_CA007
 CancelacionServiceTest#cancela_CA001_CA004_CA007
 detalle-reserva.spec.ts#CA-007 una vez cancelada la reserva deja de ofrecerse para cancelar";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
-feat/SCRUM-252-fe-cancelar-reserva-politica";;;"La reserva CANCELADA deja de ocupar fechas: la consulta de disponibilidad vuelve a mostrarlas libres.
+feat/SCRUM-252-fe-cancelar-reserva-politica";;v1.0.0;"La reserva CANCELADA deja de ocupar fechas: la consulta de disponibilidad vuelve a mostrarlas libres.
 Front-end (SCRUM-252): tras cancelar recarga la reserva desde el backend, que queda Cancelada y deja de ofrecerse para cancelar; la liberación de las fechas la hace el backend y la consulta de disponibilidad la lee de él. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-009;RF-002;Registro de cancelación;Conservación cuando no aplica;Dado que no corresponde liberar el período, cuando se procesa la cancelación, entonces el sistema debe respetar la política aplicada.;HU-01;CU-027;"CP-042 Cancelación con política y registro
 CP-043 Liberación de período después de cancelar
@@ -37,12 +37,12 @@ CancelacionServiceTest#sinDevolucion_CA009
 CancelacionServiceTest#enRevision_CA009
 PagoServiceTest#sinDevolucion_CA009
 detalle-reserva.spec.ts#CA-009 si la política no da devolución lo indica y permite cancelar igual";Probado (JUnit);;"feat/SCRUM-251-be-cancelar-reserva-politica
-feat/SCRUM-252-fe-cancelar-reserva-politica";;;"Si la política no da devolución (0 %), se cancela sin devolver y el pago sigue APROBADO.
+feat/SCRUM-252-fe-cancelar-reserva-politica";;v1.0.0;"Si la política no da devolución (0 %), se cancela sin devolver y el pago sigue APROBADO.
 Front-end (SCRUM-252): muestra la devolución que calcula el backend según la política; si es 0 % lo indica (""esta cancelación no tiene devolución"") y permite cancelar igual, sin cálculos en el front. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-010;RF-003;Registro/Consulta de notificaciones;Registro por evento relevante;Dado que ocurre un evento configurado como relevante para un usuario, cuando el sistema procesa dicho evento, entonces debe registrar una notificación asociada al usuario correspondiente.;HU-02;"CU-025
 CU-027
 CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesTest#eventoCreaLaNotificacion_CA010
-NotificacionServiceTest#registraPorEvento_CA010";Probado (JUnit);;feat/SCRUM-253-be-recibir-consultar-notificaciones;;;NotificacionService.enviar la usan los eventos: reserva confirmada o cancelada, pago no confirmado, publicación aprobada, rechazada o bloqueada, reserva en revisión y cuenta restringida o liberada. Las de reseñas llegan con HU-03 y HU-14. Sin correo, SMS ni push.
+NotificacionServiceTest#registraPorEvento_CA010";Probado (JUnit);;feat/SCRUM-253-be-recibir-consultar-notificaciones;;v1.0.0;NotificacionService.enviar la usan los eventos: reserva confirmada o cancelada, pago no confirmado, publicación aprobada, rechazada o bloqueada, reserva en revisión y cuenta restringida o liberada. Las de reseñas llegan con HU-03 y HU-14. Sin correo, SMS ni push.
 CA-013;RF-003;Registro/Consulta de notificaciones;Visualización y consulta de notificaciones;Dado que un usuario autenticado tiene notificaciones registradas asociadas a su cuenta, cuando consulta sus notificaciones, entonces el sistema debe mostrar únicamente las notificaciones asociadas a dicho usuario.;HU-02;"CU-025
 CU-027
 CU-028";CP-045 Registro y consulta de notificaciones;"NotificacionesTest#soloLasPropias_CA013
@@ -53,7 +53,7 @@ NotificacionServiceTest#listaLasPropias_CA013
 NotificacionServiceTest#contarYMarcarTodas_CA013
 NotificacionServiceTest#marcarUna_CA013
 NotificacionControllerTest#listar_CA013
-NotificacionControllerTest#marcarUna_CA013";Probado (JUnit);;feat/SCRUM-253-be-recibir-consultar-notificaciones;;;"GET /notificaciones (paginado, las más recientes primero), GET /notificaciones/noleidas, PATCH /notificaciones/leidas y PATCH /notificaciones/{id}/leida; la de otro usuario responde 404."
+NotificacionControllerTest#marcarUna_CA013";Probado (JUnit);;feat/SCRUM-253-be-recibir-consultar-notificaciones;;v1.0.0;"GET /notificaciones (paginado, las más recientes primero), GET /notificaciones/noleidas, PATCH /notificaciones/leidas y PATCH /notificaciones/{id}/leida; la de otro usuario responde 404."
 CA-016;RF-004;Registro/Consulta de reseñas y calificaciones;Reseña según estado de la reserva;Dado que el huésped evalúa un alojamiento, cuando intenta registrar una reseña o calificación, entonces el sistema debe permitirlo solo si la reserva está completada e impedir el registro en caso contrario.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
@@ -61,21 +61,21 @@ CP-048 Consulta de reseñas de alojamiento";"ResenasTest#reseniaCompletada_CA016
 ResenasTest#rechazos_CA016
 ResenaServiceTest#reseniaPublicada_CA016_CA018
 ResenaServiceTest#soloCompletadas_CA016
-ResenaServiceTest#saleHoy_CA016";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;"POST /resenas (solo HUESPED): reserva propia CONFIRMADA con la salida ya alcanzada; si no, 409. Una reseña por reserva (409). En Neon lo respaldan trg_resena_estancia_completada y uq_resena_reserva."
+ResenaServiceTest#saleHoy_CA016";Probado (JUnit);;feat/SCRUM-255-be-resenas;;v1.0.0;"POST /resenas (solo HUESPED): reserva propia CONFIRMADA con la salida ya alcanzada; si no, 409. Una reseña por reserva (409). En Neon lo respaldan trg_resena_estancia_completada y uq_resena_reserva."
 CA-018;RF-004;Registro/Consulta de reseñas y calificaciones;Asociación de reseña;Dado que se registra una reseña, cuando se almacena, entonces debe relacionarse con huésped, reserva, alojamiento, fecha y contenido.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
 CP-048 Consulta de reseñas de alojamiento";"ResenasTest#reseniaCompletada_CA016_CA018
 ResenaServiceTest#reseniaPublicada_CA016_CA018
 ResenaServiceTest#comentarioVacio_CA018
-ResenaControllerTest#crear_CA018";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;"El autor sale del token y el alojamiento de la reserva; se ignoran si el cliente los manda. Queda PUBLICADA con fecha y contenido, se avisa al anfitrión (RESENA_RECIBIDA) y queda en la auditoría."
+ResenaControllerTest#crear_CA018";Probado (JUnit);;feat/SCRUM-255-be-resenas;;v1.0.0;"El autor sale del token y el alojamiento de la reserva; se ignoran si el cliente los manda. Queda PUBLICADA con fecha y contenido, se avisa al anfitrión (RESENA_RECIBIDA) y queda en la auditoría."
 CA-019;RF-004;Registro/Consulta de reseñas y calificaciones;Consulta por publicación;Dado que existen reseñas de diferentes alojamientos, cuando se consultan las valoraciones de una publicación, entonces el sistema debe mostrar únicamente las asociadas a ella.;HU-03;"CU-029
 CU-030";"CP-046 Registro de reseña
 CP-047 Reseña de reserva no completada
 CP-048 Consulta de reseñas de alojamiento";"ResenasTest#consultaPorAlojamiento_CA019
 ResenaServiceTest#resumenDelAlojamiento_CA019
 ResenaServiceTest#resumenVacioYNoExiste_CA019
-ResenaControllerTest#deAlojamiento_CA019";Probado (JUnit);;feat/SCRUM-255-be-resenas;;;GET /alojamientos/{id}/resenas (pública): solo las PUBLICADA de ese alojamiento con promedio y cantidad. Además GET /resenas/mias (HUESPED, incluye ocultas) y GET /resenas/anfitrion (ANFITRION).
+ResenaControllerTest#deAlojamiento_CA019";Probado (JUnit);;feat/SCRUM-255-be-resenas;;v1.0.0;GET /alojamientos/{id}/resenas (pública): solo las PUBLICADA de ese alojamiento con promedio y cantidad. Además GET /resenas/mias (HUESPED, incluye ocultas) y GET /resenas/anfitrion (ANFITRION).
 CA-022;RF-005;Consulta de dashboard;Indicadores del dashboard;Dado que existen usuarios, publicaciones, reservas y operaciones registradas, cuando se consulta el dashboard, entonces debe mostrarse el indicador de usuarios, la cantidad de publicaciones activas, las reservas agrupadas por estado, los ingresos estimados y las ciudades con mayor demanda.;HU-04;CU-014;CP-055 Consulta de dashboard;"DashboardTest#indicadores_CA022
 DashboardTest#limitaCiudades_CA022
 DashboardTest#soloAdministrador_CA022
@@ -83,7 +83,7 @@ ReporteServiceTest#indicadores_CA022
 ReporteServiceTest#estadosEnCero_CA022
 ReporteServiceTest#limiteDeCiudades_CA022
 ReporteControllerTest#dashboard_CA022
-ReporteControllerTest#soloAdministrador_CA022";Probado (JUnit);;feat/SCRUM-161-be-dashboard-indicadores;;;
+ReporteControllerTest#soloAdministrador_CA022";Probado (JUnit);;feat/SCRUM-161-be-dashboard-indicadores;;v1.0.0;
 CA-027;RF-006;Exportación de reportes;Exportación y trazabilidad del reporte;Dado que un usuario solicita un reporte, cuando se ejecuta la exportación, entonces el sistema debe generarlo en PDF o Excel con datos que correspondan a la información disponible en el sistema y registrar solicitante y fecha.;HU-05;CU-015;CP-056 Exportación de reporte en PDF o Excel;"ReportesTest#exportaPdf_CA027
 ReportesTest#exportaExcelConLosDatos_CA027
 ReportesTest#historial_CA027
@@ -98,62 +98,62 @@ ReporteControllerTest#exportarInvalido_CA027
 ReporteControllerTest#historial_CA027
 ExportadorUtilTest#excelConPresentacion_CA027
 ExportadorUtilTest#pdfConYSinDatos_CA027
-ExportadorUtilTest#excelDeUnaColumna_CA027";Probado (JUnit);;feat/SCRUM-162-be-exportar-reportes;;;
+ExportadorUtilTest#excelDeUnaColumna_CA027";Probado (JUnit);;feat/SCRUM-162-be-exportar-reportes;;v1.0.0;
 CA-030;RF-001;Registro de usuarios;Crear cuenta con rol;Dado que el usuario no está registrado, cuando proporciona todos los datos obligatorios y un rol válido, entonces el sistema crea la cuenta, le asigna el rol seleccionado y muestra una confirmación.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
 CP-002 Validación de campos obligatorios en registro";"UsuarioServiceTest#creaLaCuentaYEnviaElCodigo_CA030
 UsuarioServiceTest#sinRolUsaHuesped_CA030
 RegistroUsuarioTest#registroCreaLaCuentaYEnviaElCodigo_CA030
-RegistroUsuarioTest#verificarEntregaElToken_CA030";Probado (JUnit);;feat/SCRUM-220-be-registro-de-usuario-con-rol;;;
+RegistroUsuarioTest#verificarEntregaElToken_CA030";Probado (JUnit);;feat/SCRUM-220-be-registro-de-usuario-con-rol;;v1.0.0;
 CA-031;RF-001;Registro de usuarios;Validar campos;Dado que faltan datos obligatorios, cuando el usuario intenta registrarse, entonces el sistema indica los campos faltantes.;HU-06;CU-001;"CP-001 Registro exitoso de usuario con rol
 CP-002 Validación de campos obligatorios en registro";"UsuarioServiceTest#faltanDatosNoRegistra_CA031
 UsuarioServiceTest#datosInvalidosNoRegistra_CA031
-RegistroUsuarioTest#faltanDatosNoRegistra_CA031";Probado (JUnit);;feat/SCRUM-220-be-registro-de-usuario-con-rol;;;
+RegistroUsuarioTest#faltanDatosNoRegistra_CA031";Probado (JUnit);;feat/SCRUM-220-be-registro-de-usuario-con-rol;;v1.0.0;
 CA-034;RF-008;Inicio de sesión;Iniciar sesión e identificar rol;Dado que el usuario está registrado, cuando proporciona credenciales válidas, entonces el sistema permite el acceso e identifica su rol.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
 CP-070 Activación del segundo factor";"JwtAuthenticationFilterTest#tokenValidoAutenticaConElRol_CA034
-InicioSesionTest#loginConCredencialesValidasIdentificaElRol_CA034";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
+InicioSesionTest#loginConCredencialesValidasIdentificaElRol_CA034";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;v1.0.0;
 CA-035;RF-008;Inicio de sesión;Validar credenciales;Dado que el usuario proporciona credenciales incorrectas, cuando intenta iniciar sesión, entonces el sistema informa que no son válidas.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
-CP-070 Activación del segundo factor";InicioSesionTest#loginConCredencialesIncorrectasSeRechaza_CA035;Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
+CP-070 Activación del segundo factor";InicioSesionTest#loginConCredencialesIncorrectasSeRechaza_CA035;Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;v1.0.0;
 CA-037;RF-008;Inicio de sesión;Restringir acceso;Dado que el usuario no ha iniciado sesión, cuando intenta acceder a una función restringida, entonces el sistema impide el acceso.;HU-07;"CU-002
 CU-035";"CP-003 Inicio de sesión exitoso
 CP-004 Inicio de sesión con credenciales incorrectas
 CP-005 Protección de funcionalidad sin autenticación
 CP-070 Activación del segundo factor";"JwtAuthenticationFilterTest#sinTokenValidoNoAutentica_CA037
 JwtAuthenticationFilterTest#cuentaNoActivaNoAutentica_CA037
-InicioSesionTest#sinSesionNoSeAccedeAFuncionesRestringidas_CA037";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;;
+InicioSesionTest#sinSesionNoSeAccedeAFuncionesRestringidas_CA037";Probado (JUnit);;feat/SCRUM-164-be-inicio-sesion;;v1.0.0;
 CA-038;RF-009;Recuperación de contraseña;Proceso de recuperación;Dado que el usuario no puede acceder a su cuenta, cuando selecciona recuperación de contraseña y envía la información requerida, entonces el sistema procesa la solicitud y confirma el proceso si la información es válida, mediante un proceso simulado que no requiere un mecanismo externo.;HU-08;CU-003;CP-006 Recuperación de contraseña;"AuthServiceTest#solicitaLaRecuperacion
-RecuperacionContraseniaTest#recuperaLaContrasenia_CA038";Probado (JUnit);;feat/SCRUM-165-be-recuperacion-contrasenia;;;
+RecuperacionContraseniaTest#recuperaLaContrasenia_CA038";Probado (JUnit);;feat/SCRUM-165-be-recuperacion-contrasenia;;v1.0.0;
 CA-042;RF-010;Consulta de perfil;Consulta y visualización de información del perfil;Dado que el usuario ha iniciado sesión y tiene información registrada en su cuenta, cuando consulta su perfil, entonces el sistema debe mostrar de forma clara la información básica asociada a su cuenta, permitiéndole identificar sus datos registrados.;HU-09;CU-004;"CP-007 Consulta de perfil
 CP-008 Consulta de perfil sin autenticación";"PerfilUsuarioServiceTest#consultaElPerfil_CA042
-PerfilUsuarioTest#consultaElPerfil_CA042";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
+PerfilUsuarioTest#consultaElPerfil_CA042";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;v1.0.0;
 CA-044;RF-010;Consulta de perfil;Restringir perfil;Dado que el usuario no ha iniciado sesión, cuando intenta consultar su perfil, entonces el sistema impide el acceso.;HU-09;CU-004;"CP-007 Consulta de perfil
-CP-008 Consulta de perfil sin autenticación";PerfilUsuarioTest#sinSesionNoAccede_CA044;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
+CP-008 Consulta de perfil sin autenticación";PerfilUsuarioTest#sinSesionNoAccede_CA044;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;v1.0.0;
 CA-046;RF-011;Actualización de perfil;Actualizar y mostrar perfil;Dado que el usuario ha iniciado sesión, cuando modifica datos válidos y guarda los cambios, entonces el sistema actualiza el perfil y muestra la información actualizada al consultarlo.;HU-09;CU-005;"CP-009 Actualización de perfil
 CP-010 Actualización de perfil con datos inválidos
 CP-011 Acceso o modificación de información de otro usuario";"PerfilUsuarioServiceTest#actualizaElPerfil_CA046
-PerfilUsuarioTest#actualizaElPerfil_CA046";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
+PerfilUsuarioTest#actualizaElPerfil_CA046";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;v1.0.0;
 CA-047;RF-011;Actualización de perfil;Validar actualización;Dado que existen datos inválidos o incompletos, cuando el usuario intenta guardar los cambios, entonces el sistema informa el error.;HU-09;CU-005;"CP-009 Actualización de perfil
 CP-010 Actualización de perfil con datos inválidos
 CP-011 Acceso o modificación de información de otro usuario";"PerfilUsuarioServiceTest#rechazaDatosInvalidos_CA047
-PerfilUsuarioTest#datosInvalidos_CA047";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
+PerfilUsuarioTest#datosInvalidos_CA047";Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;v1.0.0;
 CA-049;RF-011;Actualización de perfil;Proteger perfil;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la modificación.;HU-09;CU-005;"CP-009 Actualización de perfil
 CP-010 Actualización de perfil con datos inválidos
-CP-011 Acceso o modificación de información de otro usuario";PerfilUsuarioTest#noModificaOtraCuenta_CA049;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;;
+CP-011 Acceso o modificación de información de otro usuario";PerfilUsuarioTest#noModificaOtraCuenta_CA049;Probado (JUnit);;feat/SCRUM-166-be-perfil-usuario;;v1.0.0;
 CA-050;RF-012;Activación y desactivación de cuenta;Cambio y visualización del estado de la cuenta;Dado que la cuenta del usuario se encuentra en estado ACTIVA o INACTIVA, cuando el usuario solicita cambiar su estado, entonces el sistema debe actualizarla al estado contrario correspondiente (de ACTIVA a INACTIVA o de INACTIVA a ACTIVA) y mostrar el nuevo estado.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
 CP-012 Activación y desactivación de cuenta";"EstadoCuentaTest#cambiaAlEstadoContrario_CA050
 EstadoCuentaControllerTest#desactivaYMuestraElEstado_CA050
 EstadoCuentaControllerTest#reactivaYMuestraElEstado_CA050
 PerfilUsuarioServiceTest#desactivaLaCuenta_CA050
-AuthServiceTest#reactivaLaCuenta_CA050";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;;
+AuthServiceTest#reactivaLaCuenta_CA050";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;v1.0.0;
 CA-053;RF-012;Activación y desactivación de cuenta;Proteger estado;Dado que el usuario está autenticado, cuando intenta modificar otra cuenta, entonces el sistema impide la operación.;HU-10;CU-006;"CP-011 Acceso o modificación de información de otro usuario
 CP-012 Activación y desactivación de cuenta";"EstadoCuentaTest#noCambiaOtraCuenta_CA053
 EstadoCuentaControllerTest#desactivaLaCuentaDelToken_CA053
-PerfilUsuarioServiceTest#soloDesactivaLaCuentaDelToken_CA053";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;;
+PerfilUsuarioServiceTest#soloDesactivaLaCuentaDelToken_CA053";Probado (JUnit);;feat/SCRUM-167-be-activar-desactivar-cuenta;;v1.0.0;
 CA-054;RF-013;Bloqueo de publicaciones;Bloqueo administrativo de publicación;Dado que un administrador identifica una publicación que incumple las políticas de la plataforma, cuando solicita bloquearla, entonces el sistema debe cambiar su estado a BLOQUEADA, impedir nuevas reservas y excluirla de los resultados de búsqueda.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
 CP-023 Conservación de reservas al bloquear publicación";"ModeracionPublicacionesTest#bloquea_CA054
 ModeracionPublicacionesTest#bloquearSoloAdministrador_CA054
@@ -163,26 +163,26 @@ ModeracionPublicacionesTest#desbloquea
 PublicacionServiceModeracionTest#desbloquea
 PublicacionServiceModeracionTest#desbloquearSoloBloqueada
 AdminControllerModeracionTest#desbloquea";Probado (JUnit);;"feat/SCRUM-168-be-bloquear-publicaciones
-fix/SCRUM-168-be-desbloquear-y-reservas-admin";;;"POST /admin/alojamientos/{id}/bloquear (motivo obligatorio). POST .../desbloquear la pasa de BLOQUEADA a PAUSADA para que el anfitrión decida cuándo reanudarla (409 desde otro estado); queda en el historial y la auditoría."
+fix/SCRUM-168-be-desbloquear-y-reservas-admin";;v1.0.0;"POST /admin/alojamientos/{id}/bloquear (motivo obligatorio). POST .../desbloquear la pasa de BLOQUEADA a PAUSADA para que el anfitrión decida cuándo reanudarla (409 desde otro estado); queda en el historial y la auditoría."
 CA-058;RF-014;Restricción de usuarios;Restringir y mostrar restricción;Dado que el administrador consulta un usuario, cuando aplica una restricción, entonces el sistema registra y aplica la restricción y la muestra al consultar el estado de la cuenta.;HU-12;CU-010;"CP-051 Restricción de usuario
 CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringeYSeVeAlConsultar_CA058
 UsuarioServiceRestriccionTest#restringe_CA058
 UsuarioServiceRestriccionTest#motivoInvalido_CA058
 UsuarioServiceRestriccionTest#consulta_CA058
 AdminControllerUsuariosTest#restringir_CA058
-UsuarioControllerConsultaTest#adminConsultaCualquiera_CA058";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;;"PATCH /admin/usuarios/{id}/restringir (motivo obligatorio, máx. 500; a un ADMIN no) y /liberar. El estado y el motivo se ven en GET /admin/usuarios, /usuarios/obtener/{id} y /usuarios/obtenercorreo; se notifica al usuario y queda en la auditoría."
+UsuarioControllerConsultaTest#adminConsultaCualquiera_CA058";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;v1.0.0;"PATCH /admin/usuarios/{id}/restringir (motivo obligatorio, máx. 500; a un ADMIN no) y /liberar. El estado y el motivo se ven en GET /admin/usuarios, /usuarios/obtener/{id} y /usuarios/obtenercorreo; se notifica al usuario y queda en la auditoría."
 CA-059;RF-014;Restricción de usuarios;Bloquear acciones;Dado que el usuario está restringido, cuando intenta realizar una acción que requiere una cuenta habilitada, entonces el sistema impide la acción.;HU-12;CU-010;"CP-051 Restricción de usuario
 CP-052 Acción de usuario restringido";"RestriccionUsuariosTest#restringidoNoActua_CA059
 JwtAuthenticationFilter (tokens de cuentas restringidas)
-AuthController#login y #reactivar";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;;Restringida: su token deja de servir (401), no inicia sesión (403) ni se reactiva sola (403). Al liberarla vuelve a entrar.
+AuthController#login y #reactivar";Probado (JUnit);;feat/SCRUM-267-be-restringir-cuentas-usuarios;;v1.0.0;Restringida: su token deja de servir (401), no inicia sesión (403) ni se reactiva sola (403). Al liberarla vuelve a entrar.
 CA-062;RF-015;Consulta de eventos de auditoría;Consultar auditoría y detalle del evento;Dado que existen eventos registrados, cuando el administrador consulta la auditoría, entonces el sistema muestra los eventos y la información asociada a cada uno.;HU-13;CU-011;"CP-053 Consulta de auditoría
 CP-054 Consulta de auditoría sin permisos";"AuditoriaTest#consultaLaAuditoria_CA062
 AdminControllerModeracionTest#consultaLaAuditoria_CA062
 AdminControllerModeracionTest#detalleDelEvento_CA062
 AuditoriaServiceTest#consultaDelAdministrador_CA062
-AuditoriaServiceTest#obtieneElDetalle_CA062";Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;;
+AuditoriaServiceTest#obtieneElDetalle_CA062";Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;v1.0.0;
 CA-065;RF-015;Consulta de eventos de auditoría;Restringir auditoría;Dado que el usuario no tiene permisos administrativos, cuando intenta consultar la auditoría, entonces el sistema impide el acceso.;HU-13;CU-011;"CP-053 Consulta de auditoría
-CP-054 Consulta de auditoría sin permisos";AuditoriaTest#soloElAdministradorConsulta_CA065;Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;;
+CP-054 Consulta de auditoría sin permisos";AuditoriaTest#soloElAdministradorConsulta_CA065;Probado (JUnit);;feat/SCRUM-170-be-consultar-eventos-auditoria;;v1.0.0;
 CA-066;RF-016;Moderación de reseñas;Ocultar reseña;Dado que existe una reseña que incumple las reglas, cuando el administrador decide ocultarla, entonces el sistema debe ocultarla y dejar de mostrarla a los usuarios que consulten las reseñas.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
 CP-050 Moderación de reseña sin permisos";"ModeracionResenasTest#ocultarYMostrar_CA066
 ModeracionResenasTest#validaciones_CA066
@@ -191,12 +191,12 @@ ModeracionResenasServiceTest#motivoObligatorio_CA066
 AdminControllerResenasTest#ocultar_CA066
 resenas.spec.ts#CA-066 lista todas las reseñas con su estado y la acción que corresponde
 resenas.spec.ts#CA-066 oculta la reseña con el motivo y la marca como oculta cuando el backend lo confirma";Probado (JUnit);;"feat/SCRUM-271-be-ocultar-resenas
-feat/SCRUM-272-fe-ocultar-resenas";;;"PATCH /admin/resenas/{id}/ocultar con motivo (obligatorio, máximo 500): solo cambia el estado a OCULTA (no se borra; en Neon trg_resena_proteger solo permite cambiar el estado), deja de mostrarse y de contar en el promedio, avisa al autor (RESENA_OCULTA) y audita RESENA_MODERADA. PATCH .../mostrar la vuelve a PUBLICADA y GET /admin/resenas lista por estado.
+feat/SCRUM-272-fe-ocultar-resenas";;v1.0.0;"PATCH /admin/resenas/{id}/ocultar con motivo (obligatorio, máximo 500): solo cambia el estado a OCULTA (no se borra; en Neon trg_resena_proteger solo permite cambiar el estado), deja de mostrarse y de contar en el promedio, avisa al autor (RESENA_OCULTA) y audita RESENA_MODERADA. PATCH .../mostrar la vuelve a PUBLICADA y GET /admin/resenas lista por estado.
 Front-end (SCRUM-272): en Moderación de reseñas (/admin/resenas, pantalla del proyecto base) el administrador ve todas las reseñas (GET /admin/resenas) con su estado; ""Ocultar reseña"" abre el modal con el motivo obligatorio (máximo 500 caracteres, con contador) y envía PATCH /admin/resenas/{id}/ocultar; la fila pasa a Oculta solo cuando el backend lo confirma y el contenido no se modifica. ""Mostrar reseña"" (PATCH .../mostrar) la vuelve a publicar. Dejar de mostrarla al público y en el promedio lo hace el backend. Probado con Vitest (ng test); el flujo completo con un administrador queda pendiente de verificar."
 CA-069;RF-016;Moderación de reseñas;Restringir moderación;Dado que el usuario no tiene permisos administrativos, cuando intenta ocultar una reseña, entonces el sistema impide la acción.;HU-14;CU-012;"CP-049 Ocultamiento de reseña
 CP-050 Moderación de reseña sin permisos";"ModeracionResenasTest#sinPermisos_CA069
 resenas.spec.ts#CA-069 si el usuario no es administrador no puede entrar ni ocultar la reseña";Probado (JUnit);;"feat/SCRUM-271-be-ocultar-resenas
-feat/SCRUM-272-fe-ocultar-resenas";;;"/admin/** exige ADMIN: HUESPED y ANFITRION reciben 403 y sin sesión 401; la reseña no cambia y no se notifica a nadie.
+feat/SCRUM-272-fe-ocultar-resenas";;v1.0.0;"/admin/** exige ADMIN: HUESPED y ANFITRION reciben 403 y sin sesión 401; la reseña no cambia y no se notifica a nadie.
 Front-end (SCRUM-272): la ruta /admin/resenas exige el rol Administrador (roleGuard): sin sesión va al login y el huésped o el anfitrión vuelven al inicio; si el backend responde 403 se muestra ""No tienes permisos para realizar esta operación."" y la reseña no cambia. Probado con Vitest (ng test); el flujo completo con un administrador queda pendiente de verificar."
 CA-070;RF-021;Creación de reserva por el huésped;Creación exitosa con cotización vigente;Dado una cotización vigente y un alojamiento ACTIVA, cuando el huésped confirma, entonces el sistema crea la reserva con el monto cotizado.;HU-22;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
@@ -211,7 +211,7 @@ CotizacionServiceTest#cotiza_CA070
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-070 cotiza con el endpoint real y muestra el resumen de la cotización vigente
 confirmar-reserva.spec.ts#CA-070 al confirmar crea la reserva con POST /reservas y muestra la confirmación con el monto cotizado";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Cotización básica: sin servicios adicionales ni descuento (los agrega HU-31). El pago llega con HU-27.
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Cotización básica: sin servicios adicionales ni descuento (los agrega HU-31). El pago llega con HU-27.
 Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-071;RF-021;Creación de reserva por el huésped;Rechazo por alojamiento no ACTIVA;Dado un alojamiento no ACTIVA, cuando el huésped intenta reservar, entonces el sistema rechaza la operación e informa el motivo.;HU-22;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
@@ -226,7 +226,7 @@ CotizacionServiceTest#noActiva_CA071
 ReservaTest#publicacionNoActiva_CA071
 confirmar-reserva.spec.ts#CA-071 informa que el alojamiento no está disponible para reservar y no presenta la reserva como creada
 confirmar-reserva.spec.ts#CA-071 también muestra el motivo cuando el rechazo llega al cotizar y no permite confirmar";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-072;"RF-021
 RNF-019";"Creación de reserva por el huésped
 Prevención de reservas superpuestas con revalidación";Rechazo por solapamiento y confirmación simultánea;Dado un período ya reservado o dos solicitudes simultáneas para el mismo período, cuando se intenta confirmar una reserva superpuesta, entonces el sistema debe rechazar la confirmación de modo que solo una reserva quede confirmada.;HU-22;"CU-024
@@ -244,24 +244,24 @@ ManejadorGlobalExcepcionesTest#cruceDeReservas_CA072
 confirmar-reserva.spec.ts#CA-072 informa que las fechas dejaron de estar disponibles y permite volver a elegir fechas
 confirmar-reserva.spec.ts#CA-072 no confunde otro conflicto del backend con fechas ocupadas ni afirma que no se creó la reserva
 confirmar-reserva.spec.ts#CA-072 un doble clic sobre Confirmar envía una sola solicitud de reserva";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Bloqueo pesimista de la cotización y del alojamiento; en Neon, además, la restricción ex_reserva_sin_cruces.
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Bloqueo pesimista de la cotización y del alojamiento; en Neon, además, la restricción ex_reserva_sin_cruces.
 Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-074;RNF-019;Prevención de reservas superpuestas con revalidación;Revalidación de disponibilidad al confirmar;Dado que una consulta previa mostró el alojamiento como disponible, cuando el huésped solicita confirmar la reserva, entonces el sistema debe volver a comprobar la disponibilidad inmediatamente antes de confirmarla y rechazarla si el período ya no está disponible.;HU-22;CU-025;"CP-036 Reservas superpuestas o simultáneas
 CP-039 Validación de disponibilidad al confirmar";"ReservaServiceTest#periodoTomado_CA072_CA074
 ReservaTest#revalidaAntesDeConfirmar_CA074
 confirmar-reserva.spec.ts#CA-074 no da por vigente una consulta previa: confirma con POST /reservas y muestra el rechazo si el período ya no está libre";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-075;RNF-020;Confirmación inmediata de reserva válida;Confirmación inmediata sin aprobación manual;Dado que una reserva cumple las condiciones definidas (alojamiento ACTIVA, período disponible y cotización vigente), cuando el huésped la confirma en el flujo de reserva inmediata, entonces el sistema debe confirmarla sin requerir aprobación manual del anfitrión.;HU-22;CU-025;"CP-034 Creación de reserva inmediata
 CP-037 Reserva inmediata inválida";"ReservaServiceTest#reservaConfirmada_CA070_CA075_CA086
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-075 confirma en un solo paso, sin aprobación del anfitrión, y muestra el estado CONFIRMADA del backend
 confirmar-reserva.spec.ts#CA-075 diferencia una reserva que el backend no dejó CONFIRMADA";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Se confirma de inmediato sin aprobación del anfitrión; el pago de prueba llega con HU-27.
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Se confirma de inmediato sin aprobación del anfitrión; el pago de prueba llega con HU-27.
 Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-076;RF-020;Bloquear período reservado;Bloqueo automático del período tras confirmar;Dado que un huésped solicita una reserva válida sobre un alojamiento disponible, cuando la reserva queda confirmada, entonces el sistema debe bloquear automáticamente el período reservado, mostrarlo como no disponible en el calendario y no mostrarlo en las búsquedas de disponibilidad de otros usuarios.;HU-22;CU-025;CP-038 Bloqueo de período después de reservar;"ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-076 después de confirmar vuelve a consultar la disponibilidad real y muestra el período como bloqueado
 confirmar-reserva.spec.ts#CA-076 no simula el bloqueo: si el backend aún muestra las fechas libres, lo indica tal cual";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Verificado en el calendario, la consulta de disponibilidad y la cotización; la búsqueda de alojamientos aún no está implementada.
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Verificado en el calendario, la consulta de disponibilidad y la cotización; la búsqueda de alojamientos aún no está implementada.
 Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-078;RF-022;Consulta de estado e historial de reservas;Consulta de historial del huésped;Dado que el huésped tiene reservas registradas, cuando consulta su historial, entonces el sistema muestra todas sus reservas con su estado actual.;HU-25;"CU-026
 CU-020";"CP-040 Consulta de historial de reservas
@@ -275,7 +275,7 @@ mis-reservas.spec.ts#CA-078 si la consulta falla lo informa y permite reintentar
 detalle-reserva.spec.ts#CA-078 muestra el estado actual, los datos de la reserva y el desglose cotizado
 detalle-reserva.spec.ts#CA-078 de una reserva cancelada muestra la fecha, la devolución y el motivo
 detalle-reserva.spec.ts#CA-078 si la reserva no existe o no es del huésped lo indica y permite volver";Probado (JUnit);;"feat/SCRUM-275-be-consultar-historial-reservas
-feat/SCRUM-276-fe-consultar-historial-reservas";;;"GET /reservas/mias (paginado, las más recientes primero) con estado, alojamiento, imagen, política, último pago, cancelación, completada y tieneResena. GET /reservas/{id} solo para el huésped, el anfitrión del alojamiento o ADMIN; para los demás 404.
+feat/SCRUM-276-fe-consultar-historial-reservas";;v1.0.0;"GET /reservas/mias (paginado, las más recientes primero) con estado, alojamiento, imagen, política, último pago, cancelación, completada y tieneResena. GET /reservas/{id} solo para el huésped, el anfitrión del alojamiento o ADMIN; para los demás 404.
 Front-end (SCRUM-276): pantallas Mis reservas (/reservas, solo Huésped; GET /reservas/mias con todas las páginas, pestañas Próximas, Activas, Finalizadas y Canceladas con el estado de cada reserva) y Detalle de la reserva (/reservas/:id; GET /reservas/{id} con estado, datos, desglose cotizado y cancelación). Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-079;RF-022;Consulta de estado e historial de reservas;Consulta de reservas propias del anfitrión;Dado que el anfitrión tiene alojamientos con reservas, cuando consulta sus reservas, entonces el sistema muestra solo las de sus alojamientos.;HU-25;"CU-026
 CU-020";"CP-040 Consulta de historial de reservas
@@ -287,13 +287,13 @@ reservas-anfitrion.spec.ts#CA-079 sin reservas en sus alojamientos lo indica
 reservas-anfitrion.spec.ts#CA-079 si el usuario no es anfitrión (403) lo informa sin mostrar reservas
 detalle-reserva-anfitrion.spec.ts#CA-079 muestra la reserva de su alojamiento con el huésped, las fechas, el estado y el total
 detalle-reserva-anfitrion.spec.ts#CA-079 una reserva que no es de sus alojamientos (404) no se muestra";Probado (JUnit);;"feat/SCRUM-275-be-consultar-historial-reservas
-feat/SCRUM-276-fe-consultar-historial-reservas";;;"GET /reservas/anfitrion (solo ANFITRION, 403 para los demás): reservas de sus alojamientos, nunca las de alojamientos de otros.
+feat/SCRUM-276-fe-consultar-historial-reservas";;v1.0.0;"GET /reservas/anfitrion (solo ANFITRION, 403 para los demás): reservas de sus alojamientos, nunca las de alojamientos de otros.
 Front-end (SCRUM-276): pantallas Reservas del anfitrión (/host/reservas, solo Anfitrión; GET /reservas/anfitrion paginado con huésped, alojamiento y estado) y su detalle (/host/reservas/:id; GET /reservas/{id}, 404 si no es de sus alojamientos). Probado con Vitest (ng test); el flujo completo con un anfitrión queda pendiente de verificar."
 CA-080;RNF-021;Cálculo consistente de cotización;Componentes y total de la cotización;Dado un alojamiento y fechas válidas, cuando se pide la cotización, entonces el sistema muestra todos los componentes exigidos y el total corresponde a la suma correcta de dichos componentes.;HU-31;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";"CotizacionServiceTest#totalEsLaSuma_CA080
 confirmar-reserva.spec.ts#CA-080 el total es el del backend y coincide con la suma de los componentes mostrados";Probado (JUnit);;"feat/SCRUM-188-be-cotizacion-servicios-adicionales
-feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;;"Front-end (SCRUM-248): la pantalla Confirmar reserva muestra el total que devuelve POST /cotizaciones junto con todos sus componentes; el front no calcula valores. Probado con Vitest (ng test)."
+feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;v1.0.0;"Front-end (SCRUM-248): la pantalla Confirmar reserva muestra el total que devuelve POST /cotizaciones junto con todos sus componentes; el front no calcula valores. Probado con Vitest (ng test)."
 CA-082;RNF-018;Validación cronológica de fechas;Validación de período;Dado que el huésped selecciona una fecha de llegada y una de salida, cuando solicita la cotización, la consulta de disponibilidad o la reserva, entonces el sistema debe procesarla si la salida es posterior a la llegada y, si es igual o anterior, rechazarla e indicar que las fechas son inválidas.;"HU-21
 HU-31";"CU-023
 CU-024";CP-029 Validación de fechas;"CalendarioServiceTest#consultaConFechasInvalidas_CA082
@@ -311,7 +311,7 @@ confirmar-reserva.spec.ts#CA-082 con la salida igual o anterior a la llegada no 
 feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
 feat/SCRUM-188-be-cotizacion-servicios-adicionales
 feat/SCRUM-116-fe-consultar-disponibilidad
-feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;;"Probado en la consulta de disponibilidad (HU-21) y en la cotización y la reserva (HU-22).
+feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;v1.0.0;"Probado en la consulta de disponibilidad (HU-21) y en la cotización y la reserva (HU-22).
 Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl).
 Front-end (SCRUM-248): con la salida igual o anterior a la llegada, Confirmar reserva no cotiza e indica que las fechas no son válidas."
 CA-083;"RF-021
@@ -328,14 +328,14 @@ CP-037 Reserva inmediata inválida
 CP-039 Validación de disponibilidad al confirmar";"CotizacionServiceTest#rechazaCapacidadYFechas_CA083
 confirmar-reserva.spec.ts#CA-083 rechaza por capacidad con el motivo del backend y permite elegir menos huéspedes
 confirmar-reserva.spec.ts#CA-083 rechaza la cotización si las fechas no están disponibles e informa el motivo";Probado (JUnit);;"feat/SCRUM-188-be-cotizacion-servicios-adicionales
-feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;;Front-end (SCRUM-248): Confirmar reserva muestra el motivo del backend al rechazar por capacidad (400) o por fechas no disponibles (409) y permite elegir otra cantidad de huéspedes (selector de 1 a la capacidad). Probado con Vitest (ng test).
+feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;v1.0.0;Front-end (SCRUM-248): Confirmar reserva muestra el motivo del backend al rechazar por capacidad (400) o por fechas no disponibles (409) y permite elegir otra cantidad de huéspedes (selector de 1 a la capacidad). Probado con Vitest (ng test).
 CA-084;RF-023;Configurabilidad de tarifas porcentuales;Aplicación de porcentajes configurados o por defecto;Dado que el sistema calcula una nueva cotización, cuando existen porcentajes de tarifas configurados (incluido uno recién modificado), entonces debe aplicar el valor vigente o, si no hay configuración, el porcentaje por defecto documentado.;"HU-24
 HU-31";CU-013;CP-033 Aplicación de tarifa configurada o por defecto;"TarifaServiceTest#porDefecto_CA084
 TarifasTest#aplicaElValorVigenteOElPorDefecto_CA084
 CotizacionServiceTest#aplicaPorcentajeVigente_CA084
 confirmar-reserva.spec.ts#CA-084 muestra los porcentajes de limpieza y servicio que aplicó el backend, sin recalcularlos";Probado (JUnit);;"feat/SCRUM-181-be-porcentajes-tarifas
 feat/SCRUM-188-be-cotizacion-servicios-adicionales
-feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;;Front-end (SCRUM-248): el desglose muestra los porcentajes de limpieza y servicio que aplicó el backend, sin recalcularlos. Probado con Vitest (ng test).
+feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;v1.0.0;Front-end (SCRUM-248): el desglose muestra los porcentajes de limpieza y servicio que aplicó el backend, sin recalcularlos. Probado con Vitest (ng test).
 CA-086;RNF-021;Cálculo consistente de cotización;Monto de reserva igual al de la cotización;Dado que se confirma una reserva desde una cotización previa, cuando se crea el registro, entonces el monto coincide exactamente.;HU-22;"CU-024
 CU-013";"CP-031 Generación de cotización con servicios adicionales
 CP-033 Aplicación de tarifa configurada o por defecto";"CotizacionServiceTest#calcula_CA086
@@ -343,7 +343,7 @@ ReservaServiceTest#reservaConfirmada_CA070_CA075_CA086
 ReservaTest#reservaYBloquea_CA070_CA075_CA076_CA086
 confirmar-reserva.spec.ts#CA-086 envía solo la referencia de la cotización, sin monto, aunque se altere el precio mostrado
 confirmar-reserva.spec.ts#CA-086 muestra el total que devuelve el backend para la reserva, sin recalcularlo";Probado (JUnit);;"feat/SCRUM-239-be-crear-reserva-bloqueo-fechas
-feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
+feat/SCRUM-240-fe-crear-reserva-con-bloqueo";;v1.0.0;"Front-end (SCRUM-240): pantalla ConfirmarReserva con ReservaService y CotizacionService; probado con Vitest (ng test). Rutas POST /cotizaciones y POST /reservas y CORS verificados con el backend local (curl, sin sesión); el flujo completo con un huésped y un alojamiento ACTIVA queda pendiente de verificar."
 CA-087;RF-024;Búsqueda de alojamientos;Búsqueda por filtros;Dado que el usuario indica ciudad, fechas de entrada y salida válidas, cantidad de huéspedes, tipo de alojamiento, rango de precio y/o servicios, cuando ejecuta la búsqueda, entonces el sistema debe mostrar solo publicaciones ACTIVA que cumplan todos los criterios indicados: ciudad, disponibilidad en el período, capacidad suficiente, tipo, precio por noche dentro del rango y servicios seleccionados.;HU-23;CU-022;CP-030 Búsqueda de alojamientos por filtros;"BusquedaAlojamientosTest#soloActivas_CA087
 BusquedaAlojamientosTest#ciudadYTipo_CA087
 BusquedaAlojamientosTest#capacidad_CA087
@@ -353,7 +353,7 @@ BusquedaAlojamientosTest#disponibilidadEnElPeriodo_CA087
 BusquedaAlojamientosTest#filtrosCombinados_CA087
 PublicacionServiceBusquedaTest#buscaSinOrden_CA087
 PublicacionServiceBusquedaTest#sinResenas_CA087
-PublicacionServiceBusquedaTest#conFechas_CA087";Probado (JUnit);;feat/SCRUM-241-be-buscar-alojamientos-con-filtros;;;GET /alojamientos (público). Filtros combinables: ciudad y tipo sin distinguir mayúsculas, disponibilidad en el período, capacidad, rango de precio y amenidades (todas). Además GET /alojamientos/disponibles y /alojamientos/tipos. Verificado contra Neon.
+PublicacionServiceBusquedaTest#conFechas_CA087";Probado (JUnit);;feat/SCRUM-241-be-buscar-alojamientos-con-filtros;;v1.0.0;GET /alojamientos (público). Filtros combinables: ciudad y tipo sin distinguir mayúsculas, disponibilidad en el período, capacidad, rango de precio y amenidades (todas). Además GET /alojamientos/disponibles y /alojamientos/tipos. Verificado contra Neon.
 CA-093;RF-019;Consultar publicaciones registradas;Consulta de detalle de publicación activa;Dado que existe una publicación ACTIVA, cuando el usuario la selecciona desde los resultados de búsqueda o consulta su detalle, entonces el sistema debe mostrar la información detallada del alojamiento.;HU-18;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
 CP-019 Consulta de publicaciones propias";"DetalleAlojamientoTest#detalleDePublicacionActiva_CA093
@@ -361,15 +361,15 @@ AlojamientoControllerDetalleTest#detalleSinSesion_CA093
 PublicacionServiceDetalleTest#detalleDePublicacionActiva_CA093
 detalle-alojamiento.spec.ts#CA-093: la galería muestra solo las fotos del alojamiento, sin fotos de relleno
 detalle-alojamiento.spec.ts#CA-093: sin fotos no inventa imágenes y lo indica";Probado (JUnit);;"feat/SCRUM-175-be-detalle-alojamiento-mapa
-feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): la galería del detalle muestra solo las imágenes del alojamiento (sin fotos de relleno); sin imágenes indica que no tiene fotografías. Probado con Vitest (ng test)."
+feat/SCRUM-280-fe-alojamientos-favoritos";;v1.0.0;"Front-end (SCRUM-280): la galería del detalle muestra solo las imágenes del alojamiento (sin fotos de relleno); sin imágenes indica que no tiene fotografías. Probado con Vitest (ng test)."
 CA-094;RF-017;Crear publicación de alojamiento;Creación de publicación;Dado que el usuario tiene el rol ANFITRION, cuando registra un nuevo alojamiento, entonces el sistema debe permitir crear la publicación ingresando título, descripción, ubicación, tipo, capacidad, precio, servicios, reglas, política de cancelación e imágenes, y guardarla en estado BORRADOR.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
 CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#creaEnBorrador_CA094
-CrearPublicacionTest#creaLaPublicacionEnBorrador_CA094";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;;"SCRUM-196: la política de cancelación se asigna al crear la publicación; validar en backend/front."
+CrearPublicacionTest#creaLaPublicacionEnBorrador_CA094";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;v1.0.0;"SCRUM-196: la política de cancelación se asigna al crear la publicación; validar en backend/front."
 CA-097;RF-017;Crear publicación de alojamiento;Validación de información obligatoria;Dado que una publicación no contiene toda la información mínima requerida, cuando el anfitrión intenta enviarla a revisión para su activación, entonces el sistema debe impedirlo e indicar los datos faltantes.;HU-15;CU-017;"CP-013 Creación de publicación
 CP-014 Envío a revisión de publicación incompleta
 CP-015 Validación de capacidad y precio del alojamiento";"PublicacionServiceTest#indicaLosDatosFaltantes_CA097
-CrearPublicacionTest#indicaLosDatosFaltantes_CA097";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;;
+CrearPublicacionTest#indicaLosDatosFaltantes_CA097";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;v1.0.0;
 CA-098;"RF-017
 RF-018";"Crear publicación de alojamiento
 Gestión y actualización de publicación";Validación de capacidad y precio;Dado que el anfitrión registra o modifica la capacidad o el precio por noche de un alojamiento, cuando ingresa un valor igual o menor que cero, entonces el sistema debe rechazarlo e informar que el valor debe ser mayor que cero.;HU-15;"CU-017
@@ -383,7 +383,7 @@ CP-020 Envío a revisión de publicación completa
 CP-021 Pausar publicación activa
 CP-057 Estados permitidos de la publicación
 CP-073 Registro y modificación de servicio adicional";"PublicacionServiceTest#capacidadYPrecioMayoresQueCero_CA098
-CrearPublicacionTest#capacidadYPrecioMayoresQueCero_CA098";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;;
+CrearPublicacionTest#capacidadYPrecioMayoresQueCero_CA098";Probado (JUnit);;feat/SCRUM-172-be-crear-publicacion;;v1.0.0;
 CA-100;RF-018;Gestión y actualización de publicación;Modificación de información;Dado que el anfitrión tiene una publicación registrada a su nombre, cuando modifica sus datos, entonces el sistema debe guardar y mostrar la información actualizada.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -407,7 +407,7 @@ fotografias-publicacion.spec.ts#CA-100 con 15 imágenes ya no ofrece agregar má
 fotografias-publicacion.spec.ts#CA-100 informa cuando el backend no puede guardar la imagen (503)
 editar-publicacion.spec.ts#CA-100 muestra las fotografías de la publicación y no las pierde al guardar el formulario";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
 feat/SCRUM-111-fe-actualizar-publicacion-servicios
-feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+feat/SCRUM-230-fe-actualizar-publicacion-servicios";;v1.0.0;"Front-end (SCRUM-111): probado con Vitest (ng test).
 Front-end (SCRUM-230): la edición también actualiza las tarifas propias de limpieza y servicio del alojamiento (0 a 100; vacías usan la tarifa general de HU-24); probado con Vitest (ng test).
 Front-end (SCRUM-230): la edición también gestiona las fotografías (FotografiasPublicacion): subir, marcar la principal y eliminar con /alojamientos/{id}/imagenes, con las reglas del backend (JPG, PNG o WEBP de 5 MB, máximo 15, al menos una); probado con Vitest (ng test)."
 CA-101;RF-018;Gestión y actualización de publicación;Restricción de modificación;Dado que el usuario no es propietario de la publicación ni administrador, cuando intenta modificarla o modificar sus servicios adicionales, entonces el sistema debe rechazar la operación.;HU-16;"CU-009
@@ -425,7 +425,7 @@ editar-publicacion.spec.ts#CA-101 bloquea la edición cuando el servidor respond
 editar-publicacion.spec.ts#CA-101 trata el 401 como sesión expirada y ofrece volver a iniciar sesión
 fotografias-publicacion.spec.ts#CA-101 avisa al formulario cuando el backend rechaza el cambio de imágenes (403 o 401)";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
 feat/SCRUM-111-fe-actualizar-publicacion-servicios
-feat/SCRUM-230-fe-actualizar-publicacion-servicios";;;"Front-end (SCRUM-111): probado con Vitest (ng test).
+feat/SCRUM-230-fe-actualizar-publicacion-servicios";;v1.0.0;"Front-end (SCRUM-111): probado con Vitest (ng test).
 Front-end (SCRUM-230): un 403 o 401 al cambiar las fotografías bloquea la edición igual que en el formulario."
 CA-103;RF-019;Consultar publicaciones registradas;Consulta de publicaciones propias;Dado que un anfitrión tiene publicaciones registradas, cuando consulta sus alojamientos, entonces el sistema debe mostrar sus publicaciones y el estado correspondiente de cada una.;HU-19;"CU-022
 CU-016";"CP-018 Consulta de detalle de publicación
@@ -439,7 +439,7 @@ mis-alojamientos.spec.ts#CA-103 recorre todas las páginas de GET /alojamientos/
 mis-alojamientos.spec.ts#CA-103 cuenta las publicaciones por estado y permite filtrarlas
 mis-alojamientos.spec.ts#CA-103 sin publicaciones indica que aún no tiene alojamientos y ofrece crear uno
 mis-alojamientos.spec.ts#CA-103 si la consulta falla muestra el motivo, no la lista vacía, y permite actualizar";Probado (JUnit);;"feat/SCRUM-176-be-consultar-mis-publicaciones-
-feat/SCRUM-274-fe-consultar-mis-publicaciones";;;"Front-end (SCRUM-274): pantalla Mis alojamientos (/host/alojamientos, solo Anfitrión) con GET /alojamientos/mios; cada publicación muestra su estado con la insignia de HU-17, con contadores y filtro por estado. Probado con Vitest (ng test); GET /alojamientos/mios verificado con el backend local (curl, sin sesión: 401); el flujo completo con un anfitrión queda pendiente de verificar."
+feat/SCRUM-274-fe-consultar-mis-publicaciones";;v1.0.0;"Front-end (SCRUM-274): pantalla Mis alojamientos (/host/alojamientos, solo Anfitrión) con GET /alojamientos/mios; cada publicación muestra su estado con la insignia de HU-17, con contadores y filtro por estado. Probado con Vitest (ng test); GET /alojamientos/mios verificado con el backend local (curl, sin sesión: 401); el flujo completo con un anfitrión queda pendiente de verificar."
 CA-104;RF-018;Gestión y actualización de publicación;Estados permitidos;Dado que existe una publicación registrada, cuando se consulta o modifica su estado, entonces el sistema debe utilizar únicamente los estados BORRADOR, PENDIENTE_REVISION, ACTIVA, PAUSADA o BLOQUEADA.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -454,7 +454,7 @@ gestion-estado.spec.ts#CA-104 define únicamente los cinco estados del contrato,
 gestion-estado.spec.ts#CA-104 muestra la insignia del estado %s sin alterar el valor del servidor y solo sus transiciones (un caso por estado)
 gestion-estado.spec.ts#CA-104 muestra un estado desconocido como no reconocido y no ofrece acciones sobre él
 gestion-estado.spec.ts#CA-104 no permite pedir una transición incompatible con el estado actual ni al administrador";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
-feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;Front-end (SCRUM-112): probado con Vitest (ng test).
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;v1.0.0;Front-end (SCRUM-112): probado con Vitest (ng test).
 CA-108;RF-018;Gestión y actualización de publicación;Pausa de publicación;Dado que el anfitrión tiene una publicación ACTIVA, cuando solicita pausarla, entonces el sistema debe cambiar su estado a PAUSADA e impedir la confirmación de nuevas reservas.;HU-17;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -469,7 +469,7 @@ gestion-estado.spec.ts#CA-108 cancelar la confirmación no pausa la publicación
 gestion-estado.spec.ts#CA-108 muestra el error del servidor y vuelve a consultar el estado real cuando la pausa no se permite
 gestion-estado.spec.ts#CA-108 trata el 403 del servidor como falta de permiso y retira la gestión
 gestion-estado.spec.ts#CA-108 reanuda una publicación PAUSADA con el endpoint real y muestra el estado que devuelve el servidor";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
-feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;"Probado el cambio a PAUSADA. Falta impedir la confirmación de reservas (HU-31)
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;v1.0.0;"Probado el cambio a PAUSADA. Falta impedir la confirmación de reservas (HU-31)
 Front-end (SCRUM-112): probado con Vitest (ng test). El front muestra la publicación pausada como no disponible; impedir la reserva le corresponde al backend."
 CA-112;RF-013;Bloqueo de publicaciones;Conservación de reservas existentes;Dado que una publicación tiene reservas futuras, cuando un administrador la bloquea, entonces el sistema debe conservar dichas reservas para auditoría y marcarlas para revisión manual.;HU-11;CU-007;"CP-022 Bloqueo administrativo de publicación
 CP-023 Conservación de reservas al bloquear publicación";"ModeracionPublicacionesTest#conservaReservas_CA112
@@ -477,7 +477,7 @@ PublicacionServiceModeracionTest#conservaReservas_CA112
 ModeracionPublicacionesTest#reservasEnRevision_CA112
 HistorialReservasServiceTest#listadoAdminEnRevision_CA112
 AdminControllerReservasTest#enRevision_CA112";Probado (JUnit);;"feat/SCRUM-168-be-bloquear-publicaciones
-fix/SCRUM-168-be-desbloquear-y-reservas-admin";;;"Al bloquear, las reservas futuras pasan a EN_REVISION. GET /admin/reservas?estado=EN_REVISION (ADMIN) las lista resumidas (huésped, alojamiento, anfitrión, fechas, total, estado); desbloquear no las cambia."
+fix/SCRUM-168-be-desbloquear-y-reservas-admin";;v1.0.0;"Al bloquear, las reservas futuras pasan a EN_REVISION. GET /admin/reservas?estado=EN_REVISION (ADMIN) las lista resumidas (huésped, alojamiento, anfitrión, fechas, total, estado); desbloquear no las cambia."
 CA-113;RNF-004;Protección de operaciones e información de usuarios;Modificación autorizada;Dado que un usuario es el anfitrión propietario de una publicación o tiene el rol ADMINISTRADOR, cuando solicita modificarla, entonces el sistema debe permitir la operación si cumple las demás reglas aplicables.;HU-16;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -488,7 +488,7 @@ ActualizarPublicacionTest#elPropietarioModificaYVeLosCambios_CA100_CA113
 ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114
 editar-publicacion.spec.ts#CA-113 permite al anfitrión propietario modificar su publicación
 editar-publicacion.spec.ts#CA-113 permite al ADMINISTRADOR modificar la publicación de otro anfitrión";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+feat/SCRUM-111-fe-actualizar-publicacion-servicios";;v1.0.0;Front-end (SCRUM-111): probado con Vitest (ng test).
 CA-114;RNF-004;Protección de operaciones e información de usuarios;Modificación no autorizada;Dado un usuario autenticado que no es propietario de un recurso (por ejemplo, una publicación) ni tiene permisos administrativos sobre él, cuando intenta modificarlo, entonces el sistema debe denegar la operación.;HU-16;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -497,23 +497,23 @@ AlojamientoControllerActualizacionTest#eliminarServicioRechazado_CA114
 ActualizarPublicacionTest#otroAnfitrionNoPuedeModificarPeroUnAdministradorSi_CA101_CA113_CA114
 editar-publicacion.spec.ts#CA-114 deniega el acceso a la edición a un usuario autenticado sin rol de anfitrión ni administrador
 editar-publicacion.spec.ts#CA-114 muestra un mensaje claro y no ofrece la edición cuando el servidor deniega el acceso";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;Front-end (SCRUM-111): probado con Vitest (ng test).
+feat/SCRUM-111-fe-actualizar-publicacion-servicios";;v1.0.0;Front-end (SCRUM-111): probado con Vitest (ng test).
 CA-115;RF-025;Registrar y actualizar períodos disponibles;Registro y asociación de disponibilidad;Dado que un anfitrión tiene un alojamiento registrado, cuando ingresa un período válido de disponibilidad, entonces el sistema debe guardar las fechas correspondientes asociadas a dicho alojamiento.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
 CP-026 Modificación de período reservado";"CalendarioServiceTest#registraPeriodo_CA115
 CalendarioServiceTest#administradorRegistraPeriodo_CA115
-DisponibilidadTest#registraPeriodo_CA115";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
+DisponibilidadTest#registraPeriodo_CA115";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;v1.0.0;
 CA-117;RF-025;Registrar y actualizar períodos disponibles;Actualización de períodos;Dado que un anfitrión tiene períodos de disponibilidad registrados para su alojamiento, cuando modifica un período no reservado, entonces el sistema debe guardar y mostrar la disponibilidad actualizada.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
 CP-026 Modificación de período reservado";"CalendarioServiceTest#modificaPeriodoNoReservado_CA117
-DisponibilidadTest#modificaPeriodo_CA117";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
+DisponibilidadTest#modificaPeriodo_CA117";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;v1.0.0;
 CA-118;RF-025;Registrar y actualizar períodos disponibles;Protección de períodos reservados;Dado que un alojamiento tiene un período reservado, cuando el anfitrión intenta modificar su disponibilidad de manera que afecte dicha reserva, entonces el sistema debe rechazar la modificación.;HU-20;"CU-018
 CU-019";"CP-024 Registro de período disponible
 CP-025 Actualización de disponibilidad
 CP-026 Modificación de período reservado";"CalendarioServiceTest#rechazaCambioQueAfectaReserva_CA118
-DisponibilidadTest#rechazaCambioQueAfectaReserva_CA118";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;;
+DisponibilidadTest#rechazaCambioQueAfectaReserva_CA118";Probado (JUnit);;feat/SCRUM-235-be-registrar-periodos-disponibilidad;;v1.0.0;
 CA-119;RF-026;Consultar disponibilidad;Consulta de período disponible;Dado que una publicación se encuentra ACTIVA y tiene un período disponible, cuando el huésped consulta fechas comprendidas dentro de dicho período y sin reservas superpuestas, entonces el sistema debe mostrar el alojamiento como disponible.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
 CP-029 Validación de fechas";"CalendarioServiceTest#disponibleDentroDePeriodoSinReservas_CA119
@@ -521,7 +521,7 @@ DisponibilidadTest#disponibleSinReservas_CA119
 consultar-disponibilidad.spec.ts#CA-119 consulta el endpoint real con las fechas en formato AAAA-MM-DD y muestra el alojamiento disponible
 consultar-disponibilidad.spec.ts#CA-119 permite continuar con la reserva y transmite las fechas consultadas al siguiente paso
 consultar-disponibilidad.spec.ts#CA-119 invalida el resultado disponible si el huésped cambia las fechas después de consultar";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
-feat/SCRUM-116-fe-consultar-disponibilidad";;;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
+feat/SCRUM-116-fe-consultar-disponibilidad";;v1.0.0;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-120;RF-026;Consultar disponibilidad;Consulta de período no disponible;Dado que un alojamiento tiene fechas reservadas o no disponibles, cuando el huésped consulta un período que incluye dichas fechas, entonces el sistema debe indicar que el alojamiento no está disponible para el período solicitado.;HU-21;CU-023;"CP-027 Consulta de disponibilidad
 CP-028 Consulta de período ocupado
 CP-029 Validación de fechas";"CalendarioServiceTest#noDisponibleConReservaOFueraDePeriodo_CA120
@@ -530,14 +530,14 @@ DisponibilidadTest#noDisponibleConReservaOFueraDePeriodo_CA120
 consultar-disponibilidad.spec.ts#CA-120 indica que no está disponible con el motivo del servidor, conserva las fechas y no permite continuar
 consultar-disponibilidad.spec.ts#CA-120 permite elegir otras fechas y volver a consultar
 consultar-disponibilidad.spec.ts#CA-120 distingue la indisponibilidad de un error de conexión, del servidor o de un alojamiento inexistente";Probado (JUnit);;"feat/SCRUM-237-be-consultar-disponibilidad
-feat/SCRUM-116-fe-consultar-disponibilidad";;;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
+feat/SCRUM-116-fe-consultar-disponibilidad";;v1.0.0;"Front-end (SCRUM-116): probado con Vitest (ng test); endpoint verificado con el backend local (curl)."
 CA-131;RNF-003;Control de acceso por autenticación y roles;Acceso según rol;Dado un usuario con un rol determinado, cuando intente acceder a una funcionalidad, entonces el sistema debe permitir o rechazar el acceso según los permisos definidos para dicho rol.;;CU-002;"CP-074 Acceso según rol
 CP-005 Protección de funcionalidad sin autenticación";"SeguridadRutasTest#laMatrizCubreTodosLosEndpoints_CA131
 SeguridadRutasTest#rolIncorrectoResponde403_CA131
 SeguridadRutasTest#rutasPublicasSinSesion_CA131
 ReservaTest#permisos_CA131
 RestriccionUsuariosTest#permisos_CA131
-rutas-protegidas.spec.ts#CA-131 (todas las rutas del front)";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
+rutas-protegidas.spec.ts#CA-131 (todas las rutas del front)";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-133;RNF-004;Protección de operaciones e información de usuarios;Aislamiento de información de usuarios;Dado un usuario autenticado, cuando intente consultar o modificar información privada de otro usuario sin autorización, entonces el sistema debe impedir la operación.;;"CU-009
 CU-004
 CU-005";"CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -547,13 +547,13 @@ EstadoCuentaTest (CA-053 CA-133)
 FavoritosTest (CA-170, CA-171 CA-133)
 NotificacionesTest (CA-013 CA-133)
 HistorialReservasTest (CA-079 CA-133)
-MensajeriaControllerTest (CA-167 CA-133)";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
+MensajeriaControllerTest (CA-167 CA-133)";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-134;RNF-003;Control de acceso por autenticación y roles;Exigir autenticación;Dado un usuario sin una sesión válida, cuando intente ejecutar una operación protegida, entonces el sistema debe rechazar la solicitud y no ejecutar la operación.;;CU-002;"CP-074 Acceso según rol
 CP-005 Protección de funcionalidad sin autenticación";"SeguridadRutasTest#sinSesionResponde401_CA134
 SeguridadRutasTest#tokenDeCuentaInexistente_CA134
 RegistroUsuarioTest#rutaProtegidaSinTokenResponde401_CA134
 rutas-protegidas.spec.ts#CA-134 sin sesión, cada ruta protegida manda al inicio de sesión";Probado (JUnit y Vitest);38a9302;"main
-test/SCRUM-208-rnf-seguridad";;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
+test/SCRUM-208-rnf-seguridad";;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-135;RNF-005;Validación de contraseñas;Contraseña con condiciones mínimas;Dado un usuario que registre o actualice su contraseña, cuando la contraseña no cumpla las condiciones mínimas establecidas, entonces el sistema debe rechazarla e informar la validación correspondiente.;;"CU-001
 CU-003
 CU-005";CP-075 Contraseña que no cumple condiciones mínimas;"ExceptionChekerTest (CA-135)
@@ -563,56 +563,56 @@ RecuperacionContraseniaTest (CA-135)
 AuthServiceTest (CA-135)
 contrasena.spec.ts (CA-135)
 register.spec.ts (CA-135)
-recover.spec.ts#CA-038";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
+recover.spec.ts#CA-038";Probado (JUnit y Vitest);38a9302;test/SCRUM-208-rnf-seguridad;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-208 (SCRUM-208).
 CA-136;RNF-006;Registro de operaciones relevantes;Registro de operaciones relevantes;Dado una operación considerada relevante, cuando esta sea ejecutada, entonces el sistema debe generar un registro asociado a dicha operación.;HU-26;CU-011;CP-076 Registro de operación relevante;"ManejadorGlobalExcepcionesTest#errorInesperadoAuditado_CA136
 TarifaServiceTest#rechazoAuditado_CA136
 AlojamientoControllerAuditoriaTest#publicacionCreadaAuditada_CA136
-AuditoriaTest#operacionRelevanteGeneraEvento_CA136";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+AuditoriaTest#operacionRelevanteGeneraEvento_CA136";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;v1.0.0;
 CA-137;RNF-006;Registro de operaciones relevantes;Usuario responsable de la acción;Dado un usuario autenticado que realice una operación trazable, cuando el sistema genere el registro, entonces este debe identificar al usuario responsable de la acción.;HU-26;CU-011;CP-076 Registro de operación relevante;"ManejadorGlobalExcepcionesTest#accesoDenegadoAuditadoConElUsuario_CA137
 AlojamientoControllerAuditoriaTest#publicacionRechazadaAuditada_CA137
-AuditoriaTest#eventoIdentificaAlUsuario_CA137";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+AuditoriaTest#eventoIdentificaAlUsuario_CA137";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;v1.0.0;
 CA-138;RNF-006;Registro de operaciones relevantes;Fecha y estado de la operación;Dado un evento registrado, cuando se consulte su información, entonces el registro debe contener la fecha de ejecución y el estado o resultado correspondiente.;HU-26;CU-011;CP-076 Registro de operación relevante;"AuditoriaServiceTest#detalle_CA138
-AuditoriaTest#eventoTieneFechaYResultado_CA138";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+AuditoriaTest#eventoTieneFechaYResultado_CA138";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;v1.0.0;
 CA-139;RNF-007;Conservación de información para auditoría;Disponibilidad de registros para auditoría;Dado un evento de auditoría registrado, cuando un usuario autorizado consulte los registros posteriormente, entonces la información debe permanecer disponible para su revisión.;HU-26;CU-011;CP-077 Disponibilidad posterior de registros de auditoría;"AuditoriaServiceTest#consultaConFiltros_CA139
-AuditoriaTest#eventosDisponiblesParaRevision_CA139";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;;
+AuditoriaTest#eventosDisponiblesParaRevision_CA139";Probado (JUnit);;feat/SCRUM-228-be-registro-operaciones-relevantes;;v1.0.0;
 CA-140;RNF-008;Prevención de duplicados y consistencia ante reintentos;Sin duplicados por reenvío;Dado una solicitud que ya fue procesada, cuando la misma solicitud sea enviada nuevamente, entonces el sistema no debe generar una segunda operación equivalente.;;CU-025;CP-078 Solicitud duplicada o reintentada;"CancelacionReservaTest#idempotente_CA140_CA141
 IdempotenciaServiceTest#primeraVez_CA140
-IdempotenciaServiceTest#reintento_CA140_CA141";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;"Idempotency-Key en POST /reservas/{id}/cancelar (tabla registro_idempotencia): la misma clave no cancela dos veces; con otros datos responde 422 y sin clave 400. POST /reservas aún no la usa."
+IdempotenciaServiceTest#reintento_CA140_CA141";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;v1.0.0;"Idempotency-Key en POST /reservas/{id}/cancelar (tabla registro_idempotencia): la misma clave no cancela dos veces; con otros datos responde 422 y sin clave 400. POST /reservas aún no la usa."
 CA-141;RNF-008;Prevención de duplicados y consistencia ante reintentos;Resultado único ante reintentos;Dado una operación procesada previamente, cuando el cliente reintente la misma solicitud, entonces el sistema debe conservar el resultado original sin generar inconsistencias o duplicados.;;CU-025;CP-078 Solicitud duplicada o reintentada;"CancelacionReservaTest#idempotente_CA140_CA141
-IdempotenciaServiceTest#reintento_CA140_CA141";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;;El reintento con la misma clave devuelve la respuesta original con Idempotent-Replayed: true.
+IdempotenciaServiceTest#reintento_CA140_CA141";Probado (JUnit);;feat/SCRUM-251-be-cancelar-reserva-politica;;v1.0.0;El reintento con la misma clave devuelve la respuesta original con Idempotent-Replayed: true.
 CA-142;RNF-009;Tiempo de respuesta de consultas;Tiempo máximo de consulta;Dado que se ejecutan consultas de alojamientos bajo las condiciones de prueba definidas, cuando el usuario solicita visualizar los resultados, entonces al menos el 95 % de las solicitudes deben responder en un tiempo máximo de 6 segundos.;;"CU-022
 CU-023";"CP-079 Tiempo de respuesta de búsqueda
-CP-080 Tiempo de respuesta de disponibilidad";;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CP-080 Tiempo de respuesta de disponibilidad";;;;;;v1.0.0;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
 CA-143;RNF-009;Tiempo de respuesta de consultas;Tiempo máximo de disponibilidad;Dado que un usuario consulta la disponibilidad de un alojamiento bajo las condiciones de prueba definidas, cuando solicita las fechas disponibles, entonces al menos el 95 % de las solicitudes deben responder en un máximo de 6 segundos.;;"CU-022
 CU-023";"CP-079 Tiempo de respuesta de búsqueda
-CP-080 Tiempo de respuesta de disponibilidad";;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CP-080 Tiempo de respuesta de disponibilidad";;;;;;v1.0.0;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
 CA-144;RNF-010;Tiempo de actualización de información;Tiempo máximo de actualización;Dado que un anfitrión crea o actualiza una publicación o período de disponibilidad, cuando envía información válida, entonces al menos el 95 % de las operaciones deben completarse en un máximo de 5 segundos.;;"CU-009
-CU-019";CP-081 Tiempo de actualización de información;;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
-CA-145;RNF-011;Tiempo de confirmación de reserva;Tiempo máximo de confirmación;Dado que existe una solicitud de reserva válida, cuando el huésped solicita confirmarla, entonces al menos el 95 % de las operaciones deben completar la revalidación, confirmación y bloqueo del período en un máximo de 6 segundos.;;CU-025;CP-082 Tiempo de confirmación de reserva;;;;;;;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
-CA-146;RNF-012;Diseño adaptable;Visualización en diferentes dispositivos;Dado que un usuario accede desde computador o dispositivo móvil, cuando utiliza las funciones de alojamientos o disponibilidad, entonces debe poder visualizar y utilizar sus elementos principales sin pérdida de información ni controles inaccesibles.;;;CP-083 Diseño adaptable;;Verificado (revisión en computador y móvil);;fix/SCRUM-212-rnf-usabilidad;;;Se valida en el front (diseño adaptable). Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
+CU-019";CP-081 Tiempo de actualización de información;;;;;;v1.0.0;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CA-145;RNF-011;Tiempo de confirmación de reserva;Tiempo máximo de confirmación;Dado que existe una solicitud de reserva válida, cuando el huésped solicita confirmarla, entonces al menos el 95 % de las operaciones deben completar la revalidación, confirmación y bloqueo del período en un máximo de 6 segundos.;;CU-025;CP-082 Tiempo de confirmación de reserva;;;;;;v1.0.0;Tiempo de respuesta: requiere prueba de carga. Ninguna HU lo lista en sus criterios de aceptación
+CA-146;RNF-012;Diseño adaptable;Visualización en diferentes dispositivos;Dado que un usuario accede desde computador o dispositivo móvil, cuando utiliza las funciones de alojamientos o disponibilidad, entonces debe poder visualizar y utilizar sus elementos principales sin pérdida de información ni controles inaccesibles.;;;CP-083 Diseño adaptable;;Verificado (revisión en computador y móvil);;fix/SCRUM-212-rnf-usabilidad;;v1.0.0;Se valida en el front (diseño adaptable). Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
 CA-147;RNF-013;Claridad de formularios y mensajes;Validación comprensible;Dado que el usuario completa un formulario, cuando omite un dato obligatorio o ingresa información inválida, entonces el sistema debe identificar el campo correspondiente y mostrar un mensaje.;;;"CP-084 Validación comprensible de formularios
 CP-086 Mensajes de confirmación y error";"login.spec.ts#CA-147 identifica el campo vacío o inválido y muestra su mensaje
 login.spec.ts#CA-147 al enviar con campos inválidos marca cada campo, no solo un aviso general
-login.spec.ts#CA-147 el código del segundo factor exige 6 dígitos";Verificado (revisión en computador y móvil);;fix/SCRUM-212-rnf-usabilidad;;;Se valida en el front (formularios). Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
+login.spec.ts#CA-147 el código del segundo factor exige 6 dígitos";Verificado (revisión en computador y móvil);;fix/SCRUM-212-rnf-usabilidad;;v1.0.0;Se valida en el front (formularios). Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
 CA-148;RNF-014;Identificación de estados;Estados comprensibles;Dado que un usuario consulta una publicación o su disponibilidad, cuando visualiza su información, entonces debe poder identificar claramente el estado de la publicación y los períodos disponibles, reservados o bloqueados.;;"CU-019
 CU-025
-CU-031";CP-085 Identificación clara de estados;;Verificado (revisión en computador y móvil);;fix/SCRUM-212-rnf-usabilidad;;;Se valida en el front (estados visibles). Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
+CU-031";CP-085 Identificación clara de estados;;Verificado (revisión en computador y móvil);;fix/SCRUM-212-rnf-usabilidad;;v1.0.0;Se valida en el front (estados visibles). Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
 CA-149;RNF-013;Claridad de formularios y mensajes;Retroalimentación al usuario;Dado que un usuario realiza una operación, cuando esta termina correctamente o es rechazada, entonces el sistema debe mostrar un mensaje claro indicando el resultado y/o la causa del rechazo.;;;"CP-084 Validación comprensible de formularios
-CP-086 Mensajes de confirmación y error";IdentidadPerfilTest#erroresTecnicosRespondenConFormatoUniforme_CA149;Verificado (revisión en computador y móvil);38a9302;fix/SCRUM-212-rnf-usabilidad;;;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
-CA-150;RNF-015;Integridad de registros de auditoría;Protección de registros;Dado que existe un registro de auditoría, cuando un usuario no autorizado intenta modificarlo o eliminarlo, entonces el sistema debe impedir la operación y conservar la información original.;;CU-011;CP-087 Protección de registros de auditoría;AdministracionTest#losRegistrosDeAuditoriaNoSePuedenModificarNiBorrar_CA150;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
-CA-151;RNF-016;Identificación del recurso afectado;Asociación del evento;Dado que ocurre una operación relevante, cuando se genera su registro de auditoría, entonces debe quedar identificado el usuario, publicación, alojamiento, reserva u otro recurso relacionado.;;CU-011;CP-076 Registro de operación relevante;AdministracionTest#unaOperacionRechazadaQuedaRegistradaConElRecursoAfectado_CA151_CA152;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+CP-086 Mensajes de confirmación y error";IdentidadPerfilTest#erroresTecnicosRespondenConFormatoUniforme_CA149;Verificado (revisión en computador y móvil);38a9302;fix/SCRUM-212-rnf-usabilidad;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación. Evidencia: docs/evidencias/SCRUM-212 (SCRUM-212).
+CA-150;RNF-015;Integridad de registros de auditoría;Protección de registros;Dado que existe un registro de auditoría, cuando un usuario no autorizado intenta modificarlo o eliminarlo, entonces el sistema debe impedir la operación y conservar la información original.;;CU-011;CP-087 Protección de registros de auditoría;AdministracionTest#losRegistrosDeAuditoriaNoSePuedenModificarNiBorrar_CA150;;38a9302;;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación
+CA-151;RNF-016;Identificación del recurso afectado;Asociación del evento;Dado que ocurre una operación relevante, cuando se genera su registro de auditoría, entonces debe quedar identificado el usuario, publicación, alojamiento, reserva u otro recurso relacionado.;;CU-011;CP-076 Registro de operación relevante;AdministracionTest#unaOperacionRechazadaQuedaRegistradaConElRecursoAfectado_CA151_CA152;;38a9302;;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación
 CA-152;RNF-017;Conservación de evidencias e historial;Evidencia de rechazo;Dado que una operación relevante es rechazada por autorización o disponibilidad, cuando el sistema procesa el rechazo, entonces debe conservar un registro del intento y de su resultado.;;CU-011;"CP-088 Registro de operación rechazada
 CP-089 Historial sin sobrescritura";"AdministracionTest#unaOperacionRechazadaQuedaRegistradaConElRecursoAfectado_CA151_CA152
 IdentidadPerfilTest#debeAuditarLoginExitosoYFallido_CA136_CA152
 AuditoriaServiceTest#debeGuardarTambienLasOperacionesRechazadas_CA152
-AuditoriaServiceTest#noDebeInterrumpirLaOperacionSiLaAuditoriaFalla_CA152";;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
+AuditoriaServiceTest#noDebeInterrumpirLaOperacionSiLaAuditoriaFalla_CA152";;38a9302;;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación
 CA-153;RNF-017;Conservación de evidencias e historial;Historial sin sobrescritura;Dado que existen registros anteriores sobre una publicación, disponibilidad o reserva, cuando ocurre un nuevo cambio relevante, entonces el sistema debe conservar los eventos anteriores.;;CU-011;"CP-088 Registro de operación rechazada
-CP-089 Historial sin sobrescritura";PublicacionesTest#elHistorialConservaTodosLosCambiosDeEstado_CA153;;38a9302;;;;Ninguna HU lo lista en sus criterios de aceptación
-CA-154;RNF-001;Disponibilidad operativa;Disponibilidad mínima del sistema;Dado que el sistema se encuentra dentro del período de operación definido, cuando los usuarios accedan a los servicios principales, entonces estos deben permanecer disponibles al menos el 99 % del tiempo medido durante las pruebas.;;;CP-090 Disponibilidad mínima del sistema;;;;;;;Depende del despliegue (disponibilidad). Ninguna HU lo lista en sus criterios de aceptación
+CP-089 Historial sin sobrescritura";PublicacionesTest#elHistorialConservaTodosLosCambiosDeEstado_CA153;;38a9302;;;v1.0.0;Ninguna HU lo lista en sus criterios de aceptación
+CA-154;RNF-001;Disponibilidad operativa;Disponibilidad mínima del sistema;Dado que el sistema se encuentra dentro del período de operación definido, cuando los usuarios accedan a los servicios principales, entonces estos deben permanecer disponibles al menos el 99 % del tiempo medido durante las pruebas.;;;CP-090 Disponibilidad mínima del sistema;;;;;;v1.0.0;Depende del despliegue (disponibilidad). Ninguna HU lo lista en sus criterios de aceptación
 CA-155;RNF-002;Recuperación y continuidad ante fallos;Tiempo máximo de recuperación;Dado que ocurre una interrupción controlada de un servicio principal, cuando se inicia el proceso de recuperación, entonces el sistema debe restablecer el servicio en un tiempo máximo de 60 segundos.;;;"CP-091 Recuperación ante fallo
-CP-092 Conservación de información tras un fallo";;;;;;;Depende del despliegue (recuperación). Ninguna HU lo lista en sus criterios de aceptación
+CP-092 Conservación de información tras un fallo";;;;;;v1.0.0;Depende del despliegue (recuperación). Ninguna HU lo lista en sus criterios de aceptación
 CA-156;RNF-002;Recuperación y continuidad ante fallos;Conservación de información persistida;Dado que ocurre una interrupción después de almacenar información correctamente, cuando el sistema restablece sus servicios, entonces debe conservarse el 100 % de la información persistida antes del fallo.;;;"CP-091 Recuperación ante fallo
-CP-092 Conservación de información tras un fallo";;;;;;;Depende del despliegue (persistencia). Ninguna HU lo lista en sus criterios de aceptación
+CP-092 Conservación de información tras un fallo";;;;;;v1.0.0;Depende del despliegue (persistencia). Ninguna HU lo lista en sus criterios de aceptación
 CA-157;RF-027;Gestión del estado de revisión del alojamiento;Envío a revisión;Dado que el anfitrión completó los datos de una publicación, cuando solicita enviarla a revisión, entonces el sistema debe cambiar su estado a PENDIENTE_REVISION.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -625,7 +625,7 @@ gestion-estado.spec.ts#CA-157 envía a revisión una publicación completa y la 
 gestion-estado.spec.ts#CA-157 indica los datos que faltan y no envía una publicación incompleta
 gestion-estado.spec.ts#CA-157 muestra lo que falta según el servidor cuando solo el backend puede comprobarlo
 gestion-estado.spec.ts#CA-157 pide guardar los cambios del formulario antes de enviar a revisión";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
-feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;Front-end (SCRUM-112): probado con Vitest (ng test).
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;v1.0.0;Front-end (SCRUM-112): probado con Vitest (ng test).
 CA-158;RF-027;Gestión del estado de revisión del alojamiento;Aprobación de la publicación;Dado que existe una publicación en estado PENDIENTE_REVISION que cumple las condiciones, cuando un administrador la aprueba, entonces el sistema debe cambiarla a ACTIVA, dejarla disponible para recibir reservas y hacerla visible en las búsquedas.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -635,7 +635,7 @@ PublicacionServiceModeracionTest#noApruebaSinFechas_CA158
 AdminControllerModeracionTest#aprueba_CA158
 ModeracionPublicacionesTest#apruebaLaPublicacion_CA158_CA196
 ModeracionPublicacionesTest#sinFechasNoSeAprueba_CA158
-BusquedaAlojamientosTest#aprobadaApareceEnLaBusqueda_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;Queda ACTIVA, disponible para reservar y visible en la búsqueda (HU-23).
+BusquedaAlojamientosTest#aprobadaApareceEnLaBusqueda_CA158";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;v1.0.0;Queda ACTIVA, disponible para reservar y visible en la búsqueda (HU-23).
 CA-159;RF-027;Gestión del estado de revisión del alojamiento;Publicación pausada o bloqueada;Dado que una publicación está PAUSADA o BLOQUEADA, cuando un huésped intenta crear una nueva reserva sobre ella, entonces el sistema debe impedirlo y no mostrarla como disponible para nuevas reservas.;HU-17;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -645,7 +645,7 @@ gestion-estado.spec.ts#CA-159 solo una publicación ACTIVA se considera disponib
 gestion-estado.spec.ts#CA-159 muestra una publicación PAUSADA como no disponible para nuevas reservas
 gestion-estado.spec.ts#CA-159 muestra una publicación BLOQUEADA como no disponible y no ofrece reanudarla ni pausarla
 gestion-estado.spec.ts#CA-159 la pantalla de disponibilidad advierte que una publicación pausada o bloqueada no acepta nuevas reservas";Probado (JUnit);;"feat/SCRUM-174-be-estado-publicacion
-feat/SCRUM-112-fe-enviar-a-revision-y-estados";;;"Probado que no se muestra disponible. Falta impedir la creación de la reserva (HU-31)
+feat/SCRUM-112-fe-enviar-a-revision-y-estados";;v1.0.0;"Probado que no se muestra disponible. Falta impedir la creación de la reserva (HU-31)
 Front-end (SCRUM-112): probado con Vitest (ng test). El front no tiene todavía pantallas de búsqueda ni de reserva para el huésped; impedir la reserva le corresponde al backend."
 CA-160;RF-028;Procesamiento de pago simulado;Inicio del pago de prueba;Dado que el huésped confirma una reserva, cuando el sistema inicia el pago, entonces debe procesarlo únicamente en ambiente de pruebas, sin realizar cobros reales.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
@@ -660,14 +660,14 @@ confirmar-reserva.spec.ts#CA-160 muestra solo las tarjetas de prueba que ofrece 
 confirmar-reserva.spec.ts#CA-160 con Stripe en modo de prueba usa las mismas tarjetas de prueba y lo indica
 tarjetas-prueba.spec.ts#CA-160 todas las tarjetas de prueba son números válidos y no se repiten
 tarjetas-prueba.spec.ts#CA-160 la tarjeta elige el método de prueba solo si el backend lo ofrece";Probado (JUnit);;"feat/SCRUM-184-be-pago-reserva-prueba
-feat/SCRUM-246-fe-pago-reserva-prueba";;;"Front-end (SCRUM-246): ""Confirmar reserva"" abre el modal ""Confirma y paga"". Se escribe una tarjeta de prueba de Stripe (número, vencimiento, CVC) que solo se valida en el navegador; el número elige el método de prueba de GET /pagos/configuracion y solo ese método viaja en POST /reservas. Una tarjeta que no es de prueba se rechaza sin llamar al backend. 9999 9999 9999 9995 simula la falla de la pasarela (pm_card_error). Probado con Vitest (ng test); GET /pagos/configuracion verificado con el backend local (modo SIMULADO)."
+feat/SCRUM-246-fe-pago-reserva-prueba";;v1.0.0;"Front-end (SCRUM-246): ""Confirmar reserva"" abre el modal ""Confirma y paga"". Se escribe una tarjeta de prueba de Stripe (número, vencimiento, CVC) que solo se valida en el navegador; el número elige el método de prueba de GET /pagos/configuracion y solo ese método viaja en POST /reservas. Una tarjeta que no es de prueba se rechaza sin llamar al backend. 9999 9999 9999 9995 simula la falla de la pasarela (pm_card_error). Probado con Vitest (ng test); GET /pagos/configuracion verificado con el backend local (modo SIMULADO)."
 CA-161;RF-028;Procesamiento de pago simulado;Pago aprobado;Dado que el pago de prueba fue aprobado, cuando el sistema recibe el resultado, entonces debe registrarlo y asociarlo a la reserva, que queda con un pago exitoso.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#apruebaEnStripe_CA161
 PagoServiceTest#apruebaPorDefecto_CA160_CA161
 PagoServiceTest#otroMetodoSeAprueba_CA161
 confirmar-reserva.spec.ts#CA-161 con el pago aprobado muestra la reserva pagada con el pago registrado y su referencia";Probado (JUnit);;"feat/SCRUM-184-be-pago-reserva-prueba
-feat/SCRUM-246-fe-pago-reserva-prueba";;;"Front-end (SCRUM-246): con el pago aprobado, la reserva confirmada muestra el pago registrado (estado, valor y referencia) y el ambiente de prueba. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
+feat/SCRUM-246-fe-pago-reserva-prueba";;v1.0.0;"Front-end (SCRUM-246): con el pago aprobado, la reserva confirmada muestra el pago registrado (estado, valor y referencia) y el ambiente de prueba. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-162;RF-028;Procesamiento de pago simulado;Pago rechazado o con error;Dado que el pago de prueba es rechazado u ocurre un error que impide confirmarlo, cuando el sistema recibe el resultado, entonces la reserva no debe quedar marcada como pagada y se debe informar que el pago fue rechazado o no confirmado.;HU-27;CU-034;"CP-061 Inicio del pago de prueba
 CP-062 Pago de prueba aprobado
 CP-063 Pago de prueba rechazado o con error";"PagoServiceTest#rechazoEnStripe_CA162
@@ -677,10 +677,10 @@ PagoServiceTest#rechazo_CA162
 PagoServiceTest#falla_CA162
 confirmar-reserva.spec.ts#CA-162 con la tarjeta rechazada la reserva no queda pagada, se informa el motivo y se puede pagar con otra tarjeta
 confirmar-reserva.spec.ts#CA-162 con la tarjeta reservada para la falla de la pasarela informa que el pago no se confirmó";Probado (JUnit);;"feat/SCRUM-184-be-pago-reserva-prueba
-feat/SCRUM-246-fe-pago-reserva-prueba";;;Front-end (SCRUM-246): con 402 o 502 el modal muestra el motivo del backend, la reserva no aparece como pagada y se puede pagar con otra tarjeta (nueva Idempotency-Key). Probado con Vitest (ng test).
+feat/SCRUM-246-fe-pago-reserva-prueba";;v1.0.0;Front-end (SCRUM-246): con 402 o 502 el modal muestra el motivo del backend, la reserva no aparece como pagada y se puede pagar con otra tarjeta (nueva Idempotency-Key). Probado con Vitest (ng test).
 CA-164;RNF-022;Visualización de ubicación del alojamiento;Mapa de ubicación;Dado que el alojamiento tiene una ubicación registrada, cuando el huésped consulta su detalle, entonces el sistema debe mostrar en un mapa la ubicación registrada para ese alojamiento.;HU-18;CU-022;CP-018 Consulta de detalle de publicación;"DetalleAlojamientoTest#detalleConUbicacion_CA164
 AlojamientoControllerDetalleTest#detalleConCoordenadas_CA164
-PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;;"El back entrega la ubicación; el mapa se valida en el front"
+PublicacionServiceDetalleTest#detalleConUbicacion_CA164";Probado (JUnit);;feat/SCRUM-175-be-detalle-alojamiento-mapa;;v1.0.0;"El back entrega la ubicación; el mapa se valida en el front"
 CA-165;RF-029;Mensajería entre huésped y anfitrión;Envío y respuesta de mensajes;Dado que el huésped o el anfitrión participan en una conversación, cuando envían un mensaje o una respuesta, entonces el sistema debe registrarlo asociado a la misma conversación, identificando al remitente y conservando la fecha de envío.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";"MensajeriaTest#enviaYElOtroLoLee_CA165
@@ -689,7 +689,7 @@ MensajeriaServiceTest#enviaConRemitenteYFecha_CA165
 MensajeriaServiceTest#enviaPorWebSocket_CA165
 MensajeriaServiceTest#mensajeInvalido_CA165
 MensajeriaControllerTest#enviar_CA165
-NotificacionServiceTest#enviaPorWebSocket_CA165";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;;
+NotificacionServiceTest#enviaPorWebSocket_CA165";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;v1.0.0;
 CA-167;RF-029;Mensajería entre huésped y anfitrión;Acceso restringido a la conversación;Dado que un usuario no participa en una conversación, cuando intenta consultarla, entonces el sistema debe impedirlo, permitiendo el acceso solo a los participantes autorizados.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";"MensajeriaTest#soloParticipantes_CA167
@@ -699,7 +699,7 @@ MensajeriaServiceTest#participantesLeen_CA167
 MensajeriaServiceTest#conversacionInexistente_CA167
 MensajeriaServiceTest#listaLasPropias_CA167
 MensajeriaControllerTest#mensajes_CA167
-MensajeriaControllerTest#listar_CA167";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;;
+MensajeriaControllerTest#listar_CA167";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;v1.0.0;
 CA-169;RF-029;Mensajería entre huésped y anfitrión;Inicio de conversación;Dado que el huésped está autenticado y el alojamiento existe, cuando inicia una conversación con el anfitrión del alojamiento, entonces el sistema debe crearla.;HU-28;CU-032;"CP-064 Inicio de conversación con el anfitrión
 CP-065 Envío y respuesta de mensajes
 CP-066 Acceso a conversación ajena";"MensajeriaTest#iniciaConElAnfitrion_CA169
@@ -707,7 +707,7 @@ MensajeriaServiceTest#iniciaConElAnfitrion_CA169
 MensajeriaServiceTest#retomaLaExistente_CA169
 MensajeriaServiceTest#validaciones_CA169
 MensajeriaControllerTest#iniciar_CA169
-MensajeriaControllerTest#iniciarPropio_CA169";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;;
+MensajeriaControllerTest#iniciarPropio_CA169";Probado (JUnit);;feat/SCRUM-185-be-mensajeria-huesped-anfitrion;;v1.0.0;
 CA-170;RF-007;Gestión de alojamientos favoritos;Consulta de favoritos;Dado que el huésped está autenticado, cuando consulta sus alojamientos favoritos, entonces el sistema debe mostrar solo los asociados a su usuario o indicar que la lista está vacía si no tiene ninguno.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
 CP-069 Eliminación de favorito";"FavoritosTest#listaVacia_CA170
@@ -723,7 +723,7 @@ mis-favoritos.spec.ts#CA-170 sin sesión de huésped no consulta y pide iniciar 
 favorito.service.spec.ts#CA-170 consulta GET /favoritos paginado para el usuario de la sesión
 favorito.service.spec.ts#CA-170 lee todas las páginas para saber qué alojamientos son favoritos y no mezcla usuarios
 favorito.service.spec.ts#CA-170 sin sesión de huésped no consulta favoritos";Probado (JUnit);;"feat/SCRUM-186-be-alojamientos-favoritos
-feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): pantalla Mis favoritos (/favoritos, solo Huésped) con FavoritoService; lista vacía, error con reintento y paginación. Probado con Vitest (ng test). Rutas GET/POST/DELETE /favoritos verificadas con el backend local (curl, sin sesión: 401); el flujo completo con un huésped queda pendiente de verificar."
+feat/SCRUM-280-fe-alojamientos-favoritos";;v1.0.0;"Front-end (SCRUM-280): pantalla Mis favoritos (/favoritos, solo Huésped) con FavoritoService; lista vacía, error con reintento y paginación. Probado con Vitest (ng test). Rutas GET/POST/DELETE /favoritos verificadas con el backend local (curl, sin sesión: 401); el flujo completo con un huésped queda pendiente de verificar."
 CA-171;RF-007;Gestión de alojamientos favoritos;Eliminación de favorito;Dado que el huésped tiene un alojamiento en su lista de favoritos, cuando lo elimina, entonces el alojamiento debe dejar de aparecer en la lista.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
 CP-069 Eliminación de favorito";"FavoritosTest#eliminaDeLaLista_CA171
@@ -735,7 +735,7 @@ mis-favoritos.spec.ts#CA-171 si el backend no puede quitarlo, lo conserva y mues
 favorito.service.spec.ts#CA-171 elimina con DELETE /favoritos/{id} y deja de ser favorito
 favorito.service.spec.ts#CA-171 si ya no estaba en favoritos (404) también lo quita; si falla otra cosa lo conserva
 detalle-alojamiento.spec.ts#CA-171 desde el detalle el huésped quita el favorito con DELETE /favoritos/{id}";Probado (JUnit);;"feat/SCRUM-186-be-alojamientos-favoritos
-feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): quitar con el corazón en Mis favoritos o con Guardado en el detalle; el alojamiento desaparece cuando el backend confirma el DELETE. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
+feat/SCRUM-280-fe-alojamientos-favoritos";;v1.0.0;"Front-end (SCRUM-280): quitar con el corazón en Mis favoritos o con Guardado en el detalle; el alojamiento desaparece cuando el backend confirma el DELETE. Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-173;RF-007;Gestión de alojamientos favoritos;Agregar favorito sin duplicados;Dado que el huésped está autenticado y el alojamiento existe, cuando lo agrega a sus favoritos, entonces el sistema debe registrarlo en su lista y, si ya estaba agregado, conservar un único favorito.;HU-29;CU-033;"CP-067 Agregar alojamiento a favoritos sin duplicados
 CP-068 Consulta de favoritos
 CP-069 Eliminación de favorito";"FavoritosTest#agregaSinDuplicar_CA173
@@ -750,25 +750,25 @@ favorito.service.spec.ts#CA-173 agrega con POST /favoritos/{id} y lo marca como 
 favorito.service.spec.ts#CA-173 si ya estaba (200) conserva un único favorito y no envía peticiones duplicadas
 favorito.service.spec.ts#CA-173 informa el error y no lo marca si el alojamiento no existe (404) o el servidor falla
 favorito.service.spec.ts#CA-173 sin sesión de huésped no llama al backend y pide iniciar sesión";Probado (JUnit);;"feat/SCRUM-186-be-alojamientos-favoritos
-feat/SCRUM-280-fe-alojamientos-favoritos";;;"Front-end (SCRUM-280): botón Guardar del detalle (solo Huésped); se marca como Guardado cuando el backend confirma el POST y un doble clic no repite la petición. El corazón en Inicio y Explorar queda pendiente de HU-23 (SCRUM-242). Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
+feat/SCRUM-280-fe-alojamientos-favoritos";;v1.0.0;"Front-end (SCRUM-280): botón Guardar del detalle (solo Huésped); se marca como Guardado cuando el backend confirma el POST y un doble clic no repite la petición. El corazón en Inicio y Explorar queda pendiente de HU-23 (SCRUM-242). Probado con Vitest (ng test); el flujo completo con un huésped queda pendiente de verificar."
 CA-174;RNF-023;Autenticación multifactor;Validación del segundo factor;Dado que el usuario tiene habilitado el segundo factor, cuando valida sus credenciales principales, entonces el sistema debe solicitar el segundo factor y permitir el acceso solo si es válido, rechazando el inicio de sesión si es incorrecto.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
 CP-072 Inicio de sesión con MFA deshabilitado";"SegundoFactorTest#activaYElLoginPideElCodigo_CA174_CA178
 InicioSesionTest#segundoFactorEnElInicioDeSesion
-SegundoFactorServiceTest";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;;"La verificación en el login la dejó HU-07; HU-30 agrega los endpoints para activarlo."
+SegundoFactorServiceTest";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;v1.0.0;"La verificación en el login la dejó HU-07; HU-30 agrega los endpoints para activarlo."
 CA-177;RNF-023;Autenticación multifactor;MFA deshabilitado;Dado que la cuenta tiene el segundo factor deshabilitado, cuando el usuario inicia sesión, entonces el sistema debe continuar con el mecanismo normal de autenticación.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
 CP-072 Inicio de sesión con MFA deshabilitado";"SegundoFactorTest#sinSegundoFactorLoginNormal_CA177
-SegundoFactorControllerTest#desactiva_CA177";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;;El mecanismo normal es el código por correo (el ADMIN no lo necesita).
+SegundoFactorControllerTest#desactiva_CA177";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;v1.0.0;El mecanismo normal es el código por correo (el ADMIN no lo necesita).
 CA-178;RNF-023;Autenticación multifactor;Activación del segundo factor;Dado que el usuario está autenticado, cuando activa el segundo factor de autenticación, entonces la configuración debe quedar asociada exclusivamente a su cuenta.;HU-30;"CU-035
 CU-002";"CP-070 Activación del segundo factor
 CP-071 Inicio de sesión con segundo factor
 CP-072 Inicio de sesión con MFA deshabilitado";"SegundoFactorTest#activaYElLoginPideElCodigo_CA174_CA178
 SegundoFactorTest#configuracionExclusivaDeLaCuenta_CA178
 SegundoFactorControllerTest#activa_CA178
-SegundoFactorControllerTest#confirma_CA178";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;;"POST /usuarios/segundofactor/activar, /confirmar y /desactivar usan el usuario del token; el secreto se guarda cifrado con AES."
+SegundoFactorControllerTest#confirma_CA178";Probado (JUnit);;feat/SCRUM-281-be-autenticacion-multifactor;;v1.0.0;"POST /usuarios/segundofactor/activar, /confirmar y /desactivar usan el usuario del token; el secreto se guarda cifrado con AES."
 CA-179;RF-021;Creación de reserva por el huésped;Desglose de cotización con servicios adicionales;Dado que existe un alojamiento ACTIVA y las fechas seleccionadas son válidas, cuando el huésped solicita la cotización, entonces el sistema debe mostrar noches, precio base, tarifa de limpieza, tarifa de servicio, descuentos, cada servicio adicional definido con su costo y el total.;HU-31;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas
@@ -779,7 +779,7 @@ CP-036 Reservas superpuestas o simultáneas
 CP-037 Reserva inmediata inválida
 CP-039 Validación de disponibilidad al confirmar";"CotizacionServiceTest#muestraElDesglose_CA179
 confirmar-reserva.spec.ts#CA-179 muestra noches, precio base, descuento, limpieza, tarifa de servicio, cada servicio con su costo y el total";Probado (JUnit);;"feat/SCRUM-188-be-cotizacion-servicios-adicionales
-feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;;Front-end (SCRUM-248): desglose en Confirmar reserva con noches, precio base, descuento, limpieza, tarifa de servicio, cada servicio adicional con su costo y el total. Probado con Vitest (ng test).
+feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;v1.0.0;Front-end (SCRUM-248): desglose en Confirmar reserva con noches, precio base, descuento, limpieza, tarifa de servicio, cada servicio adicional con su costo y el total. Probado con Vitest (ng test).
 CA-183;RF-021;Creación de reserva por el huésped;Inclusión y exclusión de servicios adicionales;Dado que el huésped selecciona o deselecciona servicios adicionales, cuando el sistema recalcula la cotización, entonces el total debe incluir únicamente el costo de los servicios seleccionados.;HU-31;"CU-024
 CU-025";"CP-031 Generación de cotización con servicios adicionales
 CP-029 Validación de fechas
@@ -795,7 +795,7 @@ confirmar-reserva.spec.ts#CA-183 al elegir un servicio recotiza con el backend y
 confirmar-reserva.spec.ts#CA-183 al quitar un servicio recotiza sin él y el total deja de incluirlo
 confirmar-reserva.spec.ts#CA-183 mientras recotiza no deja confirmar y varios clics seguidos piden una sola cotización
 confirmar-reserva.spec.ts#CA-183 indica cuando el alojamiento no tiene servicios adicionales";Probado (JUnit);;"feat/SCRUM-188-be-cotizacion-servicios-adicionales
-feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;;"Front-end (SCRUM-248): el huésped marca o desmarca servicios adicionales en Confirmar reserva; cada cambio pide una cotización nueva (POST /cotizaciones con serviciosSeleccionados) y no se puede confirmar hasta recibirla. Probado con Vitest (ng test); POST /cotizaciones verificado con el backend local (curl, sin sesión: 401); el flujo completo con un huésped queda pendiente de verificar."
+feat/SCRUM-248-fe-cotizacion-servicios-adicionales";;v1.0.0;"Front-end (SCRUM-248): el huésped marca o desmarca servicios adicionales en Confirmar reserva; cada cambio pide una cotización nueva (POST /cotizaciones con serviciosSeleccionados) y no se puede confirmar hasta recibirla. Probado con Vitest (ng test); POST /cotizaciones verificado con el backend local (curl, sin sesión: 401); el flujo completo con un huésped queda pendiente de verificar."
 CA-185;RF-018;Gestión y actualización de publicación;Gestión de servicios adicionales;Dado que el usuario es propietario de la publicación, cuando registra, modifica o elimina un servicio adicional con nombre y costo positivo, entonces el sistema debe asociarlo a su publicación y aplicar el cambio a nuevas cotizaciones sin alterar las reservas ya confirmadas.;HU-16;"CU-009
 CU-021";"CP-016 Actualización de publicación
 CP-017 Modificación sin permisos sobre una publicación o recurso
@@ -815,7 +815,7 @@ servicios-adicionales.spec.ts#CA-185 registra un servicio adicional asociado a l
 servicios-adicionales.spec.ts#CA-185 modifica un servicio adicional existente
 servicios-adicionales.spec.ts#CA-185 elimina un servicio adicional después de confirmar
 servicios-adicionales.spec.ts#CA-185 muestra el mensaje del servidor cuando rechaza el servicio y avisa del 403";Probado (JUnit);;"feat/SCRUM-173-be-actualizar-publicacion
-feat/SCRUM-111-fe-actualizar-publicacion-servicios";;;"Probado el registro, la modificación y la eliminación. Falta el efecto en cotizaciones y reservas (HU-22, HU-31). Front-end (SCRUM-111): registro, modificación y eliminación probados con Vitest (ng test); la conservación de las reservas confirmadas la garantiza el backend."
+feat/SCRUM-111-fe-actualizar-publicacion-servicios";;v1.0.0;"Probado el registro, la modificación y la eliminación. Falta el efecto en cotizaciones y reservas (HU-22, HU-31). Front-end (SCRUM-111): registro, modificación y eliminación probados con Vitest (ng test); la conservación de las reservas confirmadas la garantiza el backend."
 CA-195;RF-027;Gestión del estado de revisión del alojamiento;Rechazo con motivo;Dado que una publicación no cumple las condiciones, cuando el administrador la rechaza indicando el motivo, entonces el sistema debe registrar el motivo y notificar al anfitrión para que corrija y vuelva a presentarla.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -825,7 +825,7 @@ PublicacionServiceModeracionTest#rechazoSinMotivo_CA195
 NotificacionServiceTest#registraLaNotificacion_CA195
 AdminControllerModeracionTest#rechaza_CA195
 ModeracionPublicacionesTest#rechazaConMotivo_CA195_CA196
-ModeracionPublicacionesTest#motivoLargo_CA195";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;"El motivo queda en el historial de estados y en una notificación; consultar las notificaciones llega con su HU."
+ModeracionPublicacionesTest#motivoLargo_CA195";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;v1.0.0;"El motivo queda en el historial de estados y en una notificación; consultar las notificaciones llega con su HU."
 CA-196;RF-027;Gestión del estado de revisión del alojamiento;Auditoría de la revisión;Dado que el administrador toma una decisión de revisión, cuando esta se registra, entonces el sistema debe guardar un evento de auditoría con administrador, publicación, fecha y resultado.;HU-32;CU-031;"CP-020 Envío a revisión de publicación completa
 CP-057 Estados permitidos de la publicación
 CP-058 Aprobación de publicación
@@ -834,4 +834,4 @@ CP-060 Auditoría de la decisión de revisión";"PublicacionServiceModeracionTes
 PublicacionServiceModeracionTest#rechazaConMotivo_CA195_CA196
 PublicacionServiceModeracionTest#soloDesdeRevision_CA196
 ModeracionPublicacionesTest#apruebaLaPublicacion_CA158_CA196
-ModeracionPublicacionesTest#soloDesdeRevision_CA196";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;;Evento ALOJAMIENTO_CAMBIO_ESTADO con administrador, publicación, fecha y resultado (EXITOSO o RECHAZADO).
+ModeracionPublicacionesTest#soloDesdeRevision_CA196";Probado (JUnit);;feat/SCRUM-249-be-revisar-aprobar-rechazar-publicaciones;;v1.0.0;Evento ALOJAMIENTO_CAMBIO_ESTADO con administrador, publicación, fecha y resultado (EXITOSO o RECHAZADO).
